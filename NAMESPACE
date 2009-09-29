@@ -1,3 +1,4 @@
+import(DBI)
 import(RSQLite)
 
 importFrom(IRanges, RangedData, IRanges)
