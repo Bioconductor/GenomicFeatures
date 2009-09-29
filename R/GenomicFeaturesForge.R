@@ -8,12 +8,24 @@
 ### in the UCSC multivalued fields like 'exonStarts' or 'exonEnds'.
 .shift.coordsInMultivaluedField <- function(x, shift)
 {
+    if (!is.character(x))
+        stop("'x' must be a character vector")
     if (length(x) == 0L)
         return(character(0))
     sapply(strsplit(x, ",", fixed=TRUE),
            function(starts)
                paste(as.character(as.integer(starts) + shift), collapse=",")
     )
+}
+
+.replaceEmptyStringWithNA <- function(x)
+{
+    if (!is.character(x))
+        stop("'x' must be a character vector")
+    if (length(x) == 0L)
+        return(character(0))
+    x[x == ""] <- NA_character_
+    return(x)
 }
 
 read_knownGene_table <- function(file, translate.starts=TRUE)
@@ -42,6 +54,7 @@ read_knownGene_table <- function(file, translate.starts=TRUE)
         ans$exonStarts <- .shift.coordsInMultivaluedField(ans$exonStarts, 0L)
     }
     ans$exonEnds <- .shift.coordsInMultivaluedField(ans$exonEnds, 0L)
+    ans$proteinID <- .replaceEmptyStringWithNA(ans$proteinID)
     return(ans)
 }
 
