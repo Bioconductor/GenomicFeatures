@@ -1,0 +1,8 @@
+import(RSQLite)
+
+importFrom(IRanges, RangedData, IRanges)
+importClassesFrom(IRanges, RangedData, IRanges)
+importMethodsFrom(IRanges, ranges, "ranges<-", start, end, gaps)
+
+export(transcripts, exons, introns)
+
