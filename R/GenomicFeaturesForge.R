@@ -60,7 +60,7 @@ read_knownGene_table <- function(file, translate.starts=TRUE)
 }
 
 ### Read UCSC cpgIslandExt.txt database file.
-read_cpgIslandExt_table <- function(file, translate.starts=TRUE)
+read_cpgIslandExt_table <- function(file, translate.starts=TRUE, inject.underscore.in.IDs=FALSE)
 {
     COL2CLASS <- c(
         `bin`="NULL",              # dropped
@@ -79,6 +79,9 @@ read_cpgIslandExt_table <- function(file, translate.starts=TRUE)
                       colClasses=COL2CLASS, check.names=FALSE)
     if (translate.starts) {
         ans$start <- ans$start + 1L
+    }
+    if (inject.underscore.in.IDs) {
+        ans$ID <- sub(" ", "_", ans$ID, fixed=TRUE)
     }
     return(ans)
 }
