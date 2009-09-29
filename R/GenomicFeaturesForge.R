@@ -28,6 +28,7 @@
     return(x)
 }
 
+### Read UCSC knownGene.txt or knownGeneOld3.txt database files.
 read_knownGene_table <- function(file, translate.starts=TRUE)
 {
     COL2CLASS <- c(
@@ -55,6 +56,30 @@ read_knownGene_table <- function(file, translate.starts=TRUE)
     }
     ans$exonEnds <- .shift.coordsInMultivaluedField(ans$exonEnds, 0L)
     ans$proteinID <- .replaceEmptyStringWithNA(ans$proteinID)
+    return(ans)
+}
+
+### Read UCSC cpgIslandExt.txt database file.
+read_cpgIslandExt_table <- function(file, translate.starts=TRUE)
+{
+    COL2CLASS <- c(
+        `bin`="NULL",              # dropped
+        `chromosome`="character",  # UCSC field is 'chrom'
+        `start`="integer",         # UCSC field is 'chromStart'
+        `end`="integer",           # UCSC field is 'chromEnd'
+        `ID`="character",          # UCSC field is 'name'
+        `length`="NULL",           # dropped
+        `cpgNum`="NULL",           # dropped
+        `gcNum`="NULL",            # dropped
+        `perCpg`="NULL",           # dropped
+        `perGc`="NULL",            # dropped
+        `obsExp`="NULL"            # dropped
+    )
+    ans <- read.table(file, sep="\t", col.names=names(COL2CLASS),
+                      colClasses=COL2CLASS, check.names=FALSE)
+    if (translate.starts) {
+        ans$start <- ans$start + 1L
+    }
     return(ans)
 }
 
