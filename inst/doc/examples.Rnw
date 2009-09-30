@@ -1,0 +1,148 @@
+%\VignetteIndexEntry{Accessing Genome annotations from the UCSC Genome Browser}
+%\VignetteKeywords{annotation}
+%\VignettePackage{GenomicFeatures}
+\documentclass[11pt]{article}
+
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+
+
+\title{Accessing Genome annotations from the UCSC Genome Browser}
+\author{Marc Carlson}
+
+\SweaveOpts{keep.source=TRUE}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \Rpackage{rtacklayer} package provides functions and methods that
+can be used to get the data tables behind the UCSC tracks and import
+them as data.frames.  This vignette will explore some of these and
+document the capabilities with specific examples.  
+
+
+\subsection{Retrieving Exon Boundary information}
+
+In general, when you want to get some data from UCSC, you will want to 1st
+make a session.  The most common thing is that you will want a session with
+the UCSC genome browser, so this is the default bahavoir.
+
+<<SetUp Session>>=
+library(rtracklayer)
+session <- browserSession()
+@ 
+
+
+Once you have done this, you will need to choose which genome you want
+to work on.  To do that, you should use the \Rfunction{ucscGenomes}
+function to list all the available genomes and then choose one as
+follows. 
+
+<<Choose Genome>>=
+head(ucscGenomes())
+@ 
+
+
+Then you can set the value of the chosen genome for your session using
+the \Rfunction{genome} command.  The following command sets it to be
+human build hg18.
+
+<<Set Genome>>=
+genome(session) <- "hg18"
+@ 
+
+
+To search for tracks/tables are available you can use the
+\Rfunction{trackNames} method like this:
+
+<<Check Available Tracks>>=
+head(trackNames(session))
+@ 
+
+
+Finally, you can retrieve the data from UCSC by using the
+\Rfunction{ucscTableQuery} command.  In this case we just want to get
+the whole table so we will leave out the option of passing in the
+segment of the genome we would want to retrieve it for.  The following
+example will create a query to retrieve the entire table/track for the
+refGene track from mouse. 
+
+<<Simple Query>>=
+query <- ucscTableQuery(session, "refGene")
+@ 
+
+
+Then we can use the \Rfunction{getTable} method to return the data in
+the query.
+
+
+<<Get Table>>=
+head(getTable(query))
+@ 
+
+
+\subsection{Some other Resources}
+
+Several kinds of data are available for access.  Here are some tracks
+from human, that I expect are likely to be popular:
+
+
+CPG Islands: "cpgIslandExt"
+
+Access to genes known to be associated with disease: "gad", "omimGene"
+
+Nucleosome Occupancy: "uwNucOcc" (this one is causing trouble)
+
+Genomic Segmental Duplications: "genomicSuperDups"
+
+Conserved TFBS:  "tfbsConsSites"
+
+
+\subsection{Restricting annotations to a Genomic Region}
+
+Sometimes you may also want to restrict the amount of data you
+retrieve.  In these cases you can pass a GenomicRanges object in to
+the \Rfunction{ucscTableSession} so that it will limit the values
+returned to only the region of interest. This can be especially true
+when looking at data that occurs in a lot of places in the genome such
+as SNPs.  Below is an example that will return the SNPs on a
+particular region of Chromosome 12.
+
+<<Access SNPs>>=
+query <- ucscTableQuery(session, "snp130",
+                        GenomicRanges(57795963, 57815592, "chr12"))
+head(getTable(query)) 
+@ 
+
+
+\subsection{Even More Resources}
+
+Here are some additional types of information that are expected to be popular:
+
+Mapped Ests: "est"
+
+Recombination Rates: "recombRate"
+
+Microsattelites: "microsat"
+
+Comparative genomics information: "chainBosTau4" (eg. compare w/bovines)
+
+
+
+
+
+
+\section{Session Information}
+
+The version number of R and packages loaded for generating the vignette were:
+
+<<SessionInfo, echo=FALSE>>=
+sessionInfo()
+@
+
+\end{document}
