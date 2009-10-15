@@ -1,9 +1,7 @@
 import(DBI)
 import(RSQLite)
+import(IRanges)
+import(Biostrings)
 
-importFrom(IRanges, RangedData, IRanges)
-importClassesFrom(IRanges, RangedData, IRanges)
-importMethodsFrom(IRanges, ranges, "ranges<-", start, end, gaps)
-
-export(transcripts, exons, introns)
+export(transcripts, exons, introns, getTranscriptSeq)
 
