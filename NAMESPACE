@@ -1,7 +1,9 @@
+import(methods)
 import(DBI)
 import(RSQLite)
 import(IRanges)
 import(Biostrings)
+import(BSgenome)
 
 export(transcripts, exons, introns, getTranscriptSeq)
 
