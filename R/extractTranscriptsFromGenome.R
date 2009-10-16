@@ -3,18 +3,18 @@
 ### -------------------------------------------------------------------------
 
 ### Typical use:
-###   library(GenomicFeatures.Hsapiens.UCSC.hg18)
-###   library(BSgenome.Hsapiens.UCSC.hg18)
-###   ## Takes < 30 sec.
-###   tseqs <- extractTranscriptsFromGenome(geneHuman(), Hsapiens)
+###   library(BSgenome.Hsapiens.UCSC.hg18)  # load the genome
+###   library(GenomicFeatures.Hsapiens.UCSC.hg18)  # load the gene table
+###   ## Takes about 30 sec.
+###   transcripts <- extractTranscriptsFromGenome(Hsapiens, geneHuman())
 ### TODO: Improve implementation: ideally, we shouldn't need to use
 ###       intermediate representation as character vector.
-extractTranscriptsFromGenome <- function(genes, genome)
+extractTranscriptsFromGenome <- function(genome, genes)
 {
-    if (!is.data.frame(genes))
-        stop("'genes' must be a data.frame")
     if (!is(genome, "BSgenome"))
         stop("'genome' must be a BSgenome object")
+    if (!is.data.frame(genes))
+        stop("'genes' must be a data.frame")
     ## The 3 lists below have identical names (the REFSEQnames)
     REFSEQnames2strand <- split(genes$strand, genes$chrom, drop=TRUE)
     REFSEQnames2exonStarts <- split(genes$exonStarts, genes$chrom, drop=TRUE)
