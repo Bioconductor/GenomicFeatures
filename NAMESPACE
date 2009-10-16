@@ -5,5 +5,5 @@ import(IRanges)
 import(Biostrings)
 import(BSgenome)
 
-export(transcripts, exons, introns, getTranscriptSeq)
+export(transcripts, exons, introns, extractTranscriptsFromGenome)
 
