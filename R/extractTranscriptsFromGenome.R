@@ -29,11 +29,8 @@ extractTranscriptsFromGenome <- function(genome, genes)
         REFSEQ_exonStarts <- REFSEQnames2exonStarts[[REFSEQname]]
         REFSEQ_exonEnds <- REFSEQnames2exonEnds[[REFSEQname]]
         REFSEQ_strand <- REFSEQnames2strand[[REFSEQname]]
-        exonStarts <- strsplit(REFSEQ_exonStarts, ",", fixed=TRUE)
-        exonStarts <- lapply(exonStarts, as.integer)
-        exonEnds <- strsplit(REFSEQ_exonEnds, ",", fixed=TRUE)
-        exonEnds <- lapply(exonEnds, as.integer)
-        transcripts <- extractTranscripts(subject, exonStarts, exonEnds,
+        transcripts <- extractTranscripts(subject,
+                           REFSEQ_exonStarts, REFSEQ_exonEnds,
                            REFSEQ_strand, reorder.exons.on.minus.strand=TRUE)
         as.character(transcripts)
     }
