@@ -54,6 +54,7 @@
 \examples{
   library(GenomicFeatures.Hsapiens.UCSC.hg18)  # load the gene table
   genes <- geneHuman()
+  library(Biostrings)  # for transcriptWidths()
   tw <- transcriptWidths(genes$exonStarts, genes$exonEnds)
 
   if (interactive()) {
