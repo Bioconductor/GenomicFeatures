@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Support package for genomic annotations
-Version: 0.2.0
+Version: 0.3.0
 Author: D. Sarkar, M. Lawrence, Biocore
 License: Artistic-2.0
 Description: Infrastructure shared by the annotation packages containing genomic
