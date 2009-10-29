@@ -28,8 +28,13 @@
     return(x)
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### read.TranscriptTable.from.*() functions.
+###
+
 ### Read UCSC knownGene.txt or knownGeneOld3.txt database files.
-read_knownGene_table <- function(file, translate.starts=TRUE)
+read.TranscriptTable.from.UCSC_knownGene_table <- function(file, translate.starts=TRUE)
 {
     COL2CLASS <- c(
         `name`="character",
@@ -59,8 +64,20 @@ read_knownGene_table <- function(file, translate.starts=TRUE)
     return(ans)
 }
 
-### Read UCSC cpgIslandExt.txt database file.
-read_cpgIslandExt_table <- function(file, translate.starts=TRUE, inject.underscore.in.IDs=FALSE)
+### Read TAIR9_GFF3_genes.gff file.
+read.TranscriptTable.from.TAIR_GFF3_genes_file <- function(file)
+{
+    stop("IMPLEMENT ME")
+    return(ans)
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### read.CpgIslandTable.from.*() functions.
+###
+
+read.CpgIslandTable.from.UCSC_cpgIslandExt_table <- function(file,
+    translate.starts=TRUE, inject.underscore.in.IDs=FALSE)
 {
     COL2CLASS <- c(
         `bin`="NULL",              # dropped
