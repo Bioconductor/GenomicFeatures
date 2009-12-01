@@ -38,15 +38,22 @@ transcripts <- function(genes, proximal = 500L, distal = 10000L) {
              space = genes$chrom[notdup])
 }
 
-## Should the exons and introns just be generated and saved?
+
+.countPos <- function(pos) {
+   strsplit(as.character(pos), ",", fixed=TRUE)
+}
+
+.splitPos <- function(pos) {
+    as.integer(unlist(.countPos(pos), use.names=FALSE))
+}
+
+
+## Introns are stored in the local DB ... for now
 
 exons <- function(genes) {
-  splitPos <- function(pos) {
-    as.integer(unlist(strsplit(as.character(pos), ","), use.names=FALSE))
-  }
   ## [exon:start, exon:end]
-  RangedData(IRanges(splitPos(genes$exonStarts),
-                     splitPos(genes$exonEnds)),
+  RangedData(IRanges(.splitPos(genes$exonStarts),
+                     .splitPos(genes$exonEnds)),
              gene = rep(genes$name, genes$exonCount),
              space = rep(genes$chrom, genes$exonCount))
 }
@@ -54,10 +61,13 @@ exons <- function(genes) {
 
 ## RG thinks that there is always one more exon than intron
 ## and that the first intron comes after the first exon
-##
+## For this data at least, I believe that RG is correct. -MC
 introns <- function(genes) {
-  exs <- exons(genes)
-  ranges(exs) <- gaps(ranges(exs))
-  exs
+  ## [intron:start, intron:end]
+  tmp <- .countPos(genes$intronStarts)
+  nIntrons <- sapply(tmp, length)
+  RangedData(IRanges(.splitPos(genes$intronStarts),
+                     .splitPos(genes$intronEnds)),
+             gene = rep(genes$name, nIntrons),
+             space = rep(genes$chrom,nIntrons))  
 }
-
