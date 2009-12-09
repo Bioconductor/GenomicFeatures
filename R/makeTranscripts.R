@@ -251,28 +251,36 @@ getTranscriptData <- function(txAnnot){
 
 ##TODO: These parameters need to be names that will identify the cols (not numbers).
 
-convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts", exonColEnd = "exonEnds"){
+convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts",
+                                      exonColEnd = "exonEnds")
+{
 
   eColStrtind = names(frame) %in% exonColStart
   eColEndind = names(frame) %in% exonColEnd
   
-  ## Before I can call makeTranscripts, I have to split the exons up into their own rows.
-  exonStart <- unlist(lapply(as.vector(frame[,eColStrtind]), function(x) strsplit(x,",")))
-  exonEnd <- unlist(lapply(as.vector(frame[,eColEndind]), function(x) strsplit(x,",")))
+  ## Before I can call makeTranscripts, I have to split the exons up
+  ## into their own rows.
+  exonStart <- unlist(lapply(as.vector(frame[,eColStrtind]),
+                             function(x) strsplit(x,",")))
+  exonEnd <- unlist(lapply(as.vector(frame[,eColEndind]),
+                           function(x) strsplit(x,",")))
 
   ## Need to also know how many times the rest needs to be expanded.
-  lengths <- unlist(lapply(as.vector(frame[,eColStrtind]), function(x){ length(unlist(strsplit(x,","))) } ))
+  lengths <- unlist(lapply(as.vector(frame[,eColStrtind]),
+                           function(x){ length(unlist(strsplit(x,","))) } ))
 
   ## I will use the subsetting shorthand to replicate the whole frame easily.
   ## This needs
-  eColStrtEndind = !(names(frame) %in% c(exonColStart, exonColEnd))
-  repCols = frame[rep(frame[,1],times=lengths ),eColStrtEndind]
-
+  notStartEnd = !(names(frame) %in% c(exonColStart, exonColEnd))
+  repCols = frame[rep(seq_len(nrow(frame)), lengths), notStartEnd, drop = FALSE]
+  keepNames <- names(repCols)
   ## Derive the exonRanks:
   exonRank <- unlist(lapply(lengths, function(x) 1:x))
-     
-  data.frame(repCols, exonStart, exonEnd, exonRank, stringsAsFactors = FALSE)
-  
+
+  ## FIXME: cleanup conversion of start/end to integer
+  structure(data.frame(repCols, as.integer(exonStart), as.integer(exonEnd), exonRank,
+                       stringsAsFactors = FALSE, row.names = NULL),
+            names = c(keepNames, "exonStarts", "exonEnds", "exonRank"))
 }
 
 
