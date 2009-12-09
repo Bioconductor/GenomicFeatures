@@ -117,6 +117,7 @@ getTranscriptData <- function(txAnnot){
   sql <- "CREATE TABLE genes
     (gene_id VARCHAR(15),
      _tx_id VARCHAR(20),
+     UNIQUE (gene_id,_tx_id),
      FOREIGN KEY (_tx_id) REFERENCES transcripts (_tx_id) )"
   dbGetQuery(con,sql)
 
@@ -127,10 +128,9 @@ getTranscriptData <- function(txAnnot){
 }
 
 
-
 .createTranscriptTreeTable <- function(con){
-  sql <- "CREATE VIRTUAL TABLE transcript_tree USING rtree(
-            _tx_id INTEGER PRIMARY KEY,    --id a single transcript
+  sql <- "CREATE VIRTUAL TABLE transcript_tree USING rtree
+           (_tx_id INTEGER PRIMARY KEY,    --id a single transcript
             tx_start INTEGER,
             tx_end INTEGER,
             cds_start INTEGER,
@@ -146,20 +146,39 @@ getTranscriptData <- function(txAnnot){
 }
 
 
-.createExonTreeTable <- function(con){
-  sql <- "CREATE VIRTUAL TABLE exon_tree USING rtree(
-            _exon_id INTEGER PRIMARY KEY,    --id a single exon
+##problem with new constraints means I have to make a "throw-away" table to ensure constraints!
+.createExonTreePreTable <- function(con){
+  sql <- "CREATE TABLE pre_exon_tree
+           (_exon_id INTEGER PRIMARY KEY,    --id a single exon
             exon_start INTEGER,
-            exon_end INTEGER)
-            --FOREIGN KEY (_exon_id) REFERENCES  exons (_exon_id)"
+            exon_end INTEGER,
+            --UNIQUE (exon_start,exon_end),
+            FOREIGN KEY (_exon_id) REFERENCES  exons (_exon_id) )"
   dbGetQuery(con,sql)
 
-  sqli <- "INSERT INTO exon_tree SELECT DISTINCT
+  sqli <- "INSERT INTO pre_exon_tree SELECT DISTINCT
              e._exon_id, ad.exon_start, ad.exon_end
              FROM exons AS e, all_dat AS ad
              WHERE ad._exon_id = e._exon_id"
   dbGetQuery(con,sqli)
 }
+
+.createExonTreeTable <- function(con){
+  .createExonTreePreTable(con)
+  sql <- "CREATE VIRTUAL TABLE exon_tree USING rtree
+           (_exon_id INTEGER PRIMARY KEY,    --id a single exon
+            exon_start INTEGER,
+            exon_end INTEGER)
+            --UNIQUE (exon_start,exon_end)
+            --FOREIGN KEY (_exon_id) REFERENCES  exons (_exon_id)"
+  dbGetQuery(con,sql)
+
+  sqli <- "INSERT INTO exon_tree SELECT * FROM pre_exon_tree"
+  dbGetQuery(con,sqli)
+}
+
+
+
 
 
 .createExonsTranscriptsTable <- function(con){
@@ -167,6 +186,7 @@ getTranscriptData <- function(txAnnot){
             _exon_id INTEGER,            --id a single exon
             _tx_id INTEGER,              --id a single transcript
             exon_rank TEXT,
+            UNIQUE(_exon_id,_tx_id),
             FOREIGN KEY (_exon_id) REFERENCES  exons  (_exon_id)
             FOREIGN KEY (_tx_id) REFERENCES  transcripts  (_tx_id))"
   dbGetQuery(con,sql)
@@ -195,16 +215,17 @@ getTranscriptData <- function(txAnnot){
   .createTranscriptsTable(con)
   .createExonsTable(con)
   .createGenesTable(con)
-  
+
   .createTranscriptTreeTable(con)
 
-##   .createExonsTranscriptsTable(con)
-##   .createExonTreeTable(con)
+  .createExonsTranscriptsTable(con)
+  .createExonTreeTable(con)
 
 
-  ##drop the all_dat table
+  ##drop the extra tables
 ##   .dropOldTable(con,"all_dat")
-  
+##   .dropOldTable(con,"pre_exon_tree")
+
   
   ## plan is to end with making the object
   new("TranscriptAnnotation",
@@ -428,3 +449,6 @@ BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
 
 ##ALTERNATIVELY: I could just get the gene IDs separately for the BMFrame and add them on in R (instead of getting the whole thing from BM which results in the bloated frame)...
 
+
+
+##TODO! Uncomment the constraint on exon starts and ends being the same, and change the way that these values are calculated so that they are NEVER assigned more than once.
