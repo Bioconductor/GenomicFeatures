@@ -5,5 +5,11 @@ import(IRanges)
 import(Biostrings)
 import(BSgenome)
 
-export(transcripts, exons, introns, extractTranscriptsFromGenome)
+importFrom(AnnotationDbi,mget)
+
+export(transcripts, exons, introns, extractTranscriptsFromGenome,
+       makeTranscripts,
+       UCSCTranscripts,
+       BMTranscripts,
+       saveFeatures)
 
