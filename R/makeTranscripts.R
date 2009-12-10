@@ -77,8 +77,7 @@ getTranscriptData <- function(txAnnot){
 
 
 .dropOldTable <- function(con, table){
-  sql <- paste("DROP TABLE ",table,sep="")
-  dbGetQuery(sql,con)
+  dbGetQuery(con,paste("DROP TABLE ",table,sep=""))
 }
 
 
@@ -146,34 +145,18 @@ getTranscriptData <- function(txAnnot){
 }
 
 
-##problem with new constraints means I have to make a "throw-away" table to ensure constraints!
-.createExonTreePreTable <- function(con){
-  sql <- "CREATE TABLE pre_exon_tree
-           (_exon_id INTEGER PRIMARY KEY,    --id a single exon
-            exon_start INTEGER,
-            exon_end INTEGER,
-            --UNIQUE (exon_start,exon_end),
-            FOREIGN KEY (_exon_id) REFERENCES  exons (_exon_id) )"
-  dbGetQuery(con,sql)
-
-  sqli <- "INSERT INTO pre_exon_tree SELECT DISTINCT
-             e._exon_id, ad.exon_start, ad.exon_end
-             FROM exons AS e, all_dat AS ad
-             WHERE ad._exon_id = e._exon_id"
-  dbGetQuery(con,sqli)
-}
-
 .createExonTreeTable <- function(con){
-  .createExonTreePreTable(con)
   sql <- "CREATE VIRTUAL TABLE exon_tree USING rtree
            (_exon_id INTEGER PRIMARY KEY,    --id a single exon
             exon_start INTEGER,
             exon_end INTEGER)
-            --UNIQUE (exon_start,exon_end)
             --FOREIGN KEY (_exon_id) REFERENCES  exons (_exon_id)"
   dbGetQuery(con,sql)
 
-  sqli <- "INSERT INTO exon_tree SELECT * FROM pre_exon_tree"
+  sqli <- "INSERT INTO exon_tree SELECT DISTINCT
+             e._exon_id, ad.exon_start, ad.exon_end
+             FROM exons AS e, all_dat AS ad
+             WHERE ad._exon_id = e._exon_id"
   dbGetQuery(con,sqli)
 }
 
@@ -224,7 +207,6 @@ getTranscriptData <- function(txAnnot){
 
   ##drop the extra tables
 ##   .dropOldTable(con,"all_dat")
-##   .dropOldTable(con,"pre_exon_tree")
 
   
   ## plan is to end with making the object
@@ -278,8 +260,8 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts",
   exonRank <- unlist(lapply(lengths, function(x) 1:x))
 
   ## FIXME: cleanup conversion of start/end to integer
-  structure(data.frame(repCols, as.integer(exonStart), as.integer(exonEnd), exonRank,
-                       stringsAsFactors = FALSE, row.names = NULL),
+  structure(data.frame(repCols, as.integer(exonStart), as.integer(exonEnd),
+            exonRank, stringsAsFactors = FALSE, row.names = NULL),
             names = c(keepNames, "exonStarts", "exonEnds", "exonRank"))
 }
 
@@ -288,14 +270,53 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts",
 
 
 
-makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd, cdsStart,
-                            cdsEnd, exonStart, exonEnd, exonRank,
-                            exonId = vector(), exonColStart = "exonStarts",
-                            exonColEnd = "exonEnds" ){
-  if(length(exonId)<1){
-    exonId = c(1:length(ids))
-  }
+
+
+## ##take a pair of vectors (expanded exonStarts and exonEnds)
+## ##And return a unique set of _exon_ids based on the same.
+## .calculate_ExonIds <- function(starts, ends, chrom, strand){
+## ##   if(length(exonId)<1){
+## ##     exonId = c(1:length(ids))
+## ##   }
+
+##   ##I want to assign a unique ID to each of the unique combinations of these.  BUT then I want to return a vector of the initial length (with repeated IDs as appropriate).
+
+##   frm <- data.frame(chrom,strand,starts,ends)
+##   ii <- order(frm$chrom,frm$strand,frm$starts,frm$ends)
+##   sortedFrm <- frm[ii,]
   
+##   dups = duplicated(sortedFrm)
+
+##   ids = vector()
+##   for(i in seq_len(length(dups))){
+##     if(dups[i]==FALSE){
+##       ids = c(ids, i)
+##     }else{##otherwise repeat the last value
+##       ids = c(ids, ids[length(ids)])
+##     }
+##   }
+    
+##   newFrm <- cbind(ids,sortedFrm)
+  
+
+
+
+
+
+  
+## ##   uSort <- unique(sortedFrm)
+## ##   ids <- 1:dim(uSort)[1]
+
+
+  
+## }                
+
+
+
+makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
+                            cdsStart, cdsEnd, exonStart, exonEnd, exonRank,
+                            exonId = vector(), exonColStart = "exonStarts",
+                            exonColEnd = "exonEnds" ){  
   frame <- data.frame(geneIds = geneIds,
                       ids = ids,
                       chrom = chrom,
