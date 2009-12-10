@@ -47,22 +47,22 @@ getTranscriptData <- function(txAnnot){
             exon_rank VARCHAR(12))"
   dbGetQuery(con,sql)
   ##Just make sure that the order is correct...
-  vals <- frame[,c("geneIds","ids","chrom","strand","txStart","txEnd","cdsStart",
-                   "cdsEnd","exonStart","exonEnd","exonRank")]
-  exon_ids <- 1:dim(frame)[1]
-  vals <- cbind(exon_ids,vals)
+  vals <- frame[,c("int_exon_id","geneIds","ids","chrom","strand","txStart",
+                   "txEnd","cdsStart","cdsEnd","exonStart","exonEnd","exonRank")]
+##   exon_ids <- 1:dim(frame)[1]
+##   vals <- cbind(exon_ids,vals)
   sqlIns <- "INSERT INTO all_dat (_exon_id,
-                                       gene_id,
-                                       tx_id,
-                                       chromosome,
-                                       strand,
-                                       tx_start,
-                                       tx_end,
-                                       cds_start, 
-                                       cds_end,
-                                       exon_start,
-                                       exon_end,
-                                       exon_rank) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+                                  gene_id,
+                                  tx_id,
+                                  chromosome,
+                                  strand,
+                                  tx_start,
+                                  tx_end,
+                                  cds_start, 
+                                  cds_end,
+                                  exon_start,
+                                  exon_end,
+                                  exon_rank) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
   dbBeginTransaction(con)
   rset <- dbSendPreparedQuery(con, sqlIns, vals)
   
@@ -200,7 +200,6 @@ getTranscriptData <- function(txAnnot){
   .createGenesTable(con)
 
   .createTranscriptTreeTable(con)
-
   .createExonsTranscriptsTable(con)
   .createExonTreeTable(con)
 
@@ -228,6 +227,16 @@ getTranscriptData <- function(txAnnot){
 
 
 
+makeIdsForUniqueRows <- function(x)
+{
+    if (!is.data.frame(x))
+        stop("'x' must be a data frame")
+    x_order <- do.call(order, x)
+    x_dups <- duplicated(x)
+    ans <- vector() 
+    ans[x_order] <- cumsum(!x_dups[x_order])
+    return(ans)
+}
 
 
 
@@ -237,8 +246,8 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts",
                                       exonColEnd = "exonEnds")
 {
 
-  eColStrtind = names(frame) %in% exonColStart
-  eColEndind = names(frame) %in% exonColEnd
+  eColStrtind <- names(frame) %in% exonColStart
+  eColEndind <- names(frame) %in% exonColEnd
   
   ## Before I can call makeTranscripts, I have to split the exons up
   ## into their own rows.
@@ -253,8 +262,8 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts",
 
   ## I will use the subsetting shorthand to replicate the whole frame easily.
   ## This needs
-  notStartEnd = !(names(frame) %in% c(exonColStart, exonColEnd))
-  repCols = frame[rep(seq_len(nrow(frame)), lengths), notStartEnd, drop = FALSE]
+  notStartEnd <- !(names(frame) %in% c(exonColStart, exonColEnd))
+  repCols <- frame[rep(seq_len(nrow(frame)), lengths), notStartEnd, drop = FALSE]
   keepNames <- names(repCols)
   ## Derive the exonRanks:
   exonRank <- unlist(lapply(lengths, function(x) 1:x))
@@ -264,52 +273,6 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts",
             exonRank, stringsAsFactors = FALSE, row.names = NULL),
             names = c(keepNames, "exonStarts", "exonEnds", "exonRank"))
 }
-
-
-
-
-
-
-
-
-## ##take a pair of vectors (expanded exonStarts and exonEnds)
-## ##And return a unique set of _exon_ids based on the same.
-## .calculate_ExonIds <- function(starts, ends, chrom, strand){
-## ##   if(length(exonId)<1){
-## ##     exonId = c(1:length(ids))
-## ##   }
-
-##   ##I want to assign a unique ID to each of the unique combinations of these.  BUT then I want to return a vector of the initial length (with repeated IDs as appropriate).
-
-##   frm <- data.frame(chrom,strand,starts,ends)
-##   ii <- order(frm$chrom,frm$strand,frm$starts,frm$ends)
-##   sortedFrm <- frm[ii,]
-  
-##   dups = duplicated(sortedFrm)
-
-##   ids = vector()
-##   for(i in seq_len(length(dups))){
-##     if(dups[i]==FALSE){
-##       ids = c(ids, i)
-##     }else{##otherwise repeat the last value
-##       ids = c(ids, ids[length(ids)])
-##     }
-##   }
-    
-##   newFrm <- cbind(ids,sortedFrm)
-  
-
-
-
-
-
-  
-## ##   uSort <- unique(sortedFrm)
-## ##   ids <- 1:dim(uSort)[1]
-
-
-  
-## }                
 
 
 
@@ -332,14 +295,16 @@ makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
   ## Check if the exonEnd and exonStart are comma separated.
   commas = FALSE
   if(length(grep(",", exonStart)) > 1 || length(grep(",", exonEnd)) > 1){
-    commas = TRUE ## ie. we will be deriving the exonRanks
-    frame = convertExonsCommaSepFrame(frame,
-      exonColStart = exonColStart, exonColEnd = exonColEnd)
+    commas <- TRUE ## ie. we will be deriving the exonRanks
+    frame <- convertExonsCommaSepFrame(frame,
+      exonColStart <- exonColStart, exonColEnd = exonColEnd)
   }
 
   if(commas == FALSE){
-    frame = cbind(frame, exonRank)
+    frame <- cbind(frame, exonRank)
   }
+
+  frame <- cbind(frame,int_exon_id=makeIdsForUniqueRows(frame))
 
   .processFrame(frame)
 }
@@ -392,19 +357,21 @@ UCSCTranscripts <- function(type= "knownGene", genome="hg18",
                             organism="human",
                             exonColStart = "exonStarts",
                             exonColEnd = "exonEnds"){
-  require("rtracklayer")
-  session <- browserSession()
-  genome(session) <- genome
-  query <- ucscTableQuery(session, type)
-  frame <- getTable(query)
+##   require("rtracklayer")
+##   session <- browserSession()
+##   genome(session) <- genome
+##   query <- ucscTableQuery(session, type)
+##   frame <- getTable(query)
   
-  ## Mapping for UCSC refGene and knownGene types both use the same names for
-  ## exonColStart and exonColEnd.  Params only exist as future insurance.
+##   ## Mapping for UCSC refGene and knownGene types both use the same names for
+##   ## exonColStart and exonColEnd.  Params only exist as future insurance.
 
-  ## For UCSC, we have to convert comma separated fields...
-  frame <- convertExonsCommaSepFrame(frame,
-    exonColStart = exonColStart, exonColEnd = exonColEnd)
+##   ## For UCSC, we have to convert comma separated fields...
+##   frame <- convertExonsCommaSepFrame(frame,
+##     exonColStart = exonColStart, exonColEnd = exonColEnd)
 
+load("UCSCFrame.Rda")
+  
   ##TODO: there are issues here with namespaces that keeps AnnotationDbi from
   ##being fully useful...
 
