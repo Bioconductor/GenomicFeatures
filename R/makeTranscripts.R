@@ -248,27 +248,27 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts",
                                       exonColEnd = "exonEnds")
 {
 
-  eColStrtind <- names(frame) %in% exonColStart
-  eColEndind <- names(frame) %in% exonColEnd
+    frame_names <- names(frame)
+    startEndIndices <- match(c(exonColStart, exonColEnd), frame_names)
+    if (any(is.na(startEndIndices)))
+        stop("exonColStart or exonColEnd not found in column names")
+  eColStrtind <- startEndIndices[1L]
+  eColEndind <- startEndIndices[2L]
   
   ## Before I can call makeTranscripts, I have to split the exons up
   ## into their own rows.
-  exonStart <- unlist(lapply(as.vector(frame[,eColStrtind]),
-                             function(x) strsplit(x,",")))
-  exonEnd <- unlist(lapply(as.vector(frame[,eColEndind]),
-                           function(x) strsplit(x,",")))
-
-  ## Need to also know how many times the rest needs to be expanded.
-  lengths <- unlist(lapply(as.vector(frame[,eColStrtind]),
-                           function(x){ length(unlist(strsplit(x,","))) } ))
+    eStarts <- strsplit(as.character(frame[[eColStrtind]]), ",")
+    lengths <- sapply(eStarts, length)
+    exonStart <- unlist(eStarts)
+    exonEnd <- unlist(strsplit(as.character(frame[[eColEndind]]), ","))
 
   ## I will use the subsetting shorthand to replicate the whole frame easily.
   ## This needs
-  notStartEnd <- !(names(frame) %in% c(exonColStart, exonColEnd))
+  notStartEnd <- !(frame_names %in% c(exonColStart, exonColEnd))
   repCols <- frame[rep(seq_len(nrow(frame)), lengths), notStartEnd, drop = FALSE]
   keepNames <- names(repCols)
   ## Derive the exonRanks:
-  exonRank <- unlist(lapply(lengths, function(x) 1:x))
+  exonRank <- unlist(lapply(lengths, function(x) seq_len(x)))
 
   ## FIXME: cleanup conversion of start/end to integer
   structure(data.frame(repCols, as.integer(exonStart), as.integer(exonEnd),
