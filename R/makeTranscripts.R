@@ -229,13 +229,15 @@ getTranscriptData <- function(txAnnot){
 
 makeIdsForUniqueRows <- function(x)
 {
+    ## NOTE: sorting is Locale specific, so different users will
+    ## generate different IDs given the same 'x'.
     if (!is.data.frame(x))
         stop("'x' must be a data frame")
     x_order <- do.call(order, x)
     x_dups <- duplicated(x)
-    ans <- vector() 
+    ans <- vector("integer", length(x_order))
     ans[x_order] <- cumsum(!x_dups[x_order])
-    return(ans)
+    ans
 }
 
 
