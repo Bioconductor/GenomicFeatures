@@ -33,7 +33,7 @@ getTranscriptData <- function(txAnnot){
   drv <- dbDriver("SQLite")  
   con <- dbConnect(drv)##, dbname="earlyTest.sqlite") ## **Temporarily** write to a file up front.
   sql <- "CREATE TABLE all_dat (
-            _exon_id INTEGER PRIMARY KEY,
+            _exon_id INTEGER,
             gene_id VARCHAR(15),
             tx_id VARCHAR(15),
             chromosome VARCHAR(20),
@@ -106,7 +106,7 @@ getTranscriptData <- function(txAnnot){
   "
   dbGetQuery(con,sql)
 
-  sqli <- "INSERT INTO exons (chromosome, strand) SELECT chromosome, strand FROM all_dat"
+  sqli <- "INSERT INTO exons (_exon_id, chromosome, strand) SELECT DISTINCT _exon_id, chromosome, strand FROM all_dat"
   dbGetQuery(con,sqli)
   dbGetQuery(con,"CREATE INDEX e__exon_id on exons(_exon_id)")  
 }
@@ -357,20 +357,21 @@ UCSCTranscripts <- function(type= "knownGene", genome="hg18",
                             organism="human",
                             exonColStart = "exonStarts",
                             exonColEnd = "exonEnds"){
-##   require("rtracklayer")
-##   session <- browserSession()
-##   genome(session) <- genome
-##   query <- ucscTableQuery(session, type)
-##   frame <- getTable(query)
+  require("rtracklayer")
+  session <- browserSession()
+  genome(session) <- genome
+  query <- ucscTableQuery(session, type)
+  frame <- getTable(query)
   
-##   ## Mapping for UCSC refGene and knownGene types both use the same names for
-##   ## exonColStart and exonColEnd.  Params only exist as future insurance.
+  ## Mapping for UCSC refGene and knownGene types both use the same names for
+  ## exonColStart and exonColEnd.  Params only exist as future insurance.
 
-##   ## For UCSC, we have to convert comma separated fields...
-##   frame <- convertExonsCommaSepFrame(frame,
-##     exonColStart = exonColStart, exonColEnd = exonColEnd)
+  ## For UCSC, we have to convert comma separated fields...
+  frame <- convertExonsCommaSepFrame(frame,
+    exonColStart = exonColStart, exonColEnd = exonColEnd)
 
-load("UCSCFrame.Rda")
+## load("UCSCFrame.Rda")
+## load("UCSCSmallDupFrame.Rda")
   
   ##TODO: there are issues here with namespaces that keeps AnnotationDbi from
   ##being fully useful...
