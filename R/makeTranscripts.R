@@ -403,24 +403,24 @@ UCSCTranscripts <- function(type= "knownGene", genome="hg18",
 ## biomaRtTranscripts(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
 
 BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
-  require(biomaRt)
-  mart = useMart(biomart=biomart, dataset=dataset)
-  frame = getBM(mart=mart, attributes=c("ensembl_gene_id",
-                             "ensembl_transcript_id",
-                             "chromosome_name",
-                             "strand",
-                             "transcript_start",
-                             "transcript_end",
-                             "cds_start", ##TODO: cds_start frame of reference is WRONG! (++ to transcript_start)
-                             "cds_end",
-                             "ensembl_exon_id",
-                             "exon_chrom_start",
-                             "exon_chrom_end",
-                             "rank" )) 
-                             ##Add in missing values for cdsStart and cdsEnd AND gene_id
+##   require(biomaRt)
+##   mart = useMart(biomart=biomart, dataset=dataset)
+##   frame = getBM(mart=mart, attributes=c("ensembl_gene_id",
+##                              "ensembl_transcript_id",
+##                              "chromosome_name",
+##                              "strand",
+##                              "transcript_start",
+##                              "transcript_end",
+##                              "cds_start", ##TODO: cds_start frame of reference is WRONG! (++ to transcript_start)
+##                              "cds_end",
+##                              "ensembl_exon_id",
+##                              "exon_chrom_start",
+##                              "exon_chrom_end",
+##                              "rank" )) 
+##                              ##Add in missing values for cdsStart and cdsEnd AND gene_id
 
 ##   save(frame,file="BMFrame.Rda")
-##   load("BMFrame.Rda")
+  load("BMFrame.Rda")
 
   
   ##This one goes in the the next step the way that it came in.
