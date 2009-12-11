@@ -47,8 +47,9 @@ getTranscriptData <- function(txAnnot){
             exon_rank VARCHAR(12))"
   dbGetQuery(con,sql)
   ##Just make sure that the order is correct...
-  vals <- frame[,c("int_exon_id","geneIds","ids","chrom","strand","txStart",
-                   "txEnd","cdsStart","cdsEnd","exonStart","exonEnd","exonRank")]
+  vals <- frame[,c("int_exon_id","geneIds","ids","chrom",
+                   "strand","txStart","txEnd","cdsStart","cdsEnd","exonStart",
+                   "exonEnd","exonRank")]
 ##   exon_ids <- 1:dim(frame)[1]
 ##   vals <- cbind(exon_ids,vals)
   sqlIns <- "INSERT INTO all_dat (_exon_id,
@@ -84,7 +85,7 @@ getTranscriptData <- function(txAnnot){
 .createTranscriptsTable <- function(con){
   sql <- "CREATE TABLE transcripts (
             _tx_id INTEGER PRIMARY KEY,     --id a single transcript
-            tx_id TEXT UNIQUE NOT NULL,     --text string for foreign transcript ID
+            tx_id TEXT UNIQUE NOT NULL,     --text string for foreign trnscpt ID
             chromosome TEXT,                --redundant with info in exons
             strand TEXT )                   --redundant with info in exons
   "
@@ -93,7 +94,6 @@ getTranscriptData <- function(txAnnot){
   sqli <- "INSERT INTO transcripts (tx_id, chromosome, strand) SELECT DISTINCT tx_id, chromosome, strand FROM all_dat"
   dbGetQuery(con,sqli)
   dbGetQuery(con,"CREATE INDEX t_tx_id on transcripts(tx_id)")
-  dbGetQuery(con,"CREATE INDEX t__tx_id on transcripts(_tx_id)")
 }
 
 
@@ -227,13 +227,15 @@ getTranscriptData <- function(txAnnot){
 
 
 
-makeIdsForUniqueRows <- function(x)
-{
+makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd"){
+    frame_names <- names(x)
+    indices <- match(c("chrom", "strand", start, end), frame_names)
+    if (any(is.na(indices)))
+      stop("Some column names for x have not been specified correctly.")
+    x <- x[,indices]
     ## NOTE: sorting is Locale specific, so different users will
     ## generate different IDs given the same 'x'.
-    if (!is.data.frame(x))
-        stop("'x' must be a data frame")
-    x_order <- do.call(order, x)
+    x_order <- do.call(order,x) 
     x_dups <- duplicated(x)
     ans <- vector("integer", length(x_order))
     ans[x_order] <- cumsum(!x_dups[x_order])
@@ -242,7 +244,6 @@ makeIdsForUniqueRows <- function(x)
 
 
 
-##TODO: These parameters need to be names that will identify the cols (not numbers).
 
 convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts",
                                       exonColEnd = "exonEnds")
@@ -306,8 +307,15 @@ makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
     frame <- cbind(frame, exonRank)
   }
 
-  frame <- cbind(frame,int_exon_id=makeIdsForUniqueRows(frame))
-
+  ##make unique IDs for unique exons.
+  frame <- cbind(frame,int_exon_id=makeIdsForUniqueRows(frame,
+                                                        start="exonStart",
+                                                        end="exonEnd"))
+  ##make unique IDs for unique transcripts.  
+##   frame <- cbind(frame,int_transcript_id=makeIdsForUniqueRows(frame,
+##                                                               start="txStart",
+##                                                               end="txEnd"))
+##   save("frame",file="postProc.Rda")
   .processFrame(frame)
 }
 
@@ -359,20 +367,20 @@ UCSCTranscripts <- function(type= "knownGene", genome="hg18",
                             organism="human",
                             exonColStart = "exonStarts",
                             exonColEnd = "exonEnds"){
-  require("rtracklayer")
-  session <- browserSession()
-  genome(session) <- genome
-  query <- ucscTableQuery(session, type)
-  frame <- getTable(query)
+##   require("rtracklayer")
+##   session <- browserSession()
+##   genome(session) <- genome
+##   query <- ucscTableQuery(session, type)
+##   frame <- getTable(query)
   
-  ## Mapping for UCSC refGene and knownGene types both use the same names for
-  ## exonColStart and exonColEnd.  Params only exist as future insurance.
+##   ## Mapping for UCSC refGene and knownGene types both use the same names for
+##   ## exonColStart and exonColEnd.  Params only exist as future insurance.
 
-  ## For UCSC, we have to convert comma separated fields...
-  frame <- convertExonsCommaSepFrame(frame,
-    exonColStart = exonColStart, exonColEnd = exonColEnd)
+##   ## For UCSC, we have to convert comma separated fields...
+##   frame <- convertExonsCommaSepFrame(frame,
+##     exonColStart = exonColStart, exonColEnd = exonColEnd)
 
-## load("UCSCFrame.Rda")
+load("UCSCFrame.Rda")
 ## load("UCSCSmallDupFrame.Rda")
   
   ##TODO: there are issues here with namespaces that keeps AnnotationDbi from
@@ -405,24 +413,24 @@ UCSCTranscripts <- function(type= "knownGene", genome="hg18",
 ## biomaRtTranscripts(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
 
 BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
-  require(biomaRt)
-  mart = useMart(biomart=biomart, dataset=dataset)
-  frame = getBM(mart=mart, attributes=c("ensembl_gene_id",
-                             "ensembl_transcript_id",
-                             "chromosome_name",
-                             "strand",
-                             "transcript_start",
-                             "transcript_end",
-                             "cds_start", ##TODO: cds_start frame of reference is WRONG! (++ to transcript_start)
-                             "cds_end",
-                             "ensembl_exon_id",
-                             "exon_chrom_start",
-                             "exon_chrom_end",
-                             "rank" )) 
-                             ##Add in missing values for cdsStart and cdsEnd AND gene_id
+##   require(biomaRt)
+##   mart = useMart(biomart=biomart, dataset=dataset)
+##   frame = getBM(mart=mart, attributes=c("ensembl_gene_id",
+##                              "ensembl_transcript_id",
+##                              "chromosome_name",
+##                              "strand",
+##                              "transcript_start",
+##                              "transcript_end",
+##                              "cds_start", ##TODO: cds_start frame of reference is WRONG! (++ to transcript_start)
+##                              "cds_end",
+##                              "ensembl_exon_id",
+##                              "exon_chrom_start",
+##                              "exon_chrom_end",
+##                              "rank" )) 
+##                              ##Add in missing values for cdsStart and cdsEnd AND gene_id
 
 ##   save(frame,file="BMFrame.Rda")
-##   load("BMFrame.Rda")
+  load("BMFrame.Rda")
 
   
   ##This one goes in the the next step the way that it came in.
