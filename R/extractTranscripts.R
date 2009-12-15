@@ -1,7 +1,7 @@
 ## TODO:
-## Chromosome and strand need to be vectorized like ranges.
+## Chromosome and strand need to be vectorized like ranges. - DONE
 
-## Append Chromosome, strand and ranges where clauses separately depending ...
+## Append Chromosome, strand and ranges where clauses separately depending ... - DONE
 
 ## Add parameter to allow expanded query... (basically also join in exons when
 ## dealing with transcripts or vice versa for getExons, where we would have to
@@ -14,23 +14,36 @@
 
 ##method to get transcripts
 getTranscripts <- function(transcript, ranges=NULL, chromosome=NULL, strand=NULL){
-  ## validObject(ranges) ##How to test? (can't seem to make a "bad" one)
   con = transcript@con
-  sql1 <- paste("SELECT t._tx_id, tx_id, chromosome,
-                strand, tx_start, tx_end
-                FROM transcripts AS t,
-                transcript_tree AS tt
-                WHERE t._tx_id=tt._tx_id
-                AND t.chromosome='",chromosome,
-                "' AND t.strand='",strand,"' AND (",sep="")
+  sqlbase <- paste("SELECT t._tx_id, tx_id, chromosome,
+                    strand, tx_start, tx_end
+                    FROM transcripts AS t,
+                    transcript_tree AS tt
+                    WHERE t._tx_id=tt._tx_id", sep="")
 
-  sql2 <- paste(" (tx_start>", start(ranges),
+  
+  sqlChromosome <- paste(" t.chromosome='",chromosome,"' ",sep="")
+
+  sqlStrand <- paste(" t.strand='",strand,"' ",sep="")
+  
+  sqlRange <- paste(" (tx_start>", start(ranges),
                 " AND tx_end<", end(ranges),")")
 
-  sql <- paste(sql1, paste(sql2,collapse=" OR "), " )")
+  sql <- paste(sqlbase,
+               " AND (",
+               paste(sqlChromosome, collapse=" OR "),
+               ") AND (",
+               paste(sqlStrand, collapse=" OR "),
+               ") AND (",
+               paste(sqlRange,collapse=" OR "),
+               ")")
   ##print(sql)
   dbGetQuery(con, sql)
 }
+
+
+
+
 
 
 ## ##eg
@@ -51,29 +64,46 @@ getTranscripts <- function(transcript, ranges=NULL, chromosome=NULL, strand=NULL
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
 ## getTranscripts(tx,foo,"chr1","-")
 
+##Compound search:
+## foo = IRanges(start=c(500,10500), end=c(10000,30000))
+## getTranscripts(tx,foo,c("chr1","chr2"),c("-","+"))
 
 
 
 ## ##method to get exons
 getExons <- function(transcript, ranges, chromosome, strand){
-  ## validObject(ranges) ##How to test?
   con = transcript@con
-  sql1 <- paste("SELECT e._exon_id, chromosome, strand,
-                exon_start, exon_end
-                FROM exons AS e,
-                exon_tree AS ee
-                WHERE e._exon_id=ee._exon_id
-                AND e.chromosome='",chromosome,
-                "' AND e.strand='",strand,"' AND (",sep="")
+  sqlbase <- paste("SELECT e._exon_id, chromosome, strand,
+                    exon_start, exon_end
+                    FROM exons AS e,
+                    exon_tree AS et
+                    WHERE e._exon_id=et._exon_id", sep="")
 
-  sql2 <- paste(" (exon_start>", start(ranges),
+  sqlChromosome <- paste(" e.chromosome='",chromosome,"' ",sep="")
+
+  sqlStrand <- paste(" e.strand='",strand,"' ",sep="")
+  
+  sqlRange <- paste(" (exon_start>", start(ranges),
                 " AND exon_end<", end(ranges),")")
 
-  sql <- paste(sql1, paste(sql2,collapse=" OR "), " )")
+  sql <- paste(sqlbase,
+               " AND (",
+               paste(sqlChromosome, collapse=" OR "),
+               ") AND (",
+               paste(sqlStrand, collapse=" OR "),
+               ") AND (",
+               paste(sqlRange,collapse=" OR "),
+               ")")
   ##print(sql)
-  dbGetQuery(con, sql)
+  dbGetQuery(con, sql)  
 }
 
 ## ##Complex example for exons.
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
 ## getExons(tx,foo,"chr1","-")
+
+
+
+##vectorized tests:
+## foo = IRanges(start=c(500,10500), end=c(10000,30000))
+## getExons(tx,foo,c("chr1","chr2"),c("-","+"))

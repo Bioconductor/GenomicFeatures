@@ -20,6 +20,7 @@ saveFeatures <- function(file, annot){
 loadFeatures <- function(file){
   drv <- dbDriver("SQLite")
   con <- dbConnect(drv, file)
+  new("TranscriptAnnotation",con = con)
 }
 
 
