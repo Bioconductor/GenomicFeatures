@@ -17,14 +17,10 @@ saveFeatures <- function(file, annot){
 }
 
 
-getTranscriptData <- function(txAnnot){
-  con <- txAnnot@con
-  dbGetQuery(con, "SELECT * FROM transcripts")
+loadFeatures <- function(file){
+  drv <- dbDriver("SQLite")
+  con <- dbConnect(drv, file)
 }
-
-
-
-
 
 
 
@@ -196,7 +192,6 @@ getTranscriptData <- function(txAnnot){
   .createTranscriptsTable(con)
   .createExonsTable(con)
   .createGenesTable(con)
-
   .createTranscriptTreeTable(con)
   .createExonsTranscriptsTable(con)
   .createExonTreeTable(con)
@@ -414,7 +409,7 @@ BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
                              "strand",
                              "transcript_start",
                              "transcript_end",
-                             "cds_start", ##TODO: cds_start frame of reference is WRONG! (++ to transcript_start)
+                             "cds_start", 
                              "cds_end",
                              "ensembl_exon_id",
                              "exon_chrom_start",
@@ -438,16 +433,23 @@ BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
                         exonStart = frame$exon_chrom_start,
                         exonEnd = frame$exon_chrom_end,
                         exonRank = frame$rank,
-                        exonId = frame$ensembl_exon_id) ##this is EXTRA info. that we don't have for UCSC - to make use of it we will want to attach it as an extra field in the DB.
+                        exonId = frame$ensembl_exon_id)
+  ##this is EXTRA info. that we don't have for UCSC - to make use of it we
+  ##will want to attach it as an extra field in the DB.
  
 }
 
 
 
 
-##TODO: put a check in place to make double-damn sure that the unique tx_ids are equal in number to the number of unique exon IDs (and one per line) before attempting to make an all_dat table.  And if they are not, then thin them out...
+##TODO: put a check in place to make double-damn sure that the unique tx_ids
+##are equal in number to the number of unique exon IDs (and one per line)
+##before attempting to make an all_dat table.  And if they are not, then thin
+##them out...
 
-##ALTERNATIVELY: I could just get the gene IDs separately for the BMFrame and add them on in R (instead of getting the whole thing from BM which results in the bloated frame)...
+##ALTERNATIVELY: I could just get the gene IDs separately for the BMFrame and
+##add them on in R (instead of getting the whole thing from BM which results
+##in the bloated frame)...
 
 
 
@@ -473,4 +475,9 @@ BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
 
 
 
-##And actually, the cds_start and cds_end from UCSC are also kind of screwy (they simply look WRONG).
+##And actually, the cds_start and cds_end from UCSC are also kind of screwy
+##(they simply look WRONG).
+
+
+##TODO: These frames all need to be adjusted so that their counts are correct
+##(pre-processed to adjust to the same counting offset as we use in R).

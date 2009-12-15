@@ -11,5 +11,8 @@ export(transcripts, exons, introns, extractTranscriptsFromGenome,
        makeTranscripts,
        UCSCTranscripts,
        BMTranscripts,
-       saveFeatures)
+       saveFeatures,
+       loadFeatures,
+       getTranscripts,
+       getExons)
 
