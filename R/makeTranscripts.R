@@ -197,10 +197,8 @@ loadFeatures <- function(file){
   .createExonsTranscriptsTable(con)
   .createExonTreeTable(con)
 
-
   ##drop the extra tables
-##   .dropOldTable(con,"all_dat")
-
+  .dropOldTable(con,"all_dat")
   
   ## plan is to end with making the object
   new("TranscriptAnnotation",
@@ -368,7 +366,7 @@ UCSCTranscripts <- function(type= "knownGene", genome="hg18",
   ## For UCSC, we have to convert comma separated fields...
   frame <- convertExonsCommaSepFrame(frame,
     exonColStart = exonColStart, exonColEnd = exonColEnd)
-
+  
 ## load("UCSCFrame.Rda")
 ## load("UCSCSmallDupFrame.Rda")
   
@@ -482,3 +480,13 @@ BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
 
 ##TODO: These frames all need to be adjusted so that their counts are correct
 ##(pre-processed to adjust to the same counting offset as we use in R).
+
+
+
+##used to make the testDB:
+##Insert the first bit into UCSCTranscript
+##frame = frame[c(1:500, 100000:100100, 120000:120100, 150000:150100,
+##170000:170100, 200000:200100),]
+## library(GenomicFeatures)
+## tx = UCSCTranscripts(organism="human")
+## saveFeatures(tx, file="HG18.sqlite")

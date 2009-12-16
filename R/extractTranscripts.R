@@ -19,17 +19,15 @@
 ## that either thing can be ok (for overlaps), and start and end would only
 ## check one thing or the other... - DONE
 
-
-
-
-
 ## expand to be a set of methods.  So this core will then become a helper
 ## function, and the methods will allow me to pass in either a RangedData
 ## object or a Ranges List.  Or other ways of representing the same kind of
-## data.
+## data. - DONE
+
+## make a "mini" myTest.sqlite and then put it in... - DONE
 
 
-## make a "mini" myTest.sqlite and then put it in...
+
 ## put myTest.sqlite into /data and formalize the tests into unit tests.
 
 
@@ -188,11 +186,6 @@ setMethod("getTranscripts", "RangesList",
 ## Example for RangedData and chrom:
 ## rd1 <- RangedData(foo, space="chr1")
 ## rd2 <- RangedData(foo, space=c("chr2","chr3"))
-
-
-
-
-
 
 
 
