@@ -10,8 +10,8 @@
   transcripts database.
 }
 \usage{
-getTranscripts(transcript,ranges,chromosome,strand)
-getExons(transcript,ranges,chromosome,strand)
+getTranscripts(transcript,ranges,chromosome,strand,expand,showSQL)
+getExons(transcript,ranges,chromosome,strand,expand,showSQL)
 }
 \arguments{
   \item{transcript}{a transcripts object, which is a connection to a DB.}
@@ -19,9 +19,15 @@ getExons(transcript,ranges,chromosome,strand)
 annotations}
   \item{chromosome}{the chromosome to search on 'chr1'.}
   \item{strand}{the strand to search on +/1}
+  \item{expand}{do additional joins to include transcript information or
+    exon information depending on whether getTranscripts or getExons is called.}
+  \item{showSQL}{Show the SQL sent to the DB?}
 }
 \details{These functions return relevant annotation results in a data
-frame based on the regions searched.}
+frame based on the regions searched.  The getExons() methods are for
+extracting data based on which exons are contained within a set of
+ranges, while a call to getTranscripts() will extract data based on the
+transcript boundaries being contained in the ranges.}
 \value{ All of these functions return a data frame. }
 \author{
   M. Carlson
