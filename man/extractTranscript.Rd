@@ -10,8 +10,8 @@
   transcripts database.
 }
 \usage{
-getTranscripts(transcript,ranges,chromosome,strand,expand,showSQL)
-getExons(transcript,ranges,chromosome,strand,expand,showSQL)
+getTranscripts(transcript,ranges,chromosome,strand,rangeRestr,expand,showSQL)
+getExons(transcript,ranges,chromosome,strand,rangeRestr,expand,showSQL)
 }
 \arguments{
   \item{transcript}{a transcripts object, which is a connection to a DB.}
@@ -19,8 +19,12 @@ getExons(transcript,ranges,chromosome,strand,expand,showSQL)
 annotations}
   \item{chromosome}{the chromosome to search on 'chr1'.}
   \item{strand}{the strand to search on +/1}
+  \item{rangeRestr}{How to test the ranges.  Either "both", "start",
+    "end" or "either" of any range can be required to land within an
+    annotation.}
   \item{expand}{do additional joins to include transcript information or
-    exon information depending on whether getTranscripts or getExons is called.}
+    exon information depending on whether getTranscripts or getExons is
+    called.}
   \item{showSQL}{Show the SQL sent to the DB?}
 }
 \details{These functions return relevant annotation results in a data
