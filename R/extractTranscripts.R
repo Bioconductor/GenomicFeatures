@@ -22,14 +22,20 @@
 
 
 
+
 ## expand to be a set of methods.  So this core will then become a helper
 ## function, and the methods will allow me to pass in either a RangedData
 ## object or a Ranges List.  Or other ways of representing the same kind of
 ## data.
 
+
+## make a "mini" myTest.sqlite and then put it in...
 ## put myTest.sqlite into /data and formalize the tests into unit tests.
 
 
+
+
+## Helper function to construct the tail end of the queries
 .makeRangeSQL <- function(start, end, ranges, rangeRestr){
   if(rangeRestr == "both"){
     sqlRange <- paste(" (",start,">", start(ranges),
@@ -49,8 +55,57 @@
 
 
 
+## getTranscript methods accomodate different object and try to use the
+## information that they contain
+setMethod("getTranscripts", "IRanges",
+    function(x, transcript, chromosome=NULL,
+             strand=NULL, rangeRestr="either",
+             expand=FALSE, showSQL=FALSE)
+    {
+      .getTranscripts(transcript=transcript, ranges=x,
+                      chromosome=chromosome, strand=strand,
+                      rangeRestr=rangeRestr, expand=expand,
+                      showSQL=showSQL)      
+    }
+)
+
+
+## If they give me a RangedData object or a RangesList object, then I should
+## just check for any additional chromosome and strand information in there,
+## and append that to my chromosome and strand information.
+
+setMethod("getTranscripts", "RangedData",
+    function(x, transcript, chromosome=NULL,
+             strand=NULL, rangeRestr="either",
+             expand=FALSE, showSQL=FALSE)
+    {
+      rdChromosome=space(x) ##Q: is this REALLY Safe??? "space()"? Really???
+      chromosome = c(chromosome, rdChromosome)
+      ranges = unlist(ranges(x))
+      .getTranscripts(transcript=transcript, ranges=ranges,
+                      chromosome=chromosome, strand=strand,
+                      rangeRestr=rangeRestr, expand=expand,
+                      showSQL=showSQL)      
+    }
+)
+
+setMethod("getTranscripts", "RangesList",
+    function(x, transcript, chromosome=NULL,
+             strand=NULL, rangeRestr="either",
+             expand=FALSE, showSQL=FALSE)
+    {
+      ranges = unlist(ranges(x))
+      .getTranscripts(transcript=transcript, ranges=ranges,
+                      chromosome=chromosome, strand=strand,
+                      rangeRestr=rangeRestr, expand=expand,
+                      showSQL=showSQL)            
+    }
+)
+
+
+
 ##method to scan transcripts
-getTranscripts <- function(transcript, ranges=NULL, chromosome=NULL,
+.getTranscripts <- function(transcript, ranges=NULL, chromosome=NULL,
                            strand=NULL,
                            rangeRestr=c("both","either","start","end"),
                            expand=FALSE, showSQL=FALSE){
@@ -83,8 +138,6 @@ getTranscripts <- function(transcript, ranges=NULL, chromosome=NULL,
   }else{sqlStrand<-"t._tx_id=t._tx_id"}
   
   if(!is.null(ranges)){
-##   sqlRange <- paste(" (tx_start>", start(ranges),
-##                 " AND tx_end<", end(ranges),")")
     sqlRange <- .makeRangeSQL("tx_start", "tx_end", ranges, rangeRestr)
   }else{sqlRange<-"t._tx_id=t._tx_id"}
 
@@ -96,7 +149,7 @@ getTranscripts <- function(transcript, ranges=NULL, chromosome=NULL,
                ") AND (",
                paste(sqlRange,collapse=" OR "),
                ") ")
-  if(showSQL==TRUE){print(sql)}
+  if(showSQL==TRUE){print(gsub("\\n               ","",sql))}
   dbGetQuery(con, sql)
 }
 
@@ -104,35 +157,90 @@ getTranscripts <- function(transcript, ranges=NULL, chromosome=NULL,
 ##TODO: for unit tests, put myTest.sqlite into /data and load it as needed.
 
 ## ##eg
+## ## library(GenomicFeatures)
 ## ## tx = loadFeatures("myTest.sqlite")
 
 ## ##This works though:
 ## ##foo = IRanges(start=c(500), end=c(10000))
 ## foo = IRanges(start=c(1000), end=c(20000))
-## getTranscripts(tx,foo,"chr1","-")
+## getTranscripts(foo,tx,"chr1","-")
 
 
 ## ##BUT NOT this (because no data there):
 ## foo = IRanges(start=c(16000), end=c(20000))
-## getTranscripts(tx,foo,"chr1","-")
+## getTranscripts(foo,tx,"chr1","-", rangeRestr="both")
 
 
 ## ##AND a more complicated example...
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getTranscripts(tx,foo,"chr1","-")
+## getTranscripts(foo,tx,"chr1","-")
 
 ##Compound search:
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getTranscripts(tx,foo,c("chr1","chr2"),c("-","+"))
+## getTranscripts(foo,tx,c("chr1","chr2"),c("-","+"))
 
 ##Compound expanded search:
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getTranscripts(tx,foo,c("chr1","chr2"),c("-","+"), expand=TRUE)
+## getTranscripts(foo,tx,c("chr1","chr2"),c("-","+"),
+## rangeRestr= "both", expand=TRUE)
 
+
+## Example for RangedData and chrom:
+## rd1 <- RangedData(foo, space="chr1")
+## rd2 <- RangedData(foo, space=c("chr2","chr3"))
+
+
+
+
+
+
+
+
+
+
+setMethod("getExons", "IRanges",
+    function(x, transcript, chromosome=NULL,
+             strand=NULL, rangeRestr="either",
+             expand=FALSE, showSQL=FALSE)
+    {
+      .getExons(transcript=transcript, ranges=x,
+                      chromosome=chromosome, strand=strand,
+                      rangeRestr=rangeRestr, expand=expand,
+                      showSQL=showSQL)      
+    }
+)
+
+setMethod("getExons", "RangedData",
+    function(x, transcript, chromosome=NULL,
+             strand=NULL, rangeRestr="either",
+             expand=FALSE, showSQL=FALSE)
+    {
+      rdChromosome=space(x) ##Q: is this REALLY Safe??? "space()"? Really???
+      chromosome = c(chromosome, rdChromosome)
+      ranges = unlist(ranges(x))
+      .getExons(transcript=transcript, ranges=ranges,
+                      chromosome=chromosome, strand=strand,
+                      rangeRestr=rangeRestr, expand=expand,
+                      showSQL=showSQL)      
+    }
+)
+
+setMethod("getExons", "RangesList",
+    function(x, transcript, chromosome=NULL,
+             strand=NULL, rangeRestr="either",
+             expand=FALSE, showSQL=FALSE)
+    {
+      ranges = unlist(ranges(x))
+      .getExons(transcript=transcript, ranges=ranges,
+                      chromosome=chromosome, strand=strand,
+                      rangeRestr=rangeRestr, expand=expand,
+                      showSQL=showSQL)            
+    }
+)
 
 
 ## ##method to scan exons
-getExons <- function(transcript, ranges=NULL, chromosome=NULL,
+.getExons <- function(transcript, ranges=NULL, chromosome=NULL,
                      strand=NULL,
                      rangeRestr=c("both","either","start","end"),
                      expand=FALSE, showSQL=FALSE){
@@ -166,8 +274,6 @@ getExons <- function(transcript, ranges=NULL, chromosome=NULL,
   }else{sqlStrand<-"e._exon_id=e._exon_id"}
   
   if(!is.null(ranges)){
-##   sqlRange <- paste(" (exon_start>", start(ranges),
-##                 " AND exon_end<", end(ranges),")")
     sqlRange <- .makeRangeSQL("exon_start", "exon_end", ranges, rangeRestr)  
   }else{sqlRange<-"e._exon_id=e._exon_id"}
 
@@ -179,21 +285,36 @@ getExons <- function(transcript, ranges=NULL, chromosome=NULL,
                ") AND (",
                paste(sqlRange,collapse=" OR "),
                ")")
-  if(showSQL==TRUE){print(sql)}
+  if(showSQL==TRUE){print(gsub("\\n               ","",sql))}
   dbGetQuery(con, sql)  
 }
 
 
 ## ##Complex example for exons.
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getExons(tx,foo,"chr1","-")
-
-
+## getExons(foo,tx,"chr1","-")
 
 ##vectorized tests:
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getExons(tx,foo,c("chr1","chr2"),c("-","+"))
+## getExons(foo,tx,c("chr1","chr2"),c("-","+"))
 
 ## expanded:
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getExons(tx,foo,c("chr1","chr2"),c("-","+"), expand=TRUE, showSQL=TRUE)
+## getExons(foo,tx,c("chr1","chr2"),c("-","+"), expand=TRUE, showSQL=TRUE)
+
+
+
+
+
+
+
+
+
+## LATER STUFF
+## TODO:
+## I need to add some discovery methods so that the users know what the values
+## are that can be passed into chromosome etc. are.
+
+## I will also need to add some warnings so that when users try to pass in a
+## bad value for chromosome, they can get a message that says "your paramater
+## needs to have values that look like: "chr1" "chr2" etc."

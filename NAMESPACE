@@ -12,7 +12,7 @@ export(transcripts, exons, introns, extractTranscriptsFromGenome,
        UCSCTranscripts,
        BMTranscripts,
        saveFeatures,
-       loadFeatures,
-       getTranscripts,
-       getExons)
+       loadFeatures)
 
+exportMethods(getTranscripts,
+              getExons)

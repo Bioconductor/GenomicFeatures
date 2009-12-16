@@ -1,22 +1,29 @@
-
 \name{getTranscripts}
 \alias{getTranscripts}
+\alias{getTranscripts,IRanges-method}
+\alias{getTranscripts,RangedData-method}
+\alias{getTranscripts,RangesList-method}
 \alias{getExons}
+\alias{getExons,IRanges-method}
+\alias{getExons,RangedData-method}
+\alias{getExons,RangesList-method}
 \title{
-  Functions to retrieve genomic features for ranges of interest.
+  Methods to retrieve genomic features for ranges of interest.
 }
 \description{
-  Functions that retrieve genomic features of interest from a
+  Methods that retrieve genomic features of interest from a
   transcripts database.
 }
 \usage{
-getTranscripts(transcript,ranges,chromosome,strand,rangeRestr,expand,showSQL)
-getExons(transcript,ranges,chromosome,strand,rangeRestr,expand,showSQL)
+  getTranscripts(x, transcript, chromosome, strand, rangeRestr, expand,
+                 showSQL)
+  getExons(x, transcript, chromosome, strand, rangeRestr, expand,
+           showSQL)
 }
 \arguments{
+  \item{x}{An IRanges object to specify which ranges to search for
+    annotations}
   \item{transcript}{a transcripts object, which is a connection to a DB.}
-  \item{ranges}{An IRanges object to specify which ranges to search for
-annotations}
   \item{chromosome}{the chromosome to search on 'chr1'.}
   \item{strand}{the strand to search on +/1}
   \item{rangeRestr}{How to test the ranges.  Either "both", "start",
@@ -31,7 +38,9 @@ annotations}
 frame based on the regions searched.  The getExons() methods are for
 extracting data based on which exons are contained within a set of
 ranges, while a call to getTranscripts() will extract data based on the
-transcript boundaries being contained in the ranges.}
+transcript boundaries being contained in the ranges.  The Chromosome and
+strand information parameters may be optional if that information is
+already provided by the ranges object supplied.}
 \value{ All of these functions return a data frame. }
 \author{
   M. Carlson
