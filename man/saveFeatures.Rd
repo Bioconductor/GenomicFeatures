@@ -17,7 +17,7 @@
   \item{x}{a transcripts object, which contains a connection to a DB.}
   \item{file}{A SQLite Database filename.}
 }
-\value{For loadFeatures only, a Trancripts object is returned.}
+\value{For loadFeatures only, a Transcripts object is returned.}
 \author{
   M. Carlson
 }

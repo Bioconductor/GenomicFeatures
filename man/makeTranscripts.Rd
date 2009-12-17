@@ -7,7 +7,7 @@
 }
 \description{
   Methods that will help to parse data and then assemble it into a
-  coherant database so that it can be used as a Transcripts object.
+  coherent database so that it can be used as a Transcripts object.
 }
 \usage{
   makeTranscripts(geneIds, ids, chrom, strand, txStart, txEnd,

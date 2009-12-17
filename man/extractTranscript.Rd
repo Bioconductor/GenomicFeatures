@@ -39,7 +39,7 @@
 frame based on the regions searched.  The getExons() methods are for
 extracting data based on which exons are contained within a set of
 ranges, while a call to getTranscripts() will extract data based on the
-transcript boundaries being contained in the ranges.  The Chromosome and
+transcript boundaries being contained in the ranges.  The chromosome and
 strand information parameters may be optional if that information is
 already provided by the ranges object supplied.}
 \value{ All of these functions return a data frame. }
