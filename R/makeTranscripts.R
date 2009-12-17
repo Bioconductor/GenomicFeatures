@@ -7,11 +7,11 @@
 ## Seth has also pointed out to me that I can pass a parameter into
 ## dbConnect() to set max.con = 100 so that the max number of connections is
 ## greater than 16).
+ 
 
 
-
-saveFeatures <- function(file, annot){
-  con <- annot@con
+saveFeatures <- function(x, file){
+  con <- x@con
   ok <- sqliteCopyDatabase(con, file)
   stopifnot(ok)
 }
@@ -237,8 +237,8 @@ makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd"){
 
 
 
-convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts",
-                                      exonColEnd = "exonEnds")
+convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStart",
+                                      exonColEnd = "exonEnd")
 {
 
     frame_names <- names(frame)
@@ -266,15 +266,14 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStarts",
     ## FIXME: cleanup conversion of start/end to integer
     structure(data.frame(repCols, as.integer(exonStart), as.integer(exonEnd),
                          exonRank, stringsAsFactors = FALSE, row.names = NULL),
-              names = c(keepNames, "exonStarts", "exonEnds", "exonRank"))
+              names = c(keepNames, "exonStart", "exonEnd", "exonRank"))
 }
 
 
 
 makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
                             cdsStart, cdsEnd, exonStart, exonEnd, exonRank,
-                            exonId = vector(), exonColStart = "exonStarts",
-                            exonColEnd = "exonEnds" ){  
+                            exonId = vector()){
   frame <- data.frame(geneIds = geneIds,
                       ids = ids,
                       chrom = chrom,
@@ -292,7 +291,7 @@ makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
   if(length(grep(",", exonStart)) > 1 || length(grep(",", exonEnd)) > 1){
     commas <- TRUE ## ie. we will be deriving the exonRanks
     frame <- convertExonsCommaSepFrame(frame,
-      exonColStart <- exonColStart, exonColEnd = exonColEnd)
+      exonColStart = "exonStart", exonColEnd = "exonEnd")
   }
 
   if(commas == FALSE){
@@ -351,28 +350,16 @@ makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
 
 
 UCSCTranscripts <- function(type= "knownGene", genome="hg18",
-                            organism="human",
-                            exonColStart = "exonStarts",
-                            exonColEnd = "exonEnds"){
+                            organism="human"){
   require("rtracklayer")
   session <- browserSession()
   genome(session) <- genome
   query <- ucscTableQuery(session, type)
   frame <- getTable(query)
   
-  ## Mapping for UCSC refGene and knownGene types both use the same names for
-  ## exonColStart and exonColEnd.  Params only exist as future insurance.
-
-  ## For UCSC, we have to convert comma separated fields...
-  frame <- convertExonsCommaSepFrame(frame,
-    exonColStart = exonColStart, exonColEnd = exonColEnd)
-  
 ## load("UCSCFrame.Rda")
 ## load("UCSCSmallDupFrame.Rda")
   
-  ##TODO: there are issues here with namespaces that keeps AnnotationDbi from
-  ##being fully useful...
-
   ##Get the geneIDs and match them with the ids.  
   EGKGmap <- .selectUCSCOrRefSeqMap(type,organism)
   EGs <- unlist(mget(as.character(frame$name),revmap(EGKGmap), ifnotfound=NA)) 
@@ -490,3 +477,4 @@ BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
 ## library(GenomicFeatures)
 ## tx = UCSCTranscripts(organism="human")
 ## saveFeatures(tx, file="HG18.sqlite")
+

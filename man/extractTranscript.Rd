@@ -8,7 +8,8 @@
 \alias{getExons,RangedData-method}
 \alias{getExons,RangesList-method}
 \title{
-  Methods to retrieve genomic features for ranges of interest.
+  Methods to retrieve genomic features for ranges of interest from a
+  Transcript Database.
 }
 \description{
   Methods that retrieve genomic features of interest from a

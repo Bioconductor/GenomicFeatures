@@ -26,6 +26,8 @@
 
 ## make a "mini" myTest.sqlite and then put it in... - DONE
 
+## Now I can do this:
+##tx = loadFeatures(system.file("inst/extdata/HG18.sqlite",package="GenomicFeatures"))
 
 
 ## put myTest.sqlite into /data and formalize the tests into unit tests.
