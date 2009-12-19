@@ -49,7 +49,7 @@ already provided by the ranges object supplied.}
 
 \examples{
 \dontrun{
-  tx <- UCSCTranscripts(organism="human")
+  tx <- UCSCTranscripts()
   foo <- IRanges(start=c(500,10500), end=c(10000,30000))
   getTranscripts(tx,foo,"chr1","-")
 }

@@ -7,7 +7,7 @@
 ## Seth has also pointed out to me that I can pass a parameter into
 ## dbConnect() to set max.con = 100 so that the max number of connections is
 ## greater than 16).
- 
+
 
 
 saveFeatures <- function(x, file){
@@ -22,7 +22,6 @@ loadFeatures <- function(file){
   con <- dbConnect(drv, file)
   new("TranscriptAnnotation",con = con)
 }
-
 
 
 .createAllDat <- function(frame){
@@ -71,7 +70,6 @@ loadFeatures <- function(file){
   dbGetQuery(con,"CREATE INDEX ad__exon_id on all_dat(_exon_id)")  
   con
 }
-
 
 
 .dropOldTable <- function(con, table){
@@ -156,9 +154,6 @@ loadFeatures <- function(file){
 }
 
 
-
-
-
 .createExonsTranscriptsTable <- function(con){
   sql <- "CREATE TABLE exons_transcripts (
             _exon_id INTEGER,            --id a single exon
@@ -177,15 +172,9 @@ loadFeatures <- function(file){
 }
 
 
-
-
-
-
-
 ## processFrame is an internal function to just get our code split up and
 ## formatted into our desired object.
 .processFrame <- function(frame){
-
   ## Need to process this.  I want to jam it all into a DB
   con <- .createAllDat(frame)
   
@@ -201,22 +190,8 @@ loadFeatures <- function(file){
   .dropOldTable(con,"all_dat")
   
   ## plan is to end with making the object
-  new("TranscriptAnnotation",
-      con = con)
+  new("TranscriptAnnotation", con = con)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd"){
@@ -235,12 +210,9 @@ makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd"){
 }
 
 
-
-
 convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStart",
                                       exonColEnd = "exonEnd")
 {
-
     frame_names <- names(frame)
     startEndIndices <- match(c(exonColStart, exonColEnd), frame_names)
     if (any(is.na(startEndIndices)))
@@ -270,7 +242,6 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStart",
 }
 
 
-
 makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
                             cdsStart, cdsEnd, exonStart, exonEnd, exonRank,
                             exonId = vector()){
@@ -287,14 +258,10 @@ makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
                       stringsAsFactors = FALSE)
   
   ## Check if the exonEnd and exonStart are comma separated.
-  commas = FALSE
   if(length(grep(",", exonStart)) > 1 || length(grep(",", exonEnd)) > 1){
-    commas <- TRUE ## ie. we will be deriving the exonRanks
     frame <- convertExonsCommaSepFrame(frame,
       exonColStart = "exonStart", exonColEnd = "exonEnd")
-  }
-
-  if(commas == FALSE){
+  } else {
     frame <- cbind(frame, exonRank)
   }
 
@@ -308,37 +275,29 @@ makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
 
 ##TODO: The portion of this helper function that just retrieves org packages from
 ##common names could be generically useful in annotate.
-.selectUCSCOrRefSeqMap <- function(type=c("knownGene","refGene"),
-                       organism=c("human",
-                                  "mouse",
-                                  "rat",
-                                  "dog",
-                                  "chimp",
-                                  "cow",
-                                  "rhesus",
-                                  "chicken",
-                                  "zebrafish",
-                                  "fly",
-                                  "anopheles",
-                                  "worm")){
+.selectUCSCOrRefSeqMap <- function(type=c("knownGene","refGene"), organism){
   ##This method just applies some simple logic to decide which gene mapping
   ##to get and from which org packages.
-  
-  organism <- match.arg(organism)
+
   require(annotate)
   chip <- switch(organism,
-                 human="org.Hs.eg",
-                 mouse="org.Mm.eg",
-                 rat="org.Rn.eg",
-                 dog="org.Cf.eg",
-                 chimp="org.Pt.eg",
-                 cow="org.Bt.eg",
-                 rhesus="org.Mmu.eg",
-                 chicken="org.Gg.eg",
-                 zebrafish="org.Dr.eg",
-                 fly="org.Dm.eg",
-                 anopheles="org.Ag.eg",
-                 worm="org.Ce.eg")
+                 "A. gambiae" = "org.Ag.eg.db",
+                 "Cow" = "org.Bt.eg.db",
+                 "C. elegans" = "org.Ce.eg.db",
+                 "Dog" = "org.Cf.eg.db",
+                 "D. melanogaster" = "org.Dm.eg.db",
+                 "Zebrafish" = "org.Dr.eg.db",
+                 ## "org.EcK12.eg.db"
+                 ## "org.EcSakai.eg.db"
+                 "Chicken" = "org.Gg.eg.db",
+                 "Human" =, "Human GRCh37 (hg19)" = "org.Hs.eg.db",
+                 "Mouse" = "org.Mm.eg.db",
+                 "Rhesus" = "org.Mmu.eg.db",
+                 "Chimp" = "org.Pt.eg.db",
+                 "Rat" = "org.Rn.eg.db",
+                 ## "org.Ss.eg.db"
+                 ## "org.Xl.eg.db"
+                 stop("unrecognized organism"))
   type <- match.arg(type)
   if(type=="knownGene"){
     map <- getAnnMap("UCSCKG", chip)
@@ -349,37 +308,41 @@ makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
 }
 
 
-UCSCTranscripts <- function(type= "knownGene", genome="hg18",
-                            organism="human"){
+UCSCTranscripts <- function(type=c("knownGene","refGene"), genome="hg18"){
   require("rtracklayer")
+  type <- match.arg(type)
+
+  if (!is.character(genome) || length(genome) != 1)
+    stop("'genome' must be a character vector of length 1")
+  genomeTable <- ucscGenomes()
+  whichGenome <- which(genome %in% as.character(genomeTable[,"db"]))
+  if (length(whichGenome) == 0)
+    stop("'genome' not in ucscGenomes()")
+  organism <- as.character(genomeTable[whichGenome, "organism"])
+
   session <- browserSession()
   genome(session) <- genome
   query <- ucscTableQuery(session, type)
   frame <- getTable(query)
-  
+
 ## load("UCSCFrame.Rda")
 ## load("UCSCSmallDupFrame.Rda")
-  
+
   ##Get the geneIDs and match them with the ids.  
   EGKGmap <- .selectUCSCOrRefSeqMap(type,organism)
   EGs <- unlist(mget(as.character(frame$name),revmap(EGKGmap), ifnotfound=NA)) 
 
-  tx <- makeTranscripts(geneIds = EGs,
-                        ids = frame$name,
-                        chrom = frame$chrom,
-                        strand = frame$strand,
-                        txStart = frame$txStart,
-                        txEnd = frame$txEnd,
-                        cdsStart = frame$cdsStart, 
-                        cdsEnd = frame$cdsEnd,
-                        exonStart = frame$exonStart,
-                        exonEnd = frame$exonEnd,
-                        exonRank = frame$exonRank)  
+  makeTranscripts(geneIds = EGs,
+                  ids = frame$name,
+                  chrom = frame$chrom,
+                  strand = frame$strand,
+                  txStart = frame$txStart,
+                  txEnd = frame$txEnd,
+                  cdsStart = frame$cdsStart,
+                  cdsEnd = frame$cdsEnd,
+                  exonStart = frame$exonStarts,
+                  exonEnd = frame$exonEnds)
 }
-
-
-
-
 
 
 ## For people who want to tap biomaRt
@@ -388,44 +351,40 @@ UCSCTranscripts <- function(type= "knownGene", genome="hg18",
 
 BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
   require(biomaRt)
-  mart = useMart(biomart=biomart, dataset=dataset)
-  frame = getBM(mart=mart, attributes=c("ensembl_gene_id",
-                             "ensembl_transcript_id",
-                             "chromosome_name",
-                             "strand",
-                             "transcript_start",
-                             "transcript_end",
-                             "cds_start", 
-                             "cds_end",
-                             "ensembl_exon_id",
-                             "exon_chrom_start",
-                             "exon_chrom_end",
-                             "rank" )) 
-
+  mart <- useMart(biomart=biomart, dataset=dataset)
+  frame <- getBM(mart=mart,
+                 attributes=c("ensembl_gene_id",
+                              "ensembl_transcript_id",
+                              "chromosome_name",
+                              "strand",
+                              "transcript_start",
+                              "transcript_end",
+                              "cds_start",
+                              "cds_end",
+                              "ensembl_exon_id",
+                              "exon_chrom_start",
+                              "exon_chrom_end",
+                              "rank"))
 
 ##   save(frame,file="BMFrame.Rda")
 ##   load("BMFrame.Rda")
-
   
   ##This one goes in the the next step the way that it came in.
-  tx <- makeTranscripts(geneIds = frame$ensembl_gene_id,
-                        ids = frame$ensembl_transcript_id,
-                        chrom = frame$chromosome_name,
-                        strand = frame$strand,
-                        txStart = frame$transcript_start,
-                        txEnd = frame$transcript_end,
-                        cdsStart = frame$cds_start,
-                        cdsEnd = frame$cds_end,
-                        exonStart = frame$exon_chrom_start,
-                        exonEnd = frame$exon_chrom_end,
-                        exonRank = frame$rank,
-                        exonId = frame$ensembl_exon_id)
+  makeTranscripts(geneIds = frame$ensembl_gene_id,
+                  ids = frame$ensembl_transcript_id,
+                  chrom = frame$chromosome_name,
+                  strand = frame$strand,
+                  txStart = frame$transcript_start,
+                  txEnd = frame$transcript_end,
+                  cdsStart = frame$cds_start,
+                  cdsEnd = frame$cds_end,
+                  exonStart = frame$exon_chrom_start,
+                  exonEnd = frame$exon_chrom_end,
+                  exonRank = frame$rank,
+                  exonId = frame$ensembl_exon_id)
   ##this is EXTRA info. that we don't have for UCSC - to make use of it we
   ##will want to attach it as an extra field in the DB.
- 
 }
-
-
 
 
 ##TODO: put a check in place to make double-damn sure that the unique tx_ids
@@ -436,11 +395,6 @@ BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
 ##ALTERNATIVELY: I could just get the gene IDs separately for the BMFrame and
 ##add them on in R (instead of getting the whole thing from BM which results
 ##in the bloated frame)...
-
-
-
-
-
 
 
 ##The trouble with the BMFrame Data is that the data have variable cds start
@@ -460,7 +414,6 @@ BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
 ##pre-processing.
 
 
-
 ##And actually, the cds_start and cds_end from UCSC are also kind of screwy
 ##(they simply look WRONG).
 
@@ -469,12 +422,10 @@ BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
 ##(pre-processed to adjust to the same counting offset as we use in R).
 
 
-
 ##used to make the testDB:
 ##Insert the first bit into UCSCTranscript
 ##frame = frame[c(1:500, 100000:100100, 120000:120100, 150000:150100,
 ##170000:170100, 200000:200100),]
 ## library(GenomicFeatures)
-## tx = UCSCTranscripts(organism="human")
+## tx = UCSCTranscripts()
 ## saveFeatures(tx, file="HG18.sqlite")
-
