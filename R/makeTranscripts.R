@@ -18,8 +18,10 @@ saveFeatures <- function(x, file){
 
 
 loadFeatures <- function(file){
-  drv <- dbDriver("SQLite")
-  con <- dbConnect(drv, file)
+  con <- dbConnect(SQLite(), file)
+  if(!file.exists(file)){
+    stop("Cannot create a Trascript object without an actual database file.")
+  }
   new("TranscriptAnnotation",con = con)
 }
 

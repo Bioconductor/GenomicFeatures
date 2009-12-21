@@ -103,6 +103,11 @@ setMethod("getTranscripts", "RangesList",
 )
 
 
+.printSQL <- function(sql){
+  cat(strwrap(gsub("\\n +"," ",sqlbase)),sep="\n")
+}
+
+
 
 ##method to scan transcripts
 .getTranscripts <- function(transcript, ranges=NULL, chromosome=NULL,
@@ -149,9 +154,10 @@ setMethod("getTranscripts", "RangesList",
                ") AND (",
                paste(sqlRange,collapse=" OR "),
                ") ")
-  if(showSQL==TRUE){print(gsub("\\n               ","",sql))}
+  if(showSQL){.printSQL(sql)}
   dbGetQuery(con, sql)
 }
+
 
 
 ##TODO: for unit tests, put myTest.sqlite into /data and load it as needed.
@@ -159,6 +165,10 @@ setMethod("getTranscripts", "RangesList",
 ## ##eg
 ## ## library(GenomicFeatures)
 ## ## tx = loadFeatures("myTest.sqlite")
+## tx <- loadFeatures(system.file("extdata", "HG18test.sqlite",
+##                    package="GenomicFeatures"))
+
+
 
 ## ##This works though:
 ## ##foo = IRanges(start=c(500), end=c(10000))

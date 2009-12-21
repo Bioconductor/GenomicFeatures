@@ -9,14 +9,14 @@ test_simpleConvert <- function() {
                paste(10:11 + 10L, collapse=","))
 
     df <- data.frame(apples = letters[1:3],
-                     exonStarts = eStarts,
-                     exonEnds = eEnds,
+                     exonStart = eStarts,
+                     exonEnd = eEnds,
                      stringsAsFactors = FALSE)
 
     want <- data.frame(
                        apples = c(rep("a", 3L), "b", rep("c", 2L)),
-                       exonStarts = c(1L, 2L, 3L, 100L, 10L, 11L),
-                       exonEnds = c(1L, 2L, 3L, 100L, 10L, 11L) + 10L,
+                       exonStart = c(1L, 2L, 3L, 100L, 10L, 11L),
+                       exonEnd = c(1L, 2L, 3L, 100L, 10L, 11L) + 10L,
                        exonRank = as.integer(c(1, 2, 3, 1, 1, 2)),
                        stringsAsFactors = FALSE)
 

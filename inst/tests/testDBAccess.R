@@ -1,5 +1,5 @@
 test_access <- function() {
-    tx <- loadFeatures(system.file("extdata", "HG18.sqlite", 
+    tx <- loadFeatures(system.file("extdata", "HG18test.sqlite", 
                                    package="GenomicFeatures"))
     range = IRanges(start=c(1000), end=c(8000))
 
