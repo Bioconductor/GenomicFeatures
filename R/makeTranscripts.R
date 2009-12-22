@@ -27,7 +27,6 @@ loadFeatures <- function(file){
 
 
 .createAllDat <- function(frame){
-  require(RSQLite)
   drv <- dbDriver("SQLite")  
   con <- dbConnect(drv)##, dbname="earlyTest.sqlite") ## **Temporarily** write to a file up front.
   sql <- "CREATE TABLE all_dat (
@@ -275,64 +274,56 @@ makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
 }
 
 
-##TODO: The portion of this helper function that just retrieves org packages from
+##TODO: The portion of this function that just retrieves org packages from
 ##common names could be generically useful in annotate.
-.selectUCSCOrRefSeqMap <- function(type=c("knownGene","refGene"), organism){
-  ##This method just applies some simple logic to decide which gene mapping
-  ##to get and from which org packages.
-
-  require(annotate)
-  chip <- switch(organism,
-                 "A. gambiae" = "org.Ag.eg.db",
-                 "Cow" = "org.Bt.eg.db",
-                 "C. elegans" = "org.Ce.eg.db",
-                 "Dog" = "org.Cf.eg.db",
-                 "D. melanogaster" = "org.Dm.eg.db",
-                 "Zebrafish" = "org.Dr.eg.db",
-                 ## "org.EcK12.eg.db"
-                 ## "org.EcSakai.eg.db"
-                 "Chicken" = "org.Gg.eg.db",
-                 "Human" =, "Human GRCh37 (hg19)" = "org.Hs.eg.db",
-                 "Mouse" = "org.Mm.eg.db",
-                 "Rhesus" = "org.Mmu.eg.db",
-                 "Chimp" = "org.Pt.eg.db",
-                 "Rat" = "org.Rn.eg.db",
-                 ## "org.Ss.eg.db"
-                 ## "org.Xl.eg.db"
-                 stop("unrecognized organism"))
-  type <- match.arg(type)
-  if(type=="knownGene"){
-    map <- getAnnMap("UCSCKG", chip)
-  }else if(type=="refGene"){
-    map <- getAnnMap("REFSEQ", chip)
-  }
-  map
-}
-
-
-UCSCTranscripts <- function(type=c("knownGene","refGene"), genome="hg18"){
-  require("rtracklayer")
+UCSCTranscripts <- function(type = c("refGene","knownGene","ensGene"),
+                            genome = "hg18"){
   type <- match.arg(type)
 
+  organismMapping <-
+    c("A. gambiae" = "org.Ag.eg.db",
+      "Cow" = "org.Bt.eg.db",
+      "C. elegans" = "org.Ce.eg.db",
+      "Dog" = "org.Cf.eg.db",
+      "D. melanogaster" = "org.Dm.eg.db",
+      "Zebrafish" = "org.Dr.eg.db",
+      ## "org.EcK12.eg.db"
+      ## "org.EcSakai.eg.db"
+      "Chicken" = "org.Gg.eg.db",
+      "Human" = "org.Hs.eg.db",
+      "Human GRCh37 (hg19)" = "org.Hs.eg.db",
+      "Mouse" = "org.Mm.eg.db",
+      "Rhesus" = "org.Mmu.eg.db",
+      "Chimp" = "org.Pt.eg.db",
+      "Rat" = "org.Rn.eg.db"
+      ## "org.Ss.eg.db"
+      ## "org.Xl.eg.db"
+      )
+  genomeTable <- ucscGenomes()
   if (!is.character(genome) || length(genome) != 1)
     stop("'genome' must be a character vector of length 1")
-  genomeTable <- ucscGenomes()
-  whichGenome <- which(genome %in% as.character(genomeTable[,"db"]))
-  if (length(whichGenome) == 0)
+  if (!(genome %in% as.character(genomeTable[,"db"])))
     stop("'genome' not in ucscGenomes()")
-  organism <- as.character(genomeTable[whichGenome, "organism"])
+  organism <-
+    as.character(genomeTable[match(genome, genomeTable[,"db"]), "organism"])
+  if (!(organism %in% names(organismMapping)))
+    stop("'genome' does not have associated 'org.*.eg.db' package")
+  if ((type == "knownGene") &&
+      !(organism %in% c("Human", "Human GRCh37 (hg19)", "Mouse")))
+    stop("UCSC \"knownGene\" table is only supported for human and mouse genomes")
+  chip <- unname(organismMapping[organism])
+  EGmap <- switch(type,
+                  "refGene" = getAnnMap("REFSEQ", chip),
+                  "knownGene" = getAnnMap("UCSCKG", chip),
+                  "ensGene" = getAnnMap("ENSEMBLTRANS", chip))
 
   session <- browserSession()
   genome(session) <- genome
   query <- ucscTableQuery(session, type)
   frame <- getTable(query)
-
-## load("UCSCFrame.Rda")
-## load("UCSCSmallDupFrame.Rda")
-
-  ##Get the geneIDs and match them with the ids.  
-  EGKGmap <- .selectUCSCOrRefSeqMap(type,organism)
-  EGs <- unlist(mget(as.character(frame$name),revmap(EGKGmap), ifnotfound=NA)) 
+  EGs <-
+    unname(unlist(mget(as.character(frame$name), revmap(EGmap),
+                       ifnotfound = NA_character_)))
 
   makeTranscripts(geneIds = EGs,
                   ids = frame$name,
@@ -352,7 +343,6 @@ UCSCTranscripts <- function(type=c("knownGene","refGene"), genome="hg18"){
 ## biomaRtTranscripts(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
 
 BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
-  require(biomaRt)
   mart <- useMart(biomart=biomart, dataset=dataset)
   frame <- getBM(mart=mart,
                  attributes=c("ensembl_gene_id",
@@ -368,9 +358,6 @@ BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
                               "exon_chrom_end",
                               "rank"))
 
-##   save(frame,file="BMFrame.Rda")
-##   load("BMFrame.Rda")
-  
   ##This one goes in the the next step the way that it came in.
   makeTranscripts(geneIds = frame$ensembl_gene_id,
                   ids = frame$ensembl_transcript_id,

@@ -13,7 +13,7 @@
   makeTranscripts(geneIds, ids, chrom, strand, txStart, txEnd,
                   cdsStart, cdsEnd, exonStart,exonEnd, exonRank, 
                   exonId)
-  UCSCTranscripts(type=c("knownGene","refGene"), genome)
+  UCSCTranscripts(type=c("refGene","knownGene","ensGene"), genome)
   BMTranscripts(biomart, dataset)
 }
 \arguments{
@@ -31,8 +31,9 @@
   \item{exonId}{vector of exon IDs}
 
   \item{type}{transcript table name for the UCSC track.
-    Either "knownGene" or "refGene".}
-  \item{genome}{genome abbreviation used by UCSC. For example: hg18.}
+    One of "refGene", "knownGene", or "ensGene".}
+  \item{genome}{genome abbreviation used by UCSC and obtained by
+    \code{ucscGenomes()[,"db"]}. For example: hg18.}
 
   \item{biomart}{which mart from biomaRt}
   \item{dataset}{which dataset from biomaRt}
