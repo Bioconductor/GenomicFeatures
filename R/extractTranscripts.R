@@ -116,13 +116,7 @@ setMethod("getTranscripts", "RangesList",
                            expand=FALSE, showSQL=FALSE){
   con = transcript@con
   rangeRestr <- match.arg(rangeRestr)
-  if(expand==FALSE){
-    sqlbase <- "SELECT t._tx_id, tx_id, chromosome,
-                strand, tx_start, tx_end
-                FROM transcripts AS t,
-                transcript_tree AS tt
-                WHERE t._tx_id=tt._tx_id"
-  }else{
+  if(expand){
     sqlbase <- "SELECT t._tx_id, tx_id, chromosome,
                 strand, tx_start, tx_end, ests._exon_id,
                 exon_start, exon_end
@@ -133,6 +127,12 @@ setMethod("getTranscripts", "RangesList",
                 WHERE t._tx_id=tt._tx_id
                 AND t._tx_id=ests._tx_id
                 AND ests._exon_id=et._exon_id"
+  } else{
+    sqlbase <- "SELECT t._tx_id, tx_id, chromosome,
+                strand, tx_start, tx_end
+                FROM transcripts AS t,
+                transcript_tree AS tt
+                WHERE t._tx_id=tt._tx_id"
   }
   if(!is.null(chromosome)){
   sqlChromosome <- paste(" t.chromosome='",chromosome,"' ",sep="")
@@ -251,13 +251,7 @@ setMethod("getExons", "RangesList",
                      expand=FALSE, showSQL=FALSE){
   con = transcript@con
   rangeRestr <- match.arg(rangeRestr)
-  if(expand==FALSE){
-    sqlbase <- "SELECT e._exon_id, chromosome, strand,
-                exon_start, exon_end
-                FROM exons AS e,
-                exon_tree AS et
-                WHERE e._exon_id=et._exon_id"
-  }else{
+  if(expand){
     sqlbase <- "SELECT e._exon_id, e.chromosome, e.strand,
                 exon_start, exon_end, ests._tx_id,
                 tx_id
@@ -268,7 +262,13 @@ setMethod("getExons", "RangesList",
                 WHERE e._exon_id=et._exon_id
                 AND e._exon_id=ests._exon_id
                 AND ests._tx_id=t._tx_id"
-  } 
+  }else{
+    sqlbase <- "SELECT e._exon_id, chromosome, strand,
+                exon_start, exon_end
+                FROM exons AS e,
+                exon_tree AS et
+                WHERE e._exon_id=et._exon_id"
+  }
 
   if(!is.null(chromosome)){
   sqlChromosome <- paste(" e.chromosome='",chromosome,"' ",sep="")
@@ -290,7 +290,7 @@ setMethod("getExons", "RangesList",
                ") AND (",
                paste(sqlRange,collapse=" OR "),
                ")")
-  if(showSQL==TRUE){print(gsub("\\n               ","",sql))}
+  if(showSQL){print(gsub("\\n               ","",sql))}
   dbGetQuery(con, sql)  
 }
 
