@@ -1,9 +1,9 @@
-setGeneric("getTranscripts", signature="x",
-           function(x, transcript, chromosome=NULL, strand=NULL,
+setGeneric("getTranscripts", signature=c("ann", "ranges"),
+           function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
                     rangeRestr="either", expand=FALSE, showSQL=FALSE)
            standardGeneric("getTranscripts"))
 
-setGeneric("getExons", signature="x",
-           function(x, transcript, chromosome=NULL, strand=NULL,
+setGeneric("getExons", signature=c("ann", "ranges"),
+           function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
                     rangeRestr="either", expand=FALSE, showSQL=FALSE)
            standardGeneric("getExons"))

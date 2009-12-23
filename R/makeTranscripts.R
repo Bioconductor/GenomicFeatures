@@ -11,24 +11,24 @@
 
 
 saveFeatures <- function(x, file){
-  con <- x@con
-  ok <- sqliteCopyDatabase(con, file)
+  conn <- x@conn
+  ok <- sqliteCopyDatabase(conn, file)
   stopifnot(ok)
 }
 
 
 loadFeatures <- function(file){
-  con <- dbConnect(SQLite(), file)
   if(!file.exists(file)){
-    stop("Cannot create a Trascript object without an actual database file.")
+    stop("Cannot create a TranscriptAnnotation object without an actual database file.")
   }
-  new("TranscriptAnnotation",con = con)
+  conn <- dbConnect(SQLite(), file)
+  new("TranscriptAnnotation", conn=conn)
 }
 
 
 .createAllDat <- function(frame){
   drv <- dbDriver("SQLite")  
-  con <- dbConnect(drv)##, dbname="earlyTest.sqlite") ## **Temporarily** write to a file up front.
+  conn <- dbConnect(drv)##, dbname="earlyTest.sqlite") ## **Temporarily** write to a file up front.
   sql <- "CREATE TABLE all_dat (
             _exon_id INTEGER,
             gene_id VARCHAR(15),
@@ -42,9 +42,9 @@ loadFeatures <- function(file){
             exon_start VARCHAR(12),
             exon_end VARCHAR(12),
             exon_rank VARCHAR(12))"
-  dbGetQuery(con,sql)
+  dbGetQuery(conn,sql)
   ##Just make sure that the order is correct...
-  vals <- frame[,c("int_exon_id","geneIds","ids","chrom",
+  vals <- frame[,c("int_exon_id","geneId","txId","chrom",
                    "strand","txStart","txEnd","cdsStart","cdsEnd","exonStart",
                    "exonEnd","exonRank")]
 ##   exon_ids <- 1:dim(frame)[1]
@@ -61,101 +61,101 @@ loadFeatures <- function(file){
                                   exon_start,
                                   exon_end,
                                   exon_rank) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
-  dbBeginTransaction(con)
-  rset <- dbSendPreparedQuery(con, sqlIns, vals)
+  dbBeginTransaction(conn)
+  rset <- dbSendPreparedQuery(conn, sqlIns, vals)
   
   dbClearResult(rset)
-  dbCommit(con)
+  dbCommit(conn)
   
-  dbGetQuery(con,"CREATE INDEX ad_tx_id on all_dat(tx_id)")
-  dbGetQuery(con,"CREATE INDEX ad__exon_id on all_dat(_exon_id)")  
-  con
+  dbGetQuery(conn,"CREATE INDEX ad_tx_id on all_dat(tx_id)")
+  dbGetQuery(conn,"CREATE INDEX ad__exon_id on all_dat(_exon_id)")  
+  conn
 }
 
 
-.dropOldTable <- function(con, table){
-  dbGetQuery(con,paste("DROP TABLE ",table,sep=""))
+.dropOldTable <- function(conn, table){
+  dbGetQuery(conn,paste("DROP TABLE ",table,sep=""))
 }
 
 
-.createTranscriptsTable <- function(con){
+.createTranscriptsTable <- function(conn){
   sql <- "CREATE TABLE transcripts (
             _tx_id INTEGER PRIMARY KEY,     --id a single transcript
             tx_id TEXT UNIQUE NOT NULL,     --text string for foreign trnscpt ID
             chromosome TEXT,                --redundant with info in exons
             strand TEXT )                   --redundant with info in exons
   "
-  dbGetQuery(con,sql)
+  dbGetQuery(conn,sql)
 
   sqli <- "INSERT INTO transcripts (tx_id, chromosome, strand) SELECT DISTINCT tx_id, chromosome, strand FROM all_dat"
-  dbGetQuery(con,sqli)
-  dbGetQuery(con,"CREATE INDEX t_tx_id on transcripts(tx_id)")
+  dbGetQuery(conn,sqli)
+  dbGetQuery(conn,"CREATE INDEX t_tx_id on transcripts(tx_id)")
 }
 
 
-.createExonsTable <- function(con){
+.createExonsTable <- function(conn){
   sql <- "CREATE TABLE exons (
             _exon_id INTEGER PRIMARY KEY,   --id a single exon
             exon_id TEXT UNIQUE,   --text string for foreign exon ID
             chromosome TEXT,
             strand TEXT)
   "
-  dbGetQuery(con,sql)
+  dbGetQuery(conn,sql)
 
   sqli <- "INSERT INTO exons (_exon_id, chromosome, strand) SELECT DISTINCT _exon_id, chromosome, strand FROM all_dat"
-  dbGetQuery(con,sqli)
-  dbGetQuery(con,"CREATE INDEX e__exon_id on exons(_exon_id)")  
+  dbGetQuery(conn,sqli)
+  dbGetQuery(conn,"CREATE INDEX e__exon_id on exons(_exon_id)")  
 }
 
 
-.createGenesTable <- function(con){
+.createGenesTable <- function(conn){
   sql <- "CREATE TABLE genes
     (gene_id VARCHAR(15),
      _tx_id VARCHAR(20),
      UNIQUE (gene_id,_tx_id),
      FOREIGN KEY (_tx_id) REFERENCES transcripts (_tx_id) )"
-  dbGetQuery(con,sql)
+  dbGetQuery(conn,sql)
 
   sqli <- "INSERT INTO genes SELECT DISTINCT ad.gene_id, t._tx_id
              FROM all_dat AS ad, transcripts AS t
              WHERE ad.tx_id = t.tx_id"
-  dbGetQuery(con,sqli)
+  dbGetQuery(conn,sqli)
 }
 
 
-.createTranscriptTreeTable <- function(con){
+.createTranscriptTreeTable <- function(conn){
   sql <- "CREATE VIRTUAL TABLE transcript_tree USING rtree
            (_tx_id INTEGER PRIMARY KEY,    --id a single transcript
             tx_start INTEGER,
             tx_end INTEGER)
             --FOREIGN KEY (_tx_id) REFERENCES  transcripts (_tx_id)"
-  dbGetQuery(con,sql)
+  dbGetQuery(conn,sql)
 
   sqli <- "INSERT INTO transcript_tree SELECT DISTINCT
              t._tx_id, ad.tx_start, ad.tx_end
              FROM transcripts AS t, all_dat AS ad
              WHERE ad.tx_id = t.tx_id"
-  dbGetQuery(con,sqli)
+  dbGetQuery(conn,sqli)
 }
 
 
-.createExonTreeTable <- function(con){
+.createExonTreeTable <- function(conn){
   sql <- "CREATE VIRTUAL TABLE exon_tree USING rtree
            (_exon_id INTEGER PRIMARY KEY,    --id a single exon
             exon_start INTEGER,
             exon_end INTEGER)
             --FOREIGN KEY (_exon_id) REFERENCES  exons (_exon_id)"
-  dbGetQuery(con,sql)
+  dbGetQuery(conn,sql)
 
   sqli <- "INSERT INTO exon_tree SELECT DISTINCT
              e._exon_id, ad.exon_start, ad.exon_end
              FROM exons AS e, all_dat AS ad
              WHERE ad._exon_id = e._exon_id"
-  dbGetQuery(con,sqli)
+  dbGetQuery(conn,sqli)
 }
 
 
-.createExonsTranscriptsTable <- function(con){
+.createExonsTranscriptsTable <- function(conn){
   sql <- "CREATE TABLE exons_transcripts (
             _exon_id INTEGER,            --id a single exon
             _tx_id INTEGER,              --id a single transcript
@@ -163,13 +163,13 @@ loadFeatures <- function(file){
             UNIQUE(_exon_id,_tx_id),
             FOREIGN KEY (_exon_id) REFERENCES  exons  (_exon_id)
             FOREIGN KEY (_tx_id) REFERENCES  transcripts  (_tx_id))"
-  dbGetQuery(con,sql)
+  dbGetQuery(conn,sql)
 
   sqli <- "INSERT INTO exons_transcripts SELECT DISTINCT
              e._exon_id, t._tx_id, ad.exon_rank
              FROM exons as e, transcripts AS t, all_dat as ad
              WHERE ad.tx_id = t.tx_id AND e._exon_id = ad._exon_id"
-  dbGetQuery(con,sqli)
+  dbGetQuery(conn,sqli)
 }
 
 
@@ -177,21 +177,21 @@ loadFeatures <- function(file){
 ## formatted into our desired object.
 .processFrame <- function(frame){
   ## Need to process this.  I want to jam it all into a DB
-  con <- .createAllDat(frame)
+  conn <- .createAllDat(frame)
   
   ##now just split things up to populate the other tables.
-  .createTranscriptsTable(con)
-  .createExonsTable(con)
-  .createGenesTable(con)
-  .createTranscriptTreeTable(con)
-  .createExonsTranscriptsTable(con)
-  .createExonTreeTable(con)
+  .createTranscriptsTable(conn)
+  .createExonsTable(conn)
+  .createGenesTable(conn)
+  .createTranscriptTreeTable(conn)
+  .createExonsTranscriptsTable(conn)
+  .createExonTreeTable(conn)
 
   ##drop the extra tables
-  .dropOldTable(con,"all_dat")
+  .dropOldTable(conn,"all_dat")
   
   ## plan is to end with making the object
-  new("TranscriptAnnotation", con = con)
+  new("TranscriptAnnotation", conn=conn)
 }
 
 
@@ -242,12 +242,15 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStart",
               names = c(keepNames, "exonStart", "exonEnd", "exonRank"))
 }
 
-
-makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
+### Creates a TranscriptAnnotation instance from vectors of data.
+### All vectors must be of equal length.  The i-th element of the
+### vectors represent data for a single exon. Transcript data will
+### be repeated over all exons within the trancsript.
+makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
                             cdsStart, cdsEnd, exonStart, exonEnd, exonRank,
                             exonId = vector()){
-  frame <- data.frame(geneIds = geneIds,
-                      ids = ids,
+  frame <- data.frame(geneId = geneId,
+                      txId = txId,
                       chrom = chrom,
                       strand = strand,
                       txStart = txStart,
@@ -274,105 +277,143 @@ makeTranscripts <- function(geneIds, ids, chrom, strand, txStart, txEnd,
 }
 
 
-##TODO: The portion of this function that just retrieves org packages from
-##common names could be generically useful in annotate.
-UCSCTranscripts <- function(type = c("refGene","knownGene","ensGene"),
-                            genome = "hg18"){
-  type <- match.arg(type)
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### UCSCTranscripts() and UCSC-specific helper functions.
+###
 
-  organismMapping <-
-    c("A. gambiae" = "org.Ag.eg.db",
-      "Cow" = "org.Bt.eg.db",
-      "C. elegans" = "org.Ce.eg.db",
-      "Dog" = "org.Cf.eg.db",
-      "D. melanogaster" = "org.Dm.eg.db",
-      "Zebrafish" = "org.Dr.eg.db",
-      ## "org.EcK12.eg.db"
-      ## "org.EcSakai.eg.db"
-      "Chicken" = "org.Gg.eg.db",
-      "Human" = "org.Hs.eg.db",
-      "Human GRCh37 (hg19)" = "org.Hs.eg.db",
-      "Mouse" = "org.Mm.eg.db",
-      "Rhesus" = "org.Mmu.eg.db",
-      "Chimp" = "org.Pt.eg.db",
-      "Rat" = "org.Rn.eg.db"
-      ## "org.Ss.eg.db"
-      ## "org.Xl.eg.db"
-      )
-  genomeTable <- ucscGenomes()
-  if (!is.character(genome) || length(genome) != 1)
-    stop("'genome' must be a character vector of length 1")
-  if (!(genome %in% as.character(genomeTable[,"db"])))
-    stop("'genome' not in ucscGenomes()")
-  organism <-
-    as.character(genomeTable[match(genome, genomeTable[,"db"]), "organism"])
-  if (!(organism %in% names(organismMapping)))
-    stop("'genome' does not have associated 'org.*.eg.db' package")
-  if ((type == "knownGene") &&
-      !(organism %in% c("Human", "Human GRCh37 (hg19)", "Mouse")))
-    stop("UCSC \"knownGene\" table is only supported for human and mouse genomes")
-  chip <- unname(organismMapping[organism])
-  EGmap <- switch(type,
-                  "refGene" = getAnnMap("REFSEQ", chip),
-                  "knownGene" = getAnnMap("UCSCKG", chip),
-                  "ensGene" = getAnnMap("ENSEMBLTRANS", chip))
+### Could belong to rtracklayer.
+.getOrganismFromUCSCgenome <- function(genome)
+{
+    ## Work around a bug in ucscGenomes().
+    if (genome == "hg19")
+        return("Human")
+    ucsc_genomes <- ucscGenomes()
+    which_genome <- match(genome, as.character(ucsc_genomes[,"db"]))
+    if (is.na(which_genome))
+        stop("'genome' not in ucscGenomes()")
+    as.character(ucsc_genomes[which_genome, "organism"])
+}
 
-  session <- browserSession()
-  genome(session) <- genome
-  query <- ucscTableQuery(session, type)
-  frame <- getTable(query)
-  EGs <-
-    unname(unlist(mget(as.character(frame$name), revmap(EGmap),
-                       ifnotfound = NA_character_)))
+### TODO: This mapping from organisms to org packages could be generically
+### useful in annotate.
+.ORGANISM2ORGPKG <- c(
+    "A. gambiae" = "org.Ag.eg.db",
+    "Cow" = "org.Bt.eg.db",
+    "C. elegans" = "org.Ce.eg.db",
+    "Dog" = "org.Cf.eg.db",
+    "D. melanogaster" = "org.Dm.eg.db",
+    "Zebrafish" = "org.Dr.eg.db",
+    ## "org.EcK12.eg.db"
+    ## "org.EcSakai.eg.db"
+    "Chicken" = "org.Gg.eg.db",
+    "Human" = "org.Hs.eg.db",
+    "Human GRCh37 (hg19)" = "org.Hs.eg.db",
+    "Mouse" = "org.Mm.eg.db",
+    "Rhesus" = "org.Mmu.eg.db",
+    "Chimp" = "org.Pt.eg.db",
+    "Rat" = "org.Rn.eg.db"
+    ## "org.Ss.eg.db"
+    ## "org.Xl.eg.db"
+)
 
-  makeTranscripts(geneIds = EGs,
-                  ids = frame$name,
-                  chrom = frame$chrom,
-                  strand = frame$strand,
-                  txStart = frame$txStart,
-                  txEnd = frame$txEnd,
-                  cdsStart = frame$cdsStart,
-                  cdsEnd = frame$cdsEnd,
-                  exonStart = frame$exonStarts,
-                  exonEnd = frame$exonEnds)
+.makeTranscriptsFromUCSCTable <- function(txtable, track, organism)
+{
+    ## Map the transcript IDs in 'txtable$name' to the corresponding Entrez
+    ## Gene IDs. Depending on the value of 'track' ("knownGene" or "refGene")
+    ## this is done by using either the UCSCKG or the REFSEQ map from the
+    ## appropriate org package.
+    orgpkg <- unname(.ORGANISM2ORGPKG[organism])
+    if (is.na(orgpkg))
+        stop("'genome' does not have associated 'org.*.eg.db' package")
+    .track2bimap <- c(
+        knownGene="UCSCKG",
+        refGene="REFSEQ",
+        ensGene="ENSEMBLTRANS"
+    )
+    bimap_name <- .track2bimap[track]
+    if (is.na(bimap_name))
+        stop("'track' does not have associated map in '", orgpkg, "'")
+    bimap <- getAnnMap(bimap_name, orgpkg)
+    ## Here we make the assumption that each transcript ID is mapped to at
+    ## most one Entrez Gene ID, which will probably be true most of the
+    ## times. For now we raise an error if this is not the case, but we might
+    ## also want to handle this nicely in the future.
+    tx2EG <- mget(as.character(txtable$name), revmap(bimap),
+                  ifnotfound=NA_character_)
+    if (any(sapply(tx2EG, length) > 1L))
+        stop("some UCSC transcript IDs are mapped to multiple Entrez Gene IDs")
+    EGs <- unname(unlist(tx2EG))  # can contain NAs
+    txStart <- txtable$txStart + 1L
+    cdsStart <- txtable$cdsStart + 1L
+    exonStarts <- .shift.coordsInMultivaluedField(txtable$exonStarts, 1L)
+    makeTranscripts(geneId = EGs,
+                    txId = txtable$name,
+                    chrom = txtable$chrom,
+                    strand = txtable$strand,
+                    txStart = txStart,
+                    txEnd = txtable$txEnd,
+                    cdsStart = cdsStart,
+                    cdsEnd = txtable$cdsEnd,
+                    exonStart = exonStarts,
+                    exonEnd = txtable$exonEnds)
+}
+
+UCSCTranscripts <- function(track=c("knownGene","refGene","ensGene"),
+                            genome="hg18")
+{
+    track <- match.arg(track)
+    if (!isSingleString(genome))
+        stop("'genome' must be a single string")
+    organism <- .getOrganismFromUCSCgenome(genome)
+    if (track == "knownGene" && !(organism %in% c("Human", "Mouse", "Rat")))
+        stop("UCSC \"knownGene\" track is only supported ",
+             "for Human, Mouse and Rat")
+    session <- browserSession()
+    genome(session) <- genome
+    query <- ucscTableQuery(session, track)
+    table <- getTable(query)
+    .makeTranscriptsFromUCSCTable(table, track, organism)
 }
 
 
-## For people who want to tap biomaRt
-## imagined usage:
-## biomaRtTranscripts(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### BMTranscripts().
+###
+### For people who want to tap biomaRt.
+### Typical usage:
+###   BMTranscripts(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+###
 
-BMTranscripts <- function(biomart="ensembl", dataset = "hsapiens_gene_ensembl"){
-  mart <- useMart(biomart=biomart, dataset=dataset)
-  frame <- getBM(mart=mart,
-                 attributes=c("ensembl_gene_id",
-                              "ensembl_transcript_id",
-                              "chromosome_name",
-                              "strand",
-                              "transcript_start",
-                              "transcript_end",
-                              "cds_start",
-                              "cds_end",
-                              "ensembl_exon_id",
-                              "exon_chrom_start",
-                              "exon_chrom_end",
-                              "rank"))
-
-  ##This one goes in the the next step the way that it came in.
-  makeTranscripts(geneIds = frame$ensembl_gene_id,
-                  ids = frame$ensembl_transcript_id,
-                  chrom = frame$chromosome_name,
-                  strand = frame$strand,
-                  txStart = frame$transcript_start,
-                  txEnd = frame$transcript_end,
-                  cdsStart = frame$cds_start,
-                  cdsEnd = frame$cds_end,
-                  exonStart = frame$exon_chrom_start,
-                  exonEnd = frame$exon_chrom_end,
-                  exonRank = frame$rank,
-                  exonId = frame$ensembl_exon_id)
-  ##this is EXTRA info. that we don't have for UCSC - to make use of it we
-  ##will want to attach it as an extra field in the DB.
+BMTranscripts <- function(biomart="ensembl", dataset="hsapiens_gene_ensembl")
+{
+    mart <- useMart(biomart=biomart, dataset=dataset)
+    txtable <- getBM(mart=mart,
+                     attributes=c("ensembl_gene_id",
+                                  "ensembl_transcript_id",
+                                  "chromosome_name",
+                                  "strand",
+                                  "transcript_start",
+                                  "transcript_end",
+                                  "cds_start",
+                                  "cds_end",
+                                  "ensembl_exon_id",
+                                  "exon_chrom_start",
+                                  "exon_chrom_end",
+                                  "rank"))
+    makeTranscripts(geneId = txtable$ensembl_gene_id,
+                    txId = txtable$ensembl_transcript_id,
+                    chrom = txtable$chromosome_name,
+                    strand = txtable$strand,
+                    txStart = txtable$transcript_start,
+                    txEnd = txtable$transcript_end,
+                    cdsStart = txtable$cds_start,
+                    cdsEnd = txtable$cds_end,
+                    exonStart = txtable$exon_chrom_start,
+                    exonEnd = txtable$exon_chrom_end,
+                    exonRank = txtable$rank,
+                    exonId = txtable$ensembl_exon_id)
+    ##this is EXTRA info. that we don't have for UCSC - to make use of it we
+    ##will want to attach it as an extra field in the DB.
 }
 
 

@@ -1,7 +1,7 @@
 test_access <- function() {
-    tx <- loadFeatures(system.file("extdata", "HG18test.sqlite", 
-                                   package="GenomicFeatures"))
-    range = IRanges(start=c(1000), end=c(8000))
+    txann <- loadFeatures(system.file("extdata", "HG18test.sqlite", 
+                                      package="GenomicFeatures"))
+    ranges = IRanges(start=c(1000), end=c(8000))
 
     want <- data.frame(
                        tx_id_ = as.integer(c(6,112,122,123)),
@@ -14,6 +14,6 @@ test_access <- function() {
 
     names(want) = gsub("(.+)_$", "_\\1", names(want))
     
-    checkEquals(want, getTranscripts(range, tx, "chr1", "-",
+    checkEquals(want, getTranscripts(txann, ranges, "chr1", "-",
                                      rangeRestr="both") )
 }

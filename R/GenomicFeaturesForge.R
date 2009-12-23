@@ -12,7 +12,7 @@
         stop("'x' must be a character vector")
     if (length(x) == 0L)
         return(character(0))
-    sapply(strsplit(x, ",", fixed=TRUE),
+    sapply(strsplitAsListOfIntegerVectors(x),
            function(starts)
                paste(as.character(as.integer(starts) + shift), collapse=",")
     )
@@ -68,7 +68,6 @@ read.TranscriptTable.from.UCSC_knownGene_table <- function(file, translate.start
 read.TranscriptTable.from.TAIR_GFF3_genes_file <- function(file)
 {
     stop("IMPLEMENT ME")
-    return(ans)
 }
 
 

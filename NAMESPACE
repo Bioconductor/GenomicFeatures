@@ -4,15 +4,41 @@ import(RSQLite)
 import(IRanges)
 import(Biostrings)
 import(BSgenome)
+import(biomaRt)
 
-importFrom(AnnotationDbi,mget)
+importFrom(rtracklayer,
+  ucscGenomes,
+  browserSession,
+  genome,
+  "genome<-",
+  ucscTableQuery,
+  getTable
+)
 
-export(transcripts, exons, introns, extractTranscriptsFromGenome,
-       makeTranscripts,
-       UCSCTranscripts,
-       BMTranscripts,
-       saveFeatures,
-       loadFeatures)
+importFrom(AnnotationDbi,
+  mget,
+  revmap
+)
 
-exportMethods(getTranscripts,
-              getExons)
+importFrom(annotate, getAnnMap)
+
+exportClasses(GenomicAnnotation, TranscriptAnnotation)
+
+export(
+  transcripts,
+  exons,
+  introns,
+  extractTranscriptsFromGenome,
+  makeTranscripts,
+  UCSCTranscripts,
+  BMTranscripts,
+  saveFeatures,
+  loadFeatures,
+  getTranscripts,
+  getExons
+)
+
+exportMethods(
+  getTranscripts,
+  getExons
+)

@@ -1,24 +1,35 @@
 \name{makeTranscripts}
+
 \alias{makeTranscripts}
 \alias{UCSCTranscripts}
 \alias{BMTranscripts}
+
+\alias{GenomicAnnotation-class}
+\alias{class:GenomicAnnotation}
+\alias{GenomicAnnotation}
+
+\alias{TranscriptAnnotation-class}
+\alias{class:TranscriptAnnotation}
+\alias{TranscriptAnnotation}
+
 \title{
-  Methods to generate Transcripts objects from publicly available sources.
+  Creating TranscriptAnnotation objects from publicly available sources.
 }
 \description{
-  Methods that will help to parse data and then assemble it into a
-  coherent database so that it can be used as a Transcripts object.
+  Flexible tools for creating a TranscriptAnnotation object from
+  a publicly available source (like the UCSC genome browser or BioMart),
+  or from a local file.
 }
 \usage{
-  makeTranscripts(geneIds, ids, chrom, strand, txStart, txEnd,
+  makeTranscripts(geneId, txId, chrom, strand, txStart, txEnd,
                   cdsStart, cdsEnd, exonStart,exonEnd, exonRank, 
                   exonId)
-  UCSCTranscripts(type=c("refGene","knownGene","ensGene"), genome)
+  UCSCTranscripts(track=c("knownGene","refGene","ensGene"), genome="hg18")
   BMTranscripts(biomart, dataset)
 }
 \arguments{
-  \item{geneIds}{vector of GeneIds}
-  \item{ids}{vector of transcript IDs}
+  \item{geneId}{vector of gene IDs}
+  \item{txId}{vector of transcript IDs}
   \item{chrom}{vector of chromosomes}
   \item{strand}{vector of strand orientation}
   \item{txStart}{vector of transcription start sites}
@@ -29,9 +40,8 @@
   \item{exonEnd}{vector of exon end sites}
   \item{exonRank}{vector of exon ranks (position within a transcript)}
   \item{exonId}{vector of exon IDs}
-
-  \item{type}{transcript table name for the UCSC track.
-    One of "refGene", "knownGene", or "ensGene".}
+  \item{track}{name of the UCSC track containing the transcript annotations
+    to retrieve. One of "refGene", "knownGene", or "ensGene".}
   \item{genome}{genome abbreviation used by UCSC and obtained by
     \code{ucscGenomes()[,"db"]}. For example: hg18.}
 
@@ -39,22 +49,26 @@
   \item{dataset}{which dataset from biomaRt}
 }
 \details{
-  All three of these functions perform similar tasks.  The most general
-  form is makeTranscripts, which simply takes vectors of equal length
-  and will then attempt to construct them into a transcript database.
+  All three of these functions perform similar tasks.
 
-  UCSCTranscripts and BMTranscripts are convenience functions for
-  feeding data from these sources to the makeTranscripts function.
+  The most general form is \code{makeTranscripts}, which simply takes
+  vectors of equal length. The i-th element of the vectors represent data
+  for a single exon. Transcript data must be repeated over all exons within
+  a given trancsript.
+
+  \code{UCSCTranscripts} and \code{BMTranscripts} are convenience functions
+  for feeding data from these sources (UCSC or BioMart) to the
+  \code{makeTranscripts} function.
 }
-\value{ All of these functions return a Transcript Object. }
+\value{ All of these functions return a TranscriptAnnotation object. }
 \author{
   M. Carlson
 }
 
 \examples{
 \dontrun{
-tx <- UCSCTranscripts()
+txann <- UCSCTranscripts()
 
-tx <- BMTranscripts("ensembl", "hsapiens_gene_ensembl")
+txann <- BMTranscripts("ensembl", "hsapiens_gene_ensembl")
 }
 }

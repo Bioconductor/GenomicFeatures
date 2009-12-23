@@ -1,12 +1,9 @@
-## Plan to make other different Objects later.
+### Plan to support other types of GenomicAnnotation objects later.
 setClass("GenomicAnnotation",
          contains="VIRTUAL")
 
-
-## We need to define an actual Transcript Object.
+### Concrete GenomicAnnotation type.
 setClass("TranscriptAnnotation",
          contains="GenomicAnnotation",
-         representation=representation(con = "SQLiteConnection"))
-
-
+         representation=representation(conn = "SQLiteConnection"))
 
