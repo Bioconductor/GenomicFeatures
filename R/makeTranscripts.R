@@ -13,15 +13,15 @@
 ### saveGenomicAnnotation()/loadGenomicAnnotation(), or to rename the
 ### GenomicAnnotation virtual class -> Features (or GenomicFeatures,
 ### probably better).
-saveFeatures <- function(x, file){
+saveFeatures <- function(x, file) {
   conn <- x@conn
   ok <- sqliteCopyDatabase(conn, file)
   stopifnot(ok)
 }
 
 
-loadFeatures <- function(file){
-  if(!file.exists(file)){
+loadFeatures <- function(file) {
+  if (!file.exists(file)) {
     stop("Cannot create a TranscriptAnnotation object without an actual database file.")
   }
   conn <- dbConnect(SQLite(), file)
@@ -29,7 +29,7 @@ loadFeatures <- function(file){
 }
 
 
-.createAllDat <- function(frame){
+.createAllDat <- function(frame) {
   drv <- dbDriver("SQLite")  
   conn <- dbConnect(drv)##, dbname="earlyTest.sqlite") ## **Temporarily** write to a file up front.
   sql <- "CREATE TABLE all_dat (
@@ -76,12 +76,12 @@ loadFeatures <- function(file){
 }
 
 
-.dropOldTable <- function(conn, table){
+.dropOldTable <- function(conn, table) {
   dbGetQuery(conn,paste("DROP TABLE ",table,sep=""))
 }
 
 
-.createTranscriptsTable <- function(conn){
+.createTranscriptsTable <- function(conn) {
   sql <- "CREATE TABLE transcripts (
             _tx_id INTEGER PRIMARY KEY,     --id a single transcript
             tx_id TEXT UNIQUE NOT NULL,     --text string for foreign trnscpt ID
@@ -96,7 +96,7 @@ loadFeatures <- function(file){
 }
 
 
-.createExonsTable <- function(conn){
+.createExonsTable <- function(conn) {
   sql <- "CREATE TABLE exons (
             _exon_id INTEGER PRIMARY KEY,   --id a single exon
             exon_id TEXT UNIQUE,   --text string for foreign exon ID
@@ -111,7 +111,7 @@ loadFeatures <- function(file){
 }
 
 
-.createGenesTable <- function(conn){
+.createGenesTable <- function(conn) {
   sql <- "CREATE TABLE genes
     (gene_id VARCHAR(15),
      _tx_id VARCHAR(20),
@@ -126,7 +126,7 @@ loadFeatures <- function(file){
 }
 
 
-.createTranscriptTreeTable <- function(conn){
+.createTranscriptTreeTable <- function(conn) {
   sql <- "CREATE VIRTUAL TABLE transcript_tree USING rtree
            (_tx_id INTEGER PRIMARY KEY,    --id a single transcript
             tx_start INTEGER,
@@ -142,7 +142,7 @@ loadFeatures <- function(file){
 }
 
 
-.createExonTreeTable <- function(conn){
+.createExonTreeTable <- function(conn) {
   sql <- "CREATE VIRTUAL TABLE exon_tree USING rtree
            (_exon_id INTEGER PRIMARY KEY,    --id a single exon
             exon_start INTEGER,
@@ -158,7 +158,7 @@ loadFeatures <- function(file){
 }
 
 
-.createExonsTranscriptsTable <- function(conn){
+.createExonsTranscriptsTable <- function(conn) {
   sql <- "CREATE TABLE exons_transcripts (
             _exon_id INTEGER,            --id a single exon
             _tx_id INTEGER,              --id a single transcript
@@ -178,7 +178,7 @@ loadFeatures <- function(file){
 
 ## processFrame is an internal function to just get our code split up and
 ## formatted into our desired object.
-.processFrame <- function(frame){
+.processFrame <- function(frame) {
   ## Need to process this.  I want to jam it all into a DB
   conn <- .createAllDat(frame)
   
@@ -198,7 +198,7 @@ loadFeatures <- function(file){
 }
 
 
-makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd"){
+makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd") {
     frame_names <- names(x)
     indices <- match(c("chrom", "strand", start, end), frame_names)
     if (any(is.na(indices)))
@@ -251,7 +251,7 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStart",
 ### be repeated over all exons within the trancsript.
 makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
                             cdsStart, cdsEnd, exonStart, exonEnd, exonRank,
-                            exonId = vector()){
+                            exonId = vector()) {
   frame <- data.frame(geneId = geneId,
                       txId = txId,
                       chrom = chrom,
@@ -265,7 +265,7 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
                       stringsAsFactors = FALSE)
   
   ## Check if the exonEnd and exonStart are comma separated.
-  if(length(grep(",", exonStart)) > 1 || length(grep(",", exonEnd)) > 1){
+  if (length(grep(",", exonStart)) > 1 || length(grep(",", exonEnd)) > 1) {
     frame <- convertExonsCommaSepFrame(frame,
       exonColStart = "exonStart", exonColEnd = "exonEnd")
   } else {
