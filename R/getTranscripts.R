@@ -29,30 +29,23 @@
 ## Now I can do this:
 ##tx = loadFeatures(system.file("inst/extdata/HG18.sqlite",package="GenomicFeatures"))
 
-
 ## put myTest.sqlite into /data and formalize the tests into unit tests.
 
 
-
-
 ## Helper function to construct the tail end of the queries
-.makeRangeSQL <- function(start, end, ranges, rangeRestr){
-  if(rangeRestr == "both"){
-    sqlRange <- paste(" (",start,">", start(ranges),
-                      " AND ",end,"<", end(ranges),")")
-  }else if(rangeRestr == "either"){
-    sqlRange <- paste(" (",start,">", start(ranges),
-                      " OR ",end,"<", end(ranges),")")
-
-  }else if(rangeRestr == "start"){
-    sqlRange <- paste(" (",start,">", start(ranges),")")
-
-  }else if(rangeRestr == "end"){
-    sqlRange <- paste(" (",end,"<", end(ranges),")")
-
-  }
+.makeRangeSQL <- function(start, end, ranges, rangeRestr) {
+  switch(rangeRestr,
+         "both"   = paste("(", start, " > ", start(ranges),
+                          " AND ", end, " < ", end(ranges), ")",
+                          sep = ""),
+         "either" = paste("(", start, " > ", start(ranges),
+                          " OR ", end, " < ", end(ranges), ")",
+                          sep = ""),
+         "start"  = paste("(", start," > ", start(ranges), ")",
+                          sep = ""),
+         "end"    = paste("(", end, " < ", end(ranges), ")",
+                          sep = ""))
 }
-
 
 
 ## getTranscript methods accomodate different object and try to use the
@@ -77,9 +70,9 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangedData"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
              rangeRestr="either", expand=FALSE, showSQL=FALSE)
     {
-      rdChromosome=space(ranges) ##Q: is this REALLY Safe??? "space()"? Really???
-      chromosome = c(chromosome, rdChromosome)
-      ranges = unlist(ranges(ranges))
+      rdChromosome <- space(ranges)
+      chromosome <- c(chromosome, rdChromosome)
+      ranges <- unlist(ranges(ranges), use.names=FALSE)
       .getTranscripts(txann=ann, ranges=ranges,
                       chromosome=chromosome, strand=strand,
                       rangeRestr=rangeRestr, expand=expand,
@@ -91,7 +84,7 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
              rangeRestr="either", expand=FALSE, showSQL=FALSE)
     {
-      ranges = unlist(ranges(ranges))
+      ranges <- unlist(ranges, use.names=FALSE)
       .getTranscripts(txann=ann, ranges=ranges,
                       chromosome=chromosome, strand=strand,
                       rangeRestr=rangeRestr, expand=expand,
@@ -100,7 +93,7 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
 )
 
 
-.printSQL <- function(sql){
+.printSQL <- function(sql) {
   cat(strwrap(gsub("\\n +"," ",sql)),sep="\n")
 }
 
@@ -108,51 +101,62 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
 .getTranscripts <- function(txann, ranges=NULL, chromosome=NULL,
                             strand=NULL,
                             rangeRestr=c("both","either","start","end"),
-                            expand=FALSE, showSQL=FALSE){
-  conn = txann@conn
+                            expand=FALSE, showSQL=FALSE) {
   rangeRestr <- match.arg(rangeRestr)
-  if(expand){
-    sqlbase <- "SELECT t._tx_id, tx_id, chromosome,
-                strand, tx_start, tx_end, ests._exon_id,
-                exon_start, exon_end
-                FROM transcripts AS t,
-                transcript_tree AS tt,
-                exons_transcripts AS ests,
-                exon_tree AS et
-                WHERE t._tx_id=tt._tx_id
-                AND t._tx_id=ests._tx_id
-                AND ests._exon_id=et._exon_id"
-  }else{
-    sqlbase <- "SELECT t._tx_id, tx_id, chromosome,
-                strand, tx_start, tx_end
-                FROM transcripts AS t,
-                transcript_tree AS tt
-                WHERE t._tx_id=tt._tx_id"
+  if (expand) {
+    sql <- paste("SELECT t._tx_id, tx_id, chromosome,",
+                 "strand, tx_start, tx_end, ests._exon_id,",
+                 "exon_start, exon_end",
+                 "FROM transcripts AS t,",
+                 "transcript_tree AS tt,",
+                 "exons_transcripts AS ests,",
+                 "exon_tree AS et",
+                 "WHERE t._tx_id=tt._tx_id",
+                 "AND t._tx_id=ests._tx_id",
+                 "AND ests._exon_id=et._exon_id")
+  } else {
+    sql <- paste("SELECT t._tx_id, tx_id, chromosome,",
+                 "strand, tx_start, tx_end",
+                 "FROM transcripts AS t,",
+                 "transcript_tree AS tt",
+                 "WHERE t._tx_id=tt._tx_id")
   }
-  if(!is.null(chromosome)){
-  sqlChromosome <- paste(" t.chromosome='",chromosome,"' ",sep="")
-  }else{sqlChromosome<-"t._tx_id=t._tx_id"}
-  
-  if(!is.null(strand)){
-  sqlStrand <- paste(" t.strand='",strand,"' ",sep="")
-  }else{sqlStrand<-"t._tx_id=t._tx_id"}
-  
-  if(!is.null(ranges)){
-    sqlRange <- .makeRangeSQL("tx_start", "tx_end", ranges, rangeRestr)
-  }else{sqlRange<-"t._tx_id=t._tx_id"}
-
-  sql <- paste(sqlbase,
-               " AND (",
-               paste(sqlChromosome, collapse=" OR "),
-               ") AND (",
-               paste(sqlStrand, collapse=" OR "),
-               ") AND (",
-               paste(sqlRange,collapse=" OR "),
-               ") ")
-  if(showSQL){.printSQL(sql)}
-  dbGetQuery(conn, sql)
+  len <- max(length(chromosome), length(strand), length(ranges))
+  if (len > 0) {
+    if (!is.null(chromosome)) {
+      if (length(chromosome) < len)
+        chromosome <- rep(chromosome, length.out = len)
+      sqlwhere <- paste("t.chromosome='", chromosome, "'", sep="")
+    } else {
+      sqlwhere <- character(0)
+    }
+    if (!is.null(strand)) {
+      if (length(strand) < len)
+        strand <- rep(strand, length.out = len)
+      sqladd <- paste("t.strand='", strand, "'", sep="")
+      if (length(sqlwhere) == 0)
+        sqlwhere <- sqladd
+      else
+        sqlwhere <- paste(sqlwhere, sqladd, sep = " AND ")
+    }
+    if (!is.null(ranges)) {
+      if (length(ranges) < len)
+        ranges <- rep(ranges, length.out = len)
+      sqladd <- .makeRangeSQL("tx_start", "tx_end", ranges, rangeRestr)
+      if (length(sqlwhere) == 0)
+        sqlwhere <- sqladd
+      else
+        sqlwhere <- paste(sqlwhere, sqladd, sep = " AND ")
+    }
+    sql <- paste(sql, " AND (",
+                 paste("(", sqlwhere, ")", sep = "", collapse = " OR "),
+                 ")", sep = "")
+  }
+  if (showSQL) {
+    .printSQL(sql)
+  }
+  dbGetQuery(txann@conn, sql)
 }
-
 
 
 ##TODO: for unit tests, put myTest.sqlite into /data and load it as needed.
@@ -162,7 +166,6 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
 ## ## txann = loadFeatures("myTest.sqlite")
 ## txann <- loadFeatures(system.file("extdata", "HG18test.sqlite",
 ##                       package="GenomicFeatures"))
-
 
 
 ## ##This works though:
@@ -210,9 +213,9 @@ setMethod("getExons", c("TranscriptAnnotation", "RangedData"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
              rangeRestr="either", expand=FALSE, showSQL=FALSE)
     {
-      rdChromosome=space(ranges) ##Q: is this REALLY Safe??? "space()"? Really???
-      chromosome = c(chromosome, rdChromosome)
-      ranges = unlist(ranges(ranges))
+      rdChromosome <- space(ranges)
+      chromosome <- c(chromosome, rdChromosome)
+      ranges <- unlist(ranges(ranges), use.names=FALSE)
       .getExons(txann=ann, ranges=ranges,
                 chromosome=chromosome, strand=strand,
                 rangeRestr=rangeRestr, expand=expand,
@@ -225,7 +228,7 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
              strand=NULL, rangeRestr="either",
              expand=FALSE, showSQL=FALSE)
     {
-      ranges = unlist(ranges(ranges))
+      ranges <- unlist(ranges, use.names=FALSE)
       .getExons(txann=ann, ranges=ranges,
                 chromosome=chromosome, strand=strand,
                 rangeRestr=rangeRestr, expand=expand,
@@ -237,49 +240,61 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
 .getExons <- function(txann, ranges=NULL, chromosome=NULL,
                       strand=NULL,
                       rangeRestr=c("both","either","start","end"),
-                      expand=FALSE, showSQL=FALSE){
-  conn = txann@conn
+                      expand=FALSE, showSQL=FALSE) {
   rangeRestr <- match.arg(rangeRestr)
-  if(expand){
-    sqlbase <- "SELECT e._exon_id, e.chromosome, e.strand,
-                exon_start, exon_end, ests._tx_id,
-                tx_id
-                FROM exons AS e,
-                exon_tree AS et,
-                exons_transcripts AS ests,
-                transcripts AS t
-                WHERE e._exon_id=et._exon_id
-                AND e._exon_id=ests._exon_id
-                AND ests._tx_id=t._tx_id"
-  }else{
-    sqlbase <- "SELECT e._exon_id, chromosome, strand,
-                exon_start, exon_end
-                FROM exons AS e,
-                exon_tree AS et
-                WHERE e._exon_id=et._exon_id"
+  if (expand) {
+    sql <- paste("SELECT e._exon_id, e.chromosome, e.strand,",
+                 "exon_start, exon_end, ests._tx_id,",
+                 "tx_id",
+                 "FROM exons AS e,",
+                 "exon_tree AS et,",
+                 "exons_transcripts AS ests,",
+                 "transcripts AS t",
+                 "WHERE e._exon_id=et._exon_id",
+                 "AND e._exon_id=ests._exon_id",
+                 "AND ests._tx_id=t._tx_id")
+  } else {
+    sql <- paste("SELECT e._exon_id, chromosome, strand,",
+                 "exon_start, exon_end",
+                 "FROM exons AS e,",
+                 "exon_tree AS et",
+                 "WHERE e._exon_id=et._exon_id")
   }
-  if(!is.null(chromosome)){
-  sqlChromosome <- paste(" e.chromosome='",chromosome,"' ",sep="")
-  }else{sqlChromosome<-"e._exon_id=e._exon_id"}
-
-  if(!is.null(strand)){
-  sqlStrand <- paste(" e.strand='",strand,"' ",sep="")
-  }else{sqlStrand<-"e._exon_id=e._exon_id"}
-  
-  if(!is.null(ranges)){
-    sqlRange <- .makeRangeSQL("exon_start", "exon_end", ranges, rangeRestr)  
-  }else{sqlRange<-"e._exon_id=e._exon_id"}
-
-  sql <- paste(sqlbase,
-               " AND (",
-               paste(sqlChromosome, collapse=" OR "),
-               ") AND (",
-               paste(sqlStrand, collapse=" OR "),
-               ") AND (",
-               paste(sqlRange,collapse=" OR "),
-               ")")
-  if(showSQL){print(gsub("\\n               ","",sql))}
-  dbGetQuery(conn, sql)  
+  len <- max(length(chromosome), length(strand), length(ranges))
+  if (len > 0) {
+    if (!is.null(chromosome)) {
+      if (length(chromosome) < len)
+        chromosome <- rep(chromosome, length.out = len)
+      sqlwhere <- paste("e.chromosome='", chromosome, "'", sep="")
+    } else {
+      sqlwhere <- character(0)
+    }
+    if (!is.null(strand)) {
+      if (length(strand) < len)
+        strand <- rep(strand, length.out = len)
+      sqladd <- paste("e.strand='", strand, "'", sep="")
+      if (length(sqlwhere) == 0)
+        sqlwhere <- sqladd
+      else
+        sqlwhere <- paste(sqlwhere, sqladd, sep = " AND ")
+    }
+    if (!is.null(ranges)) {
+      if (length(ranges) < len)
+        ranges <- rep(ranges, length.out = len)
+      sqladd <- .makeRangeSQL("exon_start", "exon_end", ranges, rangeRestr)
+      if (length(sqlwhere) == 0)
+        sqlwhere <- sqladd
+      else
+        sqlwhere <- paste(sqlwhere, sqladd, sep = " AND ")
+    }
+    sql <- paste(sql, " AND (",
+                 paste("(", sqlwhere, ")", sep = "", collapse = " OR "),
+                 ")", sep = "")
+  }
+  if (showSQL) {
+    .printSQL(sql)
+  }
+  dbGetQuery(txann@conn, sql)
 }
 
 
@@ -294,13 +309,6 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
 ## expanded:
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
 ## getExons(txann,foo,c("chr1","chr2"),c("-","+"), expand=TRUE, showSQL=TRUE)
-
-
-
-
-
-
-
 
 
 ## LATER STUFF
