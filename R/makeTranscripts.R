@@ -9,7 +9,10 @@
 ## greater than 16).
 
 
-
+### HP: I suggest to either rename saveFeatures()/loadFeatures() ->
+### saveGenomicAnnotation()/loadGenomicAnnotation(), or to rename the
+### GenomicAnnotation virtual class -> Features (or GenomicFeatures,
+### probably better).
 saveFeatures <- function(x, file){
   conn <- x@conn
   ok <- sqliteCopyDatabase(conn, file)
@@ -294,58 +297,66 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
     as.character(ucsc_genomes[which_genome, "organism"])
 }
 
-### TODO: This mapping from organisms to org packages could be generically
+### TODO: This mapping from organism to org package could be generically
 ### useful in annotate.
-.ORGANISM2ORGPKG <- c(
-    "A. gambiae" = "org.Ag.eg.db",
-    "Cow" = "org.Bt.eg.db",
-    "C. elegans" = "org.Ce.eg.db",
-    "Dog" = "org.Cf.eg.db",
-    "D. melanogaster" = "org.Dm.eg.db",
-    "Zebrafish" = "org.Dr.eg.db",
-    ## "org.EcK12.eg.db"
-    ## "org.EcSakai.eg.db"
-    "Chicken" = "org.Gg.eg.db",
-    "Human" = "org.Hs.eg.db",
-    "Human GRCh37 (hg19)" = "org.Hs.eg.db",
-    "Mouse" = "org.Mm.eg.db",
-    "Rhesus" = "org.Mmu.eg.db",
-    "Chimp" = "org.Pt.eg.db",
-    "Rat" = "org.Rn.eg.db"
-    ## "org.Ss.eg.db"
-    ## "org.Xl.eg.db"
-)
+.getOrgPkgFromOrganism <- function(organism)
+{
+    ### TODO: This mapping from organism to orgcode could be generically
+    ### useful in annotate.
+    ORGANISM2ORGCODE <- c(
+        `A. gambiae`="Ag",
+        `Cow`="Bt",
+        `C. elegans`="Ce",
+        `Dog`="Cf",
+        `D. melanogaster`="Dm",
+        `Zebrafish`="Dr",
+        ## "EcK12"
+        ## "EcSakai"
+        `Chicken`="Gg",
+        `Human`="Hs",
+        `Mouse`="Mm",
+        `Rhesus`="Mmu",
+        `Chimp`="Pt",
+        `Rat`="Rn"
+        ## "Ss"
+        ## "Xl"
+    )
+    orgcode <- unname(ORGANISM2ORGCODE[organism]) 
+    if (is.na(orgcode))
+        stop("no org.*.eg.db package for ", organism)
+    paste("org", orgcode, "eg.db", sep=".")
+}
 
 .makeTranscriptsFromUCSCTable <- function(txtable, track, organism)
 {
     ## Map the transcript IDs in 'txtable$name' to the corresponding Entrez
-    ## Gene IDs. Depending on the value of 'track' ("knownGene" or "refGene")
-    ## this is done by using either the UCSCKG or the REFSEQ map from the
-    ## appropriate org package.
-    orgpkg <- unname(.ORGANISM2ORGPKG[organism])
-    if (is.na(orgpkg))
-        stop("'genome' does not have associated 'org.*.eg.db' package")
-    .track2bimap <- c(
+    ## Gene IDs. Depending on the value of 'track' ("knownGene", "refGene"
+    ## or "ensGene") this is done by using either the UCSCKG, the REFSEQ
+    ## or the ENSEMBLTRANS map from the appropriate org package.
+    orgpkg <- .getOrgPkgFromOrganism(organism)
+    TRACK2MAPNAME <- c(
         knownGene="UCSCKG",
         refGene="REFSEQ",
         ensGene="ENSEMBLTRANS"
     )
-    bimap_name <- .track2bimap[track]
-    if (is.na(bimap_name))
-        stop("'track' does not have associated map in '", orgpkg, "'")
-    bimap <- getAnnMap(bimap_name, orgpkg)
+    mapname <- unname(TRACK2MAPNAME[track])
+    if (is.na(mapname))
+        stop("don't know which map in ", orgpkg, " to use to map the ",
+             "transcript IDs in track \"", track, "\" to Entrez Gene IDs")
+    map <- getAnnMap(mapname, orgpkg)
     ## Here we make the assumption that each transcript ID is mapped to at
     ## most one Entrez Gene ID, which will probably be true most of the
-    ## times. For now we raise an error if this is not the case, but we might
+    ## time. For now we raise an error if this is not the case, but we might
     ## also want to handle this nicely in the future.
-    tx2EG <- mget(as.character(txtable$name), revmap(bimap),
+    tx2EG <- mget(as.character(txtable$name), revmap(map),
                   ifnotfound=NA_character_)
     if (any(sapply(tx2EG, length) > 1L))
-        stop("some UCSC transcript IDs are mapped to multiple Entrez Gene IDs")
+        stop("some transcript IDs are mapped to multiple Entrez Gene IDs")
     EGs <- unname(unlist(tx2EG))  # can contain NAs
     txStart <- txtable$txStart + 1L
     cdsStart <- txtable$cdsStart + 1L
-    exonStarts <- .shift.coordsInMultivaluedField(txtable$exonStarts, 1L)
+    exonStarts <- .shift.coordsInMultivaluedField(
+                      as.character(txtable$exonStarts), 1L)
     makeTranscripts(geneId = EGs,
                     txId = txtable$name,
                     chrom = txtable$chrom,
