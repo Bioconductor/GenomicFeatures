@@ -104,7 +104,7 @@ setMethod("getTranscripts", "RangesList",
 
 
 .printSQL <- function(sql){
-  cat(strwrap(gsub("\\n +"," ",sqlbase)),sep="\n")
+  cat(strwrap(gsub("\\n +"," ",sql)),sep="\n")
 }
 
 
