@@ -17,7 +17,7 @@ test_simpleConvert <- function() {
                        apples = c(rep("a", 3L), "b", rep("c", 2L)),
                        exonStart = c(1L, 2L, 3L, 100L, 10L, 11L),
                        exonEnd = c(1L, 2L, 3L, 100L, 10L, 11L) + 10L,
-                       exonRank = as.integer(c(1, 2, 3, 1, 1, 2)),
+                       exonRank = c(1:3, 1L, 1:2),
                        stringsAsFactors = FALSE)
 
     checkEquals(want, convertExonsCommaSepFrame(df))
