@@ -162,7 +162,7 @@ loadFeatures <- function(file) {
   sql <- "CREATE TABLE exons_transcripts (
             _exon_id INTEGER,            --id a single exon
             _tx_id INTEGER,              --id a single transcript
-            exon_rank TEXT,
+            exon_rank INTEGER,
             UNIQUE(_exon_id,_tx_id),
             FOREIGN KEY (_exon_id) REFERENCES  exons  (_exon_id)
             FOREIGN KEY (_tx_id) REFERENCES  transcripts  (_tx_id))"
@@ -241,7 +241,8 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStart",
 
     ## FIXME: cleanup conversion of start/end to integer
     structure(data.frame(repCols, as.integer(exonStart), as.integer(exonEnd),
-                         exonRank, stringsAsFactors = FALSE, row.names = NULL),
+                         as.integer(exonRank), stringsAsFactors = FALSE,
+                         row.names = NULL),
               names = c(keepNames, "exonStart", "exonEnd", "exonRank"))
 }
 
@@ -267,15 +268,17 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
   ## Check if the exonEnd and exonStart are comma separated.
   if (length(grep(",", exonStart)) > 1 || length(grep(",", exonEnd)) > 1) {
     frame <- convertExonsCommaSepFrame(frame,
-      exonColStart = "exonStart", exonColEnd = "exonEnd")
+                                       exonColStart = "exonStart",
+                                       exonColEnd = "exonEnd")
   } else {
-    frame <- cbind(frame, exonRank)
+    frame <- cbind(frame, as.integer(exonRank))
   }
 
   ##make unique IDs for unique exons.
-  frame <- cbind(frame,int_exon_id=makeIdsForUniqueRows(frame,
-                                                        start="exonStart",
-                                                        end="exonEnd"))
+  frame <- cbind(frame,
+                 int_exon_id = makeIdsForUniqueRows(frame,
+                                                    start = "exonStart",
+                                                    end = "exonEnd"))
   .processFrame(frame)
 }
 
