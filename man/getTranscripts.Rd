@@ -18,9 +18,9 @@
 }
 \usage{
   getTranscripts(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-                 rangeRestr="either", expand=FALSE, showSQL=FALSE)
+                 rangeRestr="either", expand=FALSE)
   getExons(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-           rangeRestr="either", expand=FALSE, showSQL=FALSE)
+           rangeRestr="either", expand=FALSE)
 }
 \arguments{
   \item{ann}{A \link{TranscriptAnnotation} object.}
@@ -34,7 +34,6 @@
   \item{expand}{do additional joins to include transcript information or
     exon information depending on whether \code{getTranscripts} or
     \code{getExons} is called.}
-  \item{showSQL}{Show the SQL query sent to the DB?}
 }
 \details{These functions return relevant annotation results in a data
 frame based on the regions searched.  The \code{getExons} methods are
