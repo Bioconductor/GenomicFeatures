@@ -13,21 +13,29 @@
 ### saveGenomicAnnotation()/loadGenomicAnnotation(), or to rename the
 ### GenomicAnnotation virtual class -> Features (or GenomicFeatures,
 ### probably better).
-saveFeatures <- function(x, file) {
-  conn <- x@conn
-  ok <- sqliteCopyDatabase(conn, file)
-  stopifnot(ok)
+saveFeatures <- function(x, file)
+{
+    if (!is(x, "TranscriptAnnotation"))
+        stop("'x' must be a TranscriptAnnotation object")
+    if (!isSingleString(file))
+        stop("'file' must be a single string")
+    conn <- x@conn
+    ok <- sqliteCopyDatabase(conn, file)
+    if (!ok)
+        stop("failed to write 'x' to file '", file, "'")
 }
 
-
-loadFeatures <- function(file) {
-  if (!file.exists(file)) {
-    stop("Cannot create a TranscriptAnnotation object without an actual database file.")
-  }
-  conn <- dbConnect(SQLite(), file)
-  new("TranscriptAnnotation", conn=conn)
+### FIXME: loadFeatures() needs to put the db back into memory (it's currently
+### returning a TranscriptAnnotation object that points to the on-disk db).
+loadFeatures <- function(file)
+{
+    if (!isSingleString(file))
+        stop("'file' must be a single string")
+    if(!file.exists(file))
+        stop("file '", file, "' does not exist")
+    conn <- dbConnect(SQLite(), file)
+    new("TranscriptAnnotation", conn=conn)
 }
-
 
 .createAllDat <- function(frame) {
   drv <- dbDriver("SQLite")  

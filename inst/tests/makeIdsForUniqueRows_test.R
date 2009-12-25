@@ -3,7 +3,7 @@ set.seed(0xab56)
 makeIdsForUniqueRows <- GenomicFeatures:::makeIdsForUniqueRows
 
 
-test_makeIdForUniqueRows_extraCols <- function()
+test_makeIdsForUniqueRows_extraCols <- function()
 {
     df <- data.frame(foo=c("a", "b", "c"), 
                      chrom=c("chr2", "chr1", "chr2"),
@@ -29,7 +29,7 @@ test_makeIdForUniqueRows_extraCols <- function()
 
 
 
-test_makeIdForUniqueRows_simple <- function()
+test_makeIdsForUniqueRows_simple <- function()
 {
     df <- data.frame(chrom=c("chr2", "chr1", "chr2"),
                      strand=c("+", "-", "+"),
@@ -48,7 +48,7 @@ test_makeIdForUniqueRows_simple <- function()
     checkEquals(want[ord], makeIdsForUniqueRows(df[ord, ]))
 }
 
-test_makeIdForUniqueRows <- function() {
+test_makeIdsForUniqueRows <- function() {
     df <- data.frame(chrom=c("chr2", "chr2", "chr2", "chr2", "chr1", "chr2",
                      "chr2", "chr1", "chr3", "chr1"),
                      strand=c("+", "-", "-", "+", "+", "+", "+", "-", "-",
