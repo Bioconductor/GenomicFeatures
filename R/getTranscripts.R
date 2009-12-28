@@ -327,7 +327,7 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
       .printSQL(sqltx)
     }
     tx <- dbGetQuery(txann@conn, sqltx)
-    ans[["transcript"]] <-
+    ans[["transcripts"]] <-
       IRanges:::newCompressedList("CompressedCharacterList",
                                   as.character(tx[["tx_id"]]),
                                   end = end(Rle(tx[["_exon_id"]])))
