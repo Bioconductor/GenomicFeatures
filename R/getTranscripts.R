@@ -101,6 +101,11 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
                             expand=FALSE) {
   rangeRestr <- match.arg(rangeRestr)
   len <- max(length(chromosome), length(strand), length(ranges))
+  sql <- paste("SELECT t.tx_id, t.chromosome, t.strand,",
+               "tt.tx_start, tt.tx_end",
+               "FROM transcripts AS t,",
+               "transcript_tree AS tt",
+               "WHERE t._tx_id=tt._tx_id")
   if (len > 0) {
     if (!is.null(chromosome)) {
       if (length(chromosome) < len)
@@ -121,7 +126,7 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
     if (!is.null(ranges)) {
       if (length(ranges) < len)
         ranges <- rep(ranges, length.out = len)
-      sqladd <- .makeRangeSQL("tx_start", "tx_end", ranges, rangeRestr)
+      sqladd <- .makeRangeSQL("tt.tx_start", "tt.tx_end", ranges, rangeRestr)
       if (length(sqlwhere) == 0)
         sqlwhere <- sqladd
       else
@@ -130,13 +135,6 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
     sqlwhere <- paste("AND (",
                       paste("(", sqlwhere, ")", sep = "", collapse = " OR "),
                       ")", sep = "")
-  }
-  sql <- paste("SELECT t.tx_id, t.chromosome, t.strand,",
-               "tt.tx_start, tt.tx_end",
-               "FROM transcripts AS t,",
-               "transcript_tree AS tt",
-               "WHERE t._tx_id=tt._tx_id")
-  if (len > 0) {
     sql <- paste(sql, sqlwhere)
   }
   sql <- paste(sql, "ORDER BY t._tx_id")
@@ -144,18 +142,27 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
     .printSQL(sql)
   }
   ans <- dbGetQuery(txann@conn, sql)
-  ans <- RangedData(ranges = IRanges(start = ans[["tx_start"]],
-                                     end   = ans[["tx_end"]]),
-                    strand = strand(ans[["strand"]]),
-                    id     = ans[["tx_id"]],
-                    space  = ans[["chromosome"]])
+  ans <- RangedData(ranges     = IRanges(start = ans[["tx_start"]],
+                                         end   = ans[["tx_end"]]),
+                    strand     = strand(ans[["strand"]]),
+                    transcript = ans[["tx_id"]],
+                    space      = ans[["chromosome"]])
   if (expand) {
-    sqlexons <- paste("SELECT ests._tx_id, et.exon_start, et.exon_end",
-                      "FROM exon_tree AS et,",
-                      "exons_transcripts AS ests",
-                      "WHERE et._exon_id=ests._exon_id")
-    if (len > 0) {
-      sqlexons <- paste(sqlexons, sqlwhere)
+    if (len == 0) {
+      sqlexons <- paste("SELECT ests._tx_id, et.exon_start, et.exon_end",
+                        "FROM exon_tree AS et,",
+                        "exons_transcripts AS ests",
+                        "WHERE et._exon_id=ests._exon_id")
+    } else {
+      sqlexons <- paste("SELECT ests._tx_id, et.exon_start, et.exon_end",
+                        "FROM exon_tree AS et,",
+                        "exons_transcripts AS ests,",
+                        "transcripts AS t,",
+                        "transcript_tree AS tt",
+                        "WHERE et._exon_id=ests._exon_id",
+                        "AND ests._tx_id=t._tx_id",
+                        "AND t._tx_id=tt._tx_id",
+                        sqlwhere)
     }
     sqlexons <- paste(sqlexons, "ORDER BY ests._tx_id, ests.exon_rank")
     if (getOption("verbose", FALSE)) {
@@ -252,25 +259,12 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
                       rangeRestr=c("both","either","start","end"),
                       expand=FALSE) {
   rangeRestr <- match.arg(rangeRestr)
-  if (expand) {
-    sql <- paste("SELECT e._exon_id, e.chromosome, e.strand,",
-                 "exon_start, exon_end, ests._tx_id,",
-                 "tx_id",
-                 "FROM exons AS e,",
-                 "exon_tree AS et,",
-                 "exons_transcripts AS ests,",
-                 "transcripts AS t",
-                 "WHERE e._exon_id=et._exon_id",
-                 "AND e._exon_id=ests._exon_id",
-                 "AND ests._tx_id=t._tx_id")
-  } else {
-    sql <- paste("SELECT e._exon_id, chromosome, strand,",
-                 "exon_start, exon_end",
-                 "FROM exons AS e,",
-                 "exon_tree AS et",
-                 "WHERE e._exon_id=et._exon_id")
-  }
   len <- max(length(chromosome), length(strand), length(ranges))
+  sql <- paste("SELECT e.chromosome, e.strand,",
+               "et.exon_start, et.exon_end",
+               "FROM exons AS e,",
+               "exon_tree AS et",
+               "WHERE e._exon_id=et._exon_id")
   if (len > 0) {
     if (!is.null(chromosome)) {
       if (length(chromosome) < len)
@@ -291,21 +285,54 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
     if (!is.null(ranges)) {
       if (length(ranges) < len)
         ranges <- rep(ranges, length.out = len)
-      sqladd <- .makeRangeSQL("exon_start", "exon_end", ranges, rangeRestr)
+      sqladd <- .makeRangeSQL("et.exon_start", "et.exon_end", ranges, rangeRestr)
       if (length(sqlwhere) == 0)
         sqlwhere <- sqladd
       else
         sqlwhere <- paste(sqlwhere, sqladd, sep = " AND ")
     }
-    sql <- paste(sql, " AND (",
-                 paste("(", sqlwhere, ")", sep = "", collapse = " OR "),
-                 ")", sep = "")
+    sqlwhere <- paste("AND (",
+                      paste("(", sqlwhere, ")", sep = "", collapse = " OR "),
+                      ")", sep = "")
+    sql <- paste(sql, sqlwhere)
   }
   sql <- paste(sql, "ORDER BY e._exon_id")
   if (getOption("verbose", FALSE)) {
     .printSQL(sql)
   }
-  dbGetQuery(txann@conn, sql)
+  ans <- dbGetQuery(txann@conn, sql)
+  ans <- RangedData(ranges = IRanges(start = ans[["exon_start"]],
+                                     end   = ans[["exon_end"]]),
+                    strand = strand(ans[["strand"]]),
+                    space  = ans[["chromosome"]])
+  if (expand) {
+    if (len == 0) {
+      sqltx <- paste("SELECT ests._exon_id, t.tx_id",
+                     "FROM exons_transcripts AS ests,",
+                     "transcripts AS t",
+                     "WHERE ests._tx_id=t._tx_id")
+    } else {
+      sqltx <- paste("SELECT ests._exon_id, t.tx_id",
+                     "FROM exons_transcripts AS ests,",
+                     "transcripts AS t,",
+                     "exons AS e,",
+                     "exon_tree AS et",
+                     "WHERE ests._tx_id=t._tx_id",
+                     "AND ests._exon_id=e._exon_id",
+                     "AND e._exon_id=et._exon_id",
+                     sqlwhere)
+    }
+    sqltx <- paste(sqltx, "ORDER BY ests._exon_id")
+    if (getOption("verbose", FALSE)) {
+      .printSQL(sqltx)
+    }
+    tx <- dbGetQuery(txann@conn, sqltx)
+    ans[["transcript"]] <-
+      IRanges:::newCompressedList("CompressedCharacterList",
+                                  as.character(tx[["tx_id"]]),
+                                  end = end(Rle(tx[["_exon_id"]])))
+  }
+  ans
 }
 
 
