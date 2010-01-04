@@ -104,7 +104,7 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
   sql <- paste("SELECT t.tx_id, t.chromosome, t.strand,",
                "tt.tx_start, tt.tx_end",
                "FROM transcripts AS t,",
-               "transcript_tree AS tt",
+               "transcripts_rtree AS tt",
                "WHERE t._tx_id=tt._tx_id")
   if (len > 0) {
     if (!is.null(chromosome)) {
@@ -150,15 +150,15 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
   if (expand) {
     if (len == 0) {
       sqlexons <- paste("SELECT ests._tx_id, et.exon_start, et.exon_end",
-                        "FROM exon_tree AS et,",
+                        "FROM exons_rtree AS et,",
                         "exons_transcripts AS ests",
                         "WHERE et._exon_id=ests._exon_id")
     } else {
       sqlexons <- paste("SELECT ests._tx_id, et.exon_start, et.exon_end",
-                        "FROM exon_tree AS et,",
+                        "FROM exons_rtree AS et,",
                         "exons_transcripts AS ests,",
                         "transcripts AS t,",
-                        "transcript_tree AS tt",
+                        "transcripts_rtree AS tt",
                         "WHERE et._exon_id=ests._exon_id",
                         "AND ests._tx_id=t._tx_id",
                         "AND t._tx_id=tt._tx_id",
@@ -263,7 +263,7 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
   sql <- paste("SELECT e.chromosome, e.strand,",
                "et.exon_start, et.exon_end",
                "FROM exons AS e,",
-               "exon_tree AS et",
+               "exons_rtree AS et",
                "WHERE e._exon_id=et._exon_id")
   if (len > 0) {
     if (!is.null(chromosome)) {
@@ -316,7 +316,7 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
                      "FROM exons_transcripts AS ests,",
                      "transcripts AS t,",
                      "exons AS e,",
-                     "exon_tree AS et",
+                     "exons_rtree AS et",
                      "WHERE ests._tx_id=t._tx_id",
                      "AND ests._exon_id=e._exon_id",
                      "AND e._exon_id=et._exon_id",

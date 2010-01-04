@@ -135,14 +135,14 @@ loadFeatures <- function(file)
 
 
 .createTranscriptTreeTable <- function(conn) {
-  sql <- "CREATE VIRTUAL TABLE transcript_tree USING rtree
+  sql <- "CREATE VIRTUAL TABLE transcripts_rtree USING rtree
            (_tx_id INTEGER PRIMARY KEY,    --id a single transcript
             tx_start INTEGER,
             tx_end INTEGER)
             --FOREIGN KEY (_tx_id) REFERENCES  transcripts (_tx_id)"
   dbGetQuery(conn,sql)
 
-  sqli <- "INSERT INTO transcript_tree SELECT DISTINCT
+  sqli <- "INSERT INTO transcripts_rtree SELECT DISTINCT
              t._tx_id, ad.tx_start, ad.tx_end
              FROM transcripts AS t, all_dat AS ad
              WHERE ad.tx_id = t.tx_id"
@@ -151,14 +151,14 @@ loadFeatures <- function(file)
 
 
 .createExonTreeTable <- function(conn) {
-  sql <- "CREATE VIRTUAL TABLE exon_tree USING rtree
+  sql <- "CREATE VIRTUAL TABLE exons_rtree USING rtree
            (_exon_id INTEGER PRIMARY KEY,    --id a single exon
             exon_start INTEGER,
             exon_end INTEGER)
             --FOREIGN KEY (_exon_id) REFERENCES  exons (_exon_id)"
   dbGetQuery(conn,sql)
 
-  sqli <- "INSERT INTO exon_tree SELECT DISTINCT
+  sqli <- "INSERT INTO exons_rtree SELECT DISTINCT
              e._exon_id, ad.exon_start, ad.exon_end
              FROM exons AS e, all_dat AS ad
              WHERE ad._exon_id = e._exon_id"
