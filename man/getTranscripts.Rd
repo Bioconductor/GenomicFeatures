@@ -1,10 +1,12 @@
 \name{getTranscripts}
 
 \alias{getTranscripts}
+\alias{getTranscripts,TranscriptAnnotation,missing-method}
 \alias{getTranscripts,TranscriptAnnotation,IRanges-method}
 \alias{getTranscripts,TranscriptAnnotation,RangesList-method}
 \alias{getTranscripts,TranscriptAnnotation,RangedData-method}
 \alias{getExons}
+\alias{getExons,TranscriptAnnotation,missing-method}
 \alias{getExons,TranscriptAnnotation,IRanges-method}
 \alias{getExons,TranscriptAnnotation,RangesList-method}
 \alias{getExons,TranscriptAnnotation,RangedData-method}

@@ -48,6 +48,17 @@
 }
 
 
+setMethod("getTranscripts", c("TranscriptAnnotation", "missing"),
+    function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
+             rangeRestr="either", expand=FALSE)
+    {
+      .getTranscripts(txann=ann, ranges=ranges,
+                      chromosome=chromosome, strand=strand,
+                      rangeRestr=rangeRestr, expand=expand)
+    }
+)
+
+
 ## getTranscript methods accomodate different object and try to use the
 ## information that they contain
 setMethod("getTranscripts", c("TranscriptAnnotation", "IRanges"),
@@ -217,6 +228,16 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
 ## rd1 <- RangedData(foo, space="chr1")
 ## rd2 <- RangedData(foo, space=c("chr2","chr3"))
 
+
+setMethod("getExons", c("TranscriptAnnotation", "missing"),
+    function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
+             rangeRestr="either", expand=FALSE)
+    {
+      .getExons(txann=ann, ranges=ranges,
+                chromosome=chromosome, strand=strand,
+                rangeRestr=rangeRestr, expand=expand)
+    }
+)
 
 setMethod("getExons", c("TranscriptAnnotation", "IRanges"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
