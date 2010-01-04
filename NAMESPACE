@@ -39,6 +39,7 @@ export(
 )
 
 exportMethods(
+  as.data.frame,
   getTranscripts,
   getExons
 )

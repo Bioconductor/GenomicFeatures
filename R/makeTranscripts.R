@@ -481,3 +481,84 @@ BMTranscripts <- function(biomart="ensembl", dataset="hsapiens_gene_ensembl")
 ## library(GenomicFeatures)
 ## tx = UCSCTranscripts()
 ## saveFeatures(tx, file="HG18.sqlite")
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Comparing 2 TranscriptAnnotation objects.
+###
+
+### Low-level util for setting the class of the columns of a data.frame.
+### Should go in a low-level infrastructure package but we don't really have
+### anything like that at the moment.
+.set.data.frame.col.class <- function(x, col2class)
+{
+    if (!is.data.frame(x))
+        stop("'x' must be a data.frame")
+    if (!is.character(col2class) || is.null(names(col2class)))
+        stop("'col2class' must be a named character vector")
+    if (!all(names(col2class) %in% colnames(x)))
+        stop("'col2class' has invalid names")
+    y <- lapply(names(col2class),
+                function(colname)
+                {
+                    class <- col2class[[colname]]
+                    if (identical(class, "factor"))
+                        as.factor(x[[colname]])
+                    else
+                        as(x[[colname]], class)
+                }
+         )
+    x[names(col2class)] <- y
+    x
+}
+
+setMethod("as.data.frame", "TranscriptAnnotation",
+    function(x, row.names=NULL, optional=FALSE, ...)
+    {
+        COL2CLASS <- c(
+            gene_id="character",
+            tx_id="character",
+            tx_chrom="factor",
+            tx_strand="factor",
+            tx_start="integer",
+            tx_end="integer",
+            exon_rank="integer",
+            exon_id="character",
+            exon_chrom="factor",
+            exon_strand="factor",
+            exon_start="integer",
+            exon_end="integer"
+        )
+        sql <- "SELECT
+                  gene_id,
+                  tx_id,
+                  transcripts.chromosome AS tx_chrom,
+                  transcripts.strand AS tx_strand,
+                  tx_start, tx_end,
+                  exon_rank,
+                  exon_id,
+                  exons.chromosome AS exon_chrom,
+                  exons.strand AS exon_strand,
+                  exon_start, exon_end
+                FROM transcripts
+                  LEFT JOIN genes USING (_tx_id)
+                  INNER JOIN transcripts_rtree USING (_tx_id)
+                  INNER JOIN exons_transcripts USING (_tx_id)
+                  INNER JOIN exons USING (_exon_id)
+                  INNER JOIN exons_rtree USING (_exon_id)
+                ORDER BY tx_id, exon_rank;"
+        data <- dbGetQuery(x@conn, sql)
+        .set.data.frame.col.class(data, COL2CLASS)
+    }
+)
+
+compareTxAnns <- function(txann1, txann2)
+{
+    if (!is(txann1, "TranscriptAnnotation")
+     || !is(txann2, "TranscriptAnnotation"))
+        stop("'txann1' and 'txann2' must be TranscriptAnnotation objects")
+    data1 <- as.data.frame(txann1)
+    data2 <- as.data.frame(txann2)
+    identical(data1, data2)
+}
+
