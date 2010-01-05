@@ -222,38 +222,6 @@ makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd") {
 }
 
 
-convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStart",
-                                      exonColEnd = "exonEnd")
-{
-    frame_names <- names(frame)
-    startEndIndices <- match(c(exonColStart, exonColEnd), frame_names)
-    if (any(is.na(startEndIndices)))
-        stop("exonColStart or exonColEnd not found in column names")
-    eColStrtind <- startEndIndices[1L]
-    eColEndind <- startEndIndices[2L]
-  
-    ## Before I can call makeTranscripts, I have to split the exons up
-    ## into their own rows.
-    eStarts <- strsplit(frame[[eColStrtind]], ",")
-    lengths <- sapply(eStarts, length)
-    exonStart <- unlist(eStarts)
-    exonEnd <- unlist(strsplit(frame[[eColEndind]], ","))
-
-    ## I will use the subsetting shorthand to replicate the whole frame easily.
-    ## This needs
-    notStartEnd <- !(frame_names %in% c(exonColStart, exonColEnd))
-    repCols <- frame[rep(seq_len(nrow(frame)), lengths), notStartEnd, drop = FALSE]
-    keepNames <- names(repCols)
-    ## Derive the exonRanks:
-    exonRank <- unlist(lapply(lengths, function(x) seq_len(x)))
-
-    ## FIXME: cleanup conversion of start/end to integer
-    structure(data.frame(repCols, as.integer(exonStart), as.integer(exonEnd),
-                         as.integer(exonRank), stringsAsFactors = FALSE,
-                         row.names = NULL),
-              names = c(keepNames, "exonStart", "exonEnd", "exonRank"))
-}
-
 ### Creates a TranscriptAnnotation instance from vectors of data.
 ### All vectors must be of equal length.  The i-th element of the
 ### vectors represent data for a single exon. Transcript data will
@@ -271,17 +239,9 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
                       cdsEnd = cdsEnd,
                       exonStart = exonStart,
                       exonEnd = exonEnd,
+                      exonRank = exonRank,
                       stringsAsFactors = FALSE)
   
-  ## Check if the exonEnd and exonStart are comma separated.
-  if (is.character(exonStart) || is.character(exonEnd)) {
-    frame <- convertExonsCommaSepFrame(frame,
-                                       exonColStart = "exonStart",
-                                       exonColEnd = "exonEnd")
-  } else {
-    frame <- cbind(frame, exonRank)
-  }
-
   ##make unique IDs for unique exons.
   frame <- cbind(frame,
                  int_exon_id = makeIdsForUniqueRows(frame,
@@ -340,6 +300,20 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
 
 .makeTranscriptsFromUCSCTxTable <- function(ucsc_txtable, track, organism)
 {
+    COL2CLASS <- c(
+        name="character",
+        chrom="factor",
+        strand="factor",
+        txStart="integer",
+        txEnd="integer",
+        cdsStart="integer",
+        cdsEnd="integer",
+        exonCount="integer",
+        exonStarts="character",
+        exonEnds="character"
+    )
+    ucsc_txtable <- setDataFrameColClass(ucsc_txtable, COL2CLASS,
+                                         drop.extra.cols=TRUE)
     ## Map the transcript IDs in 'ucsc_txtable$name' to the corresponding
     ## Entrez Gene IDs. Depending on the value of 'track' ("knownGene",
     ## "refGene" or "ensGene") this is done by using either the UCSCKG, the
@@ -363,19 +337,33 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
     if (any(sapply(tx2EG, length) > 1L))
         stop("some transcript IDs are mapped to multiple Entrez Gene IDs")
     EGs <- unname(unlist(tx2EG))  # can contain NAs
-    txStart <- ucsc_txtable$txStart + 1L
-    cdsStart <- ucsc_txtable$cdsStart + 1L
-    exonStarts <- .shift.coordsInMultivaluedField(ucsc_txtable$exonStarts, 1L)
-    makeTranscripts(geneId = EGs,
-                    txId = ucsc_txtable$name,
-                    chrom = ucsc_txtable$chrom,
-                    strand = ucsc_txtable$strand,
-                    txStart = txStart,
-                    txEnd = ucsc_txtable$txEnd,
-                    cdsStart = cdsStart,
-                    cdsEnd = ucsc_txtable$cdsEnd,
-                    exonStart = exonStarts,
-                    exonEnd = ucsc_txtable$exonEnds)
+    ## Exon starts and ends are multi-valued fields (comma-separated) that
+    ## need to be expanded.
+    exon_count <- ucsc_txtable$exonCount
+    if (min(exon_count) <= 0L)
+        stop("'ucsc_txtable$exonCount' contains non-positive values")
+    exonStarts <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonStarts)
+    if (!identical(elementLengths(exonStarts), exon_count))
+        stop("'ucsc_txtable$exonStarts' inconsistent ",
+             "with 'ucsc_txtable$exonCount'")
+    exonEnds <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonEnds)
+    if (!identical(elementLengths(exonEnds), exon_count))
+        stop("'ucsc_txtable$exonEnds' inconsistent ",
+             "with 'ucsc_txtable$exonCount'")
+    txtable <- data.frame(
+        geneId=rep.int(EGs, exon_count),
+        txId=rep.int(ucsc_txtable$name, exon_count),
+        chrom=rep.int(ucsc_txtable$chrom, exon_count),
+        strand=rep.int(ucsc_txtable$strand, exon_count),
+        txStart=rep.int(ucsc_txtable$txStart, exon_count) + 1L,
+        txEnd=rep.int(ucsc_txtable$txEnd, exon_count),
+        cdsStart=rep.int(ucsc_txtable$cdsStart, exon_count) + 1L,
+        cdsEnd=rep.int(ucsc_txtable$cdsEnd, exon_count),
+        exonStart=unlist(exonStarts) + 1L,
+        exonEnd=unlist(exonEnds),
+        exonRank=IRanges:::mseq(rep.int(1L, length(exon_count)), exon_count),
+        stringsAsFactors=FALSE)
+    do.call(makeTranscripts, txtable)
 }
 
 ### The 2 main tasks that UCSCTranscripts() performs are: (1) download the
@@ -385,7 +373,7 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
 ### Speed:
 ###   - for track="knownGene" and genome="hg18":
 ###       (1) download takes about 40-50 sec.
-###       (2) db creation takes about 63-65 sec.
+###       (2) db creation takes about 55-60 sec.
 ### TODO: Support for track="refGene" is currently disabled because this
 ### track doesn't seem to contain anything that could be used as a unique
 ### transcript ID. So we need to either find a way to retrieve (or generate)
@@ -408,21 +396,7 @@ UCSCTranscripts <- function(track=c("knownGene","refGene","ensGene"),
     session <- browserSession()
     genome(session) <- genome
     query <- ucscTableQuery(session, track)
-    ucsc_txtable <- getTable(query)
-    COL2CLASS <- c(
-        name="character",
-        chrom="factor",
-        strand="factor",
-        txStart="integer",
-        txEnd="integer",
-        cdsStart="integer",
-        cdsEnd="integer",
-        exonCount="integer",
-        exonStarts="character",
-        exonEnds="character"
-    )
-    ucsc_txtable <- setDataFrameColClass(ucsc_txtable, COL2CLASS,
-                                         drop.extra.cols=TRUE)
+    ucsc_txtable <- getTable(query)  # download the data
     .makeTranscriptsFromUCSCTxTable(ucsc_txtable, track, organism)
 }
 
