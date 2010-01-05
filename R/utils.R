@@ -45,6 +45,38 @@ get_dbtable <- function(tablename, datacache)
     get(tablename, envir=datacache)
 }
 
+### Low-level util for setting the class of (all or some of) the columns of
+### a data.frame. Could go in a low-level infrastructure package but we don't
+### really have anything like that at the moment.
+### Typical use:
+###   x <- setDataFrameColClass(x, c(col2="integer", col5="factor"))
+setDataFrameColClass <- function(x, col2class, drop.extra.cols=FALSE)
+{
+    if (!is.data.frame(x))
+        stop("'x' must be a data.frame")
+    if (!is.character(col2class) || is.null(names(col2class)))
+        stop("'col2class' must be a named character vector")
+    if (!all(names(col2class) %in% colnames(x)))
+        stop("'col2class' has invalid names")
+    if (!isTRUEorFALSE(drop.extra.cols))
+        stop("'drop.extra.cols' must be TRUE or FALSE")
+    y <- lapply(names(col2class),
+                function(colname)
+                {
+                    class <- col2class[[colname]]
+                    if (identical(class, "factor"))
+                        as.factor(x[[colname]])
+                    else
+                        as(x[[colname]], class)
+                }
+         )
+    if (drop.extra.cols) {
+        names(y) <- names(col2class)
+        return(as.data.frame(y, stringsAsFactors=FALSE))
+    }
+    x[names(col2class)] <- y
+    x
+}
 
 test_GenomicFeatures <- function(dir)
 {

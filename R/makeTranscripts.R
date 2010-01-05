@@ -234,10 +234,10 @@ convertExonsCommaSepFrame <- function(frame, exonColStart = "exonStart",
   
     ## Before I can call makeTranscripts, I have to split the exons up
     ## into their own rows.
-    eStarts <- strsplit(as.character(frame[[eColStrtind]]), ",")
+    eStarts <- strsplit(frame[[eColStrtind]], ",")
     lengths <- sapply(eStarts, length)
     exonStart <- unlist(eStarts)
-    exonEnd <- unlist(strsplit(as.character(frame[[eColEndind]]), ","))
+    exonEnd <- unlist(strsplit(frame[[eColEndind]], ","))
 
     ## I will use the subsetting shorthand to replicate the whole frame easily.
     ## This needs
@@ -274,12 +274,12 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
                       stringsAsFactors = FALSE)
   
   ## Check if the exonEnd and exonStart are comma separated.
-  if (length(grep(",", exonStart)) > 1 || length(grep(",", exonEnd)) > 1) {
+  if (is.character(exonStart) || is.character(exonEnd)) {
     frame <- convertExonsCommaSepFrame(frame,
                                        exonColStart = "exonStart",
                                        exonColEnd = "exonEnd")
   } else {
-    frame <- cbind(frame, as.integer(exonRank))
+    frame <- cbind(frame, exonRank)
   }
 
   ##make unique IDs for unique exons.
@@ -338,12 +338,12 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
     paste("org", orgcode, "eg.db", sep=".")
 }
 
-.makeTranscriptsFromUCSCTable <- function(txtable, track, organism)
+.makeTranscriptsFromUCSCTxTable <- function(ucsc_txtable, track, organism)
 {
-    ## Map the transcript IDs in 'txtable$name' to the corresponding Entrez
-    ## Gene IDs. Depending on the value of 'track' ("knownGene", "refGene"
-    ## or "ensGene") this is done by using either the UCSCKG, the REFSEQ
-    ## or the ENSEMBLTRANS map from the appropriate org package.
+    ## Map the transcript IDs in 'ucsc_txtable$name' to the corresponding
+    ## Entrez Gene IDs. Depending on the value of 'track' ("knownGene",
+    ## "refGene" or "ensGene") this is done by using either the UCSCKG, the
+    ## REFSEQ or the ENSEMBLTRANS map from the appropriate org package.
     orgpkg <- .getOrgPkgFromOrganism(organism)
     TRACK2MAPNAME <- c(
         knownGene="UCSCKG",
@@ -359,31 +359,46 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
     ## most one Entrez Gene ID, which will probably be true most of the
     ## time. For now we raise an error if this is not the case, but we might
     ## also want to handle this nicely in the future.
-    tx2EG <- mget(as.character(txtable$name), revmap(map),
-                  ifnotfound=NA_character_)
+    tx2EG <- mget(ucsc_txtable$name, revmap(map), ifnotfound=NA_character_)
     if (any(sapply(tx2EG, length) > 1L))
         stop("some transcript IDs are mapped to multiple Entrez Gene IDs")
     EGs <- unname(unlist(tx2EG))  # can contain NAs
-    txStart <- txtable$txStart + 1L
-    cdsStart <- txtable$cdsStart + 1L
-    exonStarts <- .shift.coordsInMultivaluedField(
-                      as.character(txtable$exonStarts), 1L)
+    txStart <- ucsc_txtable$txStart + 1L
+    cdsStart <- ucsc_txtable$cdsStart + 1L
+    exonStarts <- .shift.coordsInMultivaluedField(ucsc_txtable$exonStarts, 1L)
     makeTranscripts(geneId = EGs,
-                    txId = txtable$name,
-                    chrom = txtable$chrom,
-                    strand = txtable$strand,
+                    txId = ucsc_txtable$name,
+                    chrom = ucsc_txtable$chrom,
+                    strand = ucsc_txtable$strand,
                     txStart = txStart,
-                    txEnd = txtable$txEnd,
+                    txEnd = ucsc_txtable$txEnd,
                     cdsStart = cdsStart,
-                    cdsEnd = txtable$cdsEnd,
+                    cdsEnd = ucsc_txtable$cdsEnd,
                     exonStart = exonStarts,
-                    exonEnd = txtable$exonEnds)
+                    exonEnd = ucsc_txtable$exonEnds)
 }
 
+### The 2 main tasks that UCSCTranscripts() performs are: (1) download the
+### data from UCSC into a data.frame (the getTable() call), and (2) store
+### that data.frame in an SQLite db (the .makeTranscriptsFromUCSCTxTable()
+### call).
+### Speed:
+###   - for track="knownGene" and genome="hg18":
+###       (1) download takes about 40-50 sec.
+###       (2) db creation takes about 63-65 sec.
+### TODO: Support for track="refGene" is currently disabled because this
+### track doesn't seem to contain anything that could be used as a unique
+### transcript ID. So we need to either find a way to retrieve (or generate)
+### this unique ID from somewhere else or drop "refGene" from the list of
+### valid values for the 'track' arg.
+### FIXME: Support for track="ensGene" is currently broken because some
+### transcript IDs are mapped to multiple Entrez Gene IDs.
 UCSCTranscripts <- function(track=c("knownGene","refGene","ensGene"),
                             genome="hg18")
 {
     track <- match.arg(track)
+    if (track == "refGene")
+        stop("track \"refGene\" is not currently supported, sorry!")
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
     organism <- .getOrganismFromUCSCgenome(genome)
@@ -393,8 +408,22 @@ UCSCTranscripts <- function(track=c("knownGene","refGene","ensGene"),
     session <- browserSession()
     genome(session) <- genome
     query <- ucscTableQuery(session, track)
-    table <- getTable(query)
-    .makeTranscriptsFromUCSCTable(table, track, organism)
+    ucsc_txtable <- getTable(query)
+    COL2CLASS <- c(
+        name="character",
+        chrom="factor",
+        strand="factor",
+        txStart="integer",
+        txEnd="integer",
+        cdsStart="integer",
+        cdsEnd="integer",
+        exonCount="integer",
+        exonStarts="character",
+        exonEnds="character"
+    )
+    ucsc_txtable <- setDataFrameColClass(ucsc_txtable, COL2CLASS,
+                                         drop.extra.cols=TRUE)
+    .makeTranscriptsFromUCSCTxTable(ucsc_txtable, track, organism)
 }
 
 
@@ -409,7 +438,7 @@ UCSCTranscripts <- function(track=c("knownGene","refGene","ensGene"),
 BMTranscripts <- function(biomart="ensembl", dataset="hsapiens_gene_ensembl")
 {
     mart <- useMart(biomart=biomart, dataset=dataset)
-    txtable <- getBM(mart=mart,
+    bm_txtable <- getBM(mart=mart,
                      attributes=c("ensembl_gene_id",
                                   "ensembl_transcript_id",
                                   "chromosome_name",
@@ -422,18 +451,18 @@ BMTranscripts <- function(biomart="ensembl", dataset="hsapiens_gene_ensembl")
                                   "exon_chrom_start",
                                   "exon_chrom_end",
                                   "rank"))
-    makeTranscripts(geneId = txtable$ensembl_gene_id,
-                    txId = txtable$ensembl_transcript_id,
-                    chrom = txtable$chromosome_name,
-                    strand = txtable$strand,
-                    txStart = txtable$transcript_start,
-                    txEnd = txtable$transcript_end,
-                    cdsStart = txtable$cds_start,
-                    cdsEnd = txtable$cds_end,
-                    exonStart = txtable$exon_chrom_start,
-                    exonEnd = txtable$exon_chrom_end,
-                    exonRank = txtable$rank,
-                    exonId = txtable$ensembl_exon_id)
+    makeTranscripts(geneId = bm_txtable$ensembl_gene_id,
+                    txId = bm_txtable$ensembl_transcript_id,
+                    chrom = bm_txtable$chromosome_name,
+                    strand = bm_txtable$strand,
+                    txStart = bm_txtable$transcript_start,
+                    txEnd = bm_txtable$transcript_end,
+                    cdsStart = bm_txtable$cds_start,
+                    cdsEnd = bm_txtable$cds_end,
+                    exonStart = bm_txtable$exon_chrom_start,
+                    exonEnd = bm_txtable$exon_chrom_end,
+                    exonRank = bm_txtable$rank,
+                    exonId = bm_txtable$ensembl_exon_id)
     ##this is EXTRA info. that we don't have for UCSC - to make use of it we
     ##will want to attach it as an extra field in the DB.
 }
@@ -487,31 +516,6 @@ BMTranscripts <- function(biomart="ensembl", dataset="hsapiens_gene_ensembl")
 ### Comparing 2 TranscriptAnnotation objects.
 ###
 
-### Low-level util for setting the class of the columns of a data.frame.
-### Should go in a low-level infrastructure package but we don't really have
-### anything like that at the moment.
-.set.data.frame.col.class <- function(x, col2class)
-{
-    if (!is.data.frame(x))
-        stop("'x' must be a data.frame")
-    if (!is.character(col2class) || is.null(names(col2class)))
-        stop("'col2class' must be a named character vector")
-    if (!all(names(col2class) %in% colnames(x)))
-        stop("'col2class' has invalid names")
-    y <- lapply(names(col2class),
-                function(colname)
-                {
-                    class <- col2class[[colname]]
-                    if (identical(class, "factor"))
-                        as.factor(x[[colname]])
-                    else
-                        as(x[[colname]], class)
-                }
-         )
-    x[names(col2class)] <- y
-    x
-}
-
 setMethod("as.data.frame", "TranscriptAnnotation",
     function(x, row.names=NULL, optional=FALSE, ...)
     {
@@ -548,7 +552,7 @@ setMethod("as.data.frame", "TranscriptAnnotation",
                   INNER JOIN exons_rtree USING (_exon_id)
                 ORDER BY tx_id, exon_rank;"
         data <- dbGetQuery(x@conn, sql)
-        .set.data.frame.col.class(data, COL2CLASS)
+        setDataFrameColClass(data, COL2CLASS)
     }
 )
 
