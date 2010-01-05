@@ -48,11 +48,11 @@
 }
 
 
-setMethod("getTranscripts", c("TranscriptAnnotation", "missing"),
+setMethod("getTranscripts", c("TranscriptDb", "missing"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
              rangeRestr="either", expand=FALSE)
     {
-      .getTranscripts(txann=ann, ranges=ranges,
+      .getTranscripts(txdb=ann, ranges=ranges,
                       chromosome=chromosome, strand=strand,
                       rangeRestr=rangeRestr, expand=expand)
     }
@@ -61,11 +61,11 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "missing"),
 
 ## getTranscript methods accomodate different object and try to use the
 ## information that they contain
-setMethod("getTranscripts", c("TranscriptAnnotation", "IRanges"),
+setMethod("getTranscripts", c("TranscriptDb", "IRanges"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
              rangeRestr="either", expand=FALSE)
     {
-      .getTranscripts(txann=ann, ranges=ranges,
+      .getTranscripts(txdb=ann, ranges=ranges,
                       chromosome=chromosome, strand=strand,
                       rangeRestr=rangeRestr, expand=expand)
     }
@@ -76,25 +76,25 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "IRanges"),
 ## just check for any additional chromosome and strand information in there,
 ## and append that to my chromosome and strand information.
 
-setMethod("getTranscripts", c("TranscriptAnnotation", "RangedData"),
+setMethod("getTranscripts", c("TranscriptDb", "RangedData"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
              rangeRestr="either", expand=FALSE)
     {
       rdChromosome <- space(ranges)
       chromosome <- c(chromosome, rdChromosome)
       ranges <- unlist(ranges(ranges), use.names=FALSE)
-      .getTranscripts(txann=ann, ranges=ranges,
+      .getTranscripts(txdb=ann, ranges=ranges,
                       chromosome=chromosome, strand=strand,
                       rangeRestr=rangeRestr, expand=expand)
     }
 )
 
-setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
+setMethod("getTranscripts", c("TranscriptDb", "RangesList"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
              rangeRestr="either", expand=FALSE)
     {
       ranges <- unlist(ranges, use.names=FALSE)
-      .getTranscripts(txann=ann, ranges=ranges,
+      .getTranscripts(txdb=ann, ranges=ranges,
                       chromosome=chromosome, strand=strand,
                       rangeRestr=rangeRestr, expand=expand)
     }
@@ -105,8 +105,8 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
   cat(strwrap(gsub("\\n +"," ",sql)),sep="\n")
 }
 
-### Extract selected transcripts from 'txann'.
-.getTranscripts <- function(txann, ranges=NULL, chromosome=NULL,
+### Extract selected transcripts from 'txdb'.
+.getTranscripts <- function(txdb, ranges=NULL, chromosome=NULL,
                             strand=NULL,
                             rangeRestr=c("both","either","start","end"),
                             expand=FALSE) {
@@ -152,7 +152,7 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
   if (getOption("verbose", FALSE)) {
     .printSQL(sql)
   }
-  ans <- dbGetQuery(txann@conn, sql)
+  ans <- dbGetQuery(txdb@conn, sql)
   ans <- RangedData(ranges     = IRanges(start = ans[["tx_start"]],
                                          end   = ans[["tx_end"]]),
                     strand     = strand(ans[["strand"]]),
@@ -179,7 +179,7 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
     if (getOption("verbose", FALSE)) {
       .printSQL(sqlexons)
     }
-    exons <- dbGetQuery(txann@conn, sqlexons)
+    exons <- dbGetQuery(txdb@conn, sqlexons)
     ans[["exons"]] <-
       IRanges:::newCompressedList("CompressedIRangesList",
                                   IRanges(start = exons[["exon_start"]],
@@ -194,33 +194,33 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
 
 ## ##eg
 ## ## library(GenomicFeatures)
-## ## txann = loadFeatures("myTest.sqlite")
-## txann <- loadFeatures(system.file("extdata", "HG18test.sqlite",
+## ## txdb = loadFeatures("myTest.sqlite")
+## txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite",
 ##                       package="GenomicFeatures"))
 
 
 ## ##This works though:
 ## ##foo = IRanges(start=c(500), end=c(10000))
 ## foo = IRanges(start=c(1000), end=c(20000))
-## getTranscripts(txann,foo,"chr1","-")
+## getTranscripts(txdb,foo,"chr1","-")
 
 
 ## ##BUT NOT this (because no data there):
 ## foo = IRanges(start=c(16000), end=c(20000))
-## getTranscripts(txann,foo,"chr1","-", rangeRestr="both")
+## getTranscripts(txdb,foo,"chr1","-", rangeRestr="both")
 
 
 ## ##AND a more complicated example...
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getTranscripts(txann,foo,"chr1","-")
+## getTranscripts(txdb,foo,"chr1","-")
 
 ##Compound search:
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getTranscripts(txann,foo,c("chr1","chr2"),c("-","+"))
+## getTranscripts(txdb,foo,c("chr1","chr2"),c("-","+"))
 
 ##Compound expanded search:
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getTranscripts(txann,foo,c("chr1","chr2"),c("-","+"),
+## getTranscripts(txdb,foo,c("chr1","chr2"),c("-","+"),
 ## rangeRestr= "both", expand=TRUE)
 
 
@@ -229,53 +229,53 @@ setMethod("getTranscripts", c("TranscriptAnnotation", "RangesList"),
 ## rd2 <- RangedData(foo, space=c("chr2","chr3"))
 
 
-setMethod("getExons", c("TranscriptAnnotation", "missing"),
+setMethod("getExons", c("TranscriptDb", "missing"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
              rangeRestr="either", expand=FALSE)
     {
-      .getExons(txann=ann, ranges=ranges,
+      .getExons(txdb=ann, ranges=ranges,
                 chromosome=chromosome, strand=strand,
                 rangeRestr=rangeRestr, expand=expand)
     }
 )
 
-setMethod("getExons", c("TranscriptAnnotation", "IRanges"),
+setMethod("getExons", c("TranscriptDb", "IRanges"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
              rangeRestr="either", expand=FALSE)
     {
-      .getExons(txann=ann, ranges=ranges,
+      .getExons(txdb=ann, ranges=ranges,
                 chromosome=chromosome, strand=strand,
                 rangeRestr=rangeRestr, expand=expand)
     }
 )
 
-setMethod("getExons", c("TranscriptAnnotation", "RangedData"),
+setMethod("getExons", c("TranscriptDb", "RangedData"),
     function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
              rangeRestr="either", expand=FALSE)
     {
       rdChromosome <- space(ranges)
       chromosome <- c(chromosome, rdChromosome)
       ranges <- unlist(ranges(ranges), use.names=FALSE)
-      .getExons(txann=ann, ranges=ranges,
+      .getExons(txdb=ann, ranges=ranges,
                 chromosome=chromosome, strand=strand,
                 rangeRestr=rangeRestr, expand=expand)
     }
 )
 
-setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
+setMethod("getExons", c("TranscriptDb", "RangesList"),
     function(ann, ranges, chromosome=NULL,
              strand=NULL, rangeRestr="either",
              expand=FALSE)
     {
       ranges <- unlist(ranges, use.names=FALSE)
-      .getExons(txann=ann, ranges=ranges,
+      .getExons(txdb=ann, ranges=ranges,
                 chromosome=chromosome, strand=strand,
                 rangeRestr=rangeRestr, expand=expand)            
     }
 )
 
-### Extract selected exons from 'txann'.
-.getExons <- function(txann, ranges=NULL, chromosome=NULL,
+### Extract selected exons from 'txdb'.
+.getExons <- function(txdb, ranges=NULL, chromosome=NULL,
                       strand=NULL,
                       rangeRestr=c("both","either","start","end"),
                       expand=FALSE) {
@@ -321,7 +321,7 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
   if (getOption("verbose", FALSE)) {
     .printSQL(sql)
   }
-  ans <- dbGetQuery(txann@conn, sql)
+  ans <- dbGetQuery(txdb@conn, sql)
   ans <- RangedData(ranges = IRanges(start = ans[["exon_start"]],
                                      end   = ans[["exon_end"]]),
                     strand = strand(ans[["strand"]]),
@@ -347,7 +347,7 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
     if (getOption("verbose", FALSE)) {
       .printSQL(sqltx)
     }
-    tx <- dbGetQuery(txann@conn, sqltx)
+    tx <- dbGetQuery(txdb@conn, sqltx)
     ans[["transcripts"]] <-
       IRanges:::newCompressedList("CompressedCharacterList",
                                   as.character(tx[["tx_id"]]),
@@ -359,16 +359,16 @@ setMethod("getExons", c("TranscriptAnnotation", "RangesList"),
 
 ## ##Complex example for exons.
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getExons(txann,foo,"chr1","-")
+## getExons(txdb,foo,"chr1","-")
 
 ##vectorized tests:
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getExons(txann,foo,c("chr1","chr2"),c("-","+"))
+## getExons(txdb,foo,c("chr1","chr2"),c("-","+"))
 
 ## expanded:
 ## option(verbose = TRUE)
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
-## getExons(txann,foo,c("chr1","chr2"),c("-","+"), expand=TRUE)
+## getExons(txdb,foo,c("chr1","chr2"),c("-","+"), expand=TRUE)
 
 
 ## LATER STUFF

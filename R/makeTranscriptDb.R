@@ -8,15 +8,10 @@
 ## dbConnect() to set max.con = 100 so that the max number of connections is
 ## greater than 16).
 
-
-### HP: I suggest to either rename saveFeatures()/loadFeatures() ->
-### saveGenomicAnnotation()/loadGenomicAnnotation(), or to rename the
-### GenomicAnnotation virtual class -> Features (or GenomicFeatures,
-### probably better).
 saveFeatures <- function(x, file)
 {
-    if (!is(x, "TranscriptAnnotation"))
-        stop("'x' must be a TranscriptAnnotation object")
+    if (!is(x, "TranscriptDb"))
+        stop("'x' must be a TranscriptDb object")
     if (!isSingleString(file))
         stop("'file' must be a single string")
     conn <- x@conn
@@ -26,7 +21,7 @@ saveFeatures <- function(x, file)
 }
 
 ### FIXME: loadFeatures() needs to put the db back into memory (it's currently
-### returning a TranscriptAnnotation object that points to the on-disk db).
+### returning a TranscriptDb object that points to the on-disk db).
 loadFeatures <- function(file)
 {
     if (!isSingleString(file))
@@ -34,7 +29,7 @@ loadFeatures <- function(file)
     if(!file.exists(file))
         stop("file '", file, "' does not exist")
     conn <- dbConnect(SQLite(), file)
-    new("TranscriptAnnotation", conn=conn)
+    new("TranscriptDb", conn=conn)
 }
 
 .createAllDat <- function(frame) {
@@ -202,7 +197,7 @@ loadFeatures <- function(file)
   .dropOldTable(conn,"all_dat")
   
   ## plan is to end with making the object
-  new("TranscriptAnnotation", conn=conn)
+  new("TranscriptDb", conn=conn)
 }
 
 
@@ -222,13 +217,13 @@ makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd") {
 }
 
 
-### Creates a TranscriptAnnotation instance from vectors of data.
+### Creates a TranscriptDb instance from vectors of data.
 ### All vectors must be of equal length.  The i-th element of the
 ### vectors represent data for a single exon. Transcript data will
 ### be repeated over all exons within the trancsript.
-makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
-                            cdsStart, cdsEnd, exonStart, exonEnd, exonRank,
-                            exonId = vector()) {
+makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
+                             cdsStart, cdsEnd, exonStart, exonEnd, exonRank,
+                             exonId = vector()) {
   frame <- data.frame(geneId = geneId,
                       txId = txId,
                       chrom = chrom,
@@ -252,7 +247,7 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### UCSCTranscripts() and UCSC-specific helper functions.
+### makeTranscriptDbFromUCSC() and UCSC-specific helper functions.
 ###
 
 ### Could belong to rtracklayer.
@@ -298,7 +293,7 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
     paste("org", orgcode, "eg.db", sep=".")
 }
 
-.makeTranscriptsFromUCSCTxTable <- function(ucsc_txtable, track, organism)
+.makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, track, organism)
 {
     COL2CLASS <- c(
         name="character",
@@ -363,13 +358,13 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
         exonEnd=unlist(exonEnds),
         exonRank=IRanges:::mseq(rep.int(1L, length(exon_count)), exon_count),
         stringsAsFactors=FALSE)
-    do.call(makeTranscripts, txtable)
+    do.call(makeTranscriptDb, txtable)
 }
 
-### The 2 main tasks that UCSCTranscripts() performs are: (1) download the
-### data from UCSC into a data.frame (the getTable() call), and (2) store
-### that data.frame in an SQLite db (the .makeTranscriptsFromUCSCTxTable()
-### call).
+### The 2 main tasks that makeTranscriptDbFromUCSC() performs are:
+###   (1) download the data from UCSC into a data.frame (the getTable() call);
+###   (2) store that data.frame in an SQLite db (the
+###       .makeTranscriptDbFromUCSCTxTable() call).
 ### Speed:
 ###   - for track="knownGene" and genome="hg18":
 ###       (1) download takes about 40-50 sec.
@@ -381,7 +376,7 @@ makeTranscripts <- function(geneId, txId, chrom, strand, txStart, txEnd,
 ### valid values for the 'track' arg.
 ### FIXME: Support for track="ensGene" is currently broken because some
 ### transcript IDs are mapped to multiple Entrez Gene IDs.
-UCSCTranscripts <- function(track=c("knownGene","refGene","ensGene"),
+makeTranscriptDbFromUCSC <- function(track=c("knownGene","refGene","ensGene"),
                             genome="hg18")
 {
     track <- match.arg(track)
@@ -397,19 +392,21 @@ UCSCTranscripts <- function(track=c("knownGene","refGene","ensGene"),
     genome(session) <- genome
     query <- ucscTableQuery(session, track)
     ucsc_txtable <- getTable(query)  # download the data
-    .makeTranscriptsFromUCSCTxTable(ucsc_txtable, track, organism)
+    .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, track, organism)
 }
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### BMTranscripts().
+### makeTranscriptDbFromBiomart().
 ###
 ### For people who want to tap biomaRt.
-### Typical usage:
-###   BMTranscripts(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+### Typical use:
+###   txdb <- makeTranscriptDbFromBiomart(biomart="ensembl",
+###                                       dataset="hsapiens_gene_ensembl")
 ###
 
-BMTranscripts <- function(biomart="ensembl", dataset="hsapiens_gene_ensembl")
+makeTranscriptDbFromBiomart <- function(biomart="ensembl",
+                                        dataset="hsapiens_gene_ensembl")
 {
     mart <- useMart(biomart=biomart, dataset=dataset)
     bm_txtable <- getBM(mart=mart,
@@ -425,18 +422,18 @@ BMTranscripts <- function(biomart="ensembl", dataset="hsapiens_gene_ensembl")
                                   "exon_chrom_start",
                                   "exon_chrom_end",
                                   "rank"))
-    makeTranscripts(geneId = bm_txtable$ensembl_gene_id,
-                    txId = bm_txtable$ensembl_transcript_id,
-                    chrom = bm_txtable$chromosome_name,
-                    strand = bm_txtable$strand,
-                    txStart = bm_txtable$transcript_start,
-                    txEnd = bm_txtable$transcript_end,
-                    cdsStart = bm_txtable$cds_start,
-                    cdsEnd = bm_txtable$cds_end,
-                    exonStart = bm_txtable$exon_chrom_start,
-                    exonEnd = bm_txtable$exon_chrom_end,
-                    exonRank = bm_txtable$rank,
-                    exonId = bm_txtable$ensembl_exon_id)
+    makeTranscriptDb(geneId = bm_txtable$ensembl_gene_id,
+                     txId = bm_txtable$ensembl_transcript_id,
+                     chrom = bm_txtable$chromosome_name,
+                     strand = bm_txtable$strand,
+                     txStart = bm_txtable$transcript_start,
+                     txEnd = bm_txtable$transcript_end,
+                     cdsStart = bm_txtable$cds_start,
+                     cdsEnd = bm_txtable$cds_end,
+                     exonStart = bm_txtable$exon_chrom_start,
+                     exonEnd = bm_txtable$exon_chrom_end,
+                     exonRank = bm_txtable$rank,
+                     exonId = bm_txtable$ensembl_exon_id)
     ##this is EXTRA info. that we don't have for UCSC - to make use of it we
     ##will want to attach it as an extra field in the DB.
 }
@@ -482,15 +479,15 @@ BMTranscripts <- function(biomart="ensembl", dataset="hsapiens_gene_ensembl")
 ##frame = frame[c(1:500, 100000:100100, 120000:120100, 150000:150100,
 ##170000:170100, 200000:200100),]
 ## library(GenomicFeatures)
-## tx = UCSCTranscripts()
-## saveFeatures(tx, file="HG18.sqlite")
+## txdb = makeTranscriptDbFromUCSC()
+## saveFeatures(txdb, file="HG18.sqlite")
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Comparing 2 TranscriptAnnotation objects.
+### Comparing 2 TranscriptDb objects.
 ###
 
-setMethod("as.data.frame", "TranscriptAnnotation",
+setMethod("as.data.frame", "TranscriptDb",
     function(x, row.names=NULL, optional=FALSE, ...)
     {
         COL2CLASS <- c(
@@ -530,13 +527,13 @@ setMethod("as.data.frame", "TranscriptAnnotation",
     }
 )
 
-compareTxAnns <- function(txann1, txann2)
+compareTranscriptDbs <- function(txdb1, txdb2)
 {
-    if (!is(txann1, "TranscriptAnnotation")
-     || !is(txann2, "TranscriptAnnotation"))
-        stop("'txann1' and 'txann2' must be TranscriptAnnotation objects")
-    data1 <- as.data.frame(txann1)
-    data2 <- as.data.frame(txann2)
+    if (!is(txdb1, "TranscriptDb")
+     || !is(txdb2, "TranscriptDb"))
+        stop("'txdb1' and 'txdb2' must be TranscriptDb objects")
+    data1 <- as.data.frame(txdb1)
+    data2 <- as.data.frame(txdb2)
     identical(data1, data2)
 }
 

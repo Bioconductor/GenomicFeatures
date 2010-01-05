@@ -5,7 +5,7 @@
   Methods to save and load the database contents for a Transcript Object.
 }
 \description{
-  These methods provide a way to dump a TranscriptAnnotation object to
+  These methods provide a way to dump a TranscriptDb object to
   an SQLite file, and to recreate that object the saved file.
 }
 \usage{
@@ -17,21 +17,21 @@
   \item{file}{A SQLite Database filename.}
 }
 \value{
-  For \code{loadFeatures} only, a \link{TranscriptAnnotation}
+  For \code{loadFeatures} only, a \link{TranscriptDb}
   object is returned.
 }
 \author{
   M. Carlson
 }
 \seealso{
-  \link{TranscriptAnnotation}
+  \link{TranscriptDb}
 }
 \examples{
 \dontrun{
-  ##Have a Transcript Object called tx?
+  ##Have a TranscriptDb object called txdb?
   ##You can save it:
-  saveFeatures(tx, file="HG18.sqlite")
-  ##Then later you can quickly  re-constitute it like this:
-  tx <- loadFeatures("HG18.sqlite")
+  saveFeatures(txdb, file="HG18.sqlite")
+  ##Then later you can quickly re-constitute it like this:
+  txdb <- loadFeatures("HG18.sqlite")
 }
 }

@@ -1,31 +1,32 @@
-\name{makeTranscripts}
+\name{makeTranscriptDb}
 
-\alias{makeTranscripts}
-\alias{UCSCTranscripts}
-\alias{BMTranscripts}
+\alias{makeTranscriptDb}
+\alias{makeTranscriptDbFromUCSC}
+\alias{makeTranscriptDbFromBiomart}
 
-\alias{GenomicAnnotation-class}
-\alias{class:GenomicAnnotation}
-\alias{GenomicAnnotation}
+\alias{GenomicFeatures-class}
+\alias{class:GenomicFeatures}
+\alias{GenomicFeatures}
 
-\alias{TranscriptAnnotation-class}
-\alias{class:TranscriptAnnotation}
-\alias{TranscriptAnnotation}
+\alias{TranscriptDb-class}
+\alias{class:TranscriptDb}
+\alias{TranscriptDb}
 
 \title{
-  Creating TranscriptAnnotation objects from publicly available sources.
+  Creating TranscriptDb objects from publicly available sources.
 }
 \description{
-  Flexible tools for creating a TranscriptAnnotation object from
+  Flexible tools for creating a TranscriptDb object from
   a publicly available source (like the UCSC genome browser or BioMart),
   or from a local file.
 }
 \usage{
-  makeTranscripts(geneId, txId, chrom, strand, txStart, txEnd,
-                  cdsStart, cdsEnd, exonStart,exonEnd, exonRank, 
-                  exonId)
-  UCSCTranscripts(track=c("knownGene","refGene","ensGene"), genome="hg18")
-  BMTranscripts(biomart, dataset)
+  makeTranscriptDb(geneId, txId, chrom, strand, txStart, txEnd,
+                   cdsStart, cdsEnd, exonStart,exonEnd, exonRank, 
+                   exonId)
+  makeTranscriptDbFromUCSC(track=c("knownGene","refGene","ensGene"),
+                           genome="hg18")
+  makeTranscriptDbFromBiomart(biomart, dataset)
 }
 \arguments{
   \item{geneId}{vector of gene IDs}
@@ -51,24 +52,24 @@
 \details{
   All three of these functions perform similar tasks.
 
-  The most general form is \code{makeTranscripts}, which simply takes
+  The most general form is \code{makeTranscriptDb}, which simply takes
   vectors of equal length. The i-th element of the vectors represent data
   for a single exon. Transcript data must be repeated over all exons within
   a given trancsript.
 
-  \code{UCSCTranscripts} and \code{BMTranscripts} are convenience functions
-  for feeding data from these sources (UCSC or BioMart) to the
-  \code{makeTranscripts} function.
+  \code{makeTranscriptDbFromUCSC} and \code{makeTranscriptDbFromBiomart}
+  are convenience functions for feeding data from these sources (UCSC or
+  BioMart) to the \code{makeTranscriptDb} function.
 }
-\value{ All of these functions return a TranscriptAnnotation object. }
+\value{ All of these functions return a TranscriptDb object. }
 \author{
   M. Carlson
 }
 
 \examples{
 \dontrun{
-txann <- UCSCTranscripts()
+txdb1 <- makeTranscriptDbFromUCSC()
 
-txann <- BMTranscripts("ensembl", "hsapiens_gene_ensembl")
+txdb2 <- makeTranscriptDbFromBiomart("ensembl", "hsapiens_gene_ensembl")
 }
 }

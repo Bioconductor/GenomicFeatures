@@ -22,16 +22,16 @@ importFrom(AnnotationDbi,
 
 importFrom(annotate, getAnnMap)
 
-exportClasses(GenomicAnnotation, TranscriptAnnotation)
+exportClasses(GenomicFeatures, TranscriptDb)
 
 export(
   transcripts,
   exons,
   introns,
   extractTranscriptsFromGenome,
-  makeTranscripts,
-  UCSCTranscripts,
-  BMTranscripts,
+  makeTranscriptDb,
+  makeTranscriptDbFromUCSC,
+  makeTranscriptDbFromBiomart,
   saveFeatures,
   loadFeatures,
   getTranscripts,

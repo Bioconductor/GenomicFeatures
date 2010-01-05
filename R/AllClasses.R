@@ -1,12 +1,9 @@
-### Plan to support other types of GenomicAnnotation objects later.
-### HP: I suggest to either rename this class GenomicFeatures (or
-### Features), or to rename saveFeatures()/loadFeatures() ->
-### saveGenomicAnnotation()/loadGenomicAnnotation().
-setClass("GenomicAnnotation",
+### Plan to support other types of GenomicFeatures objects later.
+setClass("GenomicFeatures",
          contains="VIRTUAL")
 
-### Concrete GenomicAnnotation type.
-setClass("TranscriptAnnotation",
-         contains="GenomicAnnotation",
+### Concrete GenomicFeatures type.
+setClass("TranscriptDb",
+         contains="GenomicFeatures",
          representation=representation(conn = "SQLiteConnection"))
 

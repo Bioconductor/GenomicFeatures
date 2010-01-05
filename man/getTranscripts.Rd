@@ -1,22 +1,22 @@
 \name{getTranscripts}
 
 \alias{getTranscripts}
-\alias{getTranscripts,TranscriptAnnotation,missing-method}
-\alias{getTranscripts,TranscriptAnnotation,IRanges-method}
-\alias{getTranscripts,TranscriptAnnotation,RangesList-method}
-\alias{getTranscripts,TranscriptAnnotation,RangedData-method}
+\alias{getTranscripts,TranscriptDb,missing-method}
+\alias{getTranscripts,TranscriptDb,IRanges-method}
+\alias{getTranscripts,TranscriptDb,RangesList-method}
+\alias{getTranscripts,TranscriptDb,RangedData-method}
 \alias{getExons}
-\alias{getExons,TranscriptAnnotation,missing-method}
-\alias{getExons,TranscriptAnnotation,IRanges-method}
-\alias{getExons,TranscriptAnnotation,RangesList-method}
-\alias{getExons,TranscriptAnnotation,RangedData-method}
+\alias{getExons,TranscriptDb,missing-method}
+\alias{getExons,TranscriptDb,IRanges-method}
+\alias{getExons,TranscriptDb,RangesList-method}
+\alias{getExons,TranscriptDb,RangedData-method}
 
 \title{
-  Retrieveing genomic features from a TranscriptAnnotation object.
+  Retrieveing genomic features from a TranscriptDb object.
 }
 \description{
   Methods to retrieve genomic features for ranges of interest from a
-  TranscriptAnnotation object.
+  TranscriptDb object.
 }
 \usage{
   getTranscripts(ann, ranges=NULL, chromosome=NULL, strand=NULL,
@@ -25,7 +25,7 @@
            rangeRestr="either", expand=FALSE)
 }
 \arguments{
-  \item{ann}{A \link{TranscriptAnnotation} object.}
+  \item{ann}{A \link{TranscriptDb} object.}
   \item{ranges}{An IRanges, RangesList or RangedData object to specify
     which ranges to search for annotations.}
   \item{chromosome}{the chromosome to search on 'chr1'.}
@@ -49,12 +49,12 @@ that information is already provided by the ranges object supplied.}
   M. Carlson
 }
 \seealso{
-  \link{TranscriptAnnotation}
+  \link{TranscriptDb}
 }
 \examples{
 \dontrun{
-  txann <- UCSCTranscripts()
+  txdb <- makeTranscriptDbFromUCSC()
   foo <- IRanges(start=c(500,10500), end=c(10000,30000))
-  getTranscripts(txann, foo, "chr1","-")
+  getTranscripts(txdb, foo, "chr1","-")
 }
 }
