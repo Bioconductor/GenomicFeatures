@@ -24,8 +24,8 @@
   makeTranscriptDb(geneId, txId, chrom, strand, txStart, txEnd,
                    cdsStart, cdsEnd, exonStart,exonEnd, exonRank, 
                    exonId)
-  makeTranscriptDbFromUCSC(track=c("knownGene","refGene","ensGene"),
-                           genome="hg18")
+  makeTranscriptDbFromUCSC(genome="hg18",
+                           track=c("knownGene","refGene","ensGene"))
   makeTranscriptDbFromBiomart(biomart, dataset)
 }
 \arguments{
@@ -41,10 +41,10 @@
   \item{exonEnd}{vector of exon end sites}
   \item{exonRank}{vector of exon ranks (position within a transcript)}
   \item{exonId}{vector of exon IDs}
-  \item{track}{name of the UCSC track containing the transcript annotations
-    to retrieve. One of "refGene", "knownGene", or "ensGene".}
   \item{genome}{genome abbreviation used by UCSC and obtained by
     \code{ucscGenomes()[,"db"]}. For example: hg18.}
+  \item{track}{name of the UCSC track containing the transcript annotations
+    to retrieve. One of "refGene", "knownGene", or "ensGene".}
 
   \item{biomart}{which mart from biomaRt}
   \item{dataset}{which dataset from biomaRt}

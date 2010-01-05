@@ -293,7 +293,7 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
     paste("org", orgcode, "eg.db", sep=".")
 }
 
-.makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, track, organism)
+.makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, organism, track)
 {
     COL2CLASS <- c(
         name="character",
@@ -366,7 +366,7 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
 ###   (2) store that data.frame in an SQLite db (the
 ###       .makeTranscriptDbFromUCSCTxTable() call).
 ### Speed:
-###   - for track="knownGene" and genome="hg18":
+###   - for genome="hg18" and track="knownGene":
 ###       (1) download takes about 40-50 sec.
 ###       (2) db creation takes about 55-60 sec.
 ### TODO: Support for track="refGene" is currently disabled because this
@@ -376,15 +376,15 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
 ### valid values for the 'track' arg.
 ### FIXME: Support for track="ensGene" is currently broken because some
 ### transcript IDs are mapped to multiple Entrez Gene IDs.
-makeTranscriptDbFromUCSC <- function(track=c("knownGene","refGene","ensGene"),
-                            genome="hg18")
+makeTranscriptDbFromUCSC <- function(genome="hg18",
+                                     track=c("knownGene","refGene","ensGene"))
 {
-    track <- match.arg(track)
-    if (track == "refGene")
-        stop("track \"refGene\" is not currently supported, sorry!")
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
     organism <- .getOrganismFromUCSCgenome(genome)
+    track <- match.arg(track)
+    if (track == "refGene")
+        stop("track \"refGene\" is not currently supported, sorry!")
     if (track == "knownGene" && !(organism %in% c("Human", "Mouse", "Rat")))
         stop("UCSC \"knownGene\" track is only supported ",
              "for Human, Mouse and Rat")
@@ -392,7 +392,7 @@ makeTranscriptDbFromUCSC <- function(track=c("knownGene","refGene","ensGene"),
     genome(session) <- genome
     query <- ucscTableQuery(session, track)
     ucsc_txtable <- getTable(query)  # download the data
-    .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, track, organism)
+    .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, organism, track)
 }
 
 
