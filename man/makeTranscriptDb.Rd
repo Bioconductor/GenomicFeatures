@@ -1,9 +1,5 @@
 \name{makeTranscriptDb}
 
-\alias{makeTranscriptDb}
-\alias{makeTranscriptDbFromUCSC}
-\alias{makeTranscriptDbFromBiomart}
-
 \alias{GenomicFeatures-class}
 \alias{class:GenomicFeatures}
 \alias{GenomicFeatures}
@@ -11,6 +7,12 @@
 \alias{TranscriptDb-class}
 \alias{class:TranscriptDb}
 \alias{TranscriptDb}
+
+\alias{makeTranscriptDb}
+\alias{makeTranscriptDbFromUCSC}
+\alias{makeTranscriptDbFromBiomart}
+
+\alias{as.data.frame,TranscriptDb-method}
 
 \title{
   Creating TranscriptDb objects from publicly available sources.
