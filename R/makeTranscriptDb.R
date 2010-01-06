@@ -1,12 +1,11 @@
-## Save method needs to connect to the DB, and write everything to a SQLite
-## file It would be best if I could just take the existing handle, and then
-## write that DB OUT.  I need to look a little closer to make this work.  Seth
-## says there might be an easier way but that it would involve changes to
-## RSQLite so perhaps I should hold off on this.
+### =========================================================================
+### Making TranscriptDb objects
+### -------------------------------------------------------------------------
 
-## Seth has also pointed out to me that I can pass a parameter into
-## dbConnect() to set max.con = 100 so that the max number of connections is
-## greater than 16).
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Saving/loading.
+###
 
 saveFeatures <- function(x, file)
 {
@@ -32,22 +31,10 @@ loadFeatures <- function(file)
     new("TranscriptDb", conn=conn)
 }
 
-### makeIdsForUniqueRows() is not used anymore.
-### TODO: Remove this function and associated unit tests.
-makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd") {
-    frame_names <- names(x)
-    indices <- match(c("chrom", "strand", start, end), frame_names)
-    if (any(is.na(indices)))
-      stop("Some column names for x have not been specified correctly.")
-    x <- x[,indices]
-    ## NOTE: sorting is Locale specific, so different users will
-    ## generate different IDs given the same 'x'.
-    x_order <- do.call(order,x) 
-    x_dups <- duplicated(x)
-    ans <- vector("integer", length(x_order))
-    ans[x_order] <- cumsum(!x_dups[x_order])
-    ans
-}
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### makeTranscriptDb().
+###
 
 .argAsCharacterFactorWithNoNAs <- function(arg, argname)
 {

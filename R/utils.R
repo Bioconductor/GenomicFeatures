@@ -78,6 +78,24 @@ setDataFrameColClass <- function(x, col2class, drop.extra.cols=FALSE)
     x
 }
 
+### makeIdsForUniqueRows() is not used anymore.
+### TODO: Remove this function and associated unit tests.
+makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd")
+{
+    frame_names <- names(x)
+    indices <- match(c("chrom", "strand", start, end), frame_names)
+    if (any(is.na(indices)))
+      stop("Some column names for x have not been specified correctly.")
+    x <- x[,indices]
+    ## NOTE: sorting is Locale specific, so different users will
+    ## generate different IDs given the same 'x'.
+    x_order <- do.call(order,x)
+    x_dups <- duplicated(x)
+    ans <- vector("integer", length(x_order))
+    ans[x_order] <- cumsum(!x_dups[x_order])
+    ans
+}
+
 test_GenomicFeatures <- function(dir)
 {
     if (missing(dir)) {
