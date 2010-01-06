@@ -347,7 +347,7 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
     if (is.na(mapname))
         stop("don't know which map in ", orgpkg, " to use to map the ",
              "transcript IDs in track \"", track, "\" to Entrez Gene IDs")
-    map <- getAnnMap(mapname, orgpkg)
+    map <- suppressMessages(getAnnMap(mapname, orgpkg))
     ## Here we make the assumption that each transcript ID is mapped to at
     ## most one Entrez Gene ID, which will probably be true most of the
     ## time. For now we raise an error if this is not the case, but we might

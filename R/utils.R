@@ -103,7 +103,7 @@ test_GenomicFeatures <- function(dir)
     }
     require("RUnit", quietly=TRUE) || stop("RUnit package not found")
     suite <- defineTestSuite(name="GenomicFeatures RUnit Tests", dirs=dir,
-                             testFileRegexp=".*_test\\.R$",
+                             testFileRegexp="^test_.*\\.R$",
                              rngKind="default",
                              rngNormalKind="default")
     result <- runTestSuite(suite)
@@ -121,3 +121,4 @@ test_GenomicFeatures <- function(dir)
 .any_fail <- function(result) {
     any(sapply(result, function(r) r$nFail > 0))
 }
+
