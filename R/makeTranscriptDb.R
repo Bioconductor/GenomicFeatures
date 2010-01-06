@@ -60,25 +60,10 @@ loadFeatures <- function(file)
 .makeInternalIdsFromExternalIds <- function(external_id)
     as.integer(factor(external_id))
 
-### TODO: Improve .makeIdsForUniqueDataFrameRows() so that it returns
-### the vector of ids such that 'unique(x)[ids, ]' is identical to 'x'.
-### This unambiguously defines 'ids' (in particular, it's not Locale
-### specific anymore).
-.makeIdsForUniqueDataFrameRows <- function(x)
-{
-    ## NOTE: sorting is Locale specific, so different users will
-    ## generate different IDs given the same 'x'.
-    x_order <- do.call(order, x) 
-    x_dups <- duplicated(x)
-    ans <- integer(nrow(x))
-    ans[x_order] <- cumsum(!x_dups[x_order])
-    ans
-}
-
 .makeInternalIdsForUniqueLocs <- function(chrom, strand, start, end)
 {
     x <- data.frame(chrom, strand, start, end, stringsAsFactors=FALSE)
-    .makeIdsForUniqueDataFrameRows(x)
+    makeIdsForUniqueDataFrameRows(x)
 }
 
 ### Because we use SQLite "rtree" feature, .writeFeatureCoreTables() creates

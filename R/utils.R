@@ -1,4 +1,13 @@
+### =========================================================================
+### Miscellaneous low-level utils
+### -------------------------------------------------------------------------
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### DB related.
+###
 ### NOT exported (to avoid collisions with AnnotationDbi).
+###
 
 ### Taken from AnnotationDbi (trying to avoid depending on AnnotationDbi
 ### for now).
@@ -45,6 +54,11 @@ get_dbtable <- function(tablename, datacache)
     get(tablename, envir=datacache)
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Data frame related.
+###
+
 ### Low-level util for setting the class of (all or some of) the columns of
 ### a data.frame. Could go in a low-level infrastructure package but we don't
 ### really have anything like that at the moment.
@@ -78,23 +92,30 @@ setDataFrameColClass <- function(x, col2class, drop.extra.cols=FALSE)
     x
 }
 
-### makeIdsForUniqueRows() is not used anymore.
-### TODO: Remove this function and associated unit tests.
-makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd")
+### Returns the vector of ids such that 'unique(x)[ids, ]' is identical
+### to 'x' (in the same way that 'levels(f)[f]' is identical to
+### 'as.vector(f)' when 'f' is a character factor).
+### This unambiguously defines 'ids'. In particular, it's not Locale
+### specific, despite the fact that the current implementation uses a
+### sorting approach.
+makeIdsForUniqueDataFrameRows <- function(x)
 {
-    frame_names <- names(x)
-    indices <- match(c("chrom", "strand", start, end), frame_names)
-    if (any(is.na(indices)))
-      stop("Some column names for x have not been specified correctly.")
-    x <- x[,indices]
-    ## NOTE: sorting is Locale specific, so different users will
-    ## generate different IDs given the same 'x'.
-    x_order <- do.call(order,x)
+    if (!is.data.frame(x))
+        stop("'x' must be a data.frame")
+    x_order <- do.call(order, x)
     x_dups <- duplicated(x)
-    ans <- vector("integer", length(x_order))
-    ans[x_order] <- cumsum(!x_dups[x_order])
-    ans
+    ## First we make "provisory" ids. Those ids *are* Locale specific.
+    prov_ids <- integer(nrow(x))
+    prov_ids[x_order] <- cumsum(!x_dups[x_order])
+    ## Convert the "provisory" ids into the final ids. The final ids are
+    ## *not* Locale specific anymore.
+    as.integer(factor(prov_ids, levels=unique(prov_ids)))
 }
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Unit test related.
+###
 
 test_GenomicFeatures <- function(dir)
 {
