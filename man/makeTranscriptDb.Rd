@@ -23,7 +23,7 @@
 \usage{
   makeTranscriptDb(geneId, txId, chrom, strand, txStart, txEnd,
                    cdsStart, cdsEnd, exonStart,exonEnd, exonRank, 
-                   exonId)
+                   exonId=NULL)
   makeTranscriptDbFromUCSC(genome="hg18",
                            track=c("knownGene","refGene","ensGene"))
   makeTranscriptDbFromBiomart(biomart, dataset)

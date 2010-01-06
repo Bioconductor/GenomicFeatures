@@ -32,175 +32,8 @@ loadFeatures <- function(file)
     new("TranscriptDb", conn=conn)
 }
 
-.createAllDat <- function(frame) {
-  drv <- dbDriver("SQLite")  
-  conn <- dbConnect(drv)##, dbname="earlyTest.sqlite") ## **Temporarily** write to a file up front.
-  sql <- "CREATE TABLE all_dat (
-            _exon_id INTEGER,
-            gene_id VARCHAR(15),
-            tx_id VARCHAR(15),
-            chromosome VARCHAR(20),
-            strand VARCHAR(3),
-            tx_start VARCHAR(12),
-            tx_end VARCHAR(12),
-            cds_start VARCHAR(12),
-            cds_end VARCHAR(12),
-            exon_start VARCHAR(12),
-            exon_end VARCHAR(12),
-            exon_rank VARCHAR(12))"
-  dbGetQuery(conn,sql)
-  ##Just make sure that the order is correct...
-  vals <- frame[,c("int_exon_id","geneId","txId","chrom",
-                   "strand","txStart","txEnd","cdsStart","cdsEnd","exonStart",
-                   "exonEnd","exonRank")]
-##   exon_ids <- 1:dim(frame)[1]
-##   vals <- cbind(exon_ids,vals)
-  sqlIns <- "INSERT INTO all_dat (_exon_id,
-                                  gene_id,
-                                  tx_id,
-                                  chromosome,
-                                  strand,
-                                  tx_start,
-                                  tx_end,
-                                  cds_start, 
-                                  cds_end,
-                                  exon_start,
-                                  exon_end,
-                                  exon_rank) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
-  dbBeginTransaction(conn)
-  rset <- dbSendPreparedQuery(conn, sqlIns, vals)
-  
-  dbClearResult(rset)
-  dbCommit(conn)
-  
-  dbGetQuery(conn,"CREATE INDEX ad_tx_id on all_dat(tx_id)")
-  dbGetQuery(conn,"CREATE INDEX ad__exon_id on all_dat(_exon_id)")  
-  conn
-}
-
-
-.dropOldTable <- function(conn, table) {
-  dbGetQuery(conn,paste("DROP TABLE ",table,sep=""))
-}
-
-
-.createTranscriptsTable <- function(conn) {
-  sql <- "CREATE TABLE transcripts (
-            _tx_id INTEGER PRIMARY KEY,     --id a single transcript
-            tx_id TEXT UNIQUE NOT NULL,     --text string for foreign trnscpt ID
-            chromosome TEXT,                --redundant with info in exons
-            strand TEXT )                   --redundant with info in exons
-  "
-  dbGetQuery(conn,sql)
-
-  sqli <- "INSERT INTO transcripts (tx_id, chromosome, strand) SELECT DISTINCT tx_id, chromosome, strand FROM all_dat"
-  dbGetQuery(conn,sqli)
-  dbGetQuery(conn,"CREATE INDEX t_tx_id on transcripts(tx_id)")
-}
-
-
-.createExonsTable <- function(conn) {
-  sql <- "CREATE TABLE exons (
-            _exon_id INTEGER PRIMARY KEY,   --id a single exon
-            exon_id TEXT UNIQUE,   --text string for foreign exon ID
-            chromosome TEXT,
-            strand TEXT)
-  "
-  dbGetQuery(conn,sql)
-
-  sqli <- "INSERT INTO exons (_exon_id, chromosome, strand) SELECT DISTINCT _exon_id, chromosome, strand FROM all_dat"
-  dbGetQuery(conn,sqli)
-  dbGetQuery(conn,"CREATE INDEX e__exon_id on exons(_exon_id)")  
-}
-
-
-.createGenesTable <- function(conn) {
-  sql <- "CREATE TABLE genes
-    (gene_id VARCHAR(15),
-     _tx_id VARCHAR(20),
-     UNIQUE (gene_id,_tx_id),
-     FOREIGN KEY (_tx_id) REFERENCES transcripts (_tx_id) )"
-  dbGetQuery(conn,sql)
-
-  sqli <- "INSERT INTO genes SELECT DISTINCT ad.gene_id, t._tx_id
-             FROM all_dat AS ad, transcripts AS t
-             WHERE ad.tx_id = t.tx_id"
-  dbGetQuery(conn,sqli)
-}
-
-
-.createTranscriptTreeTable <- function(conn) {
-  sql <- "CREATE VIRTUAL TABLE transcripts_rtree USING rtree
-           (_tx_id INTEGER PRIMARY KEY,    --id a single transcript
-            tx_start INTEGER,
-            tx_end INTEGER)
-            --FOREIGN KEY (_tx_id) REFERENCES  transcripts (_tx_id)"
-  dbGetQuery(conn,sql)
-
-  sqli <- "INSERT INTO transcripts_rtree SELECT DISTINCT
-             t._tx_id, ad.tx_start, ad.tx_end
-             FROM transcripts AS t, all_dat AS ad
-             WHERE ad.tx_id = t.tx_id"
-  dbGetQuery(conn,sqli)
-}
-
-
-.createExonTreeTable <- function(conn) {
-  sql <- "CREATE VIRTUAL TABLE exons_rtree USING rtree
-           (_exon_id INTEGER PRIMARY KEY,    --id a single exon
-            exon_start INTEGER,
-            exon_end INTEGER)
-            --FOREIGN KEY (_exon_id) REFERENCES  exons (_exon_id)"
-  dbGetQuery(conn,sql)
-
-  sqli <- "INSERT INTO exons_rtree SELECT DISTINCT
-             e._exon_id, ad.exon_start, ad.exon_end
-             FROM exons AS e, all_dat AS ad
-             WHERE ad._exon_id = e._exon_id"
-  dbGetQuery(conn,sqli)
-}
-
-
-.createExonsTranscriptsTable <- function(conn) {
-  sql <- "CREATE TABLE exons_transcripts (
-            _exon_id INTEGER,            --id a single exon
-            _tx_id INTEGER,              --id a single transcript
-            exon_rank INTEGER,
-            UNIQUE(_exon_id,_tx_id),
-            FOREIGN KEY (_exon_id) REFERENCES  exons  (_exon_id)
-            FOREIGN KEY (_tx_id) REFERENCES  transcripts  (_tx_id))"
-  dbGetQuery(conn,sql)
-
-  sqli <- "INSERT INTO exons_transcripts SELECT DISTINCT
-             e._exon_id, t._tx_id, ad.exon_rank
-             FROM exons as e, transcripts AS t, all_dat as ad
-             WHERE ad.tx_id = t.tx_id AND e._exon_id = ad._exon_id"
-  dbGetQuery(conn,sqli)
-}
-
-
-## processFrame is an internal function to just get our code split up and
-## formatted into our desired object.
-.processFrame <- function(frame) {
-  ## Need to process this.  I want to jam it all into a DB
-  conn <- .createAllDat(frame)
-  
-  ##now just split things up to populate the other tables.
-  .createTranscriptsTable(conn)
-  .createExonsTable(conn)
-  .createGenesTable(conn)
-  .createTranscriptTreeTable(conn)
-  .createExonsTranscriptsTable(conn)
-  .createExonTreeTable(conn)
-
-  ##drop the extra tables
-  .dropOldTable(conn,"all_dat")
-  
-  ## plan is to end with making the object
-  new("TranscriptDb", conn=conn)
-}
-
-
+### makeIdsForUniqueRows() is not used anymore.
+### TODO: Remove this function and associated unit tests.
 makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd") {
     frame_names <- names(x)
     indices <- match(c("chrom", "strand", start, end), frame_names)
@@ -216,6 +49,191 @@ makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd") {
     ans
 }
 
+.argAsCharacterFactorWithNoNAs <- function(arg, argname)
+{
+    if (is.factor(arg)) {
+        if (is.character(levels(arg)) && !any(is.na(arg)))
+            return(arg)
+        stop("'", argname, "' must be a character vector/factor with no NAs")
+    }
+    if (!is.character(arg) || any(is.na(arg)))
+        stop("'", argname, "' must be a character vector/factor with no NAs")
+    as.factor(arg)
+}
+
+.argAsIntegerWithNoNAs <- function(arg, argname)
+{
+    if (!is.numeric(arg) || any(is.na(arg)))
+        stop("'", argname, "' must be an integer vector with no NAs")
+    if (!is.integer(arg))
+        arg <- as.integer(arg)
+    arg
+}
+
+.makeInternalIdsFromExternalIds <- function(external_id)
+    as.integer(factor(external_id))
+
+### TODO: Improve .makeIdsForUniqueDataFrameRows() so that it returns
+### the vector of ids such that 'unique(x)[ids, ]' is identical to 'x'.
+### This unambiguously defines 'ids' (in particular, it's not Locale
+### specific anymore).
+.makeIdsForUniqueDataFrameRows <- function(x)
+{
+    ## NOTE: sorting is Locale specific, so different users will
+    ## generate different IDs given the same 'x'.
+    x_order <- do.call(order, x) 
+    x_dups <- duplicated(x)
+    ans <- integer(nrow(x))
+    ans[x_order] <- cumsum(!x_dups[x_order])
+    ans
+}
+
+.makeInternalIdsForUniqueLocs <- function(chrom, strand, start, end)
+{
+    x <- data.frame(chrom, strand, start, end, stringsAsFactors=FALSE)
+    .makeIdsForUniqueDataFrameRows(x)
+}
+
+### Because we use SQLite "rtree" feature, .writeFeatureCoreTables() creates
+### the 5 following tables:
+###   (1) '<feature>s'
+###   (2) '<feature>s_rtree'
+###   (3) '<feature>s_rtree_node'
+###   (4) '<feature>s_rtree_parent'
+###   (5) '<feature>s_rtree_rowid'
+### Note that only (1) and (2) are explicitely created. (3), (4) and (5) are
+### automatically created by the SQLite engine.
+.writeFeatureCoreTables <- function(conn,
+                                    feature,
+                                    internal_id,
+                                    external_id,
+                                    chrom,
+                                    strand,
+                                    start,
+                                    end,
+                                    colnames)
+{
+    table <- data.frame(
+        internal_id=internal_id,
+        external_id=external_id,
+        chrom=chrom,
+        strand=strand,
+        start=start,
+        end=end,
+        stringsAsFactors=FALSE)
+    table <- unique(table)
+    ## Create the '<feature>s' table.
+    if (all(is.na(external_id)))
+        null_constraint <- ""
+    else
+        null_constraint <- " NOT NULL"
+    sql <- c(
+        "CREATE TABLE ", feature, "s (\n",
+        "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
+        "  ", colnames[2L], " TEXT UNIQUE", null_constraint, ",\n",
+        "  ", colnames[3L], " TEXT NOT NULL,\n",
+        "  ", colnames[4L], " TEXT NOT NULL\n",
+        ")")
+    res <- dbSendQuery(conn, paste(sql, collapse=""))
+    dbClearResult(res)
+    ## Fill the '<feature>s' table.
+    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
+    ## when the nb of rows to insert is 0, hence the following test.
+    if (nrow(table) != 0L) {
+        sql <- c("INSERT INTO ", feature, "s VALUES (?,?,?,?)")
+        dbBeginTransaction(conn)
+        res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
+                                   table[1:4])
+        dbClearResult(res)
+        dbCommit(conn)
+    }
+    ## Create the '<feature>s_rtree' table.
+    sql <- c(
+        "CREATE VIRTUAL TABLE ", feature, "s_rtree USING rtree (\n",
+        "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
+        "  ", colnames[5L], " INTEGER, -- NOT NULL is implicit in rtree\n",
+        "  ", colnames[6L], " INTEGER  -- NOT NULL is implicit in rtree\n",
+        "  -- FOREIGN KEY (", colnames[1L], ") REFERENCES ", feature, "s\n",
+        ")")
+    res <- dbSendQuery(conn, paste(sql, collapse=""))
+    dbClearResult(res)
+    ## Fill the '<feature>s_rtree' table.
+    if (nrow(table) != 0L) {
+        sql <- c("INSERT INTO ", feature, "s_rtree VALUES (?,?,?)")
+        dbBeginTransaction(conn)
+        res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
+                                   table[c(1L, 5:6)])
+        dbClearResult(res)
+        dbCommit(conn)
+    }
+}
+
+### TODO: Call the table 'transcripts_exons' and define its cols in the
+### following order: '_tx_id', 'exon_rank', '_exon_id'.
+.writeExonsTranscriptsTable <- function(conn,
+                                        internal_exon_id,
+                                        internal_tx_id,
+                                        exonRank)
+{
+    table <- data.frame(
+        internal_exon_id=internal_exon_id,
+        internal_tx_id=internal_tx_id,
+        exonRank=exonRank,
+        stringsAsFactors=FALSE)
+    table <- unique(table)
+    ## Create the 'exons_transcripts' table.
+    sql <- c(
+        "CREATE TABLE exons_transcripts (\n",
+        "  _exon_id INTEGER NOT NULL,\n",
+        "  _tx_id INTEGER NOT NULL,\n",
+        "  exon_rank INTEGER NOT NULL,\n",
+        "  UNIQUE (_tx_id, exon_rank),\n",
+        "  FOREIGN KEY (_exon_id) REFERENCES exons,\n",
+        "  FOREIGN KEY (_tx_id) REFERENCES transcripts\n",
+        ")")
+    res <- dbSendQuery(conn, paste(sql, collapse=""))
+    dbClearResult(res)
+    ## Fill the 'exons_transcripts' table.
+    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
+    ## when the nb of rows to insert is 0, hence the following test.
+    if (nrow(table) != 0L) {
+        sql <- "INSERT INTO exons_transcripts VALUES (?,?,?)"
+        dbBeginTransaction(conn)
+        res <- dbSendPreparedQuery(conn, sql, table)
+        dbClearResult(res)
+        dbCommit(conn)
+    }
+}
+
+.writeGenesTable <- function(conn, geneId, internal_tx_id)
+{
+    table <- data.frame(
+        geneId=geneId,
+        internal_tx_id=internal_tx_id,
+        stringsAsFactors=FALSE)
+    table <- unique(table)
+    table <- table[!is.na(table$geneId), ]
+    ## Create the 'genes' table.
+    sql <- c(
+        "CREATE TABLE genes (\n",
+        "  gene_id TEXT NOT NULL,\n",
+        "  _tx_id INTEGER NOT NULL,\n",
+        "  UNIQUE (gene_id, _tx_id),\n",
+        "  FOREIGN KEY (_tx_id) REFERENCES transcripts\n",
+        ")")
+    res <- dbSendQuery(conn, paste(sql, collapse=""))
+    dbClearResult(res)
+    ## Fill the 'genes' table.
+    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
+    ## when the nb of rows to insert is 0, hence the following test.
+    if (nrow(table) != 0L) {
+        sql <- "INSERT INTO genes VALUES (?,?)"
+        dbBeginTransaction(conn)
+        res <- dbSendPreparedQuery(conn, sql, table)
+        dbClearResult(res)
+        dbCommit(conn)
+    }
+}
 
 ### Creates a TranscriptDb instance from vectors of data.
 ### All vectors must be of equal length.  The i-th element of the
@@ -223,26 +241,45 @@ makeIdsForUniqueRows <- function(x, start="exonStart", end="exonEnd") {
 ### be repeated over all exons within the trancsript.
 makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
                              cdsStart, cdsEnd, exonStart, exonEnd, exonRank,
-                             exonId = vector()) {
-  frame <- data.frame(geneId = geneId,
-                      txId = txId,
-                      chrom = chrom,
-                      strand = strand,
-                      txStart = txStart,
-                      txEnd = txEnd,
-                      cdsStart = cdsStart,
-                      cdsEnd = cdsEnd,
-                      exonStart = exonStart,
-                      exonEnd = exonEnd,
-                      exonRank = exonRank,
-                      stringsAsFactors = FALSE)
-  
-  ##make unique IDs for unique exons.
-  frame <- cbind(frame,
-                 int_exon_id = makeIdsForUniqueRows(frame,
-                                                    start = "exonStart",
-                                                    end = "exonEnd"))
-  .processFrame(frame)
+                             exonId=NULL)
+{
+    if (!is.character(geneId))
+        stop("'geneId' must be a character vector")
+    if (!is.character(txId) || any(is.na(txId)))
+        stop("'txId' must be a character vector with no NAs")
+    chrom <- .argAsCharacterFactorWithNoNAs(chrom, "chrom")
+    strand <- .argAsCharacterFactorWithNoNAs(strand, "strand")
+    txStart <- .argAsIntegerWithNoNAs(txStart, "txStart")
+    txEnd <- .argAsIntegerWithNoNAs(txEnd, "txEnd")
+    cdsStart <- .argAsIntegerWithNoNAs(cdsStart, "cdsStart")
+    cdsEnd <- .argAsIntegerWithNoNAs(cdsEnd, "cdsEnd")
+    exonStart <- .argAsIntegerWithNoNAs(exonStart, "exonStart")
+    exonEnd <- .argAsIntegerWithNoNAs(exonEnd, "exonEnd")
+    exonRank <- .argAsIntegerWithNoNAs(exonRank, "exonRank")
+    if (is.null(exonId)) {
+        exonId <- rep.int(as.character(NA), length(exonStart))
+    } else {
+        if (!is.character(exonId) || any(is.na(exonId)))
+            stop("when supplied, 'exonId' must be a character vector ",
+                 "with no NAs")
+    }
+    internal_tx_id <- .makeInternalIdsFromExternalIds(txId) 
+    internal_exon_id <- .makeInternalIdsForUniqueLocs(chrom, strand,
+                                                      exonStart, exonEnd)
+
+    conn <- dbConnect(SQLite(), dbname="") ## we'll write the db to a temp file
+    .writeFeatureCoreTables(conn, "transcript",
+        internal_tx_id, txId, chrom, strand, txStart, txEnd,
+        c("_tx_id", "tx_id", "chromosome", "strand",
+          "tx_start", "tx_end"))
+    .writeFeatureCoreTables(conn, "exon",
+        internal_exon_id, exonId, chrom, strand, exonStart, exonEnd,
+        c("_exon_id", "exon_id", "chromosome", "strand",
+          "exon_start", "exon_end"))
+    .writeExonsTranscriptsTable(conn,
+        internal_exon_id, internal_tx_id, exonRank)
+    .writeGenesTable(conn, geneId, internal_tx_id)
+    new("TranscriptDb", conn=conn)
 }
 
 
@@ -368,7 +405,7 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
 ### Speed:
 ###   - for genome="hg18" and track="knownGene":
 ###       (1) download takes about 40-50 sec.
-###       (2) db creation takes about 55-60 sec.
+###       (2) db creation takes about 30-35 sec.
 ### TODO: Support for track="refGene" is currently disabled because this
 ### track doesn't seem to contain anything that could be used as a unique
 ### transcript ID. So we need to either find a way to retrieve (or generate)
@@ -516,12 +553,17 @@ setMethod("as.data.frame", "TranscriptDb",
                   exons.strand AS exon_strand,
                   exon_start, exon_end
                 FROM transcripts
-                  LEFT JOIN genes USING (_tx_id)
-                  INNER JOIN transcripts_rtree USING (_tx_id)
-                  INNER JOIN exons_transcripts USING (_tx_id)
-                  INNER JOIN exons USING (_exon_id)
-                  INNER JOIN exons_rtree USING (_exon_id)
-                ORDER BY tx_id, exon_rank;"
+                  LEFT JOIN genes
+                    ON (transcripts._tx_id=genes._tx_id)
+                  INNER JOIN transcripts_rtree
+                    ON (transcripts._tx_id=transcripts_rtree._tx_id)
+                  INNER JOIN exons_transcripts
+                    ON (transcripts._tx_id=exons_transcripts._tx_id)
+                  INNER JOIN exons
+                    ON (exons_transcripts._exon_id=exons._exon_id)
+                  INNER JOIN exons_rtree
+                    ON (exons._exon_id=exons_rtree._exon_id)
+                ORDER BY tx_id, exon_rank"
         data <- dbGetQuery(x@conn, sql)
         setDataFrameColClass(data, COL2CLASS)
     }
