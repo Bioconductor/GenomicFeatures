@@ -1,4 +1,6 @@
-test_access <- function() {
+###
+
+test_getTranscripts <- function() {
     txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite", 
                                       package="GenomicFeatures"))
     ranges = IRanges(start=c(1000), end=c(8000))
