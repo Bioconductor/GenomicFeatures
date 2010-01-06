@@ -9,7 +9,7 @@ test_makeIdsForUniqueDataFrameRows <- function()
              start=c(5, 2, 2, 5, 4, 5, 5, 4, 2, 1),
              end=c(15, 12, 12, 15, 14, 13, 15, 14, 12, 11)
          )
-    y <- unique(x)[makeIdsForUniqueDataFrameRows(x), ]
+    y <- unique(x)[GenomicFeatures:::makeIdsForUniqueDataFrameRows(x), ]
     row.names(y) <- NULL
     checkEquals(y, x)
 }
