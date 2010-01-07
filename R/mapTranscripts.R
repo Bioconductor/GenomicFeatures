@@ -193,6 +193,6 @@ setMethod("mapTranscripts", "RangedData",
 ## NEXT:
 ## 1) wrap this in a single method to support - done.
 ## input = RangedData, TxAnn ; output = RangedData (with one more col).
-## 2) write test code (for checking helper methods)
-## 3) write a manual page
+## 2) write test code (for checking various helper methods) 
+## 3) write a manual page - done.
 ## 4) since we decided to only return the tx_id, we might want to change to returning the _tx_id starting right now. - done?
