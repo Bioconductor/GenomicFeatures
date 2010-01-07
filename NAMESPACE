@@ -42,5 +42,6 @@ export(
 exportMethods(
   as.data.frame,
   getTranscripts,
-  getExons
+  getExons,
+  mapTranscripts
 )

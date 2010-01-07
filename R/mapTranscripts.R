@@ -44,6 +44,21 @@
   uChromStrand
 }
 
+.setRange <- function(ranges, txann, chromosome, strand, chrom, strnd){
+  if(is.null(chromosome) && !is.null(strand)){
+    range <- ranges[strand==strnd]
+  }
+  if(!is.null(chromosome) && is.null(strand)){
+    range <- ranges[chromosome==chrom]
+  }
+  if(is.null(strand) && is.null(chromosome)){
+    range <- ranges
+  }
+  if(!is.null(chromosome) && !is.null(strand)){
+    range <- ranges[chromosome==chrom & strand==strnd]
+  }
+  range
+}
 
 
 .mapFeatures <- function(txann, sql, range, chrom, strnd){
@@ -73,6 +88,8 @@
   ans
 }
 
+
+
 .mapTranscripts <- function(txann, ranges=NULL, chromosome=NULL,
                             strand=NULL) {
   len <- max(length(chromosome), length(strand), length(ranges))
@@ -99,7 +116,15 @@
   for(i in seq_len(dim(uChromStrand)[1])){
     chrom <- uChromStrand[i,1]
     strnd <- uChromStrand[i,2]
-    range <- ranges[chromosome==chrom & strand==strnd]
+
+    ##TODO: this is a bug right here. It prevents me from getting any value
+    ##for the range when the chromosome or strand was not specified in the
+    ##ranges. (ie. when they were set to null)
+    #range <- ranges[chromosome==chrom & strand==strnd]
+    ##The end result is that range has no value when I try to proceed from
+    ##here
+    range <- .setRange(ranges, txann, chromosome, strand, chrom, strnd)
+    
     if(length(range) > 0){
       newData <- .mapFeatures(txann, sql, range, chrom, strnd)
       if(dim(newData)[1] > 0){
@@ -159,14 +184,14 @@ setMethod("mapTranscripts", "RangedData",
 ## #rd = RangedData(ranges, space=chromosome, strand=strand)
 ## #mapTranscripts(rd, txAnn)
 
+## #TODO: This still does not return anything (and I think it should):
 ## #rd = RangedData(ranges, space=chromosome)
 ## #mapTranscripts(rd, txAnn)
 
 
 
-
 ## NEXT:
-## 1) wrap this in a single method to support:
+## 1) wrap this in a single method to support - done.
 ## input = RangedData, TxAnn ; output = RangedData (with one more col).
 ## 2) write test code (for checking helper methods)
 ## 3) write a manual page
