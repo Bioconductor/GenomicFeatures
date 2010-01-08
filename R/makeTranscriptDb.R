@@ -33,7 +33,7 @@ loadFeatures <- function(file)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### makeTranscriptDb().
+### Helper functions for .makeTranscriptDb() / makeTranscriptDb().
 ###
 
 .argAsCharacterFactorWithNoNAs <- function(arg, argname)
@@ -207,6 +207,25 @@ loadFeatures <- function(file)
     }
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### .makeTranscriptDb().
+###
+
+### WORK-IN-PROGRESS
+.makeTranscriptDb <- function(transcript, exon, cds, ...)
+{
+    stop("WORK-IN-PROGRESS")
+    args <- list(transcript, exon, cds, ...)
+    if (!all(sapply(args, is.data.frame)))
+        stop("all args must be data frames")
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### makeTranscriptDb().
+###
+
 ### Creates a TranscriptDb instance from vectors of data.
 ### All vectors must be of equal length.  The i-th element of the
 ### vectors represent data for a single exon. Transcript data will
@@ -223,21 +242,22 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
     strand <- .argAsCharacterFactorWithNoNAs(strand, "strand")
     txStart <- .argAsIntegerWithNoNAs(txStart, "txStart")
     txEnd <- .argAsIntegerWithNoNAs(txEnd, "txEnd")
-    cdsStart <- .argAsIntegerWithNoNAs(cdsStart, "cdsStart")
-    cdsEnd <- .argAsIntegerWithNoNAs(cdsEnd, "cdsEnd")
+    #cdsStart <- .argAsIntegerWithNoNAs(cdsStart, "cdsStart")
+    #cdsEnd <- .argAsIntegerWithNoNAs(cdsEnd, "cdsEnd")
     exonStart <- .argAsIntegerWithNoNAs(exonStart, "exonStart")
     exonEnd <- .argAsIntegerWithNoNAs(exonEnd, "exonEnd")
     exonRank <- .argAsIntegerWithNoNAs(exonRank, "exonRank")
+    internal_tx_id <- .makeInternalIdsFromExternalIds(txId) 
     if (is.null(exonId)) {
         exonId <- rep.int(as.character(NA), length(exonStart))
+        internal_exon_id <- .makeInternalIdsForUniqueLocs(
+                                chrom, strand, exonStart, exonEnd)
     } else {
         if (!is.character(exonId) || any(is.na(exonId)))
             stop("when supplied, 'exonId' must be a character vector ",
                  "with no NAs")
+        internal_exon_id <- .makeInternalIdsFromExternalIds(exonId)
     }
-    internal_tx_id <- .makeInternalIdsFromExternalIds(txId) 
-    internal_exon_id <- .makeInternalIdsForUniqueLocs(chrom, strand,
-                                                      exonStart, exonEnd)
 
     conn <- dbConnect(SQLite(), dbname="") ## we'll write the db to a temp file
     .writeFeatureCoreTables(conn, "transcript",
@@ -412,29 +432,33 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
 ### Typical use:
 ###   txdb <- makeTranscriptDbFromBiomart(biomart="ensembl",
 ###                                       dataset="hsapiens_gene_ensembl")
+### Speed:
+###   - for biomart="ensembl" and dataset="hsapiens_gene_ensembl":
+###       (1) download takes about 8 min.
+###       (2) db creation takes about ?? sec.
 ###
 
 makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                         dataset="hsapiens_gene_ensembl")
 {
     mart <- useMart(biomart=biomart, dataset=dataset)
-    bm_txtable <- getBM(mart=mart,
-                     attributes=c("ensembl_gene_id",
-                                  "ensembl_transcript_id",
-                                  "chromosome_name",
-                                  "strand",
-                                  "transcript_start",
-                                  "transcript_end",
-                                  "cds_start",
-                                  "cds_end",
-                                  "ensembl_exon_id",
-                                  "exon_chrom_start",
-                                  "exon_chrom_end",
-                                  "rank"))
+    attributes <- c("ensembl_gene_id",
+                    "ensembl_transcript_id",
+                    "chromosome_name",
+                    "strand",
+                    "transcript_start",
+                    "transcript_end",
+                    "cds_start",
+                    "cds_end",
+                    "ensembl_exon_id",
+                    "exon_chrom_start",
+                    "exon_chrom_end",
+                    "rank")
+    bm_txtable <- getBM(attributes, mart=mart)
     makeTranscriptDb(geneId = bm_txtable$ensembl_gene_id,
                      txId = bm_txtable$ensembl_transcript_id,
                      chrom = bm_txtable$chromosome_name,
-                     strand = bm_txtable$strand,
+                     strand = ifelse(bm_txtable$strand == 1, "+", "-"),
                      txStart = bm_txtable$transcript_start,
                      txEnd = bm_txtable$transcript_end,
                      cdsStart = bm_txtable$cds_start,
@@ -443,8 +467,6 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                      exonEnd = bm_txtable$exon_chrom_end,
                      exonRank = bm_txtable$rank,
                      exonId = bm_txtable$ensembl_exon_id)
-    ##this is EXTRA info. that we don't have for UCSC - to make use of it we
-    ##will want to attach it as an extra field in the DB.
 }
 
 
