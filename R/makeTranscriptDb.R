@@ -450,7 +450,8 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
 ###
 
 makeTranscriptDbFromBiomart <- function(biomart="ensembl",
-                                        dataset="hsapiens_gene_ensembl")
+                                        dataset="hsapiens_gene_ensembl",
+                                        ensembl_transcript_ids=NULL)
 {
     mart <- useMart(biomart=biomart, dataset=dataset)
     attributes <- c("ensembl_gene_id",
@@ -465,7 +466,18 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                     "exon_chrom_start",
                     "exon_chrom_end",
                     "rank")
-    bm_txtable <- getBM(attributes, mart=mart)
+    if (is.null(ensembl_transcript_ids)) {
+        bm_txtable <- getBM(attributes, mart=mart)
+    } else {
+        if (!is.character(ensembl_transcript_ids)
+         || any(is.na(ensembl_transcript_ids)))
+            stop("'ensembl_transcript_ids' must be ",
+                 "a character vector with no NAs")
+        bm_txtable <- getBM(attributes,
+                            filters="ensembl_transcript_id",
+                            values=ensembl_transcript_ids,
+                            mart=mart)
+    }
     makeTranscriptDb(geneId = bm_txtable$ensembl_gene_id,
                      txId = bm_txtable$ensembl_transcript_id,
                      chrom = bm_txtable$chromosome_name,
@@ -524,7 +536,7 @@ setMethod("as.data.frame", "TranscriptDb",
                     ON (exons_transcripts._exon_id=exons._exon_id)
                   INNER JOIN exons_rtree
                     ON (exons._exon_id=exons_rtree._exon_id)
-                ORDER BY tx_id, exon_rank"
+                ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id, exon_rank"
         data <- dbGetQuery(x@conn, sql)
         setDataFrameColClass(data, COL2CLASS)
     }
