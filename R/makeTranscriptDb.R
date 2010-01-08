@@ -13,10 +13,7 @@ saveFeatures <- function(x, file)
         stop("'x' must be a TranscriptDb object")
     if (!isSingleString(file))
         stop("'file' must be a single string")
-    conn <- x@conn
-    ok <- sqliteCopyDatabase(conn, file)
-    if (!ok)
-        stop("failed to write 'x' to file '", file, "'")
+    sqliteCopyDatabase(x@conn, file)
 }
 
 ### FIXME: loadFeatures() needs to put the db back into memory (it's currently
@@ -435,7 +432,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
 ### Speed:
 ###   - for biomart="ensembl" and dataset="hsapiens_gene_ensembl":
 ###       (1) download takes about 8 min.
-###       (2) db creation takes about ?? sec.
+###       (2) db creation takes about 60-65 sec.
 ###
 
 makeTranscriptDbFromBiomart <- function(biomart="ensembl",
