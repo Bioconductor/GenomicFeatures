@@ -39,8 +39,12 @@
 }
 \examples{
 \dontrun{
-  txdb <- makeTranscriptDbFromUCSC()
-  foo <- IRanges(start=c(500,10500), end=c(10000,30000))
-  mapTranscripts(txdb, foo)
+  txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite",
+                                   package="GenomicFeatures"))
+  library(IRanges)
+  rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
+                   space = rep("chr1",2), 
+                   strand = rep("-",2))
+  mapTranscripts(rd, txdb)
 }
 }
