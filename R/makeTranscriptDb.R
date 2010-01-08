@@ -467,50 +467,6 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
 }
 
 
-##TODO: put a check in place to make double-damn sure that the unique tx_ids
-##are equal in number to the number of unique exon IDs (and one per line)
-##before attempting to make an all_dat table.  And if they are not, then thin
-##them out...
-
-##ALTERNATIVELY: I could just get the gene IDs separately for the BMFrame and
-##add them on in R (instead of getting the whole thing from BM which results
-##in the bloated frame)...
-
-
-##The trouble with the BMFrame Data is that the data have variable cds start
-##and ends for a given tx-id.  So when I go to insert this into the DB, it
-##violates a constraint in place to insure row-wise integrity for each tx
-##combined with the constraint on only allowing one tx_id per row (table
-##constraint).
-
-##I have already considered ordering based on the cds start and ends when
-##assigning tx_ids.  But this is probably a bad idea because we don't want to
-##really even get into that whole game and we kind of need to trust the
-##incoming data a certain amount.
-
-##ALSO, it appears that the cds_start and cds_end data from biomart are not
-##only counted based on a transcript frame of reference, but that they are
-##also split up based on exons...  Which complicates things in terms of
-##pre-processing.
-
-
-##And actually, the cds_start and cds_end from UCSC are also kind of screwy
-##(they simply look WRONG).
-
-
-##TODO: These frames all need to be adjusted so that their counts are correct
-##(pre-processed to adjust to the same counting offset as we use in R).
-
-
-##used to make the testDB:
-##Insert the first bit into UCSCTranscript
-##frame = frame[c(1:500, 100000:100100, 120000:120100, 150000:150100,
-##170000:170100, 200000:200100),]
-## library(GenomicFeatures)
-## txdb = makeTranscriptDbFromUCSC()
-## saveFeatures(txdb, file="HG18.sqlite")
-
-
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Comparing 2 TranscriptDb objects.
 ###
