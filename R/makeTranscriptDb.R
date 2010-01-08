@@ -319,6 +319,20 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
     paste("org", orgcode, "eg.db", sep=".")
 }
 
+.makeExonRank <- function(exonCount, exonStrand)
+{
+    ans <- lapply(seq_len(length(exonCount)),
+        function(i)
+        {
+            if (exonStrand[i] == "+")
+                seq_len(exonCount[i])
+            else
+                (exonCount[i]):1L
+        }
+    )
+    unlist(ans)
+}
+
 .makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, organism, track)
 {
     COL2CLASS <- c(
@@ -382,7 +396,7 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
         cdsEnd=rep.int(ucsc_txtable$cdsEnd, exon_count),
         exonStart=unlist(exonStarts) + 1L,
         exonEnd=unlist(exonEnds),
-        exonRank=IRanges:::mseq(rep.int(1L, length(exon_count)), exon_count),
+        exonRank=.makeExonRank(exon_count, ucsc_txtable$strand),
         stringsAsFactors=FALSE)
     do.call(makeTranscriptDb, txtable)
 }
