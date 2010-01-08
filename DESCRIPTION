@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Support package for genomic annotations
-Version: 0.3.19
+Version: 0.3.20
 Author: D. Sarkar, M. Lawrence, Biocore
 License: Artistic-2.0
 Description: Infrastructure shared by the annotation packages containing genomic
@@ -10,4 +10,13 @@ Imports: methods, DBI, RSQLite (>= 0.8-1), IRanges (>= 1.3.14), Biostrings (>= 2
 Suggests: GenomicFeatures.Hsapiens.UCSC.hg18,
           BSgenome.Hsapiens.UCSC.hg18 (>= 1.3.14),
           RUnit
+Collate: AllGenerics.R
+	 AllClasses.R
+	 utils.R
+         makeTranscriptDb.R
+	 getTranscripts.R
+	 mapTranscripts.R
+	 regions.R
+	 GenomicFeaturesForge.R
+	 extractTranscriptsFromGenome.R
 biocViews: Genetics, Infrastructure

@@ -79,7 +79,7 @@ library(IRanges)
 rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
                  space = rep("chr1",2), 
                  strand = rep("-",2))
-getTranscripts(txdb, rd)
+getTranscripts(rd, txdb)
 @
 
 

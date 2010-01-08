@@ -2,21 +2,6 @@
 ##mapTranscripts() and mapExons() methods.
 
 
-## Get the list of possible values for a type from a table:
-.getValsFromTable <- function(txann, field, table){
-  sql <- paste("SELECT",field,"FROM",table)
-  as.character(unlist(unique(dbGetQuery(txann@conn, sql))))
-}
-
-## Check that the type of thing (chromosome, strand etc.) is in the
-## transcripts table
-.checkTxFields <- function(txann, type = c("chromosome","strand"), data){
-  type <- match.arg(type)
-  annot <- .getValsFromTable(txann, type, "transcripts") 
-  all(data %in% annot)
-}
-
-
 
 ## For looping we want to get data for just the unique chromosome and strand
 ## combinations that actually occur...

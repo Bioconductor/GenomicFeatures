@@ -32,6 +32,22 @@
 ## put myTest.sqlite into /data and formalize the tests into unit tests.
 
 
+
+## Get the list of possible values for a type from a table:
+.getValsFromTable <- function(txann, field, table){
+  sql <- paste("SELECT",field,"FROM",table)
+  as.character(unlist(unique(dbGetQuery(txann@conn, sql))))
+}
+
+## Check that the type of thing (chromosome, strand etc.) is in the
+## transcripts table
+.checkTxFields <- function(txann, type = c("chromosome","strand"), data){
+  type <- match.arg(type)
+  annot <- .getValsFromTable(txann, type, "transcripts") 
+  all(data %in% annot)
+}
+
+
 ## Helper function to construct the tail end of the queries
 .makeRangeSQL <- function(start, end, ranges, rangeRestr) {
   switch(rangeRestr,
@@ -48,40 +64,21 @@
 }
 
 
-setMethod("getTranscripts", c("TranscriptDb", "missing"),
-    function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-             rangeRestr="either", expand=FALSE)
+
+
+## Method for RangedData objects
+setMethod("getTranscripts", c("RangedData"),
+    function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
     {
-      .getTranscripts(txdb=ann, ranges=ranges,
-                      chromosome=chromosome, strand=strand,
-                      rangeRestr=rangeRestr, expand=expand)
-    }
-)
+      if(.checkTxFields(ann, "strand", ranges[["strand"]])){
+        strand <- ranges[["strand"]]
+      }else{stop("Strand values for ranges do not match annotation DB")}
 
+      ## check that the chromosomes are what we expect. 
+      if(.checkTxFields(ann, "chromosome", space(ranges))){
+        chromosome <- space(ranges)
+      }else{stop("Space values for ranges do not match annotation DB")}
 
-## getTranscript methods accomodate different object and try to use the
-## information that they contain
-setMethod("getTranscripts", c("TranscriptDb", "IRanges"),
-    function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-             rangeRestr="either", expand=FALSE)
-    {
-      .getTranscripts(txdb=ann, ranges=ranges,
-                      chromosome=chromosome, strand=strand,
-                      rangeRestr=rangeRestr, expand=expand)
-    }
-)
-
-
-## If they give me a RangedData object or a RangesList object, then I should
-## just check for any additional chromosome and strand information in there,
-## and append that to my chromosome and strand information.
-
-setMethod("getTranscripts", c("TranscriptDb", "RangedData"),
-    function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-             rangeRestr="either", expand=FALSE)
-    {
-      rdChromosome <- space(ranges)
-      chromosome <- c(chromosome, rdChromosome)
       ranges <- unlist(ranges(ranges), use.names=FALSE)
       .getTranscripts(txdb=ann, ranges=ranges,
                       chromosome=chromosome, strand=strand,
@@ -89,16 +86,15 @@ setMethod("getTranscripts", c("TranscriptDb", "RangedData"),
     }
 )
 
-setMethod("getTranscripts", c("TranscriptDb", "RangesList"),
-    function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-             rangeRestr="either", expand=FALSE)
+
+## If there is not ranged Data object, then we just want it all...
+setMethod("getTranscripts", c("missing"),
+    function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
     {
-      ranges <- unlist(ranges, use.names=FALSE)
-      .getTranscripts(txdb=ann, ranges=ranges,
-                      chromosome=chromosome, strand=strand,
-                      rangeRestr=rangeRestr, expand=expand)
+      .getTranscripts(txdb=ann, rangeRestr=rangeRestr, expand=expand)
     }
 )
+
 
 
 .printSQL <- function(sql) {
