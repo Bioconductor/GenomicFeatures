@@ -79,10 +79,9 @@
   
     ##Then subset the query result with only the matching stuff.
     ##And I also have to match that up with the stuff in range...
-    matchRange <- range[unique(map@matchMatrix[,1])]
+    matchRange <- range[map@matchMatrix[,1]]
     if(!is.na(map@matchMatrix[1])){
-      dupRange <- rep(matchRange, table(map@matchMatrix[,1])[[1]])
-      ans <- cbind(as.data.frame(dupRange),res[map@matchMatrix[,2],])
+      ans <- cbind(as.data.frame(matchRange),res[map@matchMatrix[,2],])
     }else ans <- data.frame()
   }
   ans
