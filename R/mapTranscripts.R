@@ -181,6 +181,8 @@ setMethod("mapTranscripts", "RangedData",
 ## txAnn <- loadFeatures("testDB.sqlite")
 ## #GenomicFeatures:::.mapTranscripts(txAnn, ranges, chromosome, strand)
 
+
+
 ## #rd = RangedData(ranges, space=chromosome, strand=strand)
 ## #mapTranscripts(rd, txAnn)
 
@@ -196,3 +198,5 @@ setMethod("mapTranscripts", "RangedData",
 ## 2) write test code (for checking various helper methods) 
 ## 3) write a manual page - done.
 ## 4) since we decided to only return the tx_id, we might want to change to returning the _tx_id starting right now. - done?
+
+
