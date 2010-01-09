@@ -20,15 +20,31 @@
 
 \section{Introduction}
 
-The \Rpackage{GenomicFeatures} package is a resource for standardizing the way we deal with Genomic Features annotations in Biocondutor.
+The \Rpackage{GenomicFeatures} package is a resource for standardizing
+the way we deal with Genomic Features annotations in Biocondutor.
+\Rpackage{GenomicFeatures} stores annotation data for the location of
+transcripts and exons inside of a SQLite database and presents the R
+user with a \Rclass{TranscriptDb} object that contains a handle to the
+database.  Methods are provided for accessing the contents of this database.
+
+
+\subsection{What kind of data is stored inside of a TranscriptDb Object}
+A standard \Rclass{TranscriptDb} should primarily contain data about
+transcripts and exons.  The transcript data will include the
+chromosome, strand, as well along with the start and end positions
+relative to the genome.  The Exons will include much of the same
+information as the transcripts, but they will also include a key that
+maps them to their transcripts along with a rank to indicate their
+relative ordering within a transcript.  The rank of the exons will
+always be reported relative to the transcript they are mapped to.
 
 
 \subsection{Generating a TranscriptDb Object}
 
-Most of the time, you will probably want to generate a TranscriptDb
+Most of the time, you will probably want to generate a \Rclass{TranscriptDb}
 object from a standard source of annotations.  For this, you will want
-to use a helper function like \Rfunction{makeTranscriptDbFromUCSC} or
-\Rfunction{makeTranscriptDbFromBiomart}.
+to use a helper function like \Rfunction{make\Rclass{TranscriptDb}FromUCSC} or
+\Rfunction{make\Rclass{TranscriptDb}FromBiomart}.
 
 <<makeTranscriptDbFromUCSC 1>>=
 library(GenomicFeatures)
@@ -37,15 +53,16 @@ txAnn <- makeTranscriptDbFromUCSC()
 
 But for those times when you want to generate an annotation from a
 more generic source, we also are providing
-\Rfunction{makeTranscriptDb}.  It will be a lot less convenient to use
-a function like \Rfunction{makeTranscriptDb} of course, but at least
+\Rfunction{make\Rclass{TranscriptDb}}.  It will be a lot less convenient to use
+a function like \Rfunction{make\Rclass{TranscriptDb}} of course, but at least
 it buys you the flexibility to produce a TransctriptDb from any
 source.
 
 
+
 \subsection{Saving and Loading a TranscriptDb Object}
 
-When you 1st make your TranscriptDb Object, it is running from a
+When you 1st make your \Rclass{TranscriptDb} Object, it is running from a
 temporary file.  In order to save it you need to use the
 \Rfunction{saveFeatures} function.
 
@@ -53,7 +70,7 @@ temporary file.  In order to save it you need to use the
 saveFeatures(txAnn, file="fileName.sqlite")
 @
 
-To retrieve the TranscriptDb object, you only need to use the
+To retrieve the \Rclass{TranscriptDb} object, you only need to use the
 \Rfunction{loadFeatures} function.
 
 <<loadFeatures 1, eval=FALSE>>=
@@ -63,10 +80,10 @@ loadFeatures("fileName.sqlite")
 
 \subsection{Getting data from a TranscriptDb Object}
 
-A TranscriptDb object is really just an R object that points to a
-SQLite database.  This database can of course be accessed by simply
-using the \Rpackage{DBI} interface, but we have also endeavored to
-provide accessor methods.  One example of such a method is
+A \Rclass{TranscriptDb} object is really just an R object that points
+to a SQLite database.  This database can of course be accessed by
+simply using the \Rpackage{DBI} interface, but accessor methods have
+also been provided.  One example of such a method is
 \Rfunction{getTranscripts}, which will take a RangedData object as a
 means to specify which ranges, chromosomes and strands to get data
 for, and will then return another RangedData object that will contain
@@ -87,7 +104,7 @@ getTranscripts(rd, txdb)
 \subsection{Mapping data from a TranscriptDb Object}
 
 An even more common operation than simple data retrieval is to take a
-set of regions and map those onto the contents of the TranscriptDb
+set of regions and map those onto the contents of the \Rclass{TranscriptDb}
 object.  Unlike a simple getter method such as
 \Rfunction{getTranscripts}, a method like Rfunction{mapTranscripts}
 will return a RangedData that represents the mapping of the original
