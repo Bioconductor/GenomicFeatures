@@ -4,10 +4,8 @@
 \alias{getTranscripts,missing-method}
 \alias{getTranscripts,RangedData-method}
 \alias{getExons}
-\alias{getExons,TranscriptDb,missing-method}
-\alias{getExons,TranscriptDb,IRanges-method}
-\alias{getExons,TranscriptDb,RangesList-method}
-\alias{getExons,TranscriptDb,RangedData-method}
+\alias{getExons,missing-method}
+\alias{getExons,RangedData-method}
 
 \title{
   Retrieveing genomic features from a TranscriptDb object.
@@ -18,14 +16,11 @@
 }
 \usage{
   getTranscripts(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
-  getExons(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-           rangeRestr="either", expand=FALSE)
+  getExons(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
 }
 \arguments{
   \item{ranges}{A RangedData object to specify which ranges to search for annotations.}
   \item{ann}{A \link{TranscriptDb} object.}
-  \item{chromosome}{the chromosome to search on 'chr1'.}
-  \item{strand}{the strand to search on +/1}
   \item{rangeRestr}{How to test the ranges.  Either "both", "start",
     "end" or "either" of any range can be required to land within an
     annotation.}

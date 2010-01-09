@@ -9,7 +9,6 @@ setGeneric("mapTranscripts", signature="ranges",
            function(ranges=NULL, ann)
            standardGeneric("mapTranscripts"))
 
-setGeneric("getExons", signature=c("ann", "ranges"),
-           function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-                    rangeRestr="either", expand=FALSE)
+setGeneric("getExons", signature="ranges",
+           function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
            standardGeneric("getExons"))

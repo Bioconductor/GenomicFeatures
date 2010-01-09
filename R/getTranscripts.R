@@ -1,36 +1,3 @@
-## TODO:
-## Chromosome and strand need to be vectorized like ranges. - DONE
-
-## Append Chromosome, strand and ranges where clauses separately depending
-## ... - DONE
-
-## Add parameters to allow expanded querys... (basically also join in exons when
-## dealing with transcripts or vice versa for getExons, where we would have to
-## also join in transcripts). - DONE
-
-## Add checks in case someone wants to search "all Chromosomes" or all
-## ranges - so that they can leave it blank to do this - DONE
-
-## ALSO: add another parameter with a set of values () to control whether the
-## ranges have to include the feature, or simply overlap with it.  range =
-## c("start", "both", "end", "either").  Where "both" is the default and
-## requires that both ends of the range are contained within the start and end
-## elements of an annotation, "either" would say (foo >X OR bar <Y), meaning
-## that either thing can be ok (for overlaps), and start and end would only
-## check one thing or the other... - DONE
-
-## expand to be a set of methods.  So this core will then become a helper
-## function, and the methods will allow me to pass in either a RangedData
-## object or a Ranges List.  Or other ways of representing the same kind of
-## data. - DONE
-
-## make a "mini" myTest.sqlite and then put it in... - DONE
-
-## Now I can do this:
-##tx = loadFeatures(system.file("inst/extdata/HG18.sqlite",package="GenomicFeatures"))
-
-## put myTest.sqlite into /data and formalize the tests into unit tests.
-
 
 
 ## Get the list of possible values for a type from a table:
@@ -41,11 +8,12 @@
 
 ## Check that the type of thing (chromosome, strand etc.) is in the
 ## transcripts table
-.checkTxFields <- function(txann, type = c("chromosome","strand"), data){
+.checkFields <- function(txann, type = c("chromosome","strand"), data, table){
   type <- match.arg(type)
-  annot <- .getValsFromTable(txann, type, "transcripts") 
+  annot <- .getValsFromTable(txann, type, table) 
   all(data %in% annot)
 }
+
 
 
 ## Helper function to construct the tail end of the queries
@@ -67,15 +35,15 @@
 
 
 ## Method for RangedData objects
-setMethod("getTranscripts", c("RangedData"),
+setMethod("getTranscripts", "RangedData",
     function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
     {
-      if(.checkTxFields(ann, "strand", ranges[["strand"]])){
+      if(.checkFields(ann, "strand", ranges[["strand"]], "transcripts")){
         strand <- ranges[["strand"]]
       }else{stop("Strand values for ranges do not match annotation DB")}
 
       ## check that the chromosomes are what we expect. 
-      if(.checkTxFields(ann, "chromosome", space(ranges))){
+      if(.checkFields(ann, "chromosome", space(ranges), "transcripts")){
         chromosome <- space(ranges)
       }else{stop("Space values for ranges do not match annotation DB")}
 
@@ -88,7 +56,7 @@ setMethod("getTranscripts", c("RangedData"),
 
 
 ## If there is not ranged Data object, then we just want it all...
-setMethod("getTranscripts", c("missing"),
+setMethod("getTranscripts", "missing",
     function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
     {
       .getTranscripts(txdb=ann, rangeRestr=rangeRestr, expand=expand)
@@ -96,7 +64,7 @@ setMethod("getTranscripts", c("missing"),
 )
 
 
-
+## convenience function for seeing the SQL
 .printSQL <- function(sql) {
   cat(strwrap(gsub("\\n +"," ",sql)),sep="\n")
 }
@@ -225,32 +193,20 @@ setMethod("getTranscripts", c("missing"),
 ## rd2 <- RangedData(foo, space=c("chr2","chr3"))
 
 
-setMethod("getExons", c("TranscriptDb", "missing"),
-    function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-             rangeRestr="either", expand=FALSE)
-    {
-      .getExons(txdb=ann, ranges=ranges,
-                chromosome=chromosome, strand=strand,
-                rangeRestr=rangeRestr, expand=expand)
-    }
-)
 
-setMethod("getExons", c("TranscriptDb", "IRanges"),
-    function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-             rangeRestr="either", expand=FALSE)
-    {
-      .getExons(txdb=ann, ranges=ranges,
-                chromosome=chromosome, strand=strand,
-                rangeRestr=rangeRestr, expand=expand)
-    }
-)
 
-setMethod("getExons", c("TranscriptDb", "RangedData"),
-    function(ann, ranges=NULL, chromosome=NULL, strand=NULL,
-             rangeRestr="either", expand=FALSE)
+setMethod("getExons", "RangedData",
+    function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
     {
-      rdChromosome <- space(ranges)
-      chromosome <- c(chromosome, rdChromosome)
+      if(.checkFields(ann, "strand", ranges[["strand"]], "exons")){
+        strand <- ranges[["strand"]]
+      }else{stop("Strand values for ranges do not match annotation DB")}
+
+      ## check that the chromosomes are what we expect. 
+      if(.checkFields(ann, "chromosome", space(ranges), "exons")){
+        chromosome <- space(ranges)
+      }else{stop("Space values for ranges do not match annotation DB")}
+      
       ranges <- unlist(ranges(ranges), use.names=FALSE)
       .getExons(txdb=ann, ranges=ranges,
                 chromosome=chromosome, strand=strand,
@@ -258,17 +214,15 @@ setMethod("getExons", c("TranscriptDb", "RangedData"),
     }
 )
 
-setMethod("getExons", c("TranscriptDb", "RangesList"),
-    function(ann, ranges, chromosome=NULL,
-             strand=NULL, rangeRestr="either",
-             expand=FALSE)
+## No ranged Data object = get everything.
+setMethod("getExons", "missing",
+    function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
     {
-      ranges <- unlist(ranges, use.names=FALSE)
-      .getExons(txdb=ann, ranges=ranges,
-                chromosome=chromosome, strand=strand,
-                rangeRestr=rangeRestr, expand=expand)            
+      .getExons(txdb=ann, rangeRestr=rangeRestr, expand=expand)
     }
 )
+
+
 
 ### Extract selected exons from 'txdb'.
 .getExons <- function(txdb, ranges=NULL, chromosome=NULL,
@@ -353,6 +307,7 @@ setMethod("getExons", c("TranscriptDb", "RangesList"),
 }
 
 
+
 ## ##Complex example for exons.
 ## foo = IRanges(start=c(500,10500), end=c(10000,30000))
 ## getExons(txdb,foo,"chr1","-")
@@ -375,3 +330,14 @@ setMethod("getExons", c("TranscriptDb", "RangesList"),
 ## I will also need to add some warnings so that when users try to pass in a
 ## bad value for chromosome, they can get a message that says "your paramater
 ## needs to have values that look like: "chr1" "chr2" etc."
+
+
+## Add the following test case (and modify the above test cases and add one or ttwo of those as well)
+
+## library(GenomicFeatures)
+## txdb <- loadFeatures("testDB.sqlite")
+## library(IRanges)
+## ranges = IRanges(start=c(500,10500), end=c(10000,30000))
+## rd = RangedData(ranges=ranges, space = c("chr1","chr2"), c("-","-"))
+## getExons(rd,txdb)
+
