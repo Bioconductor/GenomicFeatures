@@ -30,7 +30,7 @@
   wishes to restrict this search to specific chromosomes and strands,
   then that information should be included in the passed in RangedData
   object by filling in the space section for that object and also adding
-  a collumn for the strand.  If this information is missing from the
+  a column for the strand.  If this information is missing from the
   input RangedData object, then all possible chromosomes/strands will be
   searched.
   The object returned will also be a RangedData object that

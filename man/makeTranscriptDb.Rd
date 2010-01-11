@@ -59,7 +59,7 @@
   The most general form is \code{makeTranscriptDb}, which simply takes
   vectors of equal length. The i-th element of the vectors represent data
   for a single exon. Transcript data must be repeated over all exons within
-  a given trancsript.
+  a given transcript.
 
   \code{makeTranscriptDbFromUCSC} and \code{makeTranscriptDbFromBiomart}
   are convenience functions for feeding data from these sources (UCSC or

@@ -8,7 +8,7 @@
 \alias{getExons,RangedData-method}
 
 \title{
-  Retrieveing genomic features from a TranscriptDb object.
+  Retrieving genomic features from a TranscriptDb object.
 }
 \description{
   Methods to retrieve genomic features for ranges of interest from a
