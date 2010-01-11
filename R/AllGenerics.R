@@ -6,7 +6,7 @@ setGeneric("getTranscripts", signature="ranges",
            standardGeneric("getTranscripts"))
 
 setGeneric("mapTranscripts", signature="ranges",
-           function(ranges=NULL, ann)
+           function(ranges=NULL, ann, rangeRestr="any")
            standardGeneric("mapTranscripts"))
 
 setGeneric("getExons", signature="ranges",
@@ -14,5 +14,5 @@ setGeneric("getExons", signature="ranges",
            standardGeneric("getExons"))
 
 setGeneric("mapExons", signature="ranges",
-           function(ranges=NULL, ann)
+           function(ranges=NULL, ann, rangeRestr="any")
            standardGeneric("mapExons"))

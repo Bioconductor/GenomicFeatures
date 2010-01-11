@@ -13,12 +13,17 @@
   TranscriptDb object.
 }
 \usage{
-  mapTranscripts(ranges=NULL, ann)
+  mapTranscripts(ranges=NULL, ann, rangeRestr)
 }
 \arguments{
   \item{ann}{A \link{TranscriptDb} object.}
   \item{ranges}{A RangedData object to specify which ranges to search
     for annotations.}
+  \item{rangeRestr}{How to test the ranges.  Can be "any", "start",
+    "during", "finish" or "equal" to indicate the kind of overlap
+    allowed between the ranges to be mapped and the ranges in the DB.
+    The default value is "any".}
+
 }
 \details{These Methods return relevant annotation results for the ranges
   specified in the RangedData object that is passed in.  If the user

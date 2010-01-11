@@ -47,7 +47,8 @@
 }
 
 
-.mapFeatures <- function(ann, sql, range, chrom, strnd, abr, fldAbr){
+.mapFeatures <- function(ann, sql, range, chrom, strnd, abr, fldAbr,
+                         type="any"){
 
   sqlChrom <- paste(" AND ",abr,".chromosome = '",chrom,"'",sep="")
   sqlStrand <- paste(" AND ",abr,".strand = '",strnd,"'",sep="")
@@ -62,7 +63,8 @@
     map <- findOverlaps(range,
                         IRanges(start = unlist(res[startName]),
                                 end = unlist(res[endName])),
-                        multiple=TRUE)
+                        multiple=TRUE,
+                        type=type)
   
     ##Then subset the query result with only the matching stuff.
     ##And I also have to match that up with the stuff in range...
@@ -76,7 +78,7 @@
 
 
 .mapTranscripts <- function(ann, ranges=NULL, chromosome=NULL,
-                            strand=NULL) {
+                            strand=NULL, type="any") {
   len <- max(length(chromosome), length(strand), length(ranges))
   sql <- paste("SELECT t._tx_id, t.chromosome, t.strand,",
                "tt.tx_start, tt.tx_end",
@@ -105,7 +107,7 @@
     range <- .setRange(ranges, ann, chromosome, strand, chrom, strnd)
     
     if(length(range) > 0){
-      newData <- .mapFeatures(ann, sql, range, chrom, strnd ,"t", "tx")
+      newData <- .mapFeatures(ann, sql, range, chrom, strnd ,"t", "tx", type)
       if(dim(newData)[1] > 0){
         chrs <- rep(chrom, dim(newData)[1])
         strnds <-rep(strnd, dim(newData)[1])
@@ -120,14 +122,14 @@
                strand     = ans[["strand"]],
                GF_txId    = ans[["_tx_id"]],
                space      = ans[["chromosome"]])
-  }else{stop("No matching data found.")}
+  }else{warning("Please be advised that no matching data was found.")}
   
 }
 
 
 
 setMethod("mapTranscripts", "RangedData",
-    function(ranges, ann)
+    function(ranges, ann, rangeRestr = "any")
     {
       ## check that any supplied strands are what we expect.
       ## note that NULL is ok and will not trip this error.
@@ -144,7 +146,8 @@ setMethod("mapTranscripts", "RangedData",
 
       ranges <- unlist(ranges(ranges), use.names=FALSE)
       .mapTranscripts(ann=ann, ranges=ranges,
-                      chromosome=chromosome, strand=strand)
+                      chromosome=chromosome, strand=strand,
+                      type = rangeRestr)
     }
 )
 
@@ -171,27 +174,8 @@ setMethod("mapTranscripts", "RangedData",
 ##Additional code to support mapping on exons:
 
 
-setMethod("mapExons", "RangedData",
-    function(ranges, ann)
-    {
-      ## check the strand and c-somes
-      if(.checkFields(ann, "strand", ranges[["strand"]], "exons")){
-        strand <- ranges[["strand"]]
-      }else{stop("Strand values for ranges do not match annotation DB")}
-
-      if(.checkFields(ann, "chromosome", space(ranges), "exons")){
-        chromosome <- space(ranges)
-      }else{stop("Space values for ranges do not match annotation DB")}
-
-      ranges <- unlist(ranges(ranges), use.names=FALSE)
-      .mapExons(ann=ann, ranges=ranges,
-                chromosome=chromosome, strand=strand)
-    }
-)
-
-
 .mapExons <- function(ann, ranges=NULL, chromosome=NULL,
-                            strand=NULL) {
+                            strand=NULL, type="any") {
   len <- max(length(chromosome), length(strand), length(ranges))
   sql <- paste("SELECT e._exon_id, e.chromosome, e.strand,",
                "ee.exon_start, ee.exon_end",
@@ -220,7 +204,7 @@ setMethod("mapExons", "RangedData",
     range <- .setRange(ranges, ann, chromosome, strand, chrom, strnd)
     
     if(length(range) > 0){
-      newData <- .mapFeatures(ann, sql, range, chrom, strnd ,"e", "exon")
+      newData <- .mapFeatures(ann, sql, range, chrom, strnd ,"e", "exon", type)
       if(dim(newData)[1] > 0){
         chrs <- rep(chrom, dim(newData)[1])
         strnds <-rep(strnd, dim(newData)[1])
@@ -235,10 +219,29 @@ setMethod("mapExons", "RangedData",
                strand     = ans[["strand"]],
                GF_exonId  = ans[["_exon_id"]],
                space      = ans[["chromosome"]])
-  }else{stop("No matching data found.")}
+  }else{warning("Please be advised that no matching data was found.")}
   
 }
 
+
+setMethod("mapExons", "RangedData",
+    function(ranges, ann, rangeRestr = "any")
+    {
+      ## check the strand and c-somes
+      if(.checkFields(ann, "strand", ranges[["strand"]], "exons")){
+        strand <- ranges[["strand"]]
+      }else{stop("Strand values for ranges do not match annotation DB")}
+
+      if(.checkFields(ann, "chromosome", space(ranges), "exons")){
+        chromosome <- space(ranges)
+      }else{stop("Space values for ranges do not match annotation DB")}
+
+      ranges <- unlist(ranges(ranges), use.names=FALSE)
+      .mapExons(ann=ann, ranges=ranges,
+                chromosome=chromosome, strand=strand,
+                type = rangeRestr)
+    }
+)
 
 
 ## Good news: this seems to work generically as expected.
@@ -256,3 +259,8 @@ setMethod("mapExons", "RangedData",
 ## So now I just have to wrap this in a method and make it into a nice example.
 ## rd = RangedData(ranges, space = chromosome, strand = strand)
 ## mapExons(rd, ann)
+
+
+## TODO: edit findOverlaps so that I can use a different type parameter...
+## type can be:  type = c("any", "start", "finish", "during", "equal")
+
