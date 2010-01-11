@@ -168,8 +168,27 @@ setMethod("mapTranscripts", "RangedData",
 
 
 
-
 ##Additional code to support mapping on exons:
+
+
+setMethod("mapExons", "RangedData",
+    function(ranges, ann)
+    {
+      ## check the strand and c-somes
+      if(.checkFields(ann, "strand", ranges[["strand"]], "exons")){
+        strand <- ranges[["strand"]]
+      }else{stop("Strand values for ranges do not match annotation DB")}
+
+      if(.checkFields(ann, "chromosome", space(ranges), "exons")){
+        chromosome <- space(ranges)
+      }else{stop("Space values for ranges do not match annotation DB")}
+
+      ranges <- unlist(ranges(ranges), use.names=FALSE)
+      .mapExons(ann=ann, ranges=ranges,
+                chromosome=chromosome, strand=strand)
+    }
+)
+
 
 .mapExons <- function(ann, ranges=NULL, chromosome=NULL,
                             strand=NULL) {
@@ -235,3 +254,5 @@ setMethod("mapTranscripts", "RangedData",
 ## #GenomicFeatures:::.mapExons(ann, ranges, chromosome, strand)
 
 ## So now I just have to wrap this in a method and make it into a nice example.
+## rd = RangedData(ranges, space = chromosome, strand = strand)
+## mapExons(rd, ann)

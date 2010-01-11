@@ -43,5 +43,6 @@ exportMethods(
   as.data.frame,
   getTranscripts,
   getExons,
-  mapTranscripts
+  mapTranscripts,
+  mapExons
 )

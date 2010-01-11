@@ -2,6 +2,8 @@
 
 \alias{mapTranscripts}
 \alias{mapTranscripts,RangedData-method}
+\alias{mapExons}
+\alias{mapExons,RangedData-method}
 
 \title{
   Mapping to genomic features in a TranscriptDb object.

@@ -12,3 +12,7 @@ setGeneric("mapTranscripts", signature="ranges",
 setGeneric("getExons", signature="ranges",
            function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
            standardGeneric("getExons"))
+
+setGeneric("mapExons", signature="ranges",
+           function(ranges=NULL, ann)
+           standardGeneric("mapExons"))
