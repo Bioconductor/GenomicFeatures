@@ -19,15 +19,15 @@
 ## Helper function to construct the tail end of the queries
 .makeRangeSQL <- function(start, end, ranges, rangeRestr) {
   switch(rangeRestr,
-         "both"   = paste("(", start, " > ", start(ranges),
-                          " AND ", end, " < ", end(ranges), ")",
+         "both"   = paste("(", start, " >= ", start(ranges),
+                          " AND ", end, " <= ", end(ranges), ")",
                           sep = ""),
-         "either" = paste("(", start, " > ", start(ranges),
-                          " OR ", end, " < ", end(ranges), ")",
+         "either" = paste("(", start, " >= ", start(ranges),
+                          " OR ", end, " <= ", end(ranges), ")",
                           sep = ""),
-         "start"  = paste("(", start," > ", start(ranges), ")",
+         "start"  = paste("(", start," >= ", start(ranges), ")",
                           sep = ""),
-         "end"    = paste("(", end, " < ", end(ranges), ")",
+         "end"    = paste("(", end, " <= ", end(ranges), ")",
                           sep = ""))
 }
 
