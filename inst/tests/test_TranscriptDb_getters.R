@@ -14,7 +14,8 @@ test_getTranscripts <- function()
                      strand = factor(rep("-",4),
                                      levels=c("-","+","*")),
                      space  = rep("chr1",4),
-                     transcript = c("uc001aag.1","uc009vis.1",
+                     GF_txId = c(6L,112L,122L,123L),
+                     txId = c("uc001aag.1","uc009vis.1",
                                     "uc009vjc.1","uc009vjd.1") )
 
     checkEquals(want, GenomicFeatures:::.getTranscripts(txdb,
@@ -38,7 +39,8 @@ test_getTranscripts <- function()
                      strand = factor(c("+","-","+","-","-","-"),
                                      levels=c("-","+","*")),
                      space  = rep("chr1",6),
-                     transcript = c("uc001aaa.2","uc001aag.1","uc009vip.1",
+                     GF_txId = c(1L,6L,109L,112L,122L,123L),
+                     txId = c("uc001aaa.2","uc001aag.1","uc009vip.1",
                                     "uc009vis.1","uc009vjc.1","uc009vjd.1") )
 
     checkEquals(want, getTranscripts(rd, txdb, rangeRestr="both") )

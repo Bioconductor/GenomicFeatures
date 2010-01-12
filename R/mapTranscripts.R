@@ -117,7 +117,7 @@
                GF_txId    = ans[["_tx_id"]],
 ##                txStart = ans[["tx_end"]],
 ##                txEnd = ans[["tx_start"]],
-               txID = ans[["tx_id"]],##  temp.
+               txId = ans[["tx_id"]],##  temp.
                space      = ans[["chromosome"]])
   }else{warning("Please be advised that no matching data was found.")}
 }

@@ -10,7 +10,8 @@ test__mapTranscripts <- function()
     want <- RangedData(ranges     = IRanges(start = rep(1115,2),
                                         end   = rep(1136,2) ),
                    strand     = rep("+",2),
-                   GF_txId    = c(109,1),
+                   GF_txId    = as.integer(c(109,1)),
+                   txId       = c("uc009vip.1","uc001aaa.2"),
                    space      = rep("chr1",2) )
     
     checkEquals(want, GenomicFeatures:::.mapTranscripts(txdb, ranges,
@@ -31,7 +32,8 @@ test_mapTranscripts <- function()
     want <- RangedData(ranges     = IRanges(start = rep(1115,2),
                                         end   = rep(1136,2) ),
                    strand     = rep("+",2),
-                   GF_txId    = c(109,1),
+                   GF_txId    = as.integer(c(109,1)),
+                   txId       = c("uc009vip.1","uc001aaa.2"),
                    space      = rep("chr1",2) )
 
     rd <- RangedData(ranges, space = chromosome, strand = strand)

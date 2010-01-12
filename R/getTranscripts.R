@@ -127,7 +127,7 @@ setMethod("getTranscripts", "missing",
                                          end   = ans[["tx_end"]]),
                     strand     = strand(ans[["strand"]]),
                     GF_txId    = ans[["_tx_id"]],
-                    txID = ans[["tx_id"]], ## temp. just for troubleshooting
+                    txId = ans[["tx_id"]], ## temp. just for troubleshooting
                     space      = ans[["chromosome"]])
   if (expand) {
     if (len == 0) {
