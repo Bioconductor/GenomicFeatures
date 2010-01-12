@@ -22,13 +22,17 @@
          "both"   = paste("(", start, " >= ", start(ranges),
                           " AND ", end, " <= ", end(ranges), ")",
                           sep = ""),
-         "either" = paste("(", start, " >= ", start(ranges),
-                          " OR ", end, " <= ", end(ranges), ")",
+         "either" = paste("((", start, " >= ", start(ranges),
+                          " AND ", start, " <= ", end(ranges),")",
+                          " OR (", end, " >= ", start(ranges),
+                          " AND ", end, " <= ", end(ranges), "))",
                           sep = ""),
-         "start"  = paste("(", start," >= ", start(ranges), ")",
+         "start"  = paste("(", start, " >= ", start(ranges),
+                          " AND ", start, " <= ", end(ranges), ")",
                           sep = ""),
-         "end"    = paste("(", end, " <= ", end(ranges), ")",
-                          sep = ""))
+         "end"    = paste("(", end, " >= ", start(ranges),
+                          " AND ", end, " <= ", end(ranges), ")",
+                          sep = "")) 
 }
 
 
