@@ -122,6 +122,30 @@ mapTranscripts(rd, txdb)
 @
 
 
+\subsection{Example: Retrieving data from an experiment}
+
+So lets suppose that you have run an experiment. After mapping all
+your reads to a Genome and collapsing them into a set of ranges, you
+want to find out what Genomic Features a particular range overlaps
+with.  Here is how you migth proceed:
+
+<<mapTranscripts 1, eval=FALSE>>=
+library(GenomicFeatures)
+txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite",
+                                 package="GenomicFeatures"))
+library(IRanges)
+rd <- RangedData(ranges = IRanges(start=6700,end=7700),
+                 space = "chr1", 
+                 strand = "-")
+mapTranscripts(rd, txdb)
+
+mapExons(rd, txdb)
+
+@
+
+
+
+
 \section{Session Information}
 
 The version number of R and packages loaded for generating the vignette were:

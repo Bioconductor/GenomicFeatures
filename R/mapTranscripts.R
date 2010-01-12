@@ -81,7 +81,7 @@
 .mapTranscripts <- function(ann, ranges=NULL, chromosome=NULL,
                             strand=NULL, type="any") {
   len <- max(length(chromosome), length(strand), length(ranges))
-  sql <- paste("SELECT t._tx_id, t.chromosome, t.strand,",
+  sql <- paste("SELECT t._tx_id, t.tx_id, t.chromosome, t.strand,",
                "tt.tx_start, tt.tx_end",
                "FROM transcripts AS t,",
                "transcripts_rtree AS tt",
@@ -115,6 +115,9 @@
                                     end   = ans[["end"]]),
                strand     = ans[["strand"]],
                GF_txId    = ans[["_tx_id"]],
+##                txstart = ans[["tx_end"]],
+##                txend = ans[["tx_start"]],
+               txID = ans[["tx_id"]],##  temp.
                space      = ans[["chromosome"]])
   }else{warning("Please be advised that no matching data was found.")}
 }

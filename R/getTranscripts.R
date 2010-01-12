@@ -25,7 +25,9 @@
          "either" = paste("((", start, " >= ", start(ranges),
                           " AND ", start, " <= ", end(ranges),")",
                           " OR (", end, " >= ", start(ranges),
-                          " AND ", end, " <= ", end(ranges), "))",
+                          " AND ", end, " <= ", end(ranges), ")",
+                          " OR (", start, " <= ", start(ranges),
+                          " AND ", end, " >= ", end(ranges), "))",
                           sep = ""),
          "start"  = paste("(", start, " >= ", start(ranges),
                           " AND ", start, " <= ", end(ranges), ")",
@@ -80,7 +82,7 @@ setMethod("getTranscripts", "missing",
                             expand=FALSE) {
   rangeRestr <- match.arg(rangeRestr)
   len <- max(length(chromosome), length(strand), length(ranges))
-  sql <- paste("SELECT t.tx_id, t.chromosome, t.strand,",
+  sql <- paste("SELECT t._tx_id, t.tx_id,t.chromosome, t.strand,",
                "tt.tx_start, tt.tx_end",
                "FROM transcripts AS t,",
                "transcripts_rtree AS tt",
@@ -124,7 +126,8 @@ setMethod("getTranscripts", "missing",
   ans <- RangedData(ranges     = IRanges(start = ans[["tx_start"]],
                                          end   = ans[["tx_end"]]),
                     strand     = strand(ans[["strand"]]),
-                    transcript = ans[["tx_id"]],
+                    transcript = ans[["_tx_id"]],
+                    txID = ans[["tx_id"]], ## temp. just for troubleshooting
                     space      = ans[["chromosome"]])
   if (expand) {
     if (len == 0) {
