@@ -115,8 +115,8 @@
                                     end   = ans[["end"]]),
                strand     = ans[["strand"]],
                GF_txId    = ans[["_tx_id"]],
-##                txstart = ans[["tx_end"]],
-##                txend = ans[["tx_start"]],
+##                txStart = ans[["tx_end"]],
+##                txEnd = ans[["tx_start"]],
                txID = ans[["tx_id"]],##  temp.
                space      = ans[["chromosome"]])
   }else{warning("Please be advised that no matching data was found.")}
@@ -204,6 +204,8 @@ setMethod("mapTranscripts", "RangedData",
                                     end   = ans[["end"]]),
                strand     = ans[["strand"]],
                GF_exonId  = ans[["_exon_id"]],
+##                exonStart = ans[["exon_start"]],
+##                exonEnd = ans[["exon_end"]],
                space      = ans[["chromosome"]])
   }else{warning("Please be advised that no matching data was found.")}
 }
@@ -259,5 +261,6 @@ setMethod("mapExons", "RangedData",
 ## strand <- c("+", "-", "+", "+")
 ## ann <- loadFeatures("testDB.sqlite")
 
+## system.time(getTranscripts(ann=ann))
 ## rd = getTranscripts(ann=ann)
-## mapTranscripts(rd,ann)
+## system.time(mapTranscripts(rd,ann))

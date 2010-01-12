@@ -126,7 +126,7 @@ setMethod("getTranscripts", "missing",
   ans <- RangedData(ranges     = IRanges(start = ans[["tx_start"]],
                                          end   = ans[["tx_end"]]),
                     strand     = strand(ans[["strand"]]),
-                    transcript = ans[["_tx_id"]],
+                    GF_txId    = ans[["_tx_id"]],
                     txID = ans[["tx_id"]], ## temp. just for troubleshooting
                     space      = ans[["chromosome"]])
   if (expand) {
@@ -238,7 +238,7 @@ setMethod("getExons", "missing",
                       expand=FALSE) {
   rangeRestr <- match.arg(rangeRestr)
   len <- max(length(chromosome), length(strand), length(ranges))
-  sql <- paste("SELECT e.chromosome, e.strand,",
+  sql <- paste("SELECT e.chromosome, e._exon_id, e.strand,",
                "et.exon_start, et.exon_end",
                "FROM exons AS e,",
                "exons_rtree AS et",
@@ -282,7 +282,8 @@ setMethod("getExons", "missing",
   ans <- RangedData(ranges = IRanges(start = ans[["exon_start"]],
                                      end   = ans[["exon_end"]]),
                     strand = strand(ans[["strand"]]),
-                    space  = ans[["chromosome"]])
+                    space  = ans[["chromosome"]],
+                    GF_txId = ans[["_exon_id"]])
   if (expand) {
     if (len == 0) {
       sqltx <- paste("SELECT ests._exon_id, t.tx_id",
