@@ -81,7 +81,7 @@
 .mapTranscripts <- function(ann, ranges=NULL, chromosome=NULL,
                             strand=NULL, type="any") {
   len <- max(length(chromosome), length(strand), length(ranges))
-  sql <- paste("SELECT t._tx_id, t.tx_id, t.chromosome, t.strand,",
+  sql <- paste("SELECT t.tx_id, t.tx_name, t.chromosome, t.strand,",
                "tt.tx_start, tt.tx_end",
                "FROM transcripts AS t,",
                "transcripts_rtree AS tt",
@@ -114,10 +114,10 @@
     RangedData(ranges     = IRanges(start = ans[["start"]],
                                     end   = ans[["end"]]),
                strand     = ans[["strand"]],
-               GF_txId    = ans[["_tx_id"]],
+               GF_txId    = ans[["tx_id"]],
 ##                txStart = ans[["tx_end"]],
 ##                txEnd = ans[["tx_start"]],
-               txId = ans[["tx_id"]],##  temp.
+               txName = ans[["tx_name"]],##  temp.
                space      = ans[["chromosome"]])
   }else{warning("Please be advised that no matching data was found.")}
 }
@@ -171,7 +171,7 @@ setMethod("mapTranscripts", "RangedData",
 .mapExons <- function(ann, ranges=NULL, chromosome=NULL,
                             strand=NULL, type="any") {
   len <- max(length(chromosome), length(strand), length(ranges))
-  sql <- paste("SELECT e._exon_id, e.chromosome, e.strand,",
+  sql <- paste("SELECT e.exon_id, e.chromosome, e.strand,",
                "ee.exon_start, ee.exon_end",
                "FROM exons AS e,",
                "exons_rtree AS ee",
@@ -203,7 +203,7 @@ setMethod("mapTranscripts", "RangedData",
     RangedData(ranges     = IRanges(start = ans[["start"]],
                                     end   = ans[["end"]]),
                strand     = ans[["strand"]],
-               GF_exonId  = ans[["_exon_id"]],
+               GF_exonId  = ans[["exon_id"]],
 ##                exonStart = ans[["exon_start"]],
 ##                exonEnd = ans[["exon_end"]],
                space      = ans[["chromosome"]])

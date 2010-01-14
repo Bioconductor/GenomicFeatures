@@ -82,7 +82,7 @@ setMethod("getTranscripts", "missing",
                             expand=FALSE) {
   rangeRestr <- match.arg(rangeRestr)
   len <- max(length(chromosome), length(strand), length(ranges))
-  sql <- paste("SELECT t._tx_id, t.tx_id,t.chromosome, t.strand,",
+  sql <- paste("SELECT t.tx_id, t.tx_name, t.chromosome, t.strand,",
                "tt.tx_start, tt.tx_end",
                "FROM transcripts AS t,",
                "transcripts_rtree AS tt",
@@ -118,7 +118,7 @@ setMethod("getTranscripts", "missing",
                       ")", sep = "")
     sql <- paste(sql, sqlwhere)
   }
-  sql <- paste(sql, "ORDER BY t._tx_id")
+  sql <- paste(sql, "ORDER BY t.tx_id")
   if (getOption("verbose", FALSE)) {
     .printSQL(sql)
   }
@@ -126,17 +126,17 @@ setMethod("getTranscripts", "missing",
   ans <- RangedData(ranges     = IRanges(start = ans[["tx_start"]],
                                          end   = ans[["tx_end"]]),
                     strand     = strand(ans[["strand"]]),
-                    GF_txId    = ans[["_tx_id"]],
-                    txId = ans[["tx_id"]], ## temp. just for troubleshooting
+                    GF_txId    = ans[["tx_id"]],
+                    txName = ans[["tx_name"]], ## temp. just for troubleshooting
                     space      = ans[["chromosome"]])
   if (expand) {
     if (len == 0) {
-      sqlexons <- paste("SELECT ests._tx_id, et.exon_start, et.exon_end",
+      sqlexons <- paste("SELECT ests.tx_id, et.exon_start, et.exon_end",
                         "FROM exons_rtree AS et,",
                         "exons_transcripts AS ests",
                         "WHERE et._exon_id=ests._exon_id")
     } else {
-      sqlexons <- paste("SELECT ests._tx_id, et.exon_start, et.exon_end",
+      sqlexons <- paste("SELECT ests.tx_id, et.exon_start, et.exon_end",
                         "FROM exons_rtree AS et,",
                         "exons_transcripts AS ests,",
                         "transcripts AS t,",
@@ -146,7 +146,7 @@ setMethod("getTranscripts", "missing",
                         "AND t._tx_id=tt._tx_id",
                         sqlwhere)
     }
-    sqlexons <- paste(sqlexons, "ORDER BY ests._tx_id, ests.exon_rank")
+    sqlexons <- paste(sqlexons, "ORDER BY ests.tx_id, ests.exon_rank")
     if (getOption("verbose", FALSE)) {
       .printSQL(sqlexons)
     }
@@ -155,7 +155,7 @@ setMethod("getTranscripts", "missing",
       IRanges:::newCompressedList("CompressedIRangesList",
                                   IRanges(start = exons[["exon_start"]],
                                           end   = exons[["exon_end"]]),
-                                  end = end(Rle(exons[["_tx_id"]])))
+                                  end = end(Rle(exons[["tx_id"]])))
   }
   ans
 }
@@ -238,7 +238,7 @@ setMethod("getExons", "missing",
                       expand=FALSE) {
   rangeRestr <- match.arg(rangeRestr)
   len <- max(length(chromosome), length(strand), length(ranges))
-  sql <- paste("SELECT e.chromosome, e._exon_id, e.strand,",
+  sql <- paste("SELECT e.chromosome, e.exon_id, e.strand,",
                "et.exon_start, et.exon_end",
                "FROM exons AS e,",
                "exons_rtree AS et",
@@ -274,7 +274,7 @@ setMethod("getExons", "missing",
                       ")", sep = "")
     sql <- paste(sql, sqlwhere)
   }
-  sql <- paste(sql, "ORDER BY e._exon_id")
+  sql <- paste(sql, "ORDER BY e.exon_id")
   if (getOption("verbose", FALSE)) {
     .printSQL(sql)
   }
@@ -283,15 +283,15 @@ setMethod("getExons", "missing",
                                      end   = ans[["exon_end"]]),
                     strand = strand(ans[["strand"]]),
                     space  = ans[["chromosome"]],
-                    GF_txId = ans[["_exon_id"]])
+                    GF_exonId = ans[["exon_id"]])
   if (expand) {
     if (len == 0) {
-      sqltx <- paste("SELECT ests._exon_id, t.tx_id",
+      sqltx <- paste("SELECT ests.exon_id, t.tx_id",
                      "FROM exons_transcripts AS ests,",
                      "transcripts AS t",
                      "WHERE ests._tx_id=t._tx_id")
     } else {
-      sqltx <- paste("SELECT ests._exon_id, t.tx_id",
+      sqltx <- paste("SELECT ests.exon_id, t.tx_id",
                      "FROM exons_transcripts AS ests,",
                      "transcripts AS t,",
                      "exons AS e,",
@@ -301,7 +301,7 @@ setMethod("getExons", "missing",
                      "AND e._exon_id=et._exon_id",
                      sqlwhere)
     }
-    sqltx <- paste(sqltx, "ORDER BY ests._exon_id")
+    sqltx <- paste(sqltx, "ORDER BY ests.exon_id")
     if (getOption("verbose", FALSE)) {
       .printSQL(sqltx)
     }
@@ -309,7 +309,7 @@ setMethod("getExons", "missing",
     ans[["transcripts"]] <-
       IRanges:::newCompressedList("CompressedCharacterList",
                                   as.character(tx[["tx_id"]]),
-                                  end = end(Rle(tx[["_exon_id"]])))
+                                  end = end(Rle(tx[["exon_id"]])))
   }
   ans
 }
