@@ -5,19 +5,19 @@ test_makeTranscriptDbFromUCSCTxTable <- function()
     ## want
     txdb0_file <- system.file(
                       "extdata",
-                      "UCSCknownGene_sample.sqlite",
+                      "UCSC_knownGene_sample.sqlite",
                       package="GenomicFeatures")
     txdb0 <- loadFeatures(txdb0_file)
 
     ## get
     ucsc_txtable_file <- system.file(
                              "extdata",
-                             "UCSCknownGene_sample.rda",
+                             "UCSC_knownGene_sample.rda",
                              package="GenomicFeatures"
                          )
     load(ucsc_txtable_file)
     txdb1 <- GenomicFeatures:::.makeTranscriptDbFromUCSCTxTable(
-                 UCSCknownGene_sample, "Human", "knownGene")
+                 UCSC_knownGene_sample, "Human", "knownGene")
 
     ## compare
     ok <- GenomicFeatures:::compareTranscriptDbs(txdb1, txdb0)

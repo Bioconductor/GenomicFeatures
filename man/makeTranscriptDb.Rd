@@ -23,7 +23,7 @@
   or from a local file.
 }
 \usage{
-  makeTranscriptDb(geneId, txId, chrom, strand, txStart, txEnd,
+  makeTranscriptDb(geneId, txId, txName=NULL, chrom, strand, txStart, txEnd,
                    cdsStart, cdsEnd, exonStart,exonEnd, exonRank, 
                    exonId=NULL)
   makeTranscriptDbFromUCSC(genome="hg18",
@@ -33,6 +33,7 @@
 \arguments{
   \item{geneId}{vector of gene IDs}
   \item{txId}{vector of transcript IDs}
+  \item{txName}{vector of transcript names (not necessarily unique)}
   \item{chrom}{vector of chromosomes}
   \item{strand}{vector of strand orientation}
   \item{txStart}{vector of transcription start sites}

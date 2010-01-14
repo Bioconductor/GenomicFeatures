@@ -76,15 +76,19 @@ loadFeatures <- function(file)
                                     feature,
                                     internal_id,
                                     external_id,
+                                    name,
                                     chrom,
                                     strand,
                                     start,
                                     end,
                                     colnames)
 {
+    if (is.null(name))
+        name <- rep.int(NA_character_, length(internal_id))
     table <- data.frame(
         internal_id=internal_id,
         external_id=external_id,
+        name=name,
         chrom=chrom,
         strand=strand,
         start=start,
@@ -92,16 +96,13 @@ loadFeatures <- function(file)
         stringsAsFactors=FALSE)
     table <- unique(table)
     ## Create the '<feature>s' table.
-    if (all(is.na(external_id)))
-        null_constraint <- ""
-    else
-        null_constraint <- " NOT NULL"
     sql <- c(
         "CREATE TABLE ", feature, "s (\n",
         "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
-        "  ", colnames[2L], " TEXT UNIQUE", null_constraint, ",\n",
-        "  ", colnames[3L], " TEXT NOT NULL,\n",
-        "  ", colnames[4L], " TEXT NOT NULL\n",
+        "  ", colnames[2L], " TEXT UNIQUE NOT NULL,\n",
+        "  ", colnames[3L], " TEXT NULL,\n",
+        "  ", colnames[4L], " TEXT NOT NULL,\n",
+        "  ", colnames[5L], " TEXT NOT NULL\n",
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
@@ -109,10 +110,10 @@ loadFeatures <- function(file)
     ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
     ## when the nb of rows to insert is 0, hence the following test.
     if (nrow(table) != 0L) {
-        sql <- c("INSERT INTO ", feature, "s VALUES (?,?,?,?)")
+        sql <- c("INSERT INTO ", feature, "s VALUES (?,?,?,?,?)")
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
-                                   table[1:4])
+                                   table[1:5])
         dbClearResult(res)
         dbCommit(conn)
     }
@@ -120,8 +121,8 @@ loadFeatures <- function(file)
     sql <- c(
         "CREATE VIRTUAL TABLE ", feature, "s_rtree USING rtree (\n",
         "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
-        "  ", colnames[5L], " INTEGER, -- NOT NULL is implicit in rtree\n",
-        "  ", colnames[6L], " INTEGER  -- NOT NULL is implicit in rtree\n",
+        "  ", colnames[6L], " INTEGER, -- NOT NULL is implicit in rtree\n",
+        "  ", colnames[7L], " INTEGER  -- NOT NULL is implicit in rtree\n",
         "  -- FOREIGN KEY (", colnames[1L], ") REFERENCES ", feature, "s\n",
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
@@ -131,7 +132,7 @@ loadFeatures <- function(file)
         sql <- c("INSERT INTO ", feature, "s_rtree VALUES (?,?,?)")
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
-                                   table[c(1L, 5:6)])
+                                   table[c(1L, 6:7)])
         dbClearResult(res)
         dbCommit(conn)
     }
@@ -227,14 +228,17 @@ loadFeatures <- function(file)
 ### All vectors must be of equal length.  The i-th element of the
 ### vectors represent data for a single exon. Transcript data will
 ### be repeated over all exons within the trancsript.
-makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
-                             cdsStart, cdsEnd, exonStart, exonEnd, exonRank,
-                             exonId=NULL)
+makeTranscriptDb <- function(geneId,
+                             txId, txName=NULL, chrom, strand, txStart, txEnd,
+                             cdsStart, cdsEnd,
+                             exonStart, exonEnd, exonRank, exonId=NULL)
 {
     if (!is.character(geneId))
         stop("'geneId' must be a character vector")
     if (!is.character(txId) || any(is.na(txId)))
         stop("'txId' must be a character vector with no NAs")
+    if (!is.null(txName) && !is.character(txName))
+        stop("when supplied, 'txName' must be a character vector")
     chrom <- .argAsCharacterFactorWithNoNAs(chrom, "chrom")
     strand <- .argAsCharacterFactorWithNoNAs(strand, "strand")
     txStart <- .argAsIntegerWithNoNAs(txStart, "txStart")
@@ -246,9 +250,9 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
     exonRank <- .argAsIntegerWithNoNAs(exonRank, "exonRank")
     internal_tx_id <- .makeInternalIdsFromExternalIds(txId) 
     if (is.null(exonId)) {
-        exonId <- rep.int(as.character(NA), length(exonStart))
         internal_exon_id <- .makeInternalIdsForUniqueLocs(
                                 chrom, strand, exonStart, exonEnd)
+        exonId <- as.character(internal_exon_id)
     } else {
         if (!is.character(exonId) || any(is.na(exonId)))
             stop("when supplied, 'exonId' must be a character vector ",
@@ -258,12 +262,12 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
 
     conn <- dbConnect(SQLite(), dbname="") ## we'll write the db to a temp file
     .writeFeatureCoreTables(conn, "transcript",
-        internal_tx_id, txId, chrom, strand, txStart, txEnd,
-        c("_tx_id", "tx_id", "chromosome", "strand",
+        internal_tx_id, txId, txName, chrom, strand, txStart, txEnd,
+        c("_tx_id", "tx_id", "tx_name", "chromosome", "strand",
           "tx_start", "tx_end"))
     .writeFeatureCoreTables(conn, "exon",
-        internal_exon_id, exonId, chrom, strand, exonStart, exonEnd,
-        c("_exon_id", "exon_id", "chromosome", "strand",
+        internal_exon_id, exonId, NULL, chrom, strand, exonStart, exonEnd,
+        c("_exon_id", "exon_id", "exon_name", "chromosome", "strand",
           "exon_start", "exon_end"))
     .writeExonsTranscriptsTable(conn,
         internal_exon_id, internal_tx_id, exonRank)
@@ -385,9 +389,22 @@ makeTranscriptDb <- function(geneId, txId, chrom, strand, txStart, txEnd,
     if (!identical(elementLengths(exonEnds), exon_count))
         stop("'ucsc_txtable$exonEnds' inconsistent ",
              "with 'ucsc_txtable$exonCount'")
+    txName <- rep.int(ucsc_txtable$name, exon_count)
+    ## For some tracks (e.g. knowGene), the 'name' col in the UCSC db is
+    ## known not be a unique transcript identifier. But that's not always
+    ## the case! For example, the refGene track uses the same transcript
+    ## name for different transcripts. In that case, we need to generate
+    ## our own transcript ids.
+    ## TODO: Is it safe to treat the ensGene track like the knownGene track?
+    if (track == "knownGene") {
+        txId <- txName
+    } else {
+        txId <- as.character(rep.int(seq_len(nrow(ucsc_txtable)), exon_count))
+    }
     txtable <- data.frame(
         geneId=rep.int(EGs, exon_count),
-        txId=rep.int(ucsc_txtable$name, exon_count),
+        txId=txId,
+        txName=txName,
         chrom=rep.int(ucsc_txtable$chrom, exon_count),
         strand=rep.int(ucsc_txtable$strand, exon_count),
         txStart=rep.int(ucsc_txtable$txStart, exon_count) + 1L,
@@ -503,6 +520,7 @@ setMethod("as.data.frame", "TranscriptDb",
         COL2CLASS <- c(
             gene_id="character",
             tx_id="character",
+            tx_name="character",
             tx_chrom="factor",
             tx_strand="factor",
             tx_start="integer",
@@ -517,6 +535,7 @@ setMethod("as.data.frame", "TranscriptDb",
         sql <- "SELECT
                   gene_id,
                   tx_id,
+                  tx_name,
                   transcripts.chromosome AS tx_chrom,
                   transcripts.strand AS tx_strand,
                   tx_start, tx_end,
