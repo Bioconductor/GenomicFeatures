@@ -131,10 +131,10 @@ setMethod("getTranscripts", "missing",
   if (expand) {
     sqlexons <- paste("SELECT tx_id, exon_start, exon_end",
                       "FROM transcripts",
-                      "INNER JOIN exons_transcripts",
-                      "ON (transcripts._tx_id=exons_transcripts._tx_id)",
+                      "INNER JOIN splicings",
+                      "ON (transcripts._tx_id=splicings._tx_id)",
                       "INNER JOIN exons_rtree",
-                      "ON (exons_transcripts._exon_id=exons_rtree._exon_id)")
+                      "ON (splicings._exon_id=exons_rtree._exon_id)")
     if (len != 0)
       sqlexons <- paste(sqlexons,
                         "INNER JOIN transcripts_rtree",
@@ -281,10 +281,10 @@ setMethod("getExons", "missing",
   if (expand) {
     sqltx <- paste("SELECT exon_id, tx_id",
                    "FROM exons",
-                   "INNER JOIN exons_transcripts",
-                   "ON (exons._exon_id=exons_transcripts._exon_id)",
+                   "INNER JOIN splicings",
+                   "ON (exons._exon_id=splicings._exon_id)",
                    "INNER JOIN transcripts",
-                   "ON (exons_transcripts._tx_id=transcripts._tx_id)")
+                   "ON (splicings._tx_id=transcripts._tx_id)")
     if (len != 0)
       sqltx <- paste(sqltx,
                      "INNER JOIN exons_rtree",

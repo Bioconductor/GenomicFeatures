@@ -138,36 +138,38 @@ loadFeatures <- function(file)
     }
 }
 
-### TODO: Call the table 'transcripts_exons' and define its cols in the
-### following order: '_tx_id', 'exon_rank', '_exon_id'.
-.writeExonsTranscriptsTable <- function(conn,
-                                        internal_exon_id,
-                                        internal_tx_id,
-                                        exonRank)
+.writeSplicingsTable <- function(conn,
+                                 internal_tx_id,
+                                 exonRank,
+                                 internal_exon_id,
+                                 internal_CDS_id)
 {
     table <- data.frame(
-        internal_exon_id=internal_exon_id,
         internal_tx_id=internal_tx_id,
         exonRank=exonRank,
+        internal_exon_id=internal_exon_id,
+        internal_CDS_id=internal_CDS_id,
         stringsAsFactors=FALSE)
     table <- unique(table)
-    ## Create the 'exons_transcripts' table.
+    ## Create the 'splicings' table.
     sql <- c(
-        "CREATE TABLE exons_transcripts (\n",
-        "  _exon_id INTEGER NOT NULL,\n",
+        "CREATE TABLE splicings (\n",
         "  _tx_id INTEGER NOT NULL,\n",
         "  exon_rank INTEGER NOT NULL,\n",
+        "  _exon_id INTEGER NOT NULL,\n",
+        "  _CDS_id INTEGER NULL,\n",
         "  UNIQUE (_tx_id, exon_rank),\n",
+        "  FOREIGN KEY (_tx_id) REFERENCES transcripts,\n",
         "  FOREIGN KEY (_exon_id) REFERENCES exons,\n",
-        "  FOREIGN KEY (_tx_id) REFERENCES transcripts\n",
+        "  FOREIGN KEY (_CDS_id) REFERENCES CDSs\n",
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
-    ## Fill the 'exons_transcripts' table.
+    ## Fill the 'splicings' table.
     ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
     ## when the nb of rows to insert is 0, hence the following test.
     if (nrow(table) != 0L) {
-        sql <- "INSERT INTO exons_transcripts VALUES (?,?,?)"
+        sql <- "INSERT INTO splicings VALUES (?,?,?,?)"
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, sql, table)
         dbClearResult(res)
@@ -269,8 +271,15 @@ makeTranscriptDb <- function(geneId,
         internal_exon_id, exonId, NULL, txChrom, txStrand, exonStart, exonEnd,
         c("_exon_id", "exon_id", "exon_name", "exon_chrom", "exon_strand",
           "exon_start", "exon_end"))
-    .writeExonsTranscriptsTable(conn,
-        internal_exon_id, internal_tx_id, exonRank)
+    ## CDS table is temporarily left empty.
+    .writeFeatureCoreTables(conn, "CDS",
+        integer(0), character(0), NULL,
+        character(0), character(0), integer(0), integer(0),
+        c("_CDS_id", "CDS_id", "CDS_name", "CDS_chrom", "CDS_strand",
+          "CDS_start", "CDS_end"))
+    internal_CDS_id <- rep.int(NA_integer_, length(internal_tx_id))
+    .writeSplicingsTable(conn,
+        internal_tx_id, exonRank, internal_exon_id, internal_CDS_id)
     .writeGenesTable(conn, geneId, internal_tx_id)
     new("TranscriptDb", conn=conn)
 }
@@ -543,18 +552,26 @@ setMethod("as.data.frame", "TranscriptDb",
                   exon_id,
                   exon_chrom,
                   exon_strand,
-                  exon_start, exon_end
+                  exon_start, exon_end,
+                  CDS_id,
+                  CDS_chrom,
+                  CDS_strand,
+                  CDS_start, CDS_end
                 FROM transcripts
                   LEFT JOIN genes
                     ON (transcripts._tx_id=genes._tx_id)
                   INNER JOIN transcripts_rtree
                     ON (transcripts._tx_id=transcripts_rtree._tx_id)
-                  INNER JOIN exons_transcripts
-                    ON (transcripts._tx_id=exons_transcripts._tx_id)
+                  INNER JOIN splicings
+                    ON (transcripts._tx_id=splicings._tx_id)
                   INNER JOIN exons
-                    ON (exons_transcripts._exon_id=exons._exon_id)
+                    ON (splicings._exon_id=exons._exon_id)
                   INNER JOIN exons_rtree
                     ON (exons._exon_id=exons_rtree._exon_id)
+                  LEFT JOIN CDSs
+                    ON (splicings._CDS_id=CDSs._CDS_id)
+                  LEFT JOIN CDSs_rtree
+                    ON (CDSs._CDS_id=CDSs_rtree._CDS_id)
                 ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id, exon_rank"
         data <- dbGetQuery(x@conn, sql)
         setDataFrameColClass(data, COL2CLASS)
