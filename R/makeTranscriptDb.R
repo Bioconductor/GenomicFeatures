@@ -399,13 +399,12 @@ makeTranscriptDb <- function(geneId,
         stop("'ucsc_txtable$exonEnds' inconsistent ",
              "with 'ucsc_txtable$exonCount'")
     txName <- rep.int(ucsc_txtable$name, exon_count)
-    ## For some tracks (e.g. knowGene), the 'name' col in the UCSC db is
-    ## known not be a unique transcript identifier. But that's not always
+    ## For some tracks (e.g. knownGene), the 'name' col in the UCSC db
+    ## seems to be a unique transcript identifier. But that's not always
     ## the case! For example, the refGene track uses the same transcript
     ## name for different transcripts. In that case, we need to generate
     ## our own transcript ids.
-    ## TODO: Is it safe to treat the ensGene track like the knownGene track?
-    if (track == "knownGene") {
+    if (track %in% c("knownGene", "ensGene")) {
         txId <- txName
     } else {
         txId <- as.character(rep.int(seq_len(nrow(ucsc_txtable)), exon_count))
@@ -435,11 +434,6 @@ makeTranscriptDb <- function(geneId,
 ###   - for genome="hg18" and track="knownGene":
 ###       (1) download takes about 40-50 sec.
 ###       (2) db creation takes about 30-35 sec.
-### TODO: Support for track="refGene" is currently disabled because this
-### track doesn't seem to contain anything that could be used as a unique
-### transcript ID. So we need to either find a way to retrieve (or generate)
-### this unique ID from somewhere else or drop "refGene" from the list of
-### valid values for the 'track' arg.
 ### FIXME: Support for track="ensGene" is currently broken because some
 ### transcript IDs are mapped to multiple Entrez Gene IDs.
 makeTranscriptDbFromUCSC <- function(genome="hg18",
@@ -449,8 +443,6 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
         stop("'genome' must be a single string")
     organism <- .getOrganismFromUCSCgenome(genome)
     track <- match.arg(track)
-    if (track == "refGene")
-        stop("track \"refGene\" is not currently supported, sorry!")
     if (track == "knownGene" && !(organism %in% c("Human", "Mouse", "Rat")))
         stop("UCSC \"knownGene\" track is only supported ",
              "for Human, Mouse and Rat")
