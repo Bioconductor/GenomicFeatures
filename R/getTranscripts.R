@@ -7,7 +7,7 @@
 }
 
 ## Check that the type of thing (chromosome, strand etc.) is in the
-## transcripts table
+## transcript table
 .checkFields <- function(txann, colname, data, table){
   annot <- .getValsFromTable(txann, colname, table) 
   all(data %in% annot)
@@ -43,12 +43,12 @@
 setMethod("getTranscripts", "RangedData",
     function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
     {
-      if(.checkFields(ann, "tx_strand", ranges[["tx_strand"]], "transcripts")){
+      if(.checkFields(ann, "tx_strand", ranges[["tx_strand"]], "transcript")){
         strand <- ranges[["tx_strand"]]
       }else{stop("Strand values for ranges do not match annotation DB")}
 
       ## check that the chromosomes are what we expect. 
-      if(.checkFields(ann, "tx_chrom", space(ranges), "transcripts")){
+      if(.checkFields(ann, "tx_chrom", space(ranges), "transcript")){
         chrom <- space(ranges)
       }else{stop("Space values for ranges do not match annotation DB")}
 
@@ -84,8 +84,8 @@ setMethod("getTranscripts", "missing",
   ## Note that .mapTranscripts() uses the same SQL query.
   sql <- paste("SELECT tx_id, tx_name, tx_chrom, tx_strand,",
                "tx_start, tx_end",
-               "FROM transcripts INNER JOIN transcripts_rtree",
-               "ON (transcripts._tx_id=transcripts_rtree._tx_id)")
+               "FROM transcript INNER JOIN transcript_rtree",
+               "ON (transcript._tx_id=transcript_rtree._tx_id)")
   if (len > 0) {
     if (!is.null(chrom)) {
       if (length(chrom) < len)
@@ -130,22 +130,22 @@ setMethod("getTranscripts", "missing",
                     space      = ans[["tx_chrom"]])
   if (expand) {
     sqlexons <- paste("SELECT tx_id, exon_start, exon_end",
-                      "FROM transcripts",
-                      "INNER JOIN splicings",
-                      "ON (transcripts._tx_id=splicings._tx_id)",
-                      "INNER JOIN exons_rtree",
-                      "ON (splicings._exon_id=exons_rtree._exon_id)")
+                      "FROM transcript",
+                      "INNER JOIN splicing",
+                      "ON (transcript._tx_id=splicing._tx_id)",
+                      "INNER JOIN exon_rtree",
+                      "ON (splicing._exon_id=exon_rtree._exon_id)")
     if (len != 0)
       sqlexons <- paste(sqlexons,
-                        "INNER JOIN transcripts_rtree",
-                        "ON (transcripts._tx_id=transcripts_rtree._tx_id)",
+                        "INNER JOIN transcript_rtree",
+                        "ON (transcript._tx_id=transcript_rtree._tx_id)",
                         "WHERE", sqlwhere)
     sqlexons <- paste(sqlexons, "ORDER BY tx_id, exon_rank")
     if (getOption("verbose", FALSE)) {
       .printSQL(sqlexons)
     }
     exons <- dbGetQuery(txdb@conn, sqlexons)
-    ans[["exons"]] <-
+    ans[["exon"]] <-
       IRanges:::newCompressedList("CompressedIRangesList",
                                   IRanges(start = exons[["exon_start"]],
                                           end   = exons[["exon_end"]]),
@@ -199,12 +199,12 @@ setMethod("getTranscripts", "missing",
 setMethod("getExons", "RangedData",
     function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
     {
-      if(.checkFields(ann, "exon_strand", ranges[["exon_strand"]], "exons")){
+      if(.checkFields(ann, "exon_strand", ranges[["exon_strand"]], "exon")){
         strand <- ranges[["exon_strand"]]
       }else{stop("Strand values for ranges do not match annotation DB")}
 
       ## check that the chromosomes are what we expect. 
-      if(.checkFields(ann, "exon_chrom", space(ranges), "exons")){
+      if(.checkFields(ann, "exon_chrom", space(ranges), "exon")){
         chrom <- space(ranges)
       }else{stop("Space values for ranges do not match annotation DB")}
       
@@ -235,8 +235,8 @@ setMethod("getExons", "missing",
   ## Note that .mapExons() uses the same SQL query.
   sql <- paste("SELECT exon_id, exon_chrom, exon_strand,",
                "exon_start, exon_end",
-               "FROM exons INNER JOIN exons_rtree",
-               "ON (exons._exon_id=exons_rtree._exon_id")
+               "FROM exon INNER JOIN exon_rtree",
+               "ON (exon._exon_id=exon_rtree._exon_id")
   if (len > 0) {
     if (!is.null(chrom)) {
       if (length(chrom) < len)
@@ -280,22 +280,22 @@ setMethod("getExons", "missing",
                     GF_exonId = ans[["exon_id"]])
   if (expand) {
     sqltx <- paste("SELECT exon_id, tx_id",
-                   "FROM exons",
-                   "INNER JOIN splicings",
-                   "ON (exons._exon_id=splicings._exon_id)",
-                   "INNER JOIN transcripts",
-                   "ON (splicings._tx_id=transcripts._tx_id)")
+                   "FROM exon",
+                   "INNER JOIN splicing",
+                   "ON (exon._exon_id=splicing._exon_id)",
+                   "INNER JOIN transcript",
+                   "ON (splicing._tx_id=transcript._tx_id)")
     if (len != 0)
       sqltx <- paste(sqltx,
-                     "INNER JOIN exons_rtree",
-                     "ON (exons._exon_id=exons_rtree._exon_id)",
+                     "INNER JOIN exon_rtree",
+                     "ON (exon._exon_id=exon_rtree._exon_id)",
                      "WHERE", sqlwhere)
     sqltx <- paste(sqltx, "ORDER BY exon_id")
     if (getOption("verbose", FALSE)) {
       .printSQL(sqltx)
     }
     tx <- dbGetQuery(txdb@conn, sqltx)
-    ans[["transcripts"]] <-
+    ans[["transcript"]] <-
       IRanges:::newCompressedList("CompressedCharacterList",
                                   as.character(tx[["tx_id"]]),
                                   end = end(Rle(tx[["exon_id"]])))

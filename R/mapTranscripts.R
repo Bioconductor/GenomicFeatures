@@ -83,8 +83,8 @@
   ## Note that .getTranscripts() uses the same SQL query.
   sql <- paste("SELECT tx_id, tx_name, tx_chrom, tx_strand,",
                "tx_start, tx_end",
-               "FROM transcripts INNER JOIN transcripts_rtree",
-               "ON (transcripts._tx_id=transcripts_rtree._tx_id)")
+               "FROM transcript INNER JOIN transcript_rtree",
+               "ON (transcript._tx_id=transcript_rtree._tx_id)")
   ## The length of the range, the chromosome and the strand must be the same.
   len <- max(length(chrom), length(strand), length(ranges))
   if(len <= 0){stop("Ranges, chromosomes and strands are all required.")}
@@ -93,7 +93,7 @@
   if (!is.null(strand) && length(strand) < len){
     stop("Not enough strands for all the ranges")}
   
-  uChromStrand <- .createUniqueChromStrand(ann,"transcripts",
+  uChromStrand <- .createUniqueChromStrand(ann,"transcript",
                                            chrom, strand,
                                            c("tx_chrom", "tx_strand"))
   ans <- data.frame()
@@ -131,11 +131,11 @@ setMethod("mapTranscripts", "RangedData",
       ## note that NULL is ok and will not trip this error.
       ## If there are NULL strands or chromosomes, then .mapTranscripts() will
       ## have to search a bit differently
-      if(.checkFields(ann, "tx_strand", ranges[["strand"]], "transcripts")){
+      if(.checkFields(ann, "tx_strand", ranges[["strand"]], "transcript")){
         strand <- ranges[["strand"]]
       }else{stop("Strand values for ranges do not match annotation DB")}
       ## check that the chromosomes are what we expect. 
-      if(.checkFields(ann, "tx_chrom", space(ranges), "transcripts")){
+      if(.checkFields(ann, "tx_chrom", space(ranges), "transcript")){
         chrom <- space(ranges)
       }else{stop("Space values for ranges do not match annotation DB")}
       ranges <- unlist(ranges(ranges), use.names=FALSE)
@@ -173,8 +173,8 @@ setMethod("mapTranscripts", "RangedData",
   ## Note that .getExons() uses the same SQL query.
   sql <- paste("SELECT exon_id, exon_chrom, exon_strand,",
                "exon_start, exon_end",
-               "FROM exons INNER JOIN exons_rtree",
-               "ON (exons._exon_id=exons_rtree._exon_id")
+               "FROM exon INNER JOIN exon_rtree",
+               "ON (exon._exon_id=exon_rtree._exon_id")
   ## The length of the range, the chromosome and the strand must be the same.
   len <- max(length(chrom), length(strand), length(ranges))
   if(len <= 0){stop("Ranges, chrom and strands are all required.")}
@@ -182,7 +182,7 @@ setMethod("mapTranscripts", "RangedData",
     stop("Not enough chromosomes for all the ranges")}
   if (!is.null(strand) && length(strand) < len){
     stop("Not enough strands for all the ranges")}
-  uChromStrand <- .createUniqueChromStrand(ann,"exons",
+  uChromStrand <- .createUniqueChromStrand(ann,"exon",
                                            chrom, strand,
                                            c("exon_chrom", "exon_strand"))
   ans <- data.frame()
@@ -215,10 +215,10 @@ setMethod("mapExons", "RangedData",
     function(ranges, ann, rangeRestr = "any")
     {
       ## check the strand and c-somes
-      if(.checkFields(ann, "exon_strand", ranges[["strand"]], "exons")){
+      if(.checkFields(ann, "exon_strand", ranges[["strand"]], "exon")){
         strand <- ranges[["strand"]]
       }else{stop("Strand values for ranges do not match annotation DB")}
-      if(.checkFields(ann, "exon_chrom", space(ranges), "exons")){
+      if(.checkFields(ann, "exon_chrom", space(ranges), "exon")){
         chrom <- space(ranges)
       }else{stop("Space values for ranges do not match annotation DB")}
       ranges <- unlist(ranges(ranges), use.names=FALSE)

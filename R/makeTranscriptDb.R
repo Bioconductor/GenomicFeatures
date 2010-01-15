@@ -65,11 +65,11 @@ loadFeatures <- function(file)
 
 ### Because we use SQLite "rtree" feature, .writeFeatureCoreTables() creates
 ### the 5 following tables:
-###   (1) '<feature>s'
-###   (2) '<feature>s_rtree'
-###   (3) '<feature>s_rtree_node'
-###   (4) '<feature>s_rtree_parent'
-###   (5) '<feature>s_rtree_rowid'
+###   (1) '<feature>'
+###   (2) '<feature>_rtree'
+###   (3) '<feature>_rtree_node'
+###   (4) '<feature>_rtree_parent'
+###   (5) '<feature>_rtree_rowid'
 ### Note that only (1) and (2) are explicitely created. (3), (4) and (5) are
 ### automatically created by the SQLite engine.
 .writeFeatureCoreTables <- function(conn,
@@ -95,9 +95,9 @@ loadFeatures <- function(file)
         end=end,
         stringsAsFactors=FALSE)
     table <- unique(table)
-    ## Create the '<feature>s' table.
+    ## Create the '<feature>' table.
     sql <- c(
-        "CREATE TABLE ", feature, "s (\n",
+        "CREATE TABLE ", feature, " (\n",
         "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
         "  ", colnames[2L], " TEXT UNIQUE NOT NULL,\n",
         "  ", colnames[3L], " TEXT NULL,\n",
@@ -106,30 +106,30 @@ loadFeatures <- function(file)
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
-    ## Fill the '<feature>s' table.
+    ## Fill the '<feature>' table.
     ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
     ## when the nb of rows to insert is 0, hence the following test.
     if (nrow(table) != 0L) {
-        sql <- c("INSERT INTO ", feature, "s VALUES (?,?,?,?,?)")
+        sql <- c("INSERT INTO ", feature, " VALUES (?,?,?,?,?)")
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
                                    table[1:5])
         dbClearResult(res)
         dbCommit(conn)
     }
-    ## Create the '<feature>s_rtree' table.
+    ## Create the '<feature>_rtree' table.
     sql <- c(
-        "CREATE VIRTUAL TABLE ", feature, "s_rtree USING rtree (\n",
+        "CREATE VIRTUAL TABLE ", feature, "_rtree USING rtree (\n",
         "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
         "  ", colnames[6L], " INTEGER, -- NOT NULL is implicit in rtree\n",
         "  ", colnames[7L], " INTEGER  -- NOT NULL is implicit in rtree\n",
-        "  -- FOREIGN KEY (", colnames[1L], ") REFERENCES ", feature, "s\n",
+        "  -- FOREIGN KEY (", colnames[1L], ") REFERENCES ", feature, "\n",
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
-    ## Fill the '<feature>s_rtree' table.
+    ## Fill the '<feature>_rtree' table.
     if (nrow(table) != 0L) {
-        sql <- c("INSERT INTO ", feature, "s_rtree VALUES (?,?,?)")
+        sql <- c("INSERT INTO ", feature, "_rtree VALUES (?,?,?)")
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
                                    table[c(1L, 6:7)])
@@ -138,38 +138,38 @@ loadFeatures <- function(file)
     }
 }
 
-.writeSplicingsTable <- function(conn,
-                                 internal_tx_id,
-                                 exonRank,
-                                 internal_exon_id,
-                                 internal_CDS_id)
+.writeSplicingTable <- function(conn,
+                                internal_tx_id,
+                                exonRank,
+                                internal_exon_id,
+                                internal_cds_id)
 {
     table <- data.frame(
         internal_tx_id=internal_tx_id,
         exonRank=exonRank,
         internal_exon_id=internal_exon_id,
-        internal_CDS_id=internal_CDS_id,
+        internal_cds_id=internal_cds_id,
         stringsAsFactors=FALSE)
     table <- unique(table)
-    ## Create the 'splicings' table.
+    ## Create the 'splicing' table.
     sql <- c(
-        "CREATE TABLE splicings (\n",
+        "CREATE TABLE splicing (\n",
         "  _tx_id INTEGER NOT NULL,\n",
         "  exon_rank INTEGER NOT NULL,\n",
         "  _exon_id INTEGER NOT NULL,\n",
-        "  _CDS_id INTEGER NULL,\n",
+        "  _cds_id INTEGER NULL,\n",
         "  UNIQUE (_tx_id, exon_rank),\n",
-        "  FOREIGN KEY (_tx_id) REFERENCES transcripts,\n",
-        "  FOREIGN KEY (_exon_id) REFERENCES exons,\n",
-        "  FOREIGN KEY (_CDS_id) REFERENCES CDSs\n",
+        "  FOREIGN KEY (_tx_id) REFERENCES transcript,\n",
+        "  FOREIGN KEY (_exon_id) REFERENCES exon,\n",
+        "  FOREIGN KEY (_cds_id) REFERENCES cds\n",
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
-    ## Fill the 'splicings' table.
+    ## Fill the 'splicing' table.
     ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
     ## when the nb of rows to insert is 0, hence the following test.
     if (nrow(table) != 0L) {
-        sql <- "INSERT INTO splicings VALUES (?,?,?,?)"
+        sql <- "INSERT INTO splicing VALUES (?,?,?,?)"
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, sql, table)
         dbClearResult(res)
@@ -177,7 +177,7 @@ loadFeatures <- function(file)
     }
 }
 
-.writeGenesTable <- function(conn, geneId, internal_tx_id)
+.writeGeneTable <- function(conn, geneId, internal_tx_id)
 {
     table <- data.frame(
         geneId=geneId,
@@ -185,21 +185,21 @@ loadFeatures <- function(file)
         stringsAsFactors=FALSE)
     table <- unique(table)
     table <- table[!is.na(table$geneId), ]
-    ## Create the 'genes' table.
+    ## Create the 'gene' table.
     sql <- c(
-        "CREATE TABLE genes (\n",
+        "CREATE TABLE gene (\n",
         "  gene_id TEXT NOT NULL,\n",
         "  _tx_id INTEGER NOT NULL,\n",
         "  UNIQUE (gene_id, _tx_id),\n",
-        "  FOREIGN KEY (_tx_id) REFERENCES transcripts\n",
+        "  FOREIGN KEY (_tx_id) REFERENCES transcript\n",
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
-    ## Fill the 'genes' table.
+    ## Fill the 'gene' table.
     ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
     ## when the nb of rows to insert is 0, hence the following test.
     if (nrow(table) != 0L) {
-        sql <- "INSERT INTO genes VALUES (?,?)"
+        sql <- "INSERT INTO gene VALUES (?,?)"
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, sql, table)
         dbClearResult(res)
@@ -271,16 +271,16 @@ makeTranscriptDb <- function(geneId,
         internal_exon_id, exonId, NULL, txChrom, txStrand, exonStart, exonEnd,
         c("_exon_id", "exon_id", "exon_name", "exon_chrom", "exon_strand",
           "exon_start", "exon_end"))
-    ## CDS table is temporarily left empty.
-    .writeFeatureCoreTables(conn, "CDS",
+    ## 'cds' table is temporarily left empty.
+    .writeFeatureCoreTables(conn, "cds",
         integer(0), character(0), NULL,
         character(0), character(0), integer(0), integer(0),
-        c("_CDS_id", "CDS_id", "CDS_name", "CDS_chrom", "CDS_strand",
-          "CDS_start", "CDS_end"))
-    internal_CDS_id <- rep.int(NA_integer_, length(internal_tx_id))
-    .writeSplicingsTable(conn,
-        internal_tx_id, exonRank, internal_exon_id, internal_CDS_id)
-    .writeGenesTable(conn, geneId, internal_tx_id)
+        c("_cds_id", "cds_id", "cds_name", "cds_chrom", "cds_strand",
+          "cds_start", "cds_end"))
+    internal_cds_id <- rep.int(NA_integer_, length(internal_tx_id))
+    .writeSplicingTable(conn,
+        internal_tx_id, exonRank, internal_exon_id, internal_cds_id)
+    .writeGeneTable(conn, geneId, internal_tx_id)
     new("TranscriptDb", conn=conn)
 }
 
@@ -545,25 +545,25 @@ setMethod("as.data.frame", "TranscriptDb",
                   exon_chrom,
                   exon_strand,
                   exon_start, exon_end,
-                  CDS_id,
-                  CDS_chrom,
-                  CDS_strand,
-                  CDS_start, CDS_end
-                FROM transcripts
-                  LEFT JOIN genes
-                    ON (transcripts._tx_id=genes._tx_id)
-                  INNER JOIN transcripts_rtree
-                    ON (transcripts._tx_id=transcripts_rtree._tx_id)
-                  INNER JOIN splicings
-                    ON (transcripts._tx_id=splicings._tx_id)
-                  INNER JOIN exons
-                    ON (splicings._exon_id=exons._exon_id)
-                  INNER JOIN exons_rtree
-                    ON (exons._exon_id=exons_rtree._exon_id)
-                  LEFT JOIN CDSs
-                    ON (splicings._CDS_id=CDSs._CDS_id)
-                  LEFT JOIN CDSs_rtree
-                    ON (CDSs._CDS_id=CDSs_rtree._CDS_id)
+                  cds_id,
+                  cds_chrom,
+                  cds_strand,
+                  cds_start, cds_end
+                FROM transcript
+                  LEFT JOIN gene
+                    ON (transcript._tx_id=gene._tx_id)
+                  INNER JOIN transcript_rtree
+                    ON (transcript._tx_id=transcript_rtree._tx_id)
+                  INNER JOIN splicing
+                    ON (transcript._tx_id=splicing._tx_id)
+                  INNER JOIN exon
+                    ON (splicing._exon_id=exon._exon_id)
+                  INNER JOIN exon_rtree
+                    ON (exon._exon_id=exon_rtree._exon_id)
+                  LEFT JOIN cds
+                    ON (splicing._cds_id=cds._cds_id)
+                  LEFT JOIN cds_rtree
+                    ON (cds._cds_id=cds_rtree._cds_id)
                 ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id, exon_rank"
         data <- dbGetQuery(x@conn, sql)
         setDataFrameColClass(data, COL2CLASS)
