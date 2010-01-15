@@ -1,16 +1,15 @@
 
 
 ## Get the list of possible values for a type from a table:
-.getValsFromTable <- function(txann, field, table){
-  sql <- paste("SELECT",field,"FROM",table)
+.getValsFromTable <- function(txann, colname, table){
+  sql <- paste("SELECT", colname, "FROM", table)
   as.character(unlist(unique(dbGetQuery(txann@conn, sql))))
 }
 
 ## Check that the type of thing (chromosome, strand etc.) is in the
 ## transcripts table
-.checkFields <- function(txann, type = c("chromosome","strand"), data, table){
-  type <- match.arg(type)
-  annot <- .getValsFromTable(txann, type, table) 
+.checkFields <- function(txann, colname, data, table){
+  annot <- .getValsFromTable(txann, colname, table) 
   all(data %in% annot)
 }
 
@@ -44,18 +43,18 @@
 setMethod("getTranscripts", "RangedData",
     function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
     {
-      if(.checkFields(ann, "strand", ranges[["strand"]], "transcripts")){
-        strand <- ranges[["strand"]]
+      if(.checkFields(ann, "tx_strand", ranges[["tx_strand"]], "transcripts")){
+        strand <- ranges[["tx_strand"]]
       }else{stop("Strand values for ranges do not match annotation DB")}
 
       ## check that the chromosomes are what we expect. 
-      if(.checkFields(ann, "chromosome", space(ranges), "transcripts")){
-        chromosome <- space(ranges)
+      if(.checkFields(ann, "tx_chrom", space(ranges), "transcripts")){
+        chrom <- space(ranges)
       }else{stop("Space values for ranges do not match annotation DB")}
 
       ranges <- unlist(ranges(ranges), use.names=FALSE)
       .getTranscripts(txdb=ann, ranges=ranges,
-                      chromosome=chromosome, strand=strand,
+                      chrom=chrom, strand=strand,
                       rangeRestr=rangeRestr, expand=expand)
     }
 )
@@ -76,29 +75,29 @@ setMethod("getTranscripts", "missing",
 }
 
 ### Extract selected transcripts from 'txdb'.
-.getTranscripts <- function(txdb, ranges=NULL, chromosome=NULL,
+.getTranscripts <- function(txdb, ranges=NULL, chrom=NULL,
                             strand=NULL,
                             rangeRestr=c("both","either","start","end"),
                             expand=FALSE) {
   rangeRestr <- match.arg(rangeRestr)
-  len <- max(length(chromosome), length(strand), length(ranges))
-  sql <- paste("SELECT t.tx_id, t.tx_name, t.chromosome, t.strand,",
-               "tt.tx_start, tt.tx_end",
-               "FROM transcripts AS t,",
-               "transcripts_rtree AS tt",
-               "WHERE t._tx_id=tt._tx_id")
+  len <- max(length(chrom), length(strand), length(ranges))
+  ## Note that .mapTranscripts() uses the same SQL query.
+  sql <- paste("SELECT tx_id, tx_name, tx_chrom, tx_strand,",
+               "tx_start, tx_end",
+               "FROM transcripts INNER JOIN transcripts_rtree",
+               "ON (transcripts._tx_id=transcripts_rtree._tx_id)")
   if (len > 0) {
-    if (!is.null(chromosome)) {
-      if (length(chromosome) < len)
-        chromosome <- rep(chromosome, length.out = len)
-      sqlwhere <- paste("t.chromosome='", chromosome, "'", sep="")
+    if (!is.null(chrom)) {
+      if (length(chrom) < len)
+        chrom <- rep(chrom, length.out = len)
+      sqlwhere <- paste("tx_chrom='", chrom, "'", sep="")
     } else {
       sqlwhere <- character(0)
     }
     if (!is.null(strand)) {
       if (length(strand) < len)
         strand <- rep(strand, length.out = len)
-      sqladd <- paste("t.strand='", strand, "'", sep="")
+      sqladd <- paste("tx_strand='", strand, "'", sep="")
       if (length(sqlwhere) == 0)
         sqlwhere <- sqladd
       else
@@ -107,7 +106,7 @@ setMethod("getTranscripts", "missing",
     if (!is.null(ranges)) {
       if (length(ranges) < len)
         ranges <- rep(ranges, length.out = len)
-      sqladd <- .makeRangeSQL("tt.tx_start", "tt.tx_end", ranges, rangeRestr)
+      sqladd <- .makeRangeSQL("tx_start", "tx_end", ranges, rangeRestr)
       if (length(sqlwhere) == 0)
         sqlwhere <- sqladd
       else
@@ -118,35 +117,30 @@ setMethod("getTranscripts", "missing",
                       ")", sep = "")
     sql <- paste(sql, sqlwhere)
   }
-  sql <- paste(sql, "ORDER BY t.tx_id")
+  sql <- paste(sql, "ORDER BY tx_id")
   if (getOption("verbose", FALSE)) {
     .printSQL(sql)
   }
   ans <- dbGetQuery(txdb@conn, sql)
   ans <- RangedData(ranges     = IRanges(start = ans[["tx_start"]],
                                          end   = ans[["tx_end"]]),
-                    strand     = strand(ans[["strand"]]),
+                    strand     = strand(ans[["tx_strand"]]),
                     GF_txId    = ans[["tx_id"]],
                     txName = ans[["tx_name"]], ## temp. just for troubleshooting
-                    space      = ans[["chromosome"]])
+                    space      = ans[["tx_chrom"]])
   if (expand) {
-    if (len == 0) {
-      sqlexons <- paste("SELECT ests.tx_id, et.exon_start, et.exon_end",
-                        "FROM exons_rtree AS et,",
-                        "exons_transcripts AS ests",
-                        "WHERE et._exon_id=ests._exon_id")
-    } else {
-      sqlexons <- paste("SELECT ests.tx_id, et.exon_start, et.exon_end",
-                        "FROM exons_rtree AS et,",
-                        "exons_transcripts AS ests,",
-                        "transcripts AS t,",
-                        "transcripts_rtree AS tt",
-                        "WHERE et._exon_id=ests._exon_id",
-                        "AND ests._tx_id=t._tx_id",
-                        "AND t._tx_id=tt._tx_id",
-                        sqlwhere)
-    }
-    sqlexons <- paste(sqlexons, "ORDER BY ests.tx_id, ests.exon_rank")
+    sqlexons <- paste("SELECT tx_id, exon_start, exon_end",
+                      "FROM transcripts",
+                      "INNER JOIN exons_transcripts",
+                      "ON (transcripts._tx_id=exons_transcripts._tx_id)",
+                      "INNER JOIN exons_rtree",
+                      "ON (exons_transcripts._exon_id=exons_rtree._exon_id)")
+    if (len != 0)
+      sqlexons <- paste(sqlexons,
+                        "INNER JOIN transcripts_rtree",
+                        "ON (transcripts._tx_id=transcripts_rtree._tx_id)",
+                        "WHERE", sqlwhere)
+    sqlexons <- paste(sqlexons, "ORDER BY tx_id, exon_rank")
     if (getOption("verbose", FALSE)) {
       .printSQL(sqlexons)
     }
@@ -205,18 +199,18 @@ setMethod("getTranscripts", "missing",
 setMethod("getExons", "RangedData",
     function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
     {
-      if(.checkFields(ann, "strand", ranges[["strand"]], "exons")){
-        strand <- ranges[["strand"]]
+      if(.checkFields(ann, "exon_strand", ranges[["exon_strand"]], "exons")){
+        strand <- ranges[["exon_strand"]]
       }else{stop("Strand values for ranges do not match annotation DB")}
 
       ## check that the chromosomes are what we expect. 
-      if(.checkFields(ann, "chromosome", space(ranges), "exons")){
-        chromosome <- space(ranges)
+      if(.checkFields(ann, "exon_chrom", space(ranges), "exons")){
+        chrom <- space(ranges)
       }else{stop("Space values for ranges do not match annotation DB")}
       
       ranges <- unlist(ranges(ranges), use.names=FALSE)
       .getExons(txdb=ann, ranges=ranges,
-                chromosome=chromosome, strand=strand,
+                chrom=chrom, strand=strand,
                 rangeRestr=rangeRestr, expand=expand)
     }
 )
@@ -232,29 +226,29 @@ setMethod("getExons", "missing",
 
 
 ### Extract selected exons from 'txdb'.
-.getExons <- function(txdb, ranges=NULL, chromosome=NULL,
+.getExons <- function(txdb, ranges=NULL, chrom=NULL,
                       strand=NULL,
                       rangeRestr=c("both","either","start","end"),
                       expand=FALSE) {
   rangeRestr <- match.arg(rangeRestr)
-  len <- max(length(chromosome), length(strand), length(ranges))
-  sql <- paste("SELECT e.chromosome, e.exon_id, e.strand,",
-               "et.exon_start, et.exon_end",
-               "FROM exons AS e,",
-               "exons_rtree AS et",
-               "WHERE e._exon_id=et._exon_id")
+  len <- max(length(chrom), length(strand), length(ranges))
+  ## Note that .mapExons() uses the same SQL query.
+  sql <- paste("SELECT exon_id, exon_chrom, exon_strand,",
+               "exon_start, exon_end",
+               "FROM exons INNER JOIN exons_rtree",
+               "ON (exons._exon_id=exons_rtree._exon_id")
   if (len > 0) {
-    if (!is.null(chromosome)) {
-      if (length(chromosome) < len)
-        chromosome <- rep(chromosome, length.out = len)
-      sqlwhere <- paste("e.chromosome='", chromosome, "'", sep="")
+    if (!is.null(chrom)) {
+      if (length(chrom) < len)
+        chrom <- rep(chrom, length.out = len)
+      sqlwhere <- paste("exon_chrom='", chrom, "'", sep="")
     } else {
       sqlwhere <- character(0)
     }
     if (!is.null(strand)) {
       if (length(strand) < len)
         strand <- rep(strand, length.out = len)
-      sqladd <- paste("e.strand='", strand, "'", sep="")
+      sqladd <- paste("exon_strand='", strand, "'", sep="")
       if (length(sqlwhere) == 0)
         sqlwhere <- sqladd
       else
@@ -263,7 +257,7 @@ setMethod("getExons", "missing",
     if (!is.null(ranges)) {
       if (length(ranges) < len)
         ranges <- rep(ranges, length.out = len)
-      sqladd <- .makeRangeSQL("et.exon_start", "et.exon_end", ranges, rangeRestr)
+      sqladd <- .makeRangeSQL("exon_start", "exon_end", ranges, rangeRestr)
       if (length(sqlwhere) == 0)
         sqlwhere <- sqladd
       else
@@ -274,34 +268,29 @@ setMethod("getExons", "missing",
                       ")", sep = "")
     sql <- paste(sql, sqlwhere)
   }
-  sql <- paste(sql, "ORDER BY e.exon_id")
+  sql <- paste(sql, "ORDER BY exon_id")
   if (getOption("verbose", FALSE)) {
     .printSQL(sql)
   }
   ans <- dbGetQuery(txdb@conn, sql)
   ans <- RangedData(ranges = IRanges(start = ans[["exon_start"]],
                                      end   = ans[["exon_end"]]),
-                    strand = strand(ans[["strand"]]),
-                    space  = ans[["chromosome"]],
+                    strand = strand(ans[["exon_strand"]]),
+                    space  = ans[["exon_chrom"]],
                     GF_exonId = ans[["exon_id"]])
   if (expand) {
-    if (len == 0) {
-      sqltx <- paste("SELECT ests.exon_id, t.tx_id",
-                     "FROM exons_transcripts AS ests,",
-                     "transcripts AS t",
-                     "WHERE ests._tx_id=t._tx_id")
-    } else {
-      sqltx <- paste("SELECT ests.exon_id, t.tx_id",
-                     "FROM exons_transcripts AS ests,",
-                     "transcripts AS t,",
-                     "exons AS e,",
-                     "exons_rtree AS et",
-                     "WHERE ests._tx_id=t._tx_id",
-                     "AND ests._exon_id=e._exon_id",
-                     "AND e._exon_id=et._exon_id",
-                     sqlwhere)
-    }
-    sqltx <- paste(sqltx, "ORDER BY ests.exon_id")
+    sqltx <- paste("SELECT exon_id, tx_id",
+                   "FROM exons",
+                   "INNER JOIN exons_transcripts",
+                   "ON (exons._exon_id=exons_transcripts._exon_id)",
+                   "INNER JOIN transcripts",
+                   "ON (exons_transcripts._tx_id=transcripts._tx_id)")
+    if (len != 0)
+      sqltx <- paste(sqltx,
+                     "INNER JOIN exons_rtree",
+                     "ON (exons._exon_id=exons_rtree._exon_id)",
+                     "WHERE", sqlwhere)
+    sqltx <- paste(sqltx, "ORDER BY exon_id")
     if (getOption("verbose", FALSE)) {
       .printSQL(sqltx)
     }

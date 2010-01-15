@@ -229,9 +229,9 @@ loadFeatures <- function(file)
 ### vectors represent data for a single exon. Transcript data will
 ### be repeated over all exons within the trancsript.
 makeTranscriptDb <- function(geneId,
-                             txId, txName=NULL, chrom, strand, txStart, txEnd,
-                             cdsStart, cdsEnd,
-                             exonStart, exonEnd, exonRank, exonId=NULL)
+                        txId, txName=NULL, txChrom, txStrand, txStart, txEnd,
+                        cdsStart, cdsEnd,
+                        exonStart, exonEnd, exonRank, exonId=NULL)
 {
     if (!is.character(geneId))
         stop("'geneId' must be a character vector")
@@ -239,8 +239,8 @@ makeTranscriptDb <- function(geneId,
         stop("'txId' must be a character vector with no NAs")
     if (!is.null(txName) && !is.character(txName))
         stop("when supplied, 'txName' must be a character vector")
-    chrom <- .argAsCharacterFactorWithNoNAs(chrom, "chrom")
-    strand <- .argAsCharacterFactorWithNoNAs(strand, "strand")
+    txChrom <- .argAsCharacterFactorWithNoNAs(txChrom, "txChrom")
+    txStrand <- .argAsCharacterFactorWithNoNAs(txStrand, "txStrand")
     txStart <- .argAsIntegerWithNoNAs(txStart, "txStart")
     txEnd <- .argAsIntegerWithNoNAs(txEnd, "txEnd")
     #cdsStart <- .argAsIntegerWithNoNAs(cdsStart, "cdsStart")
@@ -251,7 +251,7 @@ makeTranscriptDb <- function(geneId,
     internal_tx_id <- .makeInternalIdsFromExternalIds(txId) 
     if (is.null(exonId)) {
         internal_exon_id <- .makeInternalIdsForUniqueLocs(
-                                chrom, strand, exonStart, exonEnd)
+                                txChrom, txStrand, exonStart, exonEnd)
         exonId <- as.character(internal_exon_id)
     } else {
         if (!is.character(exonId) || any(is.na(exonId)))
@@ -262,12 +262,12 @@ makeTranscriptDb <- function(geneId,
 
     conn <- dbConnect(SQLite(), dbname="") ## we'll write the db to a temp file
     .writeFeatureCoreTables(conn, "transcript",
-        internal_tx_id, txId, txName, chrom, strand, txStart, txEnd,
-        c("_tx_id", "tx_id", "tx_name", "chromosome", "strand",
+        internal_tx_id, txId, txName, txChrom, txStrand, txStart, txEnd,
+        c("_tx_id", "tx_id", "tx_name", "tx_chrom", "tx_strand",
           "tx_start", "tx_end"))
     .writeFeatureCoreTables(conn, "exon",
-        internal_exon_id, exonId, NULL, chrom, strand, exonStart, exonEnd,
-        c("_exon_id", "exon_id", "exon_name", "chromosome", "strand",
+        internal_exon_id, exonId, NULL, txChrom, txStrand, exonStart, exonEnd,
+        c("_exon_id", "exon_id", "exon_name", "exon_chrom", "exon_strand",
           "exon_start", "exon_end"))
     .writeExonsTranscriptsTable(conn,
         internal_exon_id, internal_tx_id, exonRank)
@@ -405,8 +405,8 @@ makeTranscriptDb <- function(geneId,
         geneId=rep.int(EGs, exon_count),
         txId=txId,
         txName=txName,
-        chrom=rep.int(ucsc_txtable$chrom, exon_count),
-        strand=rep.int(ucsc_txtable$strand, exon_count),
+        txChrom=rep.int(ucsc_txtable$chrom, exon_count),
+        txStrand=rep.int(ucsc_txtable$strand, exon_count),
         txStart=rep.int(ucsc_txtable$txStart, exon_count) + 1L,
         txEnd=rep.int(ucsc_txtable$txEnd, exon_count),
         cdsStart=rep.int(ucsc_txtable$cdsStart, exon_count) + 1L,
@@ -497,8 +497,8 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     }
     makeTranscriptDb(geneId = bm_txtable$ensembl_gene_id,
                      txId = bm_txtable$ensembl_transcript_id,
-                     chrom = bm_txtable$chromosome_name,
-                     strand = ifelse(bm_txtable$strand == 1, "+", "-"),
+                     txChrom = bm_txtable$chromosome_name,
+                     txStrand = ifelse(bm_txtable$strand == 1, "+", "-"),
                      txStart = bm_txtable$transcript_start,
                      txEnd = bm_txtable$transcript_end,
                      cdsStart = bm_txtable$cds_start,
@@ -536,13 +536,13 @@ setMethod("as.data.frame", "TranscriptDb",
                   gene_id,
                   tx_id,
                   tx_name,
-                  transcripts.chromosome AS tx_chrom,
-                  transcripts.strand AS tx_strand,
+                  tx_chrom,
+                  tx_strand,
                   tx_start, tx_end,
                   exon_rank,
                   exon_id,
-                  exons.chromosome AS exon_chrom,
-                  exons.strand AS exon_strand,
+                  exon_chrom,
+                  exon_strand,
                   exon_start, exon_end
                 FROM transcripts
                   LEFT JOIN genes

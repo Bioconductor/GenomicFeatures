@@ -6,7 +6,7 @@ test_getTranscripts <- function()
                                       package="GenomicFeatures"))
     suppressMessages(library(IRanges))
     ranges <- IRanges(start=1000, end=8000)
-    chromosome <- "chr1"
+    chrom <- "chr1"
     strand <-"+"
     wantRanges = IRanges(start = c(5658,4268,6720,6720),
                          end   = c(7231,6628,7614,7924))
