@@ -95,6 +95,7 @@ loadFeatures <- function(file)
         end=end,
         stringsAsFactors=FALSE)
     table <- unique(table)
+
     ## Create the '<feature>' table.
     sql <- c(
         "CREATE TABLE ", feature, " (\n",
@@ -106,6 +107,7 @@ loadFeatures <- function(file)
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
+
     ## Fill the '<feature>' table.
     ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
     ## when the nb of rows to insert is 0, hence the following test.
@@ -117,6 +119,7 @@ loadFeatures <- function(file)
         dbClearResult(res)
         dbCommit(conn)
     }
+
     ## Create the '<feature>_rtree' table.
     sql <- c(
         "CREATE VIRTUAL TABLE ", feature, "_rtree USING rtree (\n",
@@ -127,6 +130,7 @@ loadFeatures <- function(file)
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
+
     ## Fill the '<feature>_rtree' table.
     if (nrow(table) != 0L) {
         sql <- c("INSERT INTO ", feature, "_rtree VALUES (?,?,?)")
@@ -151,7 +155,8 @@ loadFeatures <- function(file)
         internal_cds_id=internal_cds_id,
         stringsAsFactors=FALSE)
     table <- unique(table)
-    ## Create the 'splicing' table.
+
+    ## Create the 'splicing' table and related indices.
     sql <- c(
         "CREATE TABLE splicing (\n",
         "  _tx_id INTEGER NOT NULL,\n",
@@ -165,6 +170,15 @@ loadFeatures <- function(file)
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
+    sql <- c(
+        "CREATE INDEX F_tx_id ON splicing (_tx_id);\n",
+        "CREATE INDEX F_exon_id ON splicing (_exon_id);\n",
+        "CREATE INDEX F_cds_id ON splicing (_cds_id)"
+    )
+    #Temporarily droped the indices.
+    #res <- dbSendQuery(conn, paste(sql, collapse=""))
+    #dbClearResult(res)
+
     ## Fill the 'splicing' table.
     ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
     ## when the nb of rows to insert is 0, hence the following test.
@@ -212,11 +226,38 @@ loadFeatures <- function(file)
 ### .makeTranscriptDb().
 ###
 
-### WORK-IN-PROGRESS
-.makeTranscriptDb <- function(transcript, exon, cds, ...)
+### 'transcripts': data frame with 1 row per transcript.
+###   Cols: 'tx_id': character or integer vector with no NAs and no duplicates.
+###         'tx_name' (optional): character vector (or factor).
+###         'tx_chrom': character vector (or factor) with no NAs.
+###         'tx_strand': character vector (or factor) with no NAs.
+###         'tx_start', 'tx_end': integer vectors with no NAs.
+###
+### 'splicings': data frane with N rows per transcript, where N is the
+###   nb of exons in the transcript.
+###   Cols: 'tx_id': same type as 'transcripts$tx_id', no NAs.
+###         'exon_rank': integer vector with no NAs.
+###         'exon_id' (optional): character or integer vector.
+###         'exon_chrom' (optional): character vector (or factor) with no NAs.
+###           If missing then fallback on 'transcripts$tx_chrom'.
+###           If present then 'exon_strand' must be present too.
+###         'exon_strand' (optional): character vector (or factor) with no NAs.
+###           If missing then fallback on 'transcripts$tx_strand' and
+###           'exon_chrom' must be missing too.
+###         'exon_start', 'exon_end': integer vectors with no NAs.
+###         'cds_id' (optional): character or integer vector.
+###           If present then 'cds_start' and 'cds_end' must be present too.
+###         'cds_start', 'cds_end': integer vectors. NAs are allowed.
+###           For the N rows in 'splicings' that correspond to a given
+###           transcript (same 'tx_id'), either all the 'cds_*' cols
+###           have NAs or none has. When they all have NAs it means either
+###           that the transcript is known to be non-protein coding or that
+###           its cds are unknown.
+###           If missing then 'cds_id' must be missing too.
+.makeTranscriptDb <- function(transcripts, splicings, genes, ...)
 {
     stop("WORK-IN-PROGRESS")
-    args <- list(transcript, exon, cds, ...)
+    args <- list(transcripts, splicings, genes, ...)
     if (!all(sapply(args, is.data.frame)))
         stop("all args must be data frames")
 }
@@ -296,7 +337,7 @@ makeTranscriptDb <- function(geneId,
     if (genome == "hg19")
         return("Human")
     ucsc_genomes <- ucscGenomes()
-    which_genome <- match(genome, as.character(ucsc_genomes[,"db"]))
+    which_genome <- match(genome, as.character(ucsc_genomes[ , "db"]))
     if (is.na(which_genome))
         stop("'genome' not in ucscGenomes()")
     as.character(ucsc_genomes[which_genome, "organism"])
