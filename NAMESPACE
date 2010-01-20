@@ -34,15 +34,13 @@ export(
   makeTranscriptDbFromBiomart,
   saveFeatures,
   loadFeatures,
-  as.data.frame,
-  getTranscripts,
-  getExons
+  as.data.frame
 )
 
 exportMethods(
   as.data.frame,
-  getTranscripts,
-  getExons,
+  transcriptsByRanges,
+  exonsByRanges,
   bindTranscripts,
   bindExons
 )

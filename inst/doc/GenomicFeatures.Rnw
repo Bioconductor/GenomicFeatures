@@ -96,7 +96,7 @@ library(IRanges)
 rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
                  space = rep("chr1",2), 
                  strand = rep("-",2))
-getTranscripts(rd, txdb)
+transcriptsByRanges(txdb, rd)
 @
 
 
@@ -118,7 +118,7 @@ library(IRanges)
 rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
                  space = rep("chr1",2), 
                  strand = rep("-",2))
-mapTranscripts(rd, txdb)
+bindTranscripts(txdb, rd)
 @
 
 
@@ -140,9 +140,9 @@ rd <- RangedData(ranges = IRanges(start=6700,end=7700),
                  space = "chr1", 
                  strand = "-")
 
-mapTranscripts(rd, txdb)
+bindTranscripts(txdb, rd)
 
-mapExons(rd, txdb)
+bindExons(txdb, rd)
 
 @
 

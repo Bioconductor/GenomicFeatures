@@ -3,6 +3,20 @@
 
 
 
+## Get the list of possible values for a type from a table:
+.getValsFromTable <- function(txann, colname, table){
+  sql <- paste("SELECT", colname, "FROM", table)
+  as.character(unlist(unique(dbGetQuery(txann@conn, sql))))
+}
+
+## Check that the type of thing (chromosome, strand etc.) is in the
+## transcript table
+.checkFields <- function(txann, colname, data, table){
+  annot <- .getValsFromTable(txann, colname, table) 
+  all(data %in% annot)
+}
+
+
 ## For looping we want to get data for just the unique chrom/strand
 ## combinations that actually occur...
 ## BUT if one or both of the chrom/strand is NULL: we must expand
@@ -77,7 +91,23 @@
   ans
 }
 
+##Format the ranged data object depending on whether mapping or getting
+.formatRD <- function(ans, format, prefix){
+  switch(format,
+         "map" = return(RangedData(
+           ranges = IRanges(start = ans[["start"]],
+                              end = ans[["end"]]),
+           strand = ans[[paste(prefix,"_strand",sep="")]],
+           space = ans[[paste(prefix,"_chrom",sep="")]])),
+         "get" = return(RangedData(
+           ranges = IRanges(start = ans[[paste(prefix,"_start",sep="")]],
+                              end = ans[[paste(prefix,"_end",sep="")]]),
+           strand = ans[[paste(prefix,"_strand",sep="")]],
+           space = ans[[paste(prefix,"_chrom",sep="")]]))         
+         )
+}
 
+##Add addional data that was requested to the Ranged Data that is returned.
 .appendCols <- function(rd, ans, col){## for each value in cols
   ## verify that cols are in ans
   if(all(col %in% colnames(ans))){
@@ -93,7 +123,10 @@
 
 .mapTranscripts <- function(txdb, ranges=NULL, chrom=NULL,
                             strand=NULL, type="any",
-                            col=c("tx_id", "tx_name")) {
+                            col=c("tx_id", "tx_name"),
+                            format=c("map","get")) {
+  ## check the format:
+  format=match.arg(format)
   ## check the cols:
   colNames <- c("tx_id", "tx_name", "gene_id", "exon_id","cds_id",
                 NULL, character(0))
@@ -135,10 +168,11 @@
     }
   }
   if(dim(ans)[1] >0){
-      rd =  RangedData(ranges = IRanges(start = ans[["start"]],
-                          end = ans[["end"]]),
-                       strand = ans[["tx_strand"]],
-                        space = ans[["tx_chrom"]])
+      rd <- .formatRD(ans, format, "tx")
+##       rd =  RangedData(ranges = IRanges(start = ans[["start"]],
+##                           end = ans[["end"]]),
+##                        strand = ans[["tx_strand"]],
+##                         space = ans[["tx_chrom"]])
       if(is.null(col) || length(col)==0){
         return(rd)
       }else{
@@ -169,7 +203,8 @@ setMethod("bindTranscripts", "RangedData",
       ranges <- unlist(ranges(ranges), use.names=FALSE)
       .mapTranscripts(txdb=txdb, ranges=ranges,
                       chrom=chrom, strand=strand,
-                      type = restrict, col=columns)
+                      type=restrict, col=columns,
+                      format="map")
     }
 )
 
@@ -202,7 +237,10 @@ setMethod("bindTranscripts", "RangedData",
 
 .mapExons <- function(txdb, ranges=NULL, chrom=NULL,
                       strand=NULL, type="any",
-                      col=c("exon_id")) {
+                      col=c("exon_id"),
+                      format=c("map","get")) {
+  ## check the format:
+  format=match.arg(format)
   ## check the cols:
   colNames=c("exon_id", NULL, character(0))
   if(!all(col %in% colNames)){
@@ -239,10 +277,11 @@ setMethod("bindTranscripts", "RangedData",
     }
   }
   if(dim(ans)[1] >0){
-      rd =  RangedData(ranges = IRanges(start = ans[["start"]],
-                          end = ans[["end"]]),
-                       strand = ans[["exon_strand"]],
-                        space = ans[["exon_chrom"]])
+      rd <- .formatRD(ans, format, "exon")
+##       rd =  RangedData(ranges = IRanges(start = ans[["start"]],
+##                           end = ans[["end"]]),
+##                        strand = ans[["exon_strand"]],
+##                         space = ans[["exon_chrom"]])
       if(is.null(col) || length(col)==0){
         return(rd)
       }else{
@@ -267,7 +306,8 @@ setMethod("bindExons", "RangedData",
       ranges <- unlist(ranges(ranges), use.names=FALSE)
       .mapExons(txdb=txdb, ranges=ranges,
                 chrom=chrom, strand=strand,
-                type = restrict, col=columns)
+                type = restrict, col=columns,
+                format="map")
     }
 )
 

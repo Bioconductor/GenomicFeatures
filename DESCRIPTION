@@ -14,8 +14,8 @@ Collate: AllGenerics.R
 	 AllClasses.R
 	 utils.R
          makeTranscriptDb.R
-	 getTranscripts.R
 	 mapTranscripts.R
+	 getTranscripts.R
 	 regions.R
 	 GenomicFeaturesForge.R
 	 extractTranscriptsFromGenome.R
