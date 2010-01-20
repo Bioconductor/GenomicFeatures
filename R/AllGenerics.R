@@ -5,10 +5,10 @@ setGeneric("getTranscripts", signature="ranges",
            function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
            standardGeneric("getTranscripts"))
 
-setGeneric("transcriptsByRanges", signature="ranges",
+setGeneric("bindTranscripts", signature="ranges",
            function(txdb, ranges=NULL, restrict="any",
                     columns=c("tx_id", "tx_name"))
-           standardGeneric("transcriptsByRanges"))
+           standardGeneric("bindTranscripts"))
 
 
 
@@ -19,7 +19,7 @@ setGeneric("getExons", signature="ranges",
            function(ranges=NULL, ann, rangeRestr="either", expand=FALSE)
            standardGeneric("getExons"))
 
-setGeneric("exonsByRanges", signature="ranges",
+setGeneric("bindExons", signature="ranges",
            function(txdb, ranges=NULL, restrict="any",
                     columns=c("exon_id", "exon_name"))
            standardGeneric("exonsByRanges"))

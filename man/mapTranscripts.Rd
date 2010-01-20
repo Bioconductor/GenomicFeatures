@@ -1,9 +1,9 @@
-\name{transcriptsByRanges}
+\name{bindTranscripts}
 
-\alias{transcriptsByRanges}
-\alias{transcriptsByRanges,RangedData-method}
-\alias{exonsByRanges}
-\alias{exonsByRanges,RangedData-method}
+\alias{bindTranscripts}
+\alias{bindTranscripts,RangedData-method}
+\alias{bindExons}
+\alias{bindExons,RangedData-method}
 
 \title{
   Mapping to genomic features in a TranscriptDb object.
@@ -13,7 +13,7 @@
   TranscriptDb object.
 }
 \usage{
-  transcriptsByRanges(txdb, ranges=NULL, restrict, columns)
+  bindTranscripts(txdb, ranges=NULL, restrict, columns)
 }
 \arguments{
   \item{txdb}{A \link{TranscriptDb} object.}
@@ -52,6 +52,6 @@
   rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
                    space = rep("chr1",2), 
                    strand = rep("-",2))
-  transcriptsByRanges(txdb, rd)
+  bindTranscripts(txdb, rd)
 }
 }

@@ -150,7 +150,7 @@
 
 
 
-setMethod("transcriptsByRanges", "RangedData",
+setMethod("bindTranscripts", "RangedData",
     function(txdb, ranges, restrict = "any", columns=c("tx_id", "tx_name"))
     {
       ## check that txdb is in fact a TranscriptDb object
@@ -252,7 +252,7 @@ setMethod("transcriptsByRanges", "RangedData",
 }
 
 
-setMethod("exonsByRanges", "RangedData",
+setMethod("bindExons", "RangedData",
     function(txdb, ranges, restrict = "any", columns=c("exon_id", "exon_name"))
     {
       ## check that txdb is in fact a TranscriptDb object
