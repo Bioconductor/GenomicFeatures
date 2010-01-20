@@ -43,6 +43,6 @@ exportMethods(
   as.data.frame,
   getTranscripts,
   getExons,
-  mapTranscripts,
-  mapExons
+  transcriptsByRanges,
+  exonsByRanges
 )

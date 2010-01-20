@@ -1,9 +1,9 @@
-\name{mapTranscripts}
+\name{transcriptsByRanges}
 
-\alias{mapTranscripts}
-\alias{mapTranscripts,RangedData-method}
-\alias{mapExons}
-\alias{mapExons,RangedData-method}
+\alias{transcriptsByRanges}
+\alias{transcriptsByRanges,RangedData-method}
+\alias{exonsByRanges}
+\alias{exonsByRanges,RangedData-method}
 
 \title{
   Mapping to genomic features in a TranscriptDb object.
@@ -13,17 +13,17 @@
   TranscriptDb object.
 }
 \usage{
-  mapTranscripts(ranges=NULL, ann, rangeRestr)
+  transcriptsByRanges(txdb, ranges=NULL, restrict, columns)
 }
 \arguments{
-  \item{ann}{A \link{TranscriptDb} object.}
+  \item{txdb}{A \link{TranscriptDb} object.}
   \item{ranges}{A RangedData object to specify which ranges to search
     for annotations.}
-  \item{rangeRestr}{How to test the ranges.  Can be "any", "start",
+  \item{restrict}{How to test the ranges.  Can be "any", "start",
     "during", "finish" or "equal" to indicate the kind of overlap
     allowed between the ranges to be mapped and the ranges in the DB.
     The default value is "any".}
-
+  \item{columns}{Which data columns to return with the rangedData object.}
 }
 \details{These Methods return relevant annotation results for the ranges
   specified in the RangedData object that is passed in.  If the user
@@ -52,6 +52,6 @@
   rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
                    space = rep("chr1",2), 
                    strand = rep("-",2))
-  mapTranscripts(rd, txdb)
+  transcriptsByRanges(txdb, rd)
 }
 }
