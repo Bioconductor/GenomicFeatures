@@ -89,4 +89,19 @@ some_ids <- c(
     "ENST00000341724"
 )
 tiny_txdb <- makeTranscriptDbFromBiomart(ensembl_transcript_ids=some_ids)
+
+### Low-level utility.
+transcripts <- data.frame(
+                   tx_id=1:3,
+                   tx_chrom="chr1",
+                   tx_strand=c("-", "+", "+"),
+                   tx_start=c(1, 2001, 2001),
+                   tx_end=c(999, 2199, 2199))
+splicings <-  data.frame(
+                   tx_id=c(1L, 2L, 2L, 2L, 3L, 3L),
+                   exon_rank=c(1L, 1L, 2L, 3L, 1L, 2L),
+                   exon_start=c(1, 2001, 2101, 2131, 2001, 2131),
+                   exon_end=c(999, 2085, 2144, 2199, 2085, 2199))
+
+txdb <- GenomicFeatures:::.makeTranscriptDb(transcripts, splicings)
 }

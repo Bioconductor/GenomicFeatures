@@ -33,16 +33,18 @@ loadFeatures <- function(file)
 ### Helper functions for .makeTranscriptDb() / makeTranscriptDb().
 ###
 
+.isCharacterVectorOrFactor <- function(x)
+{
+    is.character(x) || (is.factor(x) && is.character(levels(x)))
+}
+
 .argAsCharacterFactorWithNoNAs <- function(arg, argname)
 {
-    if (is.factor(arg)) {
-        if (is.character(levels(arg)) && !any(is.na(arg)))
-            return(arg)
+    if (!.isCharacterVectorOrFactor(arg) || any(is.na(arg)))
         stop("'", argname, "' must be a character vector/factor with no NAs")
-    }
-    if (!is.character(arg) || any(is.na(arg)))
-        stop("'", argname, "' must be a character vector/factor with no NAs")
-    as.factor(arg)
+    if (is.character(arg))
+        arg <- as.factor(arg)
+    arg
 }
 
 .argAsIntegerWithNoNAs <- function(arg, argname)
@@ -55,7 +57,12 @@ loadFeatures <- function(file)
 }
 
 .makeInternalIdsFromExternalIds <- function(external_id)
-    as.integer(factor(external_id))
+{
+    if (is.integer(external_id))
+        external_id
+    else
+        as.integer(factor(external_id))
+}
 
 .makeInternalIdsForUniqueLocs <- function(chrom, strand, start, end)
 {
@@ -227,39 +234,278 @@ loadFeatures <- function(file)
 ###
 
 ### 'transcripts': data frame with 1 row per transcript.
-###   Cols: 'tx_id': character or integer vector with no NAs and no duplicates.
-###         'tx_name' (optional): character vector (or factor).
-###         'tx_chrom': character vector (or factor) with no NAs.
-###         'tx_strand': character vector (or factor) with no NAs.
-###         'tx_start', 'tx_end': integer vectors with no NAs.
+###   colname          description
+###   ---------------- -------------------------------------------------------
+###   tx_id            - Character vector (or factor) or integer vector.
+###                      No NAs. No duplicates.
+###   tx_name          - [optional] Character vector (or factor).
+###   tx_chrom         - Character vector (or factor) with no NAs.
+###   tx_strand        - Character vector (or factor) with no NAs.
+###   tx_start, tx_end - Integer vectors with no NAs.
+###   Other cols, if any, are ignored.
 ###
-### 'splicings': data frane with N rows per transcript, where N is the
+### 'splicings': data frame with N rows per transcript, where N is the
 ###   nb of exons in the transcript.
-###   Cols: 'tx_id': same type as 'transcripts$tx_id', no NAs.
-###         'exon_rank': integer vector with no NAs.
-###         'exon_id' (optional): character or integer vector.
-###         'exon_chrom' (optional): character vector (or factor) with no NAs.
-###           If missing then fallback on 'transcripts$tx_chrom'.
-###           If present then 'exon_strand' must be present too.
-###         'exon_strand' (optional): character vector (or factor) with no NAs.
-###           If missing then fallback on 'transcripts$tx_strand' and
-###           'exon_chrom' must be missing too.
-###         'exon_start', 'exon_end': integer vectors with no NAs.
-###         'cds_id' (optional): character or integer vector.
-###           If present then 'cds_start' and 'cds_end' must be present too.
-###         'cds_start', 'cds_end': integer vectors. NAs are allowed.
-###           For the N rows in 'splicings' that correspond to a given
-###           transcript (same 'tx_id'), either all the 'cds_*' cols
-###           have NAs or none has. When they all have NAs it means either
-###           that the transcript is known to be non-protein coding or that
-###           its cds are unknown.
-###           If missing then 'cds_id' must be missing too.
+###   colname          description
+###   ---------------- -------------------------------------------------------
+###   tx_id            - Same type as 'transcripts$tx_id'. No NAs. All the
+###                      values in this col must be present in
+###                      'transcripts$tx_id'.
+###   exon_rank        - Integer vector with no NAs. tx_id/exon_rank pairs
+###                      must be unique. For a given transcript (i.e. for a
+###                      given 'tx_id' value), the 'exon_rank' values must be
+###                      1:N where N is the nb of exons in the transcript.
+###   exon_id          - [optional] Character vector (or factor) or integer
+###                      vector. No NAs.
+###   exon_chrom       - [optional] Character vector (or factor) with no NAs.
+###                      If missing then fallback on 'transcripts$tx_chrom'.
+###                      If present then 'exon_strand' must be present too.
+###   exon_strand      - [optional] Character vector (or factor) with no NAs.
+###                      If missing then fallback on 'transcripts$tx_strand'
+###                      and 'exon_chrom' must be missing too.
+###   exon_start, exon_end - Integer vectors with no NAs.
+###   cds_id           - [optional] Character vector (or factor) or integer
+###                      vector. No NAs.
+###                      If present then 'cds_start' and 'cds_end' must be
+###                      present too.
+###   cds_start, cds_end - [optional] If one of the 2 cols is missing then
+###                      all 'cds_*' cols must be missing.
+###                      Integer vectors. NAs are allowed.
+###                      For the N rows in 'splicings' that correspond to a
+###                      given transcript (same 'tx_id'), either all the
+###                      'cds_*' cols have NAs or none has. When they all have
+###                      NAs it means either that the transcript is known to
+###                      be non-protein coding or that its cds are unknown.
+###                      If missing then 'cds_id' must be missing too.
+###   Other cols, if any, are ignored.
+###
+### 'genes': data frame with N rows per transcript, where N is the
+###   nb of genes linked to the transcript (N will be 1 most of the time).
+###   colname          description
+###   ---------------- -------------------------------------------------------
+###   tx_id            - Same type as 'transcripts$tx_id'. No NAs. All the
+###                      values in this col must be present in
+###                      'transcripts$tx_id'.
+###   gene_id          - Character vector (or factor). No NAs.
+###   Other cols, if any, are ignored.
+
+.checkargColnames <- function(arg, required_colnames, optional_colnames,
+                              argname)
+{
+    supported_colnames <- c(required_colnames, optional_colnames)
+    if (!is.data.frame(arg))
+        stop("'", argname, "' must be a data frame")
+    if (!all(required_colnames %in% colnames(arg)))
+        stop("'", argname, "' must have at least the following cols: ",
+             paste(required_colnames, collapse=", "))
+    is_supported_col <- colnames(arg) %in% supported_colnames
+    if (any(duplicated(colnames(arg)[is_supported_col])))
+        stop("'", argname, "' has duplicated colnames")
+    if (any(!is_supported_col))
+        warning("ignoring the following cols in '", argname, "': ",
+            paste(colnames(arg)[!is_supported_col], collapse=", "))
+}
+
+.checkargTranscripts <- function(transcripts)
+{
+    .REQUIRED_COLS <- c("tx_id", "tx_chrom", "tx_strand", "tx_start", "tx_end")
+    .OPTIONAL_COLS <- "tx_name"
+    .checkargColnames(transcripts, .REQUIRED_COLS, .OPTIONAL_COLS,
+                      "transcripts")
+    ## Check 'tx_id'.
+    if (!(.isCharacterVectorOrFactor(transcripts$tx_id)
+          || is.integer(transcripts$tx_id))
+     || any(is.na(transcripts$tx_id)))
+        stop("'transcripts$tx_id' must be a character vector (or factor), ",
+             "or an integer vector, with no NAs")
+    if (any(duplicated(transcripts$tx_id)))
+        stop("'transcripts$tx_id' contains duplicated values")
+    ## Check 'tx_name'.
+    if ("tx_name" %in% colnames(transcripts)
+     && !.isCharacterVectorOrFactor(transcripts$tx_name))
+        stop("'transcripts$tx_name' must be a character vector (or factor)")
+    ## Check 'tx_chrom'.
+    if (!.isCharacterVectorOrFactor(transcripts$tx_chrom)
+     || any(is.na(transcripts$tx_chrom)))
+        stop("'transcripts$tx_chrom' must be a character vector (or factor) ",
+             "with no NAs")
+    ## Check 'tx_strand'.
+    if (!.isCharacterVectorOrFactor(transcripts$tx_strand)
+     || any(is.na(transcripts$tx_strand)))
+        stop("'transcripts$tx_strand' must be a character vector (or factor) ",
+             "with no NAs")
+    if (!all(transcripts$tx_strand %in% c("+", "-")))
+        stop("values in 'transcripts$tx_strand' must be \"+\" or \"-\"")
+    ## Check 'tx_start'.
+    if (!is.numeric(transcripts$tx_start)
+     || any(is.na(transcripts$tx_start)))
+        stop("'transcripts$tx_start' must be an integer vector with no NAs")
+    if (!is.integer(transcripts$tx_start))
+        transcripts$tx_start <- as.integer(transcripts$tx_start)
+    ## Check 'tx_end'.
+    if (!is.numeric(transcripts$tx_end)
+     || any(is.na(transcripts$tx_end)))
+        stop("'transcripts$tx_end' must be an integer vector with no NAs")
+    if (!is.integer(transcripts$tx_end))
+        transcripts$tx_end <- as.integer(transcripts$tx_end)
+    ## Check 'tx_start <= tx_end'.
+    if (any(transcripts$tx_start > transcripts$tx_end))
+        stop("transcript starts must be <= transcript ends")
+}
+
+.checkargSplicings <- function(splicings, unique_tx_ids)
+{
+    .REQUIRED_COLS <- c("tx_id", "exon_rank", "exon_start", "exon_end")
+    .OPTIONAL_COLS <- c("exon_id", "exon_chrom", "exon_strand",
+                        "cds_id", "cd_start", "cds_end")
+    .checkargColnames(splicings, .REQUIRED_COLS, .OPTIONAL_COLS,
+                      "splicings")
+    ## Check 'tx_id'.
+    if (!(.isCharacterVectorOrFactor(splicings$tx_id)
+            && .isCharacterVectorOrFactor(unique_tx_ids))
+     && !(is.integer(splicings$tx_id) && is.integer(unique_tx_ids)))
+        stop("'splicings$tx_id' must have the same type as 'transcripts$tx_id'")
+    if (any(is.na(splicings$tx_id)))
+        stop("'splicings$tx_id' cannot contain NAs")
+    if (!all(splicings$tx_id %in% unique_tx_ids))
+        stop("all the values in 'splicings$tx_id' must be ",
+             "present in 'transcripts$tx_id'")
+    ## Check 'exon_rank'.
+    if (!is.integer(splicings$exon_rank)
+     || any(is.na(splicings$exon_rank)))
+        stop("'splicings$exon_rank' must be an integer vector with no NAs")
+    ## Check 'exon_id'.
+    if ("exon_id" %in% colnames(splicings)
+     && (!(.isCharacterVectorOrFactor(splicings$exon_id)
+           || is.integer(splicings$exon_id)) || any(is.na(splicings$exon_id))))
+        stop("'splicings$exon_id' must be a character vector (or factor), ",
+             "or an integer vector, with no NAs")
+    ## Check 'exon_chrom'.
+    if ("exon_chrom" %in% colnames(splicings)
+     && (!.isCharacterVectorOrFactor(splicings$exon_chrom)
+         || any(is.na(splicings$exon_chrom))))
+        stop("'splicings$exon_chrom' must be a character vector (or factor) ",
+             "with no NAs")
+    ## Check 'exon_strand'.
+    if ("exon_strand" %in% colnames(splicings)
+     && (!.isCharacterVectorOrFactor(splicings$exon_strand)
+         || any(is.na(splicings$exon_strand))))
+        stop("'splicings$exon_strand' must be a character vector (or factor) ",
+             "with no NAs")
+    if (("exon_chrom" %in% colnames(splicings))
+     && !("exon_strand" %in% colnames(splicings)))
+        stop("if 'splicings' has an \"exon_chrom\" col then ",
+             "it must have an \"exon_strand\" col too")
+    ## Check 'exon_start'.
+    if (!is.numeric(splicings$exon_start)
+     || any(is.na(splicings$exon_start)))
+        stop("'splicings$exon_start' must be an integer vector with no NAs")
+    if (!is.integer(splicings$exon_start))
+        splicings$exon_start <- as.integer(splicings$exon_start)
+    ## Check 'exon_end'.
+    if (!is.numeric(splicings$exon_end)
+     || any(is.na(splicings$exon_end)))
+        stop("'splicings$exon_end' must be an integer vector with no NAs")
+    if (!is.integer(splicings$exon_end))
+        splicings$exon_end <- as.integer(splicings$exon_end)
+    ## Check 'exon_start <= exon_end'.
+    if (any(splicings$exon_start > splicings$exon_end))
+        stop("exon starts must be <= exon ends")
+    ## 'cds_*' cols.
+    if (any(c("cds_id", "cds_start", "cds_end") %in% colnames(splicings)))
+        warning("'cds_*' cols are temporarily ignored")
+}
+
+.importTranscripts <- function(conn, transcripts, internal_tx_id)
+{
+    .writeFeatureCoreTables(conn, "transcript",
+        internal_tx_id, transcripts$tx_id, transcripts$tx_name,
+        transcripts$tx_chrom, transcripts$tx_strand,
+        transcripts$tx_start, transcripts$tx_end,
+        c("_tx_id", "tx_id", "tx_name",
+          "tx_chrom", "tx_strand",
+          "tx_start", "tx_end"))
+}
+
+.importExons <- function(conn, splicings, internal_exon_id)
+{
+    .writeFeatureCoreTables(conn, "exon",
+        internal_exon_id, splicings$exon_id, NULL,
+        splicings$exon_chrom, splicings$exon_strand,
+        splicings$exon_start, splicings$exon_end,
+        c("_exon_id", "exon_id", "exon_name",
+          "exon_chrom", "exon_strand",
+          "exon_start", "exon_end"))
+}
+
+.importCDS <- function(conn, splicings, internal_cds_id)
+{
+    ## 'cds' table is temporarily left empty.
+    .writeFeatureCoreTables(conn, "cds",
+        integer(0), character(0), NULL,
+        character(0), character(0),
+        integer(0), integer(0),
+        c("_cds_id", "cds_id", "cds_name",
+          "cds_chrom", "cds_strand",
+          "cds_start", "cds_end"))
+}
+
 .makeTranscriptDb <- function(transcripts, splicings, genes, ...)
 {
-    stop("WORK-IN-PROGRESS")
-    args <- list(transcripts, splicings, genes, ...)
-    if (!all(sapply(args, is.data.frame)))
-        stop("all args must be data frames")
+    if (length(list(...)) != 0L)
+        warning("extra args are ignored for now")
+    .checkargTranscripts(transcripts)
+    unique_tx_ids <- transcripts$tx_id  # guaranteed to be unique
+    .checkargSplicings(splicings, unique_tx_ids)
+    ## Generate internal transcript id.
+    if (is.integer(unique_tx_ids)) {
+        transcripts_internal_tx_id <- unique_tx_ids
+        splicings_internal_tx_id <- splicings$tx_id
+    } else {
+        transcripts_internal_tx_id <- seq_len(length(unique_tx_ids))
+        splicings_internal_tx_id <- as.integer(factor(splicings$tx_id,
+                                                      levels=unique_tx_ids))
+    }
+    ## Generate internal exon id.
+    if (is.null(splicings$exon_chrom))
+        splicings$exon_chrom <- transcripts$tx_chrom[splicings_internal_tx_id]
+    if (is.null(splicings$exon_strand))
+        splicings$exon_strand <- transcripts$tx_strand[splicings_internal_tx_id]
+    if (is.null(splicings$exon_id)) {
+        splicings_internal_exon_id <-
+            .makeInternalIdsForUniqueLocs(
+                splicings$exon_chrom, splicings$exon_strand,
+                splicings$exon_start, splicings$exon_end)
+        splicings$exon_id <- splicings_internal_exon_id
+    } else {
+        splicings_internal_exon_id <-
+            .makeInternalIdsFromExternalIds(splicings$exon_id)
+    }
+    ## Generate internal cds id.
+    if (is.null(splicings$cds_start))
+        splicings_internal_cds_id <- rep.int(NA_integer_, nrow(splicings))
+    else if (is.null(splicings$cds_id)) {
+        splicings_internal_cds_id <-
+            .makeInternalIdsForUniqueLocs(
+                splicings$exon_chrom, splicings$exon_strand,
+                splicings$cds_start, splicings$cds_end)
+        splicings$cds_id <- splicings_internal_cds_id
+    } else {
+        splicings_internal_cds_id <-
+            .makeInternalIdsFromExternalIds(splicings$cds_id)
+    }
+
+    ## Create the db in a temp file.
+    conn <- dbConnect(SQLite(), dbname="")
+    .importTranscripts(conn, transcripts, transcripts_internal_tx_id)
+    .importExons(conn, splicings, splicings_internal_exon_id)
+    .importCDS(conn, splicings, splicings_internal_cds_id)
+    .writeSplicingTable(conn,
+                        splicings_internal_tx_id,
+                        splicings$exon_rank,
+                        splicings_internal_exon_id,
+                        splicings_internal_cds_id)
+    new("TranscriptDb", conn=conn)
 }
 
 
