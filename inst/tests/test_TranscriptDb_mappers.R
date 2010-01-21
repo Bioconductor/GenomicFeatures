@@ -37,7 +37,7 @@ test_mapTranscripts <- function()
                    space      = rep("chr1",2) )
 
     rd <- RangedData(ranges, space = chrom, strand = strand)
-    checkEquals(want, mapTranscripts(rd, txdb))
+    checkEquals(want, bindTranscripts(txdb, rd))
 }
 
 

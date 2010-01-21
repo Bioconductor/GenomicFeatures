@@ -15,8 +15,10 @@
   TranscriptDb object.
 }
 \usage{
-  transcriptsByRanges(txdb, ranges=NULL, restrict, columns)
-  exonsByRanges(txdb, ranges=NULL, restrict, columns)
+  transcriptsByRanges(txdb, ranges, restrict="any",
+                      columns=c("tx_id","tx_name"))
+  exonsByRanges(txdb, ranges, restrict="any",
+                columns=c("exon_id","exon_name"))
 }
 \arguments{  
   \item{txdb}{A \link{TranscriptDb} object.}

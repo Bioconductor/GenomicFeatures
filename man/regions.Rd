@@ -1,7 +1,7 @@
 \name{regions}
 \Rdversion{1.1}
-\alias{transcripts}
-\alias{exons}
+\alias{transcripts_deprecated}
+\alias{exons_deprecated}
 \alias{introns}
 \title{
   Functions that compute genomic regions of interest.
@@ -12,8 +12,8 @@
   the data.frame returned by \code{\link[GenomicFeatures.Hsapiens.UCSC.hg18]{geneHuman}}.
 }
 \usage{
-transcripts(genes, proximal = 500, distal = 10000)
-exons(genes)
+transcripts_deprecated(genes, proximal = 500, distal = 10000)
+exons_deprecated(genes)
 introns(genes)
 }
 \arguments{
@@ -36,10 +36,10 @@ introns(genes)
   All of these functions return a
   \code{\link[IRanges:RangedData-class]{RangedData}}
   object with a \code{gene} column with the UCSC ID of the gene.
-  For \code{transcripts}, each element corresponds to a transcript, and
+  For \code{transcripts_deprecated}, each element corresponds to a transcript, and
   there are columns for each type of region (promoter, threeprime,
   upstream, and downstream).
-  For \code{exons}, each element corresponds to an exon.
+  For \code{exons_deprecated}, each element corresponds to an exon.
   For \code{introns}, each element corresponds to an intron.
 }
 \author{
@@ -49,5 +49,5 @@ introns(genes)
 \examples{
 library(GenomicFeatures.Hsapiens.UCSC.hg18)
 ## promoter 300bp up and down from TSS (threeprime from TES)
-transcripts(geneHuman(), proximal = 300)
+transcripts_deprecated(geneHuman(), proximal = 300)
 }

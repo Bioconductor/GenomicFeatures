@@ -18,11 +18,11 @@ test_getTranscripts <- function()
                      GF_txId = wantIds,
                      txName = wantIds)
 
-    checkEquals(want, GenomicFeatures:::.getTranscripts(txdb,
+    checkEquals(want, GenomicFeatures:::.mapTranscripts(txdb,
                                                         ranges,
                                                         "chr1",
                                                         "-",
-                                                        rangeRestr="both"))
+                                                        type="any"))
 }
 
 
@@ -44,6 +44,6 @@ test_getTranscripts <- function()
                      GF_txId = wantIds,
                      txName = wantIds)
 
-    checkEquals(want, getTranscripts(rd, txdb, rangeRestr="both") )
+    checkEquals(want, transcriptsByRanges(txdb, rd, restrict="any") )
 }
 

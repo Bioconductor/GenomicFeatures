@@ -4,7 +4,7 @@
 ##   the promoter and end region, respectively.
 ## 'distal' is the number of bases on either side for upstream/downstream,
 ##   i.e. enhancer/silencer regions.
-transcripts <- function(genes, proximal = 500L, distal = 10000L) {
+transcripts_deprecated <- function(genes, proximal = 500L, distal = 10000L) {
   transcript <- IRanges(genes$txStart, genes$txEnd)
   # some have multiple exons, CDS, etc
   notdup <- !duplicated(genes[c("chrom", "txStart", "txEnd")])
@@ -50,7 +50,7 @@ transcripts <- function(genes, proximal = 500L, distal = 10000L) {
 
 ## Introns are stored in the local DB ... for now
 
-exons <- function(genes) {
+exons_deprecated <- function(genes) {
   ## [exon:start, exon:end]
   RangedData(IRanges(.splitPos(genes$exonStarts),
                      .splitPos(genes$exonEnds)),

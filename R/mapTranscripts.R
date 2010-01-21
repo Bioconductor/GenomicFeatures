@@ -1,7 +1,3 @@
-##This should be similar to getTranscripts, but is for the more commonly used
-##mapTranscripts() and mapExons() methods.
-
-
 
 ## Get the list of possible values for a type from a table:
 .getValsFromTable <- function(txann, colname, table){
@@ -17,9 +13,7 @@
 }
 
 
-## For looping we want to get data for just the unique chrom/strand
-## combinations that actually occur...
-## BUT if one or both of the chrom/strand is NULL: we must expand
+## in the absence of chromosome and strand information, expand the query...
 .createUniqueChromStrand <- function(txdb, table, chrom, strand, colnames){
   if(is.null(chrom) && !is.null(strand)){
     allChrms = .getValsFromTable(txdb, colnames[1L], table)
@@ -38,7 +32,6 @@
                                  rep(allStrnds,each=length(allChrms))))
   }
   if(!is.null(chrom) && !is.null(strand)){
-#    uChromStrand <- unique(cbind(chrom,strand))
     uChromStrand <- unique(cbind(as.character(chrom),as.character(strand)))
   }
   uChromStrand
@@ -120,11 +113,13 @@
 }
 
 
-
+## This is the core function for mapping transcripts
 .mapTranscripts <- function(txdb, ranges=NULL, chrom=NULL,
                             strand=NULL, type="any",
                             col=c("tx_id", "tx_name"),
                             format=c("map","get")) {
+  ## check that txdb is in fact a TranscriptDb object
+  if(!is(txdb,"TranscriptDb"))stop("txdb MUST be a TranscriptDb object.")
   ## check the format:
   format=match.arg(format)
   ## check the cols:
@@ -134,7 +129,7 @@
     stop(paste("Arguments to column must be some combination of: ",
                colNames,sep=""))
   }
-  ## Note that .getTranscripts() uses the same SQL query.
+  ## base SQL query
   sql <- paste("SELECT gene_id, t._tx_id AS tx_id, tx_name, tx_chrom, tx_strand,",
                "tx_start, tx_end, _exon_id AS exon_id, _cds_id AS cds_id",
                "FROM transcript AS t, transcript_rtree AS trt,",
@@ -169,10 +164,6 @@
   }
   if(dim(ans)[1] >0){
       rd <- .formatRD(ans, format, "tx")
-##       rd =  RangedData(ranges = IRanges(start = ans[["start"]],
-##                           end = ans[["end"]]),
-##                        strand = ans[["tx_strand"]],
-##                         space = ans[["tx_chrom"]])
       if(is.null(col) || length(col)==0){
         return(rd)
       }else{
@@ -184,29 +175,23 @@
 
 
 
-setMethod("bindTranscripts", "RangedData",
-    function(txdb, ranges, restrict = "any", columns=c("tx_id", "tx_name"))
-    {
-      ## check that txdb is in fact a TranscriptDb object
-      if(!is(txdb,"TranscriptDb"))stop("txdb MUST be a TranscriptDb object.")
-      ## check that any supplied strands are what we expect.
-      ## note that NULL is ok and will not trip this error.
-      ## If there are NULL strands or chromosomes, then .mapTranscripts() will
-      ## have to search a bit differently
-      if(.checkFields(txdb, "tx_strand", ranges[["strand"]], "transcript")){
-        strand <- ranges[["strand"]]
-      }else{stop("Strand values for ranges do not match annotation DB")}
-      ## check that the chromosomes are what we expect. 
-      if(.checkFields(txdb, "tx_chrom", space(ranges), "transcript")){
-        chrom <- space(ranges)
-      }else{stop("Space values for ranges do not match annotation DB")}
-      ranges <- unlist(ranges(ranges), use.names=FALSE)
-      .mapTranscripts(txdb=txdb, ranges=ranges,
-                      chrom=chrom, strand=strand,
-                      type=restrict, col=columns,
-                      format="map")
-    }
-)
+bindTranscripts <- function(txdb, ranges, restrict = "any",
+                            columns=c("tx_id", "tx_name"))
+{
+  ## check/assign the strand, ranges c-somes
+  if(.checkFields(txdb, "tx_strand", ranges[["strand"]], "transcript")){
+    strand <- ranges[["strand"]]
+  }else{stop("Strand values for ranges do not match annotation DB")}
+  if(.checkFields(txdb, "tx_chrom", space(ranges), "transcript")){
+    chrom <- space(ranges)
+  }else{stop("Space values for ranges do not match annotation DB")}
+  ranges <- unlist(ranges(ranges), use.names=FALSE)
+  .mapTranscripts(txdb=txdb, ranges=ranges,
+                  chrom=chrom, strand=strand,
+                  type=restrict, col=columns,
+                  format="map")
+}
+
 
 
 
@@ -234,11 +219,13 @@ setMethod("bindTranscripts", "RangedData",
 
 ##Additional code to support mapping on exons:
 
-
+## This is the core function for mapping transcripts
 .mapExons <- function(txdb, ranges=NULL, chrom=NULL,
                       strand=NULL, type="any",
                       col=c("exon_id"),
                       format=c("map","get")) {
+  ## check that txdb is in fact a TranscriptDb object
+  if(!is(txdb,"TranscriptDb"))stop("txdb MUST be a TranscriptDb object.")
   ## check the format:
   format=match.arg(format)
   ## check the cols:
@@ -247,7 +234,7 @@ setMethod("bindTranscripts", "RangedData",
     stop(paste("Arguments to column must be some combination of: ",
                colNames,sep=""))
   }  
-  ## Note that .getExons() uses the same SQL query.
+  ## base SQL query:
   sql <- paste("SELECT exon_id, exon_chrom, exon_strand,",
                "exon_start, exon_end",
                "FROM exon INNER JOIN exon_rtree",
@@ -278,10 +265,6 @@ setMethod("bindTranscripts", "RangedData",
   }
   if(dim(ans)[1] >0){
       rd <- .formatRD(ans, format, "exon")
-##       rd =  RangedData(ranges = IRanges(start = ans[["start"]],
-##                           end = ans[["end"]]),
-##                        strand = ans[["exon_strand"]],
-##                         space = ans[["exon_chrom"]])
       if(is.null(col) || length(col)==0){
         return(rd)
       }else{
@@ -291,25 +274,23 @@ setMethod("bindTranscripts", "RangedData",
 }
 
 
-setMethod("bindExons", "RangedData",
-    function(txdb, ranges, restrict = "any", columns=c("exon_id", "exon_name"))
-    {
-      ## check that txdb is in fact a TranscriptDb object
-      if(!is(txdb,"TranscriptDb"))stop("txdb MUST be a TranscriptDb object.")
-      ## check the strand and c-somes
-      if(.checkFields(txdb, "exon_strand", ranges[["strand"]], "exon")){
-        strand <- ranges[["strand"]]
-      }else{stop("Strand values for ranges do not match annotation DB")}
-      if(.checkFields(txdb, "exon_chrom", space(ranges), "exon")){
-        chrom <- space(ranges)
-      }else{stop("Space values for ranges do not match annotation DB")}
-      ranges <- unlist(ranges(ranges), use.names=FALSE)
-      .mapExons(txdb=txdb, ranges=ranges,
-                chrom=chrom, strand=strand,
-                type = restrict, col=columns,
-                format="map")
-    }
-)
+bindExons <- function(txdb, ranges, restrict = "any",
+                      columns=c("exon_id", "exon_name"))
+{
+  ## check/assign the strand, ranges c-somes
+  if(.checkFields(txdb, "exon_strand", ranges[["strand"]], "exon")){
+    strand <- ranges[["strand"]]
+  }else{stop("Strand values for ranges do not match annotation DB")}
+  if(.checkFields(txdb, "exon_chrom", space(ranges), "exon")){
+    chrom <- space(ranges)
+  }else{stop("Space values for ranges do not match annotation DB")}
+  ranges <- unlist(ranges(ranges), use.names=FALSE)
+  .mapExons(txdb=txdb, ranges=ranges,
+            chrom=chrom, strand=strand,
+            type = restrict, col=columns,
+            format="map")
+}
+
 
 
 ## Good news: this seems to work generically as expected.

@@ -13,7 +13,7 @@
   TranscriptDb object.
 }
 \usage{
-  bindTranscripts(txdb, ranges=NULL, restrict, columns)
+  bindTranscripts(txdb, ranges, restrict="any", columns=c("tx_id","tx_name"))
 }
 \arguments{
   \item{txdb}{A \link{TranscriptDb} object.}
