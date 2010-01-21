@@ -66,8 +66,13 @@ loadFeatures <- function(file)
 
 .makeInternalIdsForUniqueLocs <- function(chrom, strand, start, end)
 {
-    x <- data.frame(chrom, strand, start, end, stringsAsFactors=FALSE)
-    makeIdsForUniqueDataFrameRows(x)
+    not_NA <- !is.na(start)
+    x <- data.frame(chrom, strand, start, end,
+                    stringsAsFactors=FALSE)[not_NA, ]
+    ans <- integer(length(start))
+    ans[not_NA] <- makeIdsForUniqueDataFrameRows(x)
+    ans[!not_NA] <- NA_integer_
+    ans
 }
 
 ### Because we use SQLite "rtree" feature, .writeFeatureCoreTables() creates
@@ -306,6 +311,21 @@ loadFeatures <- function(file)
             paste(colnames(arg)[!is_supported_col], collapse=", "))
 }
 
+.checkForeignKey <- function(referring_vals, referred_vals,
+                             referring_colname, referred_colname)
+{
+    if (!(.isCharacterVectorOrFactor(referring_vals)
+          && .isCharacterVectorOrFactor(referred_vals))
+     && !(is.integer(referring_vals) && is.integer(referred_vals)))
+        stop("'", referring_colname, "' must have the ",
+             "same type as '", referred_colname, "'")
+    if (any(is.na(referring_vals)))
+        stop("'", referring_colname, "' cannot contain NAs")
+    if (!all(referring_vals %in% referred_vals))
+        stop("all the values in '", referring_vals, "' must ",
+             "be present in '", referred_colname, "'")
+}
+
 .checkargTranscripts <- function(transcripts)
 {
     .REQUIRED_COLS <- c("tx_id", "tx_chrom", "tx_strand", "tx_start", "tx_end")
@@ -357,19 +377,11 @@ loadFeatures <- function(file)
 {
     .REQUIRED_COLS <- c("tx_id", "exon_rank", "exon_start", "exon_end")
     .OPTIONAL_COLS <- c("exon_id", "exon_chrom", "exon_strand",
-                        "cds_id", "cd_start", "cds_end")
-    .checkargColnames(splicings, .REQUIRED_COLS, .OPTIONAL_COLS,
-                      "splicings")
+                        "cds_id", "cds_start", "cds_end")
+    .checkargColnames(splicings, .REQUIRED_COLS, .OPTIONAL_COLS, "splicings")
     ## Check 'tx_id'.
-    if (!(.isCharacterVectorOrFactor(splicings$tx_id)
-            && .isCharacterVectorOrFactor(unique_tx_ids))
-     && !(is.integer(splicings$tx_id) && is.integer(unique_tx_ids)))
-        stop("'splicings$tx_id' must have the same type as 'transcripts$tx_id'")
-    if (any(is.na(splicings$tx_id)))
-        stop("'splicings$tx_id' cannot contain NAs")
-    if (!all(splicings$tx_id %in% unique_tx_ids))
-        stop("all the values in 'splicings$tx_id' must be ",
-             "present in 'transcripts$tx_id'")
+    .checkForeignKey(splicings$tx_id, unique_tx_ids,
+                     "splicings$tx_id", "transcripts$tx_id")
     ## Check 'exon_rank'.
     if (!is.integer(splicings$exon_rank)
      || any(is.na(splicings$exon_rank)))
@@ -411,9 +423,56 @@ loadFeatures <- function(file)
     ## Check 'exon_start <= exon_end'.
     if (any(splicings$exon_start > splicings$exon_end))
         stop("exon starts must be <= exon ends")
-    ## 'cds_*' cols.
-    if (any(c("cds_id", "cds_start", "cds_end") %in% colnames(splicings)))
-        warning("'cds_*' cols are temporarily ignored")
+    ## Check 'cds_start', 'cds_end'.
+    if (is.null(splicings$cds_start) != is.null(splicings$cds_end))
+        stop("'splicings' has a \"cds_start\" col ",
+             "but no \"cds_end\" col, or vice versa")
+    if (!is.null(splicings$cds_start)) {
+        if (!is.numeric(splicings$cds_start))
+            stop("'splicings$cds_start' must be an integer vector")
+        if (!is.integer(splicings$cds_start))
+            splicings$cds_start <- as.integer(splicings$cds_start)
+        if (!is.numeric(splicings$cds_end))
+            stop("'splicings$cds_end' must be an integer vector")
+        if (!is.integer(splicings$cds_end))
+            splicings$cds_end <- as.integer(splicings$cds_end)
+        if (!all(is.na(splicings$cds_end) == is.na(splicings$cds_start)))
+            stop("NAs in 'splicings$cds_end' don't match ",
+                 "NAs in 'splicings$cds_start'")
+        if (any(splicings$cds_start > splicings$cds_end, na.rm=TRUE))
+            stop("cds starts must be <= cds ends")
+        if (any(splicings$cds_start < splicings$exon_start, na.rm=TRUE)
+         || any(splicings$cds_end > splicings$exon_end, na.rm=TRUE))
+            stop("cds starts/ends are incompatible with exon starts/ends")
+    }
+    ## Check 'cds_id'.
+    if (!is.null(splicings$cds_id)) {
+        if (is.null(splicings$cds_start))
+            stop("'splicings' has a \"cds_id\" col ",
+                 "but no \"cds_start\"/\"cds_end\" cols")
+        if (!.isCharacterVectorOrFactor(splicings$cds_id)
+         && !is.integer(splicings$cds_id))
+            stop("'splicings$cds_id' must be a character vector (or factor), ",
+                 "or an integer vector")
+        if (!all(is.na(splicings$cds_id) == is.na(splicings$cds_start)))
+            stop("NAs in 'splicings$cds_id' don't match ",
+                 "NAs in 'splicings$cds_start'")
+    }
+}
+
+.checkargGenes <- function(genes, unique_tx_ids)
+{
+    .REQUIRED_COLS <- c("tx_id", "gene_id")
+    .OPTIONAL_COLS <- character(0)
+    .checkargColnames(genes, .REQUIRED_COLS, .OPTIONAL_COLS, "genes")
+    ## Check 'tx_id'.
+    .checkForeignKey(genes$tx_id, unique_tx_ids,
+                     "genes$tx_id", "transcripts$tx_id")
+    ## Check 'gene_id'.
+    if (!.isCharacterVectorOrFactor(genes$gene_id)
+     || any(is.na(genes$gene_id)))
+        stop("'genes$gene_id' must be a character vector (or factor) ",
+             "with no NAs")
 }
 
 .importTranscripts <- function(conn, transcripts, internal_tx_id)
@@ -440,33 +499,45 @@ loadFeatures <- function(file)
 
 .importCDS <- function(conn, splicings, internal_cds_id)
 {
-    ## 'cds' table is temporarily left empty.
+    external_cds_id <- splicings$cds_id[!is.na(internal_cds_id)]
+    cds_chrom <- splicings$exon_chrom[!is.na(internal_cds_id)]
+    cds_strand <- splicings$exon_strand[!is.na(internal_cds_id)]
+    cds_start <- splicings$cds_start[!is.na(internal_cds_id)]
+    cds_end <- splicings$cds_end[!is.na(internal_cds_id)]
     .writeFeatureCoreTables(conn, "cds",
-        integer(0), character(0), NULL,
-        character(0), character(0),
-        integer(0), integer(0),
+        internal_cds_id[!is.na(internal_cds_id)], external_cds_id, NULL,
+        cds_chrom, cds_strand,
+        cds_start, cds_end,
         c("_cds_id", "cds_id", "cds_name",
           "cds_chrom", "cds_strand",
           "cds_start", "cds_end"))
 }
 
-.makeTranscriptDb <- function(transcripts, splicings, genes, ...)
+.makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
 {
     if (length(list(...)) != 0L)
         warning("extra args are ignored for now")
     .checkargTranscripts(transcripts)
     unique_tx_ids <- transcripts$tx_id  # guaranteed to be unique
     .checkargSplicings(splicings, unique_tx_ids)
+    if (is.null(genes))
+        genes <- data.frame(tx_id=unique_tx_ids[FALSE], gene_id=character(0))
+    else
+        .checkargGenes(genes, unique_tx_ids)
     ## Generate internal transcript id.
     if (is.integer(unique_tx_ids)) {
         transcripts_internal_tx_id <- unique_tx_ids
         splicings_internal_tx_id <- splicings$tx_id
+        genes_internal_tx_id <- genes$tx_id
     } else {
         transcripts_internal_tx_id <- seq_len(length(unique_tx_ids))
         splicings_internal_tx_id <- as.integer(factor(splicings$tx_id,
                                                       levels=unique_tx_ids))
+        genes_internal_tx_id <- as.integer(factor(genes$tx_id,
+                                                  levels=unique_tx_ids))
     }
-    ## Generate internal exon id.
+    ## Infer 'splicings$exon_chrom' and 'splicings$exon_strand' when missing
+    ## and generate internal exon id.
     if (is.null(splicings$exon_chrom))
         splicings$exon_chrom <- transcripts$tx_chrom[splicings_internal_tx_id]
     if (is.null(splicings$exon_strand))
@@ -481,10 +552,13 @@ loadFeatures <- function(file)
         splicings_internal_exon_id <-
             .makeInternalIdsFromExternalIds(splicings$exon_id)
     }
-    ## Generate internal cds id.
-    if (is.null(splicings$cds_start))
-        splicings_internal_cds_id <- rep.int(NA_integer_, nrow(splicings))
-    else if (is.null(splicings$cds_id)) {
+    ## Infer 'splicings$cds_start' and 'splicings$cds_end' when missing
+    ## and generate internal cds id.
+    if (is.null(splicings$cds_start)) {
+        splicings$cds_start <- rep.int(NA_integer_, nrow(splicings))
+        splicings$cds_end <- splicings$cds_start
+    }
+    if (is.null(splicings$cds_id)) {
         splicings_internal_cds_id <-
             .makeInternalIdsForUniqueLocs(
                 splicings$exon_chrom, splicings$exon_strand,
@@ -494,7 +568,6 @@ loadFeatures <- function(file)
         splicings_internal_cds_id <-
             .makeInternalIdsFromExternalIds(splicings$cds_id)
     }
-
     ## Create the db in a temp file.
     conn <- dbConnect(SQLite(), dbname="")
     .importTranscripts(conn, transcripts, transcripts_internal_tx_id)
@@ -505,6 +578,7 @@ loadFeatures <- function(file)
                         splicings$exon_rank,
                         splicings_internal_exon_id,
                         splicings_internal_cds_id)
+    .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
     new("TranscriptDb", conn=conn)
 }
 

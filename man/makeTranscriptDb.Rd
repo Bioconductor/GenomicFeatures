@@ -101,7 +101,9 @@ splicings <-  data.frame(
                    tx_id=c(1L, 2L, 2L, 2L, 3L, 3L),
                    exon_rank=c(1L, 1L, 2L, 3L, 1L, 2L),
                    exon_start=c(1, 2001, 2101, 2131, 2001, 2131),
-                   exon_end=c(999, 2085, 2144, 2199, 2085, 2199))
+                   exon_end=c(999, 2085, 2144, 2199, 2085, 2199),
+                   cds_start=c(1, 2022, 2101, 2131, NA, NA),
+                   cds_end=c(999, 2085, 2144, 2193, NA, NA))
 
 txdb <- GenomicFeatures:::.makeTranscriptDb(transcripts, splicings)
 }
