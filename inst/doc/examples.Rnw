@@ -72,7 +72,7 @@ segment of the genome we would want to retrieve it for.  The following
 example will create a query to retrieve the entire table/track for the
 refGene track from mouse. 
 
-<<Simple Query>>=
+<<Simple Query, eval=FALSE>>=
 query <- ucscTableQuery(session, "refGene")
 @ 
 
@@ -81,7 +81,7 @@ Then we can use the \Rfunction{getTable} method to return the data in
 the query.
 
 
-<<Get Table>>=
+<<Get Table, eval=FALSE>>=
 head(getTable(query))
 @ 
 

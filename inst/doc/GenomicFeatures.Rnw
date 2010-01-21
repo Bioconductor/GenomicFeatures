@@ -90,7 +90,7 @@ for, and will then return another RangedData object that will contain
 the Transcript ranges from the specified regions.
 
 <<getTranscripts 1>>=
-txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite",
+txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                  package="GenomicFeatures"))
 library(IRanges)
 rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
@@ -112,7 +112,7 @@ ranges to the transcript values contained in the database.
 
 
 <<mapTranscripts 1, eval=FALSE>>=
-txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite",
+txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                  package="GenomicFeatures"))
 library(IRanges)
 rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
@@ -131,7 +131,7 @@ with.  Here is how you might proceed:
 
 <<mapTranscripts 1, eval=FALSE>>=
 library(GenomicFeatures)
-txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite",
+txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                  package="GenomicFeatures"))
 library(IRanges)
 

@@ -1,49 +1,51 @@
-###
+## 
 
 test_getTranscripts <- function()
 {
-    txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite", 
+    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                       package="GenomicFeatures"))
     suppressMessages(library(IRanges))
     ranges <- IRanges(start=1000, end=8000)
-    chrom <- "chr1"
-    strand <-"+"
-    wantRanges = IRanges(start = c(5658,4268,6720,6720),
-                         end   = c(7231,6628,7614,7924))
-    wantIds <- c("uc001aag.1","uc009vis.1", "uc009vjc.1","uc009vjd.1")
-    want<-RangedData(ranges = wantRanges,
-                     strand = factor(rep("-",4),
-                                     levels=c("-","+","*")),
-                     space  = rep("chr1",4),
-                     GF_txId = wantIds,
-                     txName = wantIds)
+    
+    wantRanges = IRanges(start = rep(4269,4),
+                         end   = rep(6628,4))
+    wantIds <- rep("uc009vis.1",4)
+    want<-RangedData(ranges  = wantRanges,
+                     strand  = factor(rep("-",4),
+                                      levels=c("-","+","*")),
+                     space   = rep("chr1",4),
+                     tx_id   = rep(110L,4),
+                     tx_name = wantIds)
 
     checkEquals(want, GenomicFeatures:::.mapTranscripts(txdb,
                                                         ranges,
                                                         "chr1",
                                                         "-",
-                                                        type="any"))
+                                                        type="any",
+                                                        format="get"))
 }
 
 
 test_getTranscripts <- function()
 {
-    txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite", 
+    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                       package="GenomicFeatures"))
     suppressMessages(library(IRanges))
-    rd <- RangedData(ranges = IRanges(start=1000, end=8000),
-                     space  = "chr1")    
-    wantRanges = IRanges(start = c(1115,5658,1115,4268,6720,6720),
-                         end   = c(4121,7231,4272,6628,7614,7924))
-    wantIds <- c("uc001aaa.2","uc001aag.1","uc009vip.1",
-                 "uc009vis.1","uc009vjc.1","uc009vjd.1")
-    want<-RangedData(ranges = wantRanges,
-                     strand = factor(c("+","-","+","-","-","-"),
-                                     levels=c("-","+","*")),
-                     space  = rep("chr1",6),
-                     GF_txId = wantIds,
-                     txName = wantIds)
+    rd <- RangedData(ranges = IRanges(start=190000, end=280000),
+                     space  = "chr5", strand = "-")    
 
-    checkEquals(want, transcriptsByRanges(txdb, rd, restrict="any") )
+
+    wantRanges = IRanges(start = rep(257875,3),
+                         end   = rep(271297,3))
+    wantIds <- rep("uc003jam.1",3)
+    want<-RangedData(ranges  = wantRanges,
+                     strand  = factor(rep("-",3),
+                                     levels=c("-","+","*")),
+                     space   = rep("chr5",3),
+                     tx_id   = rep(69,3),
+                     tx_name = wantIds)
+
+    checkEquals(want, transcriptsByRanges(txdb, rd))
 }
+
 

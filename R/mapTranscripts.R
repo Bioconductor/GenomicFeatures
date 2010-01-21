@@ -79,10 +79,11 @@
     matchRange <- range[map@matchMatrix[,1]]
     if(!is.na(map@matchMatrix[1])){
       ans <- cbind(as.data.frame(matchRange),res[map@matchMatrix[,2],])
-    }else ans <- data.frame()
-  }
+    }else{ans <- data.frame()}
+  }else{ans <- data.frame()}
   ans
 }
+
 
 ##Format the ranged data object depending on whether mapping or getting
 .formatRD <- function(ans, format, prefix){
@@ -90,12 +91,14 @@
          "map" = return(RangedData(
            ranges = IRanges(start = ans[["start"]],
                               end = ans[["end"]]),
-           strand = ans[[paste(prefix,"_strand",sep="")]],
+           strand = factor(ans[[paste(prefix,"_strand",sep="")]],
+                           levels=c("-","+","*")),
            space = ans[[paste(prefix,"_chrom",sep="")]])),
          "get" = return(RangedData(
            ranges = IRanges(start = ans[[paste(prefix,"_start",sep="")]],
                               end = ans[[paste(prefix,"_end",sep="")]]),
-           strand = ans[[paste(prefix,"_strand",sep="")]],
+           strand = factor(ans[[paste(prefix,"_strand",sep="")]],
+                           levels=c("-","+","*")),
            space = ans[[paste(prefix,"_chrom",sep="")]]))         
          )
 }
