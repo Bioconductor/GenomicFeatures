@@ -92,6 +92,43 @@ setDataFrameColClass <- function(x, col2class, drop.extra.cols=FALSE)
     x
 }
 
+### Acts like an SQL *inner* join.
+### 'x' must be a data frame. 'name2val' must be a named atomic vector or
+### a named factor. 'join_colname' must be the name of the col in 'x' whose
+### values are matched against 'names(name2val)'. 'vals_colname' must be the
+### name of the col that will be populated with the appropriate 'name2val'
+### vals and bound to 'x'.
+### Note that this acts like an SQL *inner* join, not a *left* join, i.e.
+### rows in 'x' that can't be mapped to a value in 'name2val' are dropped.
+joinDataFrameWithName2Val <- function(x, join_colname, name2val, vals_colname)
+{
+    if (!is.data.frame(x))
+        stop("'x' must be a data.frame")
+    if (!isSingleString(join_colname) || is.null(x[[join_colname]]))
+        stop("'join_colname' must be a valid colname for 'x'")
+    if (!is.vector(name2val) && !is.factor(name2val))
+        stop("'name2val' must be a vector (or factor)")
+    if (!is.atomic(name2val) || is.null(names(name2val)))
+        stop("'name2val' must be atomic and have names")
+    if (!isSingleString(vals_colname) || !is.null(x[[vals_colname]]))
+        stop("invalid 'vals_colname'")
+    tmp <- split(as.vector(name2val), names(name2val))
+    ## as.vector() is required below just because 'x[[join_colname]]' could
+    ## be a factor (subsetting by a factor is equivalent to subsetting by
+    ## an integer vector but this is not what we want here).
+    tmp <- tmp[as.vector(x[[join_colname]])]
+    x <- x[rep.int(seq_len(nrow(x)), elementLengths(tmp)), ]
+    row.names(x) <- NULL
+    if (nrow(x) == 0L)
+        vals <- name2val[FALSE]
+    else if (is.factor(name2val))
+        vals <- factor(unname(unlist(tmp)), levels=levels(name2val))
+    else
+        vals <- unname(unlist(tmp))
+    x[[vals_colname]] <- vals
+    x
+}
+
 ### Returns the vector of ids such that 'unique(x)[ids, ]' is identical
 ### to 'x' (in the same way that 'levels(f)[f]' is identical to
 ### 'as.vector(f)' when 'f' is a character factor).

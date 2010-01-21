@@ -326,7 +326,7 @@ loadFeatures <- function(file)
              "be present in '", referred_colname, "'")
 }
 
-.checkargTranscripts <- function(transcripts)
+.normargTranscripts <- function(transcripts)
 {
     .REQUIRED_COLS <- c("tx_id", "tx_chrom", "tx_strand", "tx_start", "tx_end")
     .OPTIONAL_COLS <- "tx_name"
@@ -371,9 +371,10 @@ loadFeatures <- function(file)
     ## Check 'tx_start <= tx_end'.
     if (any(transcripts$tx_start > transcripts$tx_end))
         stop("transcript starts must be <= transcript ends")
+    transcripts
 }
 
-.checkargSplicings <- function(splicings, unique_tx_ids)
+.normargSplicings <- function(splicings, unique_tx_ids)
 {
     .REQUIRED_COLS <- c("tx_id", "exon_rank", "exon_start", "exon_end")
     .OPTIONAL_COLS <- c("exon_id", "exon_chrom", "exon_strand",
@@ -383,9 +384,13 @@ loadFeatures <- function(file)
     .checkForeignKey(splicings$tx_id, unique_tx_ids,
                      "splicings$tx_id", "transcripts$tx_id")
     ## Check 'exon_rank'.
-    if (!is.integer(splicings$exon_rank)
+    if (!is.numeric(splicings$exon_rank)
      || any(is.na(splicings$exon_rank)))
         stop("'splicings$exon_rank' must be an integer vector with no NAs")
+    if (!is.integer(splicings$exon_rank))
+        splicings$exon_rank <- as.integer(splicings$exon_rank)
+    if (any(splicings$exon_rank <= 0L))
+        stop("'splicings$exon_rank' contains non-positive values")
     ## Check 'exon_id'.
     if ("exon_id" %in% colnames(splicings)
      && (!(.isCharacterVectorOrFactor(splicings$exon_id)
@@ -458,21 +463,37 @@ loadFeatures <- function(file)
             stop("NAs in 'splicings$cds_id' don't match ",
                  "NAs in 'splicings$cds_start'")
     }
+    splicings
 }
 
-.checkargGenes <- function(genes, unique_tx_ids)
+.normargGenes <- function(genes, unique_tx_ids)
 {
-    .REQUIRED_COLS <- c("tx_id", "gene_id")
-    .OPTIONAL_COLS <- character(0)
+    if (is.null(genes))
+        return(data.frame(tx_id=unique_tx_ids[FALSE], gene_id=character(0)))
+    .REQUIRED_COLS <- "gene_id"
+    .OPTIONAL_COLS <- c("tx_id", "tx_name")
     .checkargColnames(genes, .REQUIRED_COLS, .OPTIONAL_COLS, "genes")
-    ## Check 'tx_id'.
-    .checkForeignKey(genes$tx_id, unique_tx_ids,
-                     "genes$tx_id", "transcripts$tx_id")
     ## Check 'gene_id'.
     if (!.isCharacterVectorOrFactor(genes$gene_id)
      || any(is.na(genes$gene_id)))
         stop("'genes$gene_id' must be a character vector (or factor) ",
              "with no NAs")
+    ## 'genes' must have one of the 2 optional cols but not both.
+    if (length(intersect(colnames(genes), .OPTIONAL_COLS)) != 1L)
+        stop("'genes' must have either a \"tx_id\" ",
+             "or a \"tx_name\" col but not both")
+    if (is.null(genes$tx_id)) {
+        ## Remap 'gene_id' to 'tx_id'.
+        if (is.null(names(unique_tx_ids)))
+            stop("cannot map genes to transcripts, need 'transcripts$tx_name'")
+        genes <- joinDataFrameWithName2Val(genes, "tx_name",
+                                           unique_tx_ids, "tx_id")
+    } else {
+        ## Check 'tx_id'.
+        .checkForeignKey(genes$tx_id, unique_tx_ids,
+                         "genes$tx_id", "transcripts$tx_id")
+    }
+    genes
 }
 
 .importTranscripts <- function(conn, transcripts, internal_tx_id)
@@ -517,13 +538,11 @@ loadFeatures <- function(file)
 {
     if (length(list(...)) != 0L)
         warning("extra args are ignored for now")
-    .checkargTranscripts(transcripts)
+    transcripts <- .normargTranscripts(transcripts)
     unique_tx_ids <- transcripts$tx_id  # guaranteed to be unique
-    .checkargSplicings(splicings, unique_tx_ids)
-    if (is.null(genes))
-        genes <- data.frame(tx_id=unique_tx_ids[FALSE], gene_id=character(0))
-    else
-        .checkargGenes(genes, unique_tx_ids)
+    names(unique_tx_ids) <- transcripts$tx_name
+    splicings <- .normargSplicings(splicings, unique_tx_ids)
+    genes <- .normargGenes(genes, unique_tx_ids)
     ## Generate internal transcript id.
     if (is.integer(unique_tx_ids)) {
         transcripts_internal_tx_id <- unique_tx_ids
@@ -723,29 +742,28 @@ makeTranscriptDb <- function(geneId,
     )
     ucsc_txtable <- setDataFrameColClass(ucsc_txtable, COL2CLASS,
                                          drop.extra.cols=TRUE)
-    ## Map the transcript IDs in 'ucsc_txtable$name' to the corresponding
-    ## Entrez Gene IDs. Depending on the value of 'track' ("knownGene",
-    ## "refGene" or "ensGene") this is done by using either the UCSCKG, the
-    ## REFSEQ or the ENSEMBLTRANS map from the appropriate org package.
-    orgpkg <- .getOrgPkgFromOrganism(organism)
-    TRACK2MAPNAME <- c(
-        knownGene="UCSCKG",
-        refGene="REFSEQ",
-        ensGene="ENSEMBLTRANS"
+
+    ## Prepare 'transcripts' data frame.
+    ## For some tracks (e.g. knownGene), the 'name' col in the UCSC db
+    ## seems to be a unique transcript identifier. But that's not always
+    ## the case! For example, the refGene track uses the same transcript
+    ## name for different transcripts. In that case, we need to generate
+    ## our own transcript ids.
+    if (track %in% c("knownGene", "ensGene")) {
+        tx_id <- ucsc_txtable$name
+    } else {
+        tx_id <- seq_len(nrow(ucsc_txtable))
+    }
+    transcripts <- data.frame(
+        tx_id=tx_id,
+        tx_name=ucsc_txtable$name,
+        tx_chrom=ucsc_txtable$chrom,
+        tx_strand=ucsc_txtable$strand,
+        tx_start=ucsc_txtable$txStart + 1L,
+        tx_end=ucsc_txtable$txEnd
     )
-    mapname <- unname(TRACK2MAPNAME[track])
-    if (is.na(mapname))
-        stop("don't know which map in ", orgpkg, " to use to map the ",
-             "transcript IDs in track \"", track, "\" to Entrez Gene IDs")
-    map <- suppressMessages(getAnnMap(mapname, orgpkg))
-    ## Here we make the assumption that each transcript ID is mapped to at
-    ## most one Entrez Gene ID, which will probably be true most of the
-    ## time. For now we raise an error if this is not the case, but we might
-    ## also want to handle this nicely in the future.
-    tx2EG <- mget(ucsc_txtable$name, revmap(map), ifnotfound=NA_character_)
-    if (any(sapply(tx2EG, length) > 1L))
-        stop("some transcript IDs are mapped to multiple Entrez Gene IDs")
-    EGs <- unname(unlist(tx2EG))  # can contain NAs
+
+    ## Prepare 'splicings' data frame.
     ## Exon starts and ends are multi-valued fields (comma-separated) that
     ## need to be expanded.
     exon_count <- ucsc_txtable$exonCount
@@ -759,32 +777,57 @@ makeTranscriptDb <- function(geneId,
     if (!identical(elementLengths(exonEnds), exon_count))
         stop("'ucsc_txtable$exonEnds' inconsistent ",
              "with 'ucsc_txtable$exonCount'")
-    txName <- rep.int(ucsc_txtable$name, exon_count)
-    ## For some tracks (e.g. knownGene), the 'name' col in the UCSC db
-    ## seems to be a unique transcript identifier. But that's not always
-    ## the case! For example, the refGene track uses the same transcript
-    ## name for different transcripts. In that case, we need to generate
-    ## our own transcript ids.
-    if (track %in% c("knownGene", "ensGene")) {
-        txId <- txName
-    } else {
-        txId <- as.character(rep.int(seq_len(nrow(ucsc_txtable)), exon_count))
-    }
-    txtable <- data.frame(
-        geneId=rep.int(EGs, exon_count),
-        txId=txId,
-        txName=txName,
-        txChrom=rep.int(ucsc_txtable$chrom, exon_count),
-        txStrand=rep.int(ucsc_txtable$strand, exon_count),
-        txStart=rep.int(ucsc_txtable$txStart, exon_count) + 1L,
-        txEnd=rep.int(ucsc_txtable$txEnd, exon_count),
-        cdsStart=rep.int(ucsc_txtable$cdsStart, exon_count) + 1L,
-        cdsEnd=rep.int(ucsc_txtable$cdsEnd, exon_count),
-        exonStart=unlist(exonStarts) + 1L,
-        exonEnd=unlist(exonEnds),
-        exonRank=.makeExonRank(exon_count, ucsc_txtable$strand),
-        stringsAsFactors=FALSE)
-    do.call(makeTranscriptDb, txtable)
+    splicings <- data.frame(
+        tx_id=rep.int(tx_id, exon_count),
+        exon_rank=.makeExonRank(exon_count, ucsc_txtable$strand),
+        exon_start=unlist(exonStarts) + 1L,
+        exon_end=unlist(exonEnds)
+    )
+
+    ## Prepare the 'genes' data frame.
+    ## Map the transcript IDs in 'ucsc_txtable$name' to the corresponding
+    ## Entrez Gene IDs. Depending on the value of 'track' ("knownGene",
+    ## "refGene" or "ensGene") this is done by using either the UCSCKG, the
+    ## REFSEQ or the ENSEMBLTRANS map from the appropriate org package.
+    ## TODO: Get rid of the org package dependency by downloading the
+    ## appropriate mapping directly from UCSC. For example, for hg18, it
+    ## seems that the mappings can be found in
+    ##   ftp://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/
+    ##     - use knownToLocusLink.txt.gz file for knownGene track
+    ##     - use refLink.txt.gz file for refGene track
+    ##     - which file to use for the ensGene track?
+    ## This will also solve the current problem of using mappings that don't
+    ## match the genome build (e.g. we use the mappings from the org.Hs.eg.db
+    ## package for hg18 and hg19 transcripts).
+    orgpkg <- .getOrgPkgFromOrganism(organism)
+    TRACK2MAPNAME <- c(
+        knownGene="UCSCKG",
+        refGene="REFSEQ",
+        ensGene="ENSEMBLTRANS"
+    )
+    TRACK2RCOLNAME <- c(
+        knownGene="ucsc_id",
+        refGene="accession",
+        ensGene="trans_id"
+    )
+    TRACK2NEWRCOLNAME <- c(
+        knownGene="tx_id",
+        refGene="tx_name",
+        ensGene="tx_id"
+    )
+    mapname <- unname(TRACK2MAPNAME[track])
+    if (is.na(mapname))
+        stop("don't know which map in ", orgpkg, " to use to map the ",
+             "transcript IDs in track \"", track, "\" to Entrez Gene IDs")
+    map <- suppressMessages(getAnnMap(mapname, orgpkg))
+    genes <- toTable(map)
+    Rcolname <- TRACK2RCOLNAME[track]
+    new_Rcolname <- TRACK2NEWRCOLNAME[track]
+    colnames(genes)[match(Rcolname, colnames(genes))] <- new_Rcolname
+    genes <- genes[genes$tx_id %in% ucsc_txtable$name, ]
+
+    ## Call .makeTranscriptDb().
+    .makeTranscriptDb(transcripts, splicings, genes)
 }
 
 ### The 2 main tasks that makeTranscriptDbFromUCSC() performs are:
@@ -795,8 +838,6 @@ makeTranscriptDb <- function(geneId,
 ###   - for genome="hg18" and track="knownGene":
 ###       (1) download takes about 40-50 sec.
 ###       (2) db creation takes about 30-35 sec.
-### FIXME: Support for track="ensGene" is currently broken because some
-### transcript IDs are mapped to multiple Entrez Gene IDs.
 makeTranscriptDbFromUCSC <- function(genome="hg18",
                                      track=c("knownGene","refGene","ensGene"))
 {
