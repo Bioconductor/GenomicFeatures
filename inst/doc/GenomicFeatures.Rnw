@@ -10,7 +10,7 @@
 
 
 \title{Making and Utilizing TranscriptDb Objects}
-\author{Marc Carlson}
+\author{Biocore Team}
 
 \SweaveOpts{keep.source=TRUE}
 
@@ -18,51 +18,88 @@
 
 \maketitle
 
+
 \section{Introduction}
 
-The \Rpackage{GenomicFeatures} package is a resource for standardizing
-the way we deal with Genomic Features annotations in Biocondutor.
-\Rpackage{GenomicFeatures} stores annotation data for the location of
-transcripts and exons inside of a SQLite database and presents the R
-user with a \Rclass{TranscriptDb} object that contains a handle to the
-database.  Methods are provided for accessing the contents of this database.
+The \Rpackage{GenomicFeatures} package is designed to obtain genomic
+features metadata from UCSC Genome Bioinformatics and BioMart for
+ChIP-chip, ChIP-seq, and RNA-seq analyses. It is currently focused on
+transcript-related features, but its scope will grow in future releases.
 
-
-\subsection{What kind of data is stored inside of a TranscriptDb Object}
-A standard \Rclass{TranscriptDb} should primarily contain data about
-transcripts and exons.  The transcript data will include the
-chromosome, strand, as well along with the start and end positions
-relative to the genome.  The Exons will include much of the same
-information as the transcripts, but they will also include a key that
-maps them to their transcripts along with a rank to indicate their
-relative ordering within a transcript.  The rank of the exons will
-always be reported relative to the transcript they are mapped to.
-
-
-\subsection{Generating a TranscriptDb Object}
-
-Most of the time, you will probably want to generate a \Rclass{TranscriptDb}
-object from a standard source of annotations.  For this, you will want
-to use a helper function like \Rfunction{make\Rclass{TranscriptDb}FromUCSC} or
-\Rfunction{make\Rclass{TranscriptDb}FromBiomart}.
-
-<<makeTranscriptDbFromUCSC 1>>=
+<<loadGenomicFeatures>>=
+suppressMessages(library(IRanges))
 library(GenomicFeatures)
-txAnn <- makeTranscriptDbFromUCSC()
 @
 
-But for those times when you want to generate an annotation from a
-more generic source, we also are providing
-\Rfunction{make\Rclass{TranscriptDb}}.  It will be a lot less convenient to use
-a function like \Rfunction{make\Rclass{TranscriptDb}} of course, but at least
-it buys you the flexibility to produce a TransctriptDb from any
-source.
 
+\section{Transcript Metadata}
+
+\subsection{\Rclass{TranscriptDb} Objects}
+
+The \Rpackage{GenomicFeatures} package uses \Rclass{TranscriptDb}
+objects to store transcript metadata. This class is designed to map
+the 5' untranslated regions (UTRs), protein coding sequence (CDSs),
+and 3' UTRs for a set mRNA transcripts to their associated genome,
+where the combined 5' UTR, CDS, and 3' UTR region for an mRNA
+transcript either originated from a single exon or from multiple
+exons that were spliced together post-transcription.
+
+As the suffix of the class name suggests, \Rclass{TranscriptDb}
+objects are backed by a SQLite database. This database manages:
+
+\begin{enumerate}
+\item genes and their associated mRNA transcripts
+\item pre-mRNA transcript genomic locations for mRNA transcripts
+\item exon genomic locations
+\item protein coding sequence contig genomic locations
+\item the relationships amongst mRNA transcripts, exons, and
+      protein coding sequence contigs
+\end{enumerate}
+
+
+\subsection{Creating New \Rclass{TranscriptDb} Objects}
+
+The \Rpackage{GenomicFeatures} package contains three methods for
+creating new \Rclass{TranscriptDb} objects:
+
+\begin{enumerate}
+\item Download from a UCSC Genome Bioinformatics
+\item Download from BioMart
+\item Use \Rclass{data.frame} objects containing transcript metadata
+\end{enumerate}
+
+
+\subsubsection{UCSC Genome Bioinformatics}
+
+The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC Genome
+Bioinformatics transcript tracks (e.g. \Rcode{"knownGene"},
+\Rcode{"refGene"}, \code{"ensGene"}) for a genome build (e.g.
+\code{"mm9"}, \code{"hg19"}).
+
+<<makeTranscriptDbFromUCSC>>=
+mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", track = "knownGene")
+mm9KG
+@
+
+
+\subsubsection{BioMart}
+
+<<makeTranscriptDbFromBiomart, eval=FALSE>>=
+mmusculusEnsembl <- 
+  makeTranscriptDbFromBiomart(biomart = "ensembl",
+                              dataset = "mmusculus_gene_ensembl")
+@
+
+
+\subsubsection{\Rclass{data.frame} Inputs}
+
+The function \Rfunction{makeTranscriptDb} creates \Rclass{TransctriptDb}
+objects from \Rclass{data.frame} objects.
 
 
 \subsection{Saving and Loading a TranscriptDb Object}
 
-When you 1st make your \Rclass{TranscriptDb} Object, it is running from a
+When you 1st make your \Rclass{TranscriptDb} object, it is running from a
 temporary file.  In order to save it you need to use the
 \Rfunction{saveFeatures} function.
 
@@ -77,22 +114,22 @@ To retrieve the \Rclass{TranscriptDb} object, you only need to use the
 loadFeatures("fileName.sqlite")
 @
 
-
-\subsection{Getting data from a TranscriptDb Object}
-
-A \Rclass{TranscriptDb} object is really just an R object that points
-to a SQLite database.  This database can of course be accessed by
-simply using the \Rpackage{DBI} interface, but accessor methods have
-also been provided.  One example of such a method is
-\Rfunction{getTranscripts}, which will take a RangedData object as a
-means to specify which ranges, chromosomes and strands to get data
-for, and will then return another RangedData object that will contain
-the Transcript ranges from the specified regions.
-
-<<getTranscripts 1>>=
+<<load_UCSC_KG>>=
 txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                  package="GenomicFeatures"))
-library(IRanges)
+@
+
+
+\subsection{Getting Transcript Ranges}
+
+
+\subsection{Getting Overlapped Transcript Ranges}
+
+The \Rfunction{transcriptsByRanges} function returns a \Rclass{RangedData}
+object containing metadata for transcripts that are overlapped by
+specified locations from a \Rclass{RangedData} object.
+
+<<transcriptsByRanges>>=
 rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
                  space = rep("chr1",2), 
                  strand = rep("-",2))
@@ -100,21 +137,10 @@ transcriptsByRanges(txdb, rd)
 @
 
 
-
-\subsection{Mapping data from a TranscriptDb Object}
-
-An even more common operation than simple data retrieval is to take a
-set of regions and map those onto the contents of the \Rclass{TranscriptDb}
-object.  Unlike a simple getter method such as
-\Rfunction{getTranscripts}, a method like Rfunction{mapTranscripts}
-will return a RangedData that represents the mapping of the original
-ranges to the transcript values contained in the database.
+\subsection{Binding Transcript Data to a RangedData Object}
 
 
-<<mapTranscripts 1, eval=FALSE>>=
-txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                                 package="GenomicFeatures"))
-library(IRanges)
+<<bindTranscripts>>=
 rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
                  space = rep("chr1",2), 
                  strand = rep("-",2))
@@ -122,19 +148,17 @@ bindTranscripts(txdb, rd)
 @
 
 
+\subsection{Transcript Overlap Counts}
+
+
 \subsection{Example: Retrieving data from an experiment}
 
 So lets suppose that you have run an experiment. After mapping all
-your reads to a Genome and collapsing them into a set of ranges, you
-want to find out what Genomic Features a particular range overlaps
+your reads to a genome and collapsing them into a set of ranges, you
+want to find out what genomic Features a particular range overlaps
 with.  Here is how you might proceed:
 
 <<mapTranscripts 1, eval=FALSE>>=
-library(GenomicFeatures)
-txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                                 package="GenomicFeatures"))
-library(IRanges)
-
 ##rd will represent the RangedData object that you have (your data)
 rd <- RangedData(ranges = IRanges(start=6700,end=7700),
                  space = "chr1", 
@@ -145,8 +169,6 @@ bindTranscripts(txdb, rd)
 bindExons(txdb, rd)
 
 @
-
-
 
 
 \section{Session Information}
