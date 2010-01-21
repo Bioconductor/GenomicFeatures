@@ -50,8 +50,8 @@
   \item{track}{name of the UCSC track containing the transcript annotations
     to retrieve. One of "refGene", "knownGene", or "ensGene".}
 
-  \item{biomart}{which mart from biomaRt}
-  \item{dataset}{which dataset from biomaRt}
+  \item{biomart}{which mart from BioMart}
+  \item{dataset}{which dataset from BioMart}
   \item{ensembl_transcript_ids}{optionally, only retrieve transcript
     annotation data for the specified set of Ensembl transcript ids}
 }

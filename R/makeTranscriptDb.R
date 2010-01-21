@@ -818,7 +818,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### makeTranscriptDbFromBiomart().
 ###
-### For people who want to tap biomaRt.
+### For people who want to tap BioMart.
 ### Typical use:
 ###   txdb <- makeTranscriptDbFromBiomart(biomart="ensembl",
 ###                                       dataset="hsapiens_gene_ensembl")
