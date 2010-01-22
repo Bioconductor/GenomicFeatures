@@ -12,6 +12,7 @@
 \alias{makeTranscriptDbFromBiomart}
 \alias{makeTranscriptDb}
 
+\alias{as.list,TranscriptDb-method}
 \alias{as.data.frame,TranscriptDb-method}
 
 \title{
@@ -150,7 +151,7 @@ some_ids <- c(
 )
 tiny_txdb <- makeTranscriptDbFromBiomart(ensembl_transcript_ids=some_ids)
 
-### Low-level utility.
+## Using from user supplied annotations.
 transcripts <- data.frame(
                    tx_id=1:3,
                    tx_chrom="chr1",
@@ -165,5 +166,15 @@ splicings <-  data.frame(
                    cds_start=c(1, 2022, 2101, 2131, NA, NA),
                    cds_end=c(999, 2085, 2144, 2193, NA, NA))
 
-txdb <- makeTranscriptDb(transcripts, splicings)
+txdb0 <- makeTranscriptDb(transcripts, splicings)
+
+## Dump the entire TranscriptDb object into a list of data frames 'txdump'
+## that can be used in 'do.call(makeTranscriptDb, txdump)' to make the db
+## again with no loss of information.
+## Note that the transcripts are dumped in a consistent order in all the
+## elements of the result.
+txdump0 <- as.list(txdb0)
+txdump0
+txdb0b <- do.call(makeTranscriptDb, txdump0)
+stopifnot(identical(as.list(txdb0b), txdump0))
 }
