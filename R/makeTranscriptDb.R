@@ -805,26 +805,27 @@ makeTranscriptDb <- function(geneId,
         refGene="REFSEQ",
         ensGene="ENSEMBLTRANS"
     )
-    TRACK2RCOLNAME <- c(
-        knownGene="ucsc_id",
-        refGene="accession",
-        ensGene="trans_id"
-    )
-    TRACK2NEWRCOLNAME <- c(
-        knownGene="tx_id",
-        refGene="tx_name",
-        ensGene="tx_id"
-    )
     mapname <- unname(TRACK2MAPNAME[track])
     if (is.na(mapname))
         stop("don't know which map in ", orgpkg, " to use to map the ",
              "transcript IDs in track \"", track, "\" to Entrez Gene IDs")
     map <- suppressMessages(getAnnMap(mapname, orgpkg))
     genes <- toTable(map)
-    Rcolname <- TRACK2RCOLNAME[track]
-    new_Rcolname <- TRACK2NEWRCOLNAME[track]
-    colnames(genes)[match(Rcolname, colnames(genes))] <- new_Rcolname
-    genes <- genes[genes$tx_id %in% ucsc_txtable$name, ]
+    MAPNAME2MAPCOLNAMES <- list(
+        UCSCKG=c("gene_id", "ucsc_id"),
+        REFSEQ=c("gene_id", "accession"),
+        ENSEMBLTRANS=c("gene_id", "trans_id")
+    )
+    expected_colnames <- MAPNAME2MAPCOLNAMES[[mapname]]
+    if (!identical(colnames(genes), expected_colnames))
+        stop(mapname, " map from ", orgpkg, " has unexpected colnames")
+    TRACK2GENESCOLNAMES <- list(
+        knownGene=c("gene_id", "tx_id"),
+        refGene=c("gene_id", "tx_name"),
+        ensGene=c("gene_id", "tx_id")
+    )
+    colnames(genes) <- TRACK2GENESCOLNAMES[[track]]
+    genes <- genes[genes[[2L]] %in% ucsc_txtable$name, ]
 
     ## Call .makeTranscriptDb().
     .makeTranscriptDb(transcripts, splicings, genes)
