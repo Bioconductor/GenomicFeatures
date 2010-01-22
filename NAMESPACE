@@ -40,7 +40,8 @@ export(
   exonsByRanges,
   bindTranscripts,
   bindExons,
-  transcripts
+  transcripts,
+  exons
 )
 
 exportMethods(
