@@ -7,6 +7,7 @@
 \newcommand{\Robject}[1]{{\texttt{#1}}}
 \newcommand{\Rpackage}[1]{{\textit{#1}}}
 \newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rcode}[1]{{\texttt{#1}}}
 
 
 \title{Making and Utilizing TranscriptDb Objects}
@@ -73,10 +74,10 @@ creating new \Rclass{TranscriptDb} objects:
 
 The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC Genome
 Bioinformatics transcript tracks (e.g. \Rcode{"knownGene"},
-\Rcode{"refGene"}, \code{"ensGene"}) for a genome build (e.g.
-\code{"mm9"}, \code{"hg19"}).
+\Rcode{"refGene"}, \Rcode{"ensGene"}) for a genome build (e.g.
+\Rcode{"mm9"}, \Rcode{"hg19"}).
 
-<<makeTranscriptDbFromUCSC>>=
+<<makeTranscriptDbFromUCSC, eval=FALSE>>=
 mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", track = "knownGene")
 mm9KG
 @
