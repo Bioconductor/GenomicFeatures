@@ -50,3 +50,20 @@ test_makeTranscriptDbFromBiomart <- function()
     checkEquals(ok, TRUE)
 }
 
+test_makeTranscriptDb <- function()
+{
+    ## want
+    txdb0_file <- system.file(
+                      "extdata",
+                      "Biomart_Ensembl_sample.sqlite",
+                      package="GenomicFeatures")
+    txdb0 <- loadFeatures(txdb0_file)
+
+    ## get
+    txdb1 <- do.call(makeTranscriptDb, as.list(txdb0))
+
+    ## compare
+    ok <- GenomicFeatures:::compareTranscriptDbs(txdb1, txdb0)
+    checkEquals(ok, TRUE)
+}
+
