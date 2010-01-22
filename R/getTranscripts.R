@@ -146,14 +146,34 @@ exonsByRanges <- function(txdb, ranges, restrict = "any",
 
 ##Time for methods to access data via more direct queries.
 
+##1st some helper methods for complex restrictions in where clauses.
+.orAndTester <- function(val){  
+  if(length(unlist(val))>1){
+    .appendValElementsSQL(val)
+  }else{
+    paste("AND ", names(val), " = ","'",val,"'",sep="")
+  }
+}
+
 .appendValsSQL <- function(vals){
-  vals = unlist2(vals) ##AnnotationDbi:::unlist2 preserves names with repeats
   sql <- character()
   for(i in seq_len(length(vals))){
-    sql <- c(sql, paste("AND ",names(vals[i])," = ","'",vals[i],"'",sep=""))
+    #print(i)
+    sql <- c(sql, .orAndTester(vals[i]))    
   }
   paste(sql, collapse=" ")
 }
+
+.appendValElementsSQL <- function(vals){
+  vals = unlist2(vals) ##AnnotationDbi:::unlist2 preserves names with repeats
+  sql <- character()
+  for(i in seq_len(length(vals))){
+    sql <- c(sql, paste(names(vals[i])," = ","'",vals[i],"'",sep=""))
+  }
+  sql <- paste(sql, collapse=" OR ")
+  paste("AND (",sql,")",collapse=" ")
+}
+
 
 ## This is the core function for looking up transcripts
 .lookupTranscripts <- function(txdb, vals, col=c("tx_id", "tx_name")){
@@ -175,7 +195,7 @@ exonsByRanges <- function(txdb, ranges, restrict = "any",
                colNames,sep=""))
   }
 
-  ## base SQL query 
+  ## base SQL query 1
   sql <- paste("SELECT gene_id, t._tx_id AS tx_id, tx_name, tx_chrom, tx_strand,",
                "tx_start, tx_end, _exon_id AS exon_id, _cds_id AS cds_id",
                "FROM transcript AS t, transcript_rtree AS trt,",
@@ -199,10 +219,51 @@ exonsByRanges <- function(txdb, ranges, restrict = "any",
 }
 
 
-## 
+ 
 transcripts <- function(txdb, vals, columns=c("tx_id", "tx_name"))
 {
   ##Add error here
   if(is.data.frame(txdb) && is.integer(vals)){stop("This is not the transcripts function that you are looking for. Please use transcripts_deprecated instead.")}
   .lookupTranscripts(txdb=txdb, vals, col=columns)
+}
+
+
+
+
+## This is the core function for looking up exons
+.lookupExons <- function(txdb, vals){
+  ## check that txdb is in fact a TranscriptDb object
+  if(!is(txdb,"TranscriptDb"))stop("txdb MUST be a TranscriptDb object.")
+  
+  ## check the vals:
+  valNames <- c("exon_id", "exon_strand")
+  if(!all(names(vals) %in% valNames)){
+    stop(paste("Argument names for vals must be some combination of: ",
+               valNames,sep=""))
+  }
+
+  ## base SQL query 1
+  sql <- paste("SELECT e._exon_id AS exon_id, exon_chrom, exon_strand,",
+               "exon_start, exon_end",
+               "FROM exon AS e, exon_rtree AS ert,",
+               "WHERE e._exon_id=ert._exon_id")
+
+  ## Now we just need to finish the where clause with stuff in "vals"
+  sql <- paste(sql, .appendValsSQL(vals), collapse=" ")
+  ans <- dbGetQuery(txdb@conn, sql)
+
+  ## We always return the exon_id
+  col <- c("exon_strand","exon_id")
+  if(dim(ans)[1] >0){
+      rd <- .formatRD(ans, "get", "exon")
+      return(.appendCols(rd, ans, col))
+  }else{warning("Please be advised that no matching data was found.")}
+}
+
+
+exons <- function(txdb, vals)
+{
+  ##Add error here
+  if(is.data.frame(txdb) && is.integer(vals)){stop("This is not the exons function that you are looking for. Please use exons_deprecated instead.")}
+  .lookupTranscripts(txdb=txdb, vals)
 }

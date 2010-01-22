@@ -12,7 +12,7 @@
 }
 \usage{
   transcripts(txdb, vals, columns=c("tx_id", "tx_name"))
-  exons(txdb, vals, columns=c("tx_id", "tx_name"))
+  exons(txdb, vals)
 }
 \arguments{  
   \item{txdb}{A \link{TranscriptDb} object.}
@@ -36,10 +36,10 @@ ranges.}
 }
 \examples{
 \dontrun{
-  txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite",
+  txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                    package="GenomicFeatures"))
   library(IRanges)
-  vals <- list(tx_chrom = c("chr3", "chr7"), tx_strand = "-")
+  vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
   transcripts(txdb, vals)
 }
 }

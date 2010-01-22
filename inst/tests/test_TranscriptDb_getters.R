@@ -49,3 +49,44 @@ test_getTranscripts <- function()
 }
 
 
+
+
+## test_transcripts <- function()
+## {
+##     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+##                                       package="GenomicFeatures"))
+##     suppressMessages(library(IRanges))
+
+
+
+##     want<-RangedData(ranges  = wantRanges,
+##                      strand  = factor(rep("-",3),
+##                                      levels=c("-","+","*")),
+##                      space   = rep("chr5",3),
+##                      tx_id   = rep(69,3),
+##                      tx_name = wantIds)
+
+##     checkEquals(want, transcriptsByRanges(txdb, rd))
+## }
+
+
+
+## test_exons <- function()
+## {
+##     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+##                                       package="GenomicFeatures"))
+##     suppressMessages(library(IRanges))
+##     vals <- list(tx_chrom = c("chr3", "chr7"), tx_strand = "-")
+
+##     wantRanges = IRanges(start = rep(257875,3),
+##                          end   = rep(271297,3))
+##     wantIds <- rep("uc003jam.1",3)
+##     want<-RangedData(ranges  = wantRanges,
+##                      strand  = factor(rep("-",3),
+##                                      levels=c("-","+","*")),
+##                      space   = rep("chr5",3),
+##                      tx_id   = rep(69,3),
+##                      tx_name = wantIds)
+
+##     checkEquals(want, transcriptsByRanges(txdb, rd))
+## }

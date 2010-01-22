@@ -46,7 +46,7 @@
 }
 \examples{
 \dontrun{
-  txdb <- loadFeatures(system.file("extdata", "HG18test.sqlite",
+  txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                    package="GenomicFeatures"))
   library(IRanges)
   rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
