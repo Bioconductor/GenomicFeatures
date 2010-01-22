@@ -236,24 +236,28 @@ transcripts <- function(txdb, vals, columns=c("tx_id", "tx_name"))
   if(!is(txdb,"TranscriptDb"))stop("txdb MUST be a TranscriptDb object.")
   
   ## check the vals:
-  valNames <- c("exon_id", "exon_strand")
+  valNames <- c("exon_id", "exon_strand", "tx_chrom", "tx_strand",
+                "tx_id", "tx_name")
   if(!all(names(vals) %in% valNames)){
     stop(paste("Argument names for vals must be some combination of: ",
                valNames,sep=""))
   }
 
-  ## base SQL query 1
+  ## base SQL query 1  -- JOIN THIS to transcript
   sql <- paste("SELECT e._exon_id AS exon_id, exon_chrom, exon_strand,",
-               "exon_start, exon_end",
-               "FROM exon AS e, exon_rtree AS ert,",
-               "WHERE e._exon_id=ert._exon_id")
+               "exon_start, exon_end, tx_chrom, tx_strand, tx_name,",
+               "t._tx_id AS tx_id",
+               "FROM exon AS e, exon_rtree AS ert, transcript AS t,",
+               "splicing AS s",
+               "WHERE e._exon_id=ert._exon_id AND e._exon_id=s._exon_id",
+               "AND t._tx_id=s._tx_id")
 
   ## Now we just need to finish the where clause with stuff in "vals"
   sql <- paste(sql, .appendValsSQL(vals), collapse=" ")
   ans <- dbGetQuery(txdb@conn, sql)
 
   ## We always return the exon_id
-  col <- c("exon_strand","exon_id")
+  col <- "exon_id"
   if(dim(ans)[1] >0){
       rd <- .formatRD(ans, "get", "exon")
       return(.appendCols(rd, ans, col))
@@ -265,5 +269,5 @@ exons <- function(txdb, vals)
 {
   ##Add error here
   if(is.data.frame(txdb) && is.integer(vals)){stop("This is not the exons function that you are looking for. Please use exons_deprecated instead.")}
-  .lookupTranscripts(txdb=txdb, vals)
+  .lookupExons(txdb=txdb, vals)
 }
