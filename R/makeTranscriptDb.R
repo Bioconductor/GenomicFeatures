@@ -156,13 +156,13 @@ loadFeatures <- function(file)
 
 .writeSplicingTable <- function(conn,
                                 internal_tx_id,
-                                exonRank,
+                                exon_rank,
                                 internal_exon_id,
                                 internal_cds_id)
 {
     table <- data.frame(
         internal_tx_id=internal_tx_id,
-        exonRank=exonRank,
+        exon_rank=exon_rank,
         internal_exon_id=internal_exon_id,
         internal_cds_id=internal_cds_id,
         stringsAsFactors=FALSE)
@@ -743,7 +743,7 @@ makeTranscriptDb <- function(geneId,
     ucsc_txtable <- setDataFrameColClass(ucsc_txtable, COL2CLASS,
                                          drop.extra.cols=TRUE)
 
-    ## Prepare 'transcripts' data frame.
+    ## Prepare the 'transcripts' data frame.
     ## For some tracks (e.g. knownGene), the 'name' col in the UCSC db
     ## seems to be a unique transcript identifier. But that's not always
     ## the case! For example, the refGene track uses the same transcript
@@ -763,7 +763,7 @@ makeTranscriptDb <- function(geneId,
         tx_end=ucsc_txtable$txEnd
     )
 
-    ## Prepare 'splicings' data frame.
+    ## Prepare the 'splicings' data frame.
     ## Exon starts and ends are multi-valued fields (comma-separated) that
     ## need to be expanded.
     exon_count <- ucsc_txtable$exonCount
@@ -875,42 +875,64 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                         ensembl_transcript_ids=NULL)
 {
     mart <- useMart(biomart=biomart, dataset=dataset)
-    attributes <- c("ensembl_gene_id",
-                    "ensembl_transcript_id",
+    if (is.null(ensembl_transcript_ids)) {
+        filters <- values <- ""
+    } else if (is.character(ensembl_transcript_ids)
+            && !any(is.na(ensembl_transcript_ids))) {
+        filters <- "ensembl_transcript_id"
+        values <- ensembl_transcript_ids
+    } else {
+            stop("'ensembl_transcript_ids' must be ",
+                 "a character vector with no NAs")
+    }
+    ## Download and prepare the 'transcripts' data frame.
+    attributes <- c("ensembl_transcript_id",
                     "chromosome_name",
                     "strand",
                     "transcript_start",
-                    "transcript_end",
-                    "cds_start",
-                    "cds_end",
-                    "ensembl_exon_id",
-                    "exon_chrom_start",
-                    "exon_chrom_end",
-                    "rank")
-    if (is.null(ensembl_transcript_ids)) {
-        bm_txtable <- getBM(attributes, mart=mart)
-    } else {
-        if (!is.character(ensembl_transcript_ids)
-         || any(is.na(ensembl_transcript_ids)))
-            stop("'ensembl_transcript_ids' must be ",
-                 "a character vector with no NAs")
-        bm_txtable <- getBM(attributes,
-                            filters="ensembl_transcript_id",
-                            values=ensembl_transcript_ids,
-                            mart=mart)
-    }
-    makeTranscriptDb(geneId = bm_txtable$ensembl_gene_id,
-                     txId = bm_txtable$ensembl_transcript_id,
-                     txChrom = bm_txtable$chromosome_name,
-                     txStrand = ifelse(bm_txtable$strand == 1, "+", "-"),
-                     txStart = bm_txtable$transcript_start,
-                     txEnd = bm_txtable$transcript_end,
-                     cdsStart = bm_txtable$cds_start,
-                     cdsEnd = bm_txtable$cds_end,
-                     exonStart = bm_txtable$exon_chrom_start,
-                     exonEnd = bm_txtable$exon_chrom_end,
-                     exonRank = bm_txtable$rank,
-                     exonId = bm_txtable$ensembl_exon_id)
+                    "transcript_end")
+    bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
+    transcripts <- unique(data.frame(
+        tx_id=bm_table$ensembl_transcript_id,
+        tx_chrom=bm_table$chromosome_name,
+        tx_strand=ifelse(bm_table$strand == 1, "+", "-"),
+        tx_start=bm_table$transcript_start,
+        tx_end=bm_table$transcript_end
+    ))
+    ## Download and prepare the 'splicings' data frame.
+    attributes <- c(
+        "ensembl_transcript_id",
+        "rank",
+        "ensembl_exon_id",
+        "exon_chrom_start",
+        "exon_chrom_end"
+        #"5_utr_start",
+        #"5_utr_end",
+        #"3_utr_start",
+        #"3_utr_end",
+        #"cds_start",
+        #"cds_end",
+        #"cds_length"
+    )
+    bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
+    splicings <- unique(data.frame(
+        tx_id=bm_table$ensembl_transcript_id,
+        exon_id=bm_table$ensembl_exon_id,
+        exon_rank=bm_table$rank,
+        exon_start=bm_table$exon_chrom_start,
+        exon_end=bm_table$exon_chrom_end
+        #cds_start=bm_table$cds_start,
+        #cds_end=bm_table$cds_end
+    ))
+    ## Download and prepare the 'genes' data frame.
+    attributes <- c("ensembl_gene_id", "ensembl_transcript_id")
+    bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
+    genes <- unique(data.frame(
+        tx_id=bm_table$ensembl_transcript_id,
+        gene_id=bm_table$ensembl_gene_id
+    ))
+    ## Call .makeTranscriptDb().
+    .makeTranscriptDb(transcripts, splicings, genes)
 }
 
 
