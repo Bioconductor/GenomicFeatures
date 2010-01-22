@@ -733,6 +733,78 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
 ###       (2) db creation takes about 60-65 sec.
 ###
 
+.extractCdsRanges <- function(bm_table)
+{
+    strand <- bm_table[["strand"]]
+    cds_start <- exon_start <- bm_table[["exon_chrom_start"]]
+    cds_end <- exon_end <- bm_table[["exon_chrom_end"]]
+    utr5_start <- bm_table[["5_utr_start"]]
+    utr5_end <- bm_table[["5_utr_end"]]
+    utr3_start <- bm_table[["3_utr_start"]]
+    utr3_end <- bm_table[["3_utr_end"]]
+
+    if (!all(strand %in% c(1, -1)))
+        stop("BioMart data anomaly: \"strand\" attribute should be 1 or -1")
+    if (!is.numeric(exon_start)
+     || !is.numeric(exon_end)
+     || !is.numeric(utr5_start)
+     || !is.numeric(utr5_end)
+     || !is.numeric(utr3_start)
+     || !is.numeric(utr3_end))
+        stop("BioMart data anomaly: exon or utr coordinates don't ",
+             "have a numeric type")
+    no_utr5 <- is.na(utr5_start)
+    if (!identical(no_utr5, is.na(utr5_end)))
+        stop("BioMart data anomaly: NAs in \"5_utr_start\" attribute ",
+             "don't match NAs in \"5_utr_end\" attribute")
+    if (!all(utr5_start <= utr5_end, na.rm=TRUE))
+        stop("BioMart data anomaly: some 5' UTR have a start > end")
+    if (!all(utr5_start >= exon_start, na.rm=TRUE)
+     || !all(utr5_end <= exon_end, na.rm=TRUE))
+        stop("BioMart data anomaly: some 5' UTR are not within the exon limits")
+    no_utr3 <- is.na(utr3_start)
+    if (!identical(no_utr3, is.na(utr3_end)))
+        stop("BioMart data anomaly: NAs in \"3_utr_start\" attribute ",
+             "don't match NAs in \"3_utr_end\" attribute")
+    if (!all(utr3_start <= utr3_end, na.rm=TRUE))
+        stop("BioMart data anomaly: some 3' UTR have a start > end")
+    if (!all(utr3_start >= exon_start, na.rm=TRUE)
+     || !all(utr3_end <= exon_end, na.rm=TRUE))
+        stop("BioMart data anomaly: some 3' UTR are not within the exon limits")
+
+    idx <- strand == 1 & !no_utr5
+    if (!all(utr5_start[idx] == exon_start[idx]))
+        stop("BioMart data anomaly: some 5' UTR on the plus strand ",
+             "don't start where the exon starts")
+    cds_start[idx] <- utr5_end[idx] + 1L
+    idx <- strand == 1 & !no_utr3
+    if (!all(utr3_end[idx] == exon_end[idx]))
+        stop("BioMart data anomaly: some 3' UTR on the plus strand ",
+             "don't end where the exon ends")
+    cds_end[idx] <- utr3_start[idx] - 1L
+    idx <- strand == -1 & !no_utr3
+    if (!all(utr3_start[idx] == exon_start[idx]))
+        stop("BioMart data anomaly: some 3' UTR on the minus strand ",
+             "don't start where the exon starts")
+    cds_start[idx] <- utr3_end[idx] + 1L
+    idx <- strand == -1 & !no_utr5
+    if (!all(utr5_end[idx] == exon_end[idx]))
+        stop("BioMart data anomaly: some 5' UTR on the minus strand ",
+             "don't end where the exon ends")
+    cds_end[idx] <- utr5_start[idx] - 1L
+    ans <- IRanges(start=cds_start, end=cds_end)
+    if (length(ans) != 0L) {
+        cds_length <- sapply(
+                        split(width(ans), bm_table$ensembl_transcript_id),
+                        sum)
+        if (!all(cds_length[bm_table$ensembl_transcript_id]
+                 == bm_table$cds_length, na.rm=TRUE))
+            stop("the cds lengths inferred from the exon and UTR info ",
+                 "don't match the \"cds_length\" attribute from BioMart")
+    }
+    ans
+}
+
 makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                         dataset="hsapiens_gene_ensembl",
                                         ensembl_transcript_ids=NULL)
@@ -763,29 +835,40 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
         tx_end=bm_table$transcript_end
     )
     ## Download and prepare the 'splicings' data frame.
+    ## Ironically the cds_start and cds_end attributes that we get from
+    ## BioMart are pretty useless because they are relative to the coding
+    ## mRNA. However, the utr coordinates are relative to the chromosome so
+    ## we use them to infer the cds coordinates. We also retrieve the
+    ## cds_length attribute as a sanity check.
     attributes <- c(
         "ensembl_transcript_id",
+        "strand",
         "rank",
         "ensembl_exon_id",
         "exon_chrom_start",
-        "exon_chrom_end"
-        #"5_utr_start",
-        #"5_utr_end",
-        #"3_utr_start",
-        #"3_utr_end",
+        "exon_chrom_end",
+        "5_utr_start",
+        "5_utr_end",
+        "3_utr_start",
+        "3_utr_end",
         #"cds_start",
         #"cds_end",
-        #"cds_length"
+        "cds_length"
     )
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
+    cds_ranges <- .extractCdsRanges(bm_table)
+    cds_start <- start(cds_ranges)
+    cds_start[width(cds_ranges) == 0L] <- NA_integer_
+    cds_end <- end(cds_ranges)
+    cds_end[width(cds_ranges) == 0L] <- NA_integer_
     splicings <- data.frame(
         tx_id=bm_table$ensembl_transcript_id,
         exon_rank=bm_table$rank,
         exon_id=bm_table$ensembl_exon_id,
         exon_start=bm_table$exon_chrom_start,
-        exon_end=bm_table$exon_chrom_end
-        #cds_start=bm_table$cds_start,
-        #cds_end=bm_table$cds_end
+        exon_end=bm_table$exon_chrom_end,
+        cds_start=cds_start,
+        cds_end=cds_end
     )
     ## Download and prepare the 'genes' data frame.
     attributes <- c("ensembl_gene_id", "ensembl_transcript_id")
@@ -820,6 +903,16 @@ setMethod("as.list", "TranscriptDb",
             "ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id"
         )
         transcripts <- dbGetQuery(x@conn, sql)
+        COL2CLASS <- c(
+             tx_id="character",
+             tx_name="character",
+             tx_chrom="factor",
+             tx_strand="factor",
+             tx_start="integer",
+             tx_end="integer"
+        )
+        transcripts <- setDataFrameColClass(transcripts, COL2CLASS)
+
         ## Retrieve the "splicings" element.
         sql <- paste(
             "SELECT tx_id, exon_rank,",
@@ -840,6 +933,17 @@ setMethod("as.list", "TranscriptDb",
             "ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id, exon_rank"
         )
         splicings <- dbGetQuery(x@conn, sql)
+        COL2CLASS <- c(
+             tx_id="character",
+             exon_rank="integer",
+             exon_id="character",
+             exon_chrom="factor",
+             exon_strand="factor",
+             exon_start="integer",
+             exon_end="integer"
+        )
+        splicings <- setDataFrameColClass(splicings, COL2CLASS)
+
         ## Retrieve the "genes" element.
         sql <- paste(
             "SELECT tx_id, gene_id",
@@ -850,6 +954,12 @@ setMethod("as.list", "TranscriptDb",
             "ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id, gene_id"
         )
         genes <- dbGetQuery(x@conn, sql)
+        COL2CLASS <- c(
+             tx_id="character",
+             gene_id="character"
+        )
+        genes <- setDataFrameColClass(genes, COL2CLASS)
+
         list(transcripts=transcripts, splicings=splicings, genes=genes)
     }
 )
