@@ -30,7 +30,7 @@ loadFeatures <- function(file)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Helper functions for .makeTranscriptDb() / makeTranscriptDb().
+### Helper functions for makeTranscriptDb().
 ###
 
 .isCharacterVectorOrFactor <- function(x)
@@ -235,64 +235,8 @@ loadFeatures <- function(file)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### .makeTranscriptDb().
+### makeTranscriptDb().
 ###
-
-### 'transcripts': data frame with 1 row per transcript.
-###   colname          description
-###   ---------------- -------------------------------------------------------
-###   tx_id            - Character vector (or factor) or integer vector.
-###                      No NAs. No duplicates.
-###   tx_name          - [optional] Character vector (or factor).
-###   tx_chrom         - Character vector (or factor) with no NAs.
-###   tx_strand        - Character vector (or factor) with no NAs.
-###   tx_start, tx_end - Integer vectors with no NAs.
-###   Other cols, if any, are ignored.
-###
-### 'splicings': data frame with N rows per transcript, where N is the
-###   nb of exons in the transcript.
-###   colname          description
-###   ---------------- -------------------------------------------------------
-###   tx_id            - Same type as 'transcripts$tx_id'. No NAs. All the
-###                      values in this col must be present in
-###                      'transcripts$tx_id'.
-###   exon_rank        - Integer vector with no NAs. tx_id/exon_rank pairs
-###                      must be unique. For a given transcript (i.e. for a
-###                      given 'tx_id' value), the 'exon_rank' values must be
-###                      1:N where N is the nb of exons in the transcript.
-###   exon_id          - [optional] Character vector (or factor) or integer
-###                      vector. No NAs.
-###   exon_chrom       - [optional] Character vector (or factor) with no NAs.
-###                      If missing then fallback on 'transcripts$tx_chrom'.
-###                      If present then 'exon_strand' must be present too.
-###   exon_strand      - [optional] Character vector (or factor) with no NAs.
-###                      If missing then fallback on 'transcripts$tx_strand'
-###                      and 'exon_chrom' must be missing too.
-###   exon_start, exon_end - Integer vectors with no NAs.
-###   cds_id           - [optional] Character vector (or factor) or integer
-###                      vector. No NAs.
-###                      If present then 'cds_start' and 'cds_end' must be
-###                      present too.
-###   cds_start, cds_end - [optional] If one of the 2 cols is missing then
-###                      all 'cds_*' cols must be missing.
-###                      Integer vectors. NAs are allowed.
-###                      For the N rows in 'splicings' that correspond to a
-###                      given transcript (same 'tx_id'), either all the
-###                      'cds_*' cols have NAs or none has. When they all have
-###                      NAs it means either that the transcript is known to
-###                      be non-protein coding or that its cds are unknown.
-###                      If missing then 'cds_id' must be missing too.
-###   Other cols, if any, are ignored.
-###
-### 'genes': data frame with N rows per transcript, where N is the
-###   nb of genes linked to the transcript (N will be 1 most of the time).
-###   colname          description
-###   ---------------- -------------------------------------------------------
-###   tx_id            - Same type as 'transcripts$tx_id'. No NAs. All the
-###                      values in this col must be present in
-###                      'transcripts$tx_id'.
-###   gene_id          - Character vector (or factor). No NAs.
-###   Other cols, if any, are ignored.
 
 .checkargColnames <- function(arg, required_colnames, optional_colnames,
                               argname)
@@ -534,7 +478,7 @@ loadFeatures <- function(file)
           "cds_start", "cds_end"))
 }
 
-.makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
+makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
 {
     if (length(list(...)) != 0L)
         warning("extra args are ignored for now")
@@ -598,69 +542,6 @@ loadFeatures <- function(file)
                         splicings_internal_exon_id,
                         splicings_internal_cds_id)
     .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
-    new("TranscriptDb", conn=conn)
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### makeTranscriptDb().
-###
-
-### Creates a TranscriptDb instance from vectors of data.
-### All vectors must be of equal length.  The i-th element of the
-### vectors represent data for a single exon. Transcript data will
-### be repeated over all exons within the trancsript.
-makeTranscriptDb <- function(geneId,
-                        txId, txName=NULL, txChrom, txStrand, txStart, txEnd,
-                        cdsStart, cdsEnd,
-                        exonStart, exonEnd, exonRank, exonId=NULL)
-{
-    if (!is.character(geneId))
-        stop("'geneId' must be a character vector")
-    if (!is.character(txId) || any(is.na(txId)))
-        stop("'txId' must be a character vector with no NAs")
-    if (!is.null(txName) && !is.character(txName))
-        stop("when supplied, 'txName' must be a character vector")
-    txChrom <- .argAsCharacterFactorWithNoNAs(txChrom, "txChrom")
-    txStrand <- .argAsCharacterFactorWithNoNAs(txStrand, "txStrand")
-    txStart <- .argAsIntegerWithNoNAs(txStart, "txStart")
-    txEnd <- .argAsIntegerWithNoNAs(txEnd, "txEnd")
-    #cdsStart <- .argAsIntegerWithNoNAs(cdsStart, "cdsStart")
-    #cdsEnd <- .argAsIntegerWithNoNAs(cdsEnd, "cdsEnd")
-    exonStart <- .argAsIntegerWithNoNAs(exonStart, "exonStart")
-    exonEnd <- .argAsIntegerWithNoNAs(exonEnd, "exonEnd")
-    exonRank <- .argAsIntegerWithNoNAs(exonRank, "exonRank")
-    internal_tx_id <- .makeInternalIdsFromExternalIds(txId) 
-    if (is.null(exonId)) {
-        internal_exon_id <- .makeInternalIdsForUniqueLocs(
-                                txChrom, txStrand, exonStart, exonEnd)
-        exonId <- as.character(internal_exon_id)
-    } else {
-        if (!is.character(exonId) || any(is.na(exonId)))
-            stop("when supplied, 'exonId' must be a character vector ",
-                 "with no NAs")
-        internal_exon_id <- .makeInternalIdsFromExternalIds(exonId)
-    }
-
-    conn <- dbConnect(SQLite(), dbname="") ## we'll write the db to a temp file
-    .writeFeatureCoreTables(conn, "transcript",
-        internal_tx_id, txId, txName, txChrom, txStrand, txStart, txEnd,
-        c("_tx_id", "tx_id", "tx_name", "tx_chrom", "tx_strand",
-          "tx_start", "tx_end"))
-    .writeFeatureCoreTables(conn, "exon",
-        internal_exon_id, exonId, NULL, txChrom, txStrand, exonStart, exonEnd,
-        c("_exon_id", "exon_id", "exon_name", "exon_chrom", "exon_strand",
-          "exon_start", "exon_end"))
-    ## 'cds' table is temporarily left empty.
-    .writeFeatureCoreTables(conn, "cds",
-        integer(0), character(0), NULL,
-        character(0), character(0), integer(0), integer(0),
-        c("_cds_id", "cds_id", "cds_name", "cds_chrom", "cds_strand",
-          "cds_start", "cds_end"))
-    internal_cds_id <- rep.int(NA_integer_, length(internal_tx_id))
-    .writeSplicingTable(conn,
-        internal_tx_id, exonRank, internal_exon_id, internal_cds_id)
-    .writeGeneTable(conn, geneId, internal_tx_id)
     new("TranscriptDb", conn=conn)
 }
 
@@ -827,8 +708,8 @@ makeTranscriptDb <- function(geneId,
     colnames(genes) <- TRACK2GENESCOLNAMES[[track]]
     genes <- genes[genes[[2L]] %in% ucsc_txtable$name, ]
 
-    ## Call .makeTranscriptDb().
-    .makeTranscriptDb(transcripts, splicings, genes)
+    ## Call makeTranscriptDb().
+    makeTranscriptDb(transcripts, splicings, genes)
 }
 
 ### The 2 main tasks that makeTranscriptDbFromUCSC() performs are:
@@ -931,8 +812,8 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
         tx_id=bm_table$ensembl_transcript_id,
         gene_id=bm_table$ensembl_gene_id
     ))
-    ## Call .makeTranscriptDb().
-    .makeTranscriptDb(transcripts, splicings, genes)
+    ## Call makeTranscriptDb().
+    makeTranscriptDb(transcripts, splicings, genes)
 }
 
 
