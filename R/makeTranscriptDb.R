@@ -636,8 +636,8 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
     cds_ranges <- pintersect(tmp_ranges, exon_ranges)
     cds_cumlength <- diff(c(0L, cumsum(width(cds_ranges))[cumsum(exon_count)]))
     if (!all(cds_cumlength %% 3L == 0L))
-        stop("UCSC data anomaly: the cds cumulative lengths ",
-             "are not multiples of 3")
+        warning("UCSC data anomaly: the cds cumulative lengths ",
+                "are not multiples of 3")
     return(cds_ranges)
 }
 
@@ -850,11 +850,14 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
     if (length(ans) != 0L) {
         cds_cumlength <-
             sapply(split(width(ans), bm_table$ensembl_transcript_id), sum)
-        if (!all(cds_cumlength[bm_table$ensembl_transcript_id]
+        if (!all(cds_cumlength[as.vector(bm_table$ensembl_transcript_id)]
                  == bm_table$cds_length, na.rm=TRUE))
             stop("BioMart data anomaly: the cds cumulative lengths ",
                  "inferred from the exon and UTR info don't match ",
                  "the \"cds_length\" attribute from BioMart")
+        if (!all(cds_cumlength %% 3L == 0L))
+            warning("BioMart data anomaly: the cds cumulative lengths ",
+                    "(\"cds_length\" attribute) are not multiples of 3")
     }
     ans
 }
