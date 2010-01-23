@@ -11,8 +11,7 @@ Suggests: GenomicFeatures.Hsapiens.UCSC.hg18,
           BSgenome.Hsapiens.UCSC.hg18 (>= 1.3.14),
           org.Mm.eg.db,
           RUnit
-Collate: AllGenerics.R
-	 AllClasses.R
+Collate: AllClasses.R
 	 utils.R
          makeTranscriptDb.R
 	 transcripts.R

@@ -31,7 +31,12 @@
 
 
 ## This is the core function for looking up transcripts
-.lookupTranscripts <- function(txdb, vals, col=c("tx_id", "tx_name")){
+
+transcripts <- function(txdb, vals, columns=c("tx_id", "tx_name"))
+{
+  ##Add error here
+  if(is.data.frame(txdb) && is.integer(vals)){stop("This is not the transcripts function that you are looking for. Please use transcripts_deprecated instead.")}
+
   ## check that txdb is in fact a TranscriptDb object
   if(!is(txdb,"TranscriptDb"))stop("txdb MUST be a TranscriptDb object.")
   
@@ -45,7 +50,7 @@
   ## check the cols:
   colNames <- c("tx_id", "tx_name", "gene_id", "exon_id","cds_id",
                 NULL, character(0))
-  if(!all(col %in% colNames)){
+  if(!all(columns %in% colNames)){
     stop(paste("Arguments to column must be some combination of: ",
                colNames,sep=""))
   }
@@ -65,27 +70,26 @@
   
   if(dim(ans)[1] >0){
       rd <- .formatRD(ans, "get", "tx")
-      if(is.null(col) || length(col)==0){
+      if(is.null(columns) || length(columns)==0){
         return(rd)
       }else{
-        return(.appendCols(rd, ans, col))
+        return(.appendCols(rd, ans, columns))
       }
   }else{warning("Please be advised that no matching data was found.")}
 }
 
 
-transcripts <- function(txdb, vals, columns=c("tx_id", "tx_name"))
-{
-  ##Add error here
-  if(is.data.frame(txdb) && is.integer(vals)){stop("This is not the transcripts function that you are looking for. Please use transcripts_deprecated instead.")}
-  .lookupTranscripts(txdb=txdb, vals, col=columns)
-}
 
 
 
 
 ## This is the core function for looking up exons
-.lookupExons <- function(txdb, vals){
+
+exons <- function(txdb, vals)
+{
+  ##Add error here
+  if(is.data.frame(txdb) && is.integer(vals)){stop("This is not the exons function that you are looking for. Please use exons_deprecated instead.")}
+
   ## check that txdb is in fact a TranscriptDb object
   if(!is(txdb,"TranscriptDb"))stop("txdb MUST be a TranscriptDb object.")
   
@@ -111,17 +115,11 @@ transcripts <- function(txdb, vals, columns=c("tx_id", "tx_name"))
   ans <- dbGetQuery(txdb@conn, sql)
 
   ## We always return the exon_id
-  col <- "exon_id"
+  columns <- "exon_id"
   if(dim(ans)[1] >0){
       rd <- .formatRD(ans, "get", "exon")
-      return(.appendCols(rd, ans, col))
+      return(.appendCols(rd, ans, columns))
   }else{warning("Please be advised that no matching data was found.")}
 }
 
 
-exons <- function(txdb, vals)
-{
-  ##Add error here
-  if(is.data.frame(txdb) && is.integer(vals)){stop("This is not the exons function that you are looking for. Please use exons_deprecated instead.")}
-  .lookupExons(txdb=txdb, vals)
-}
