@@ -151,7 +151,7 @@ some_ids <- c(
 )
 tiny_txdb <- makeTranscriptDbFromBiomart(ensembl_transcript_ids=some_ids)
 
-## Using from user supplied annotations.
+## From user supplied annotations.
 transcripts <- data.frame(
                    tx_id=1:3,
                    tx_chrom="chr1",
