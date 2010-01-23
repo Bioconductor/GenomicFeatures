@@ -910,7 +910,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
         "cds_length"
     )
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
-    cds_ranges <- .extractCdsRanges(bm_table)
+    cds_ranges <- .extractCdsRangesFromBiomartTable(bm_table)
     cds_start <- start(cds_ranges)
     cds_start[width(cds_ranges) == 0L] <- NA_integer_
     cds_end <- end(cds_ranges)
