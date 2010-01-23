@@ -32,6 +32,23 @@
 
 ## This is the core function for looking up transcripts
 
+
+##For each tx_id from ans, look up a list of exon IDs...
+##Then return an integerList with a vector of integers for each tx_id
+##I might want to expose this one...
+.getMatchingExonsORCDS <- function(txdb, tx_ids, type=c("exon","cds")){
+  type <- match.arg(type)
+  sqlBase <- paste("SELECT _tx_id, _",type,"_id FROM splicing AS s ",
+                   "WHERE s._tx_id IN (", sep="")
+  sqlIDs <- paste(tx_ids,",", collapse="")
+  sql <- paste(sqlBase, sub(",$","",sqlIDs), ")")
+  res <- dbGetQuery(txdb@conn, sql)
+  ## then just use split to break things up into a list
+  ans <- split(res[,2], res[,1])
+  IntegerList(ans)
+}
+
+
 transcripts <- function(txdb, vals, columns=c("tx_id", "tx_name"))
 {
   ##Add error here
@@ -55,28 +72,49 @@ transcripts <- function(txdb, vals, columns=c("tx_id", "tx_name"))
                colNames,sep=""))
   }
 
-  ## base SQL query 1
-  sql <- paste("SELECT gene_id, t._tx_id AS tx_id, tx_name, tx_chrom, tx_strand,",
-               "tx_start, tx_end, _exon_id AS exon_id, _cds_id AS cds_id",
+  ## base SQL query
+  sql <- paste("SELECT gene_id, t._tx_id AS tx_id, tx_name, tx_chrom,",
+               "tx_strand, tx_start, tx_end",
                "FROM transcript AS t, transcript_rtree AS trt,",
-               "gene AS g, splicing AS s",
-               "WHERE t._tx_id=trt._tx_id AND t._tx_id=g._tx_id",
-               "AND t._tx_id=s._tx_id")
+               "gene AS g",
+               "WHERE t._tx_id=trt._tx_id AND t._tx_id=g._tx_id")
 
 
   ## Now we just need to finish the where clause with stuff in "vals"
+
+  ## TODO: 1) track cols for exon_ids and cds_ids separately 2) put look these
+  ## up in a separate subquery (make a separate helper function for this) 3)
+  ## append them to the rd as an IntegerList
+
   sql <- paste(sql, .appendValsSQL(vals), collapse=" ")
   ans <- dbGetQuery(txdb@conn, sql)
+
+  
   
   if(dim(ans)[1] >0){
       rd <- .formatRD(ans, "get", "tx")
       if(is.null(columns) || length(columns)==0){
         return(rd)
       }else{
+        ##IF we need to get exon_id or cds_id we have to do that separately
+        if("exon_id" %in% columns && length(ans[["tx_id"]])>0){
+          rd[["exon_id"]] <- .getMatchingExonsORCDS(txdb,
+                                                    ans[["tx_id"]],
+                                                    "exon")
+        }
+        if("cds_id" %in% columns && length(ans[["tx_id"]])>0){
+          rd[["cds_id"]] <- .getMatchingExonsORCDS(txdb,
+                                                   ans[["tx_id"]],
+                                                   "cds")
+        }
+        ##Then remove exon_id and cds_id from columns. (always)
+        columns <- columns[!columns %in% c("exon_id","cds_id")]
         return(.appendCols(rd, ans, columns))
       }
   }else{warning("Please be advised that no matching data was found.")}
 }
+
+
 
 
 
