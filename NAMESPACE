@@ -36,15 +36,15 @@ export(
   saveFeatures,
   loadFeatures,
   as.list,
+  transcripts,
+  exons,
+  cds,
   transcriptsByRanges,
   exonsByRanges,
   bindTranscripts,
-  bindExons,
-  transcripts,
-  exons
+  bindExons
 )
 
 exportMethods(
   as.list
 )
-

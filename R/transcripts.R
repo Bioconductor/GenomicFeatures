@@ -1,163 +1,158 @@
-
-##Time for methods to access data via more direct queries.
-
-##1st some helper methods for complex restrictions in where clauses.
-.orAndTester <- function(val){  
-  if(length(unlist(val))>1){
-    .appendValElementsSQL(val)
-  }else{
-    paste("AND ", names(val), " = ","'",val,"'",sep="")
-  }
-}
-
-.appendValsSQL <- function(vals){
-  sql <- character()
-  for(i in seq_len(length(vals))){
-    #print(i)
-    sql <- c(sql, .orAndTester(vals[i]))    
-  }
-  paste(sql, collapse=" ")
-}
-
-.appendValElementsSQL <- function(vals){
-  vals = unlist2(vals) ##AnnotationDbi:::unlist2 preserves names with repeats
-  sql <- character()
-  for(i in seq_len(length(vals))){
-    sql <- c(sql, paste(names(vals[i])," = ","'",vals[i],"'",sep=""))
-  }
-  sql <- paste(sql, collapse=" OR ")
-  paste("AND (",sql,")",collapse=" ")
-}
-
-
-## This is the core function for looking up transcripts
-
-
-##For each tx_id from ans, look up a list of exon IDs...
-##Then return an integerList with a vector of integers for each tx_id
-##I might want to expose this one...
-.getMatchingExonsORCDS <- function(txdb, tx_ids, type=c("exon","cds")){
-  type <- match.arg(type)
-  sqlBase <- paste("SELECT _tx_id, _",type,"_id FROM splicing AS s ",
-                   "WHERE s._tx_id IN (", sep="")
-  sqlIDs <- paste(tx_ids,",", collapse="")
-  sql <- paste(sqlBase, sub(",$","",sqlIDs), ")")
-  res <- dbGetQuery(txdb@conn, sql)
-  ## then just use split to break things up into a list
-  ans <- split(res[,2], res[,1])
-  IntegerList(ans)
-}
-
-
-transcripts <- function(txdb, vals, columns=c("tx_id", "tx_name"))
+## convert a named list into a SQL where condition
+.sqlWhereVals <- function(vals)
 {
-  ##Add error here
-  if(is.data.frame(txdb) && is.integer(vals)){stop("This is not the transcripts function that you are looking for. Please use transcripts_deprecated instead.")}
+  sql <-
+    lapply(seq_len(length(vals)), function(i) {
+             v <- vals[[i]]
+             if (!is.numeric(v))
+               v <- paste("'", v, "'", sep="")
+             v <- paste("(", paste(v, collapse=","), ")", sep="")
+             v <- paste(names(vals)[i], " IN ", v, sep="")
+             paste("AND (", v, ")", sep="")
+          })
+  paste(unlist(sql), collapse = " ")
+}
 
-  ## check that txdb is in fact a TranscriptDb object
-  if(!is(txdb,"TranscriptDb"))stop("txdb MUST be a TranscriptDb object.")
-  
-  ## check the vals:
-  valNames <- c("gene_id", "tx_id", "tx_name", "tx_chrom", "tx_strand")
-  if(!all(names(vals) %in% valNames)){
-    stop(paste("Argument names for vals must be some combination of: ",
-               valNames,sep=""))
+
+## transcripts function and helper
+
+.exonORcdsIntegerList <- function(txdb, tx_ids, type=c("exon", "cds"))
+{
+  type <- match.arg(type)
+  type_id <- paste("_", type, "_id", sep="")
+  sqlIDs <- paste("(", paste(tx_ids, collapse=","), ")", sep="")
+  sql <- paste("SELECT _tx_id, exon_rank, ", type_id, " ",
+               "FROM splicing AS s ",
+               "WHERE s._tx_id IN ", sqlIDs,
+               sep="")
+  ans <- dbGetQuery(txdb@conn, sql)
+  ans[["_tx_id"]] <-
+    factor(as.character(ans[["_tx_id"]]), levels=as.character(tx_ids))
+  ans <- ans[order(ans[["_tx_id"]], ans[["exon_rank"]]), ,drop=FALSE]
+  ## then just use split to break things up into a list
+  IRanges:::newCompressedList("CompressedIntegerList",
+                              unlistData = ans[[type_id]],
+                              splitFactor = ans[["_tx_id"]])
+}
+
+
+transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
+{
+  ## check to see if user wanted deprecated function
+  if(is.data.frame(txdb))
+    stop("Please use 'transcripts_deprecated' for older data.frame-based transcript metadata.")
+
+  ## check that txdb is a TranscriptDb object
+  if(!is(txdb,"TranscriptDb"))
+    stop("'txdb' must be a TranscriptDb object")
+
+  ## check the vals argument
+  validValNames <- c("gene_id", "tx_id", "tx_name", "tx_chrom", "tx_strand")
+  if(!is.null(vals) &&
+     (!is.list(vals) || is.null(names(vals)) ||
+      !all(names(vals) %in% validValNames))) {
+    stop("'vals' must be NULL or a list with names being a combination of ",
+         paste(dQuote(validValNames), collapse = ", "))
   }
 
-  ## check the cols:
-  colNames <- c("tx_id", "tx_name", "gene_id", "exon_id","cds_id",
-                NULL, character(0))
-  if(!all(columns %in% colNames)){
-    stop(paste("Arguments to column must be some combination of: ",
-               colNames,sep=""))
+  ## check the columns argument
+  validColumns <- c("tx_id", "tx_name", "gene_id", "exon_id","cds_id")
+  if(length(columns) > 0 &&
+     (!is.character(columns) || !all(columns %in% validColumns))) {
+    stop("'columns' must be NULL or a combination of ",
+         paste(dQuote(validColumns), collapse = ", "))
   }
 
-  ## base SQL query
-  sql <- paste("SELECT gene_id, t._tx_id AS tx_id, tx_name, tx_chrom,",
-               "tx_strand, tx_start, tx_end",
+  ## create SQL query
+  optionalColumns <- intersect(c("tx_name", "gene_id"), columns)
+  if (length(optionalColumns) > 0)
+    optionalColumns <- paste(", ", optionalColumns, sep="", collapse="")
+  sql <- paste("SELECT tx_chrom, tx_start, tx_end, tx_strand,",
+               "t._tx_id AS tx_id", optionalColumns,
                "FROM transcript AS t, transcript_rtree AS trt,",
                "gene AS g",
-               "WHERE t._tx_id=trt._tx_id AND t._tx_id=g._tx_id")
+               "WHERE t._tx_id=trt._tx_id AND t._tx_id=g._tx_id",
+               .sqlWhereVals(vals),
+               "ORDER BY tx_chrom, tx_start, tx_end, tx_strand DESC")
 
-
-  ## Now we just need to finish the where clause with stuff in "vals"
-
-  ## TODO: 1) track cols for exon_ids and cds_ids separately 2) put look these
-  ## up in a separate subquery (make a separate helper function for this) 3)
-  ## append them to the rd as an IntegerList
-
-  sql <- paste(sql, .appendValsSQL(vals), collapse=" ")
+  ## get the data from the database
   ans <- dbGetQuery(txdb@conn, sql)
+  ans <-
+    RangedData(ranges = IRanges(start = ans[["tx_start"]],
+                                  end = ans[["tx_end"]]),
+               strand = strand(ans[["tx_strand"]]),
+               ans[-c(1:4)],
+               space = ans[["tx_chrom"]])
 
-  
-  
-  if(dim(ans)[1] >0){
-      rd <- .formatRD(ans, "get", "tx")
-      if(is.null(columns) || length(columns)==0){
-        return(rd)
-      }else{
-        ##IF we need to get exon_id or cds_id we have to do that separately
-        if("exon_id" %in% columns && length(ans[["tx_id"]])>0){
-          rd[["exon_id"]] <- .getMatchingExonsORCDS(txdb,
-                                                    ans[["tx_id"]],
-                                                    "exon")
-        }
-        if("cds_id" %in% columns && length(ans[["tx_id"]])>0){
-          rd[["cds_id"]] <- .getMatchingExonsORCDS(txdb,
-                                                   ans[["tx_id"]],
-                                                   "cds")
-        }
-        ##Then remove exon_id and cds_id from columns. (always)
-        columns <- columns[!columns %in% c("exon_id","cds_id")]
-        return(.appendCols(rd, ans, columns))
+  if(nrow(ans) > 0 && any(c("exon_id","cds_id") %in% columns)) {
+      if("exon_id" %in% columns) {
+          ans[["exon_id"]] <- .exonORcdsIntegerList(txdb, ans[["tx_id"]], "exon")
       }
-  }else{warning("Please be advised that no matching data was found.")}
-}
-
-
-
-
-
-
-
-
-## This is the core function for looking up exons
-
-exons <- function(txdb, vals)
-{
-  ##Add error here
-  if(is.data.frame(txdb) && is.integer(vals)){stop("This is not the exons function that you are looking for. Please use exons_deprecated instead.")}
-
-  ## check that txdb is in fact a TranscriptDb object
-  if(!is(txdb,"TranscriptDb"))stop("txdb MUST be a TranscriptDb object.")
-  
-  ## check the vals:
-  valNames <- c("exon_id", "exon_strand", "tx_chrom", "tx_strand",
-                "tx_id", "tx_name")
-  if(!all(names(vals) %in% valNames)){
-    stop(paste("Argument names for vals must be some combination of: ",
-               valNames,sep=""))
+      if("cds_id" %in% columns) {
+          ans[["cds_id"]] <- .exonORcdsIntegerList(txdb, ans[["tx_id"]], "cds")
+      }
   }
 
-  ## base SQL query 1  -- JOIN THIS to transcript
-  sql <- paste("SELECT e._exon_id AS exon_id, exon_chrom, exon_strand,",
-               "exon_start, exon_end, tx_chrom, tx_strand, tx_name,",
-               "t._tx_id AS tx_id",
-               "FROM exon AS e, exon_rtree AS ert, transcript AS t,",
-               "splicing AS s",
-               "WHERE e._exon_id=ert._exon_id AND e._exon_id=s._exon_id",
-               "AND t._tx_id=s._tx_id")
+  if (!("tx_id" %in% columns))
+    ans[["tx_id"]] <- NULL
 
-  ## Now we just need to finish the where clause with stuff in "vals"
-  sql <- paste(sql, .appendValsSQL(vals), collapse=" ")
-  ans <- dbGetQuery(txdb@conn, sql)
-
-  ## We always return the exon_id
-  columns <- "exon_id"
-  if(dim(ans)[1] >0){
-      rd <- .formatRD(ans, "get", "exon")
-      return(.appendCols(rd, ans, columns))
-  }else{warning("Please be advised that no matching data was found.")}
+  ans
 }
 
 
+## exon and cds functions and helper
+
+.exonORcdsRangedData <- function(txdb, vals=NULL, type=c("exon", "cds"))
+{
+  type <- match.arg(type)
+
+  if (type == "exon" && is.data.frame(txdb))
+    stop("Please use 'exons_deprecated' for older data.frame-based transcript metadata.")
+
+  ## check that txdb is a TranscriptDb object
+  if(!is(txdb,"TranscriptDb"))
+    stop("'txdb' must be a TranscriptDb object")
+
+  ## check the vals argument
+  validValNames <- gsub("TYPE", type, c("TYPE_id", "TYPE_chrom", "TYPE_strand"))
+  if(!is.null(vals) &&
+     (!is.list(vals) || is.null(names(vals)) ||
+      !all(names(vals) %in% validValNames))) {
+    stop("'vals' must be NULL or a list with names being a combination of ",
+         paste(dQuote(validValNames), collapse = ", "))
+  }
+
+  ## create base SQL query
+  sql <-
+    gsub("TYPE", type,
+         paste("SELECT TYPE_chrom, TYPE_start, TYPE_end, TYPE_strand,",
+               "x._TYPE_id AS TYPE_id",
+               "FROM TYPE AS x, TYPE_rtree AS rt",
+               "WHERE x._TYPE_id=rt._TYPE_id",
+               .sqlWhereVals(vals),
+               "ORDER BY TYPE_chrom, TYPE_start, TYPE_end, TYPE_strand DESC"))
+
+  ## get the data from the database
+  ans <- dbGetQuery(txdb@conn, sql)
+  ans <-
+    RangedData(ranges = IRanges(start = ans[[paste(type, "_start", sep="")]],
+                                  end = ans[[paste(type, "_end", sep="")]]),
+               strand = strand(ans[[paste(type, "_strand", sep="")]]),
+               "TYPE_id" = ans[[paste(type, "_id", sep="")]],
+               space = ans[[paste(type, "_chrom", sep="")]])
+  colnames(ans) <- gsub("TYPE", type, colnames(ans))
+
+  ans
+}
+
+
+exons <- function(txdb, vals=NULL)
+{
+  .exonORcdsRangedData(txdb, vals=vals, type="exon")
+}
+
+
+cds <- function(txdb, vals=NULL)
+{
+  .exonORcdsRangedData(txdb, vals=vals, type="cds")
+}

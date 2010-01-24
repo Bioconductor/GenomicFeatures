@@ -6,6 +6,7 @@
 \alias{exonsByRanges}
 \alias{exonsByRanges,missing-method}
 \alias{exonsByRanges,RangedData-method}
+\alias{cdsByRanges}
 
 \title{
   Retrieving genomic features from a TranscriptDb object.
