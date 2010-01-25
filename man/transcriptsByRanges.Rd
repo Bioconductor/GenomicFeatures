@@ -1,56 +1,56 @@
 \name{transcriptsByRanges}
 
 \alias{transcriptsByRanges}
-\alias{transcriptsByRanges,missing-method}
-\alias{transcriptsByRanges,RangedData-method}
 \alias{exonsByRanges}
-\alias{exonsByRanges,missing-method}
-\alias{exonsByRanges,RangedData-method}
 \alias{cdsByRanges}
 
 \title{
-  Retrieving genomic features from a TranscriptDb object.
+  Retrieving genomic features from a TranscriptDb object using a restriction
+  by genomic location.
 }
 \description{
-  Methods to retrieve genomic features for ranges of interest from a
-  TranscriptDb object.
+  Functions to retrieve genomic features for specified genomic locations.
 }
 \usage{
-  transcriptsByRanges(txdb, ranges, restrict="any",
-                      columns=c("tx_id","tx_name"))
-  exonsByRanges(txdb, ranges, restrict="any",
-                columns=c("exon_id","exon_name"))
+  transcriptsByRanges(txdb, ranges,
+                      restrict = c("any", "start", "end", "within", "equal"),
+                      columns = c("tx_id","tx_name"))
+  exonsByRanges(txdb, ranges,
+                restrict = c("any", "start", "end", "within", "equal"))
+  cdsByRanges(txdb, ranges,
+              restrict = c("any", "start", "end", "within", "equal"))
 }
 \arguments{  
   \item{txdb}{A \link{TranscriptDb} object.}
-  \item{ranges}{A RangedData object to specify which ranges to search
-    for annotations.}
-  \item{restrict}{How to test the ranges.  Can be "any", "start",
-    "during", "finish" or "equal" to indicate the kind of overlap
-    allowed between the ranges to be mapped and the ranges in the DB.
-    The default value is "any".}
-  \item{columns}{Which data columns to return with the rangedData object.}
+  \item{ranges}{A \link[IRanges]{RangedData} object to restrict the output.}
+  \item{restrict}{How to perform the interval overlap operations of the
+    \code{ranges}. See the
+    \code{\link[IRanges:IntervalTree-class]{findOverlaps}} manual page
+    in the IRanges package for more information.}
+  \item{columns}{columns to include in the output. Can be NULL or
+    a combination of "tx_id", "tx_name", "gene_id", "exon_id", and
+    "cds_id".}
 }
-\details{These functions return relevant annotation results in a Ranged
-Data object based on the regions searched.  The \code{exonsByRanges} methods are
-for extracting data based on which exons are contained within a set of
-ranges, while a call to \code{transcriptsByRanges} will extract data based
-on the transcript boundaries being contained in the ranges.}
-\value{ All of these methods should return a RangedData object. }
+\details{
+  These functions subset the results of \code{\link{transcripts}},
+  \code{\link{exons}}, and \code{\link{cds}} function calls with
+  using the results of \code{\link[IRanges:IntervalTree-class]{findOverlaps}}
+  calls based on the specified \code{ranges}.
+}
+\value{ a RangedData object }
 \author{
-  M. Carlson
+  P. Aboyoun and M. Carlson
 }
 \seealso{
-  \link{TranscriptDb}
+  \link{TranscriptDb}, \code{\link{transcripts}}, \code{\link{bindTranscripts}}
 }
 \examples{
-\dontrun{
+  library(IRanges)
+  library(BSgenome)
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                    package="GenomicFeatures"))
-  library(IRanges)
-  rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000) ),
-                   space = rep("chr1",2), 
-                   strand = rep("-",2))
+  rd <- RangedData(ranges = IRanges(start=c(500,10500), end=c(10000,30000)),
+                   space  = rep("chr1",2), 
+                   strand = strand(rep("-",2)))
   transcriptsByRanges(txdb,rd)
-}
 }

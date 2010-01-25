@@ -1,49 +1,74 @@
-## test_mapTranscripts <- function()
-## {
-##     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
-##                                       package="GenomicFeatures"))
-##     suppressMessages(library(IRanges))
-##     ranges <- IRanges(start=1000, end=8000)
-    
-##     wantRanges = IRanges(start = rep(4269,4),
-##                          end   = rep(6628,4))
-##     wantIds <- rep("uc009vis.1",4)
-##     want<-RangedData(ranges  = wantRanges,
-##                      strand  = factor(rep("-",4),
-##                                       levels=c("-","+","*")),
-##                      space   = rep("chr1",4),
-##                      tx_id   = rep(110L,4),
-##                      tx_name = wantIds)
-
-##     checkEquals(want, GenomicFeatures:::.mapTranscripts(txdb,
-##                                                         ranges,
-##                                                         "chr1",
-##                                                         "-",
-##                                                         type="any",
-##                                                         format="get"))
-## }
-
-
 test_transcriptsByRanges <- function()
 {
-    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
-                                      package="GenomicFeatures"))
     suppressMessages(library(IRanges))
+    suppressMessages(library(BSgenome))
+
+    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+                                     package="GenomicFeatures"))
+
+    checkException(transcriptsByRanges(txdb), silent = TRUE)
+    checkException(transcriptsByRanges(txdb, IRanges()), silent = TRUE)
+    checkException(transcriptsByRanges(txdb, RangedData(), columns = "bad"),
+                   silent = TRUE)
+
     rd <- RangedData(ranges = IRanges(start=190000, end=280000),
-                     space  = "chr5", strand = "-")    
-
-    wantRanges = IRanges(start = rep(257875,3),
-                         end   = rep(271297,3))
-    wantIds <- rep("uc003jam.1",3)
-    want<-RangedData(ranges  = wantRanges,
-                     strand  = factor(rep("-",3),
-                                     levels=c("-","+","*")),
-                     space   = rep("chr5",3),
-                     tx_id   = rep(69,3),
-                     tx_name = wantIds)
-
-    checkEquals(want, transcriptsByRanges(txdb, rd))
+                     space  = "chr5", strand = strand("-"))
+    want <-
+      RangedData(IRanges(start=257875, end=271297),
+                 strand = strand("-"),
+                 tx_id = 15L,
+                 tx_name = "uc003jam.1",
+                 space = "chr5")
+    ranges(want) <- IRangesList(as.list(ranges(want)))
+    checkIdentical(transcriptsByRanges(txdb, rd), want)
 }
 
+test_exonsByRanges <- function()
+{
+    suppressMessages(library(IRanges))
+    suppressMessages(library(BSgenome))
 
+    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+                                     package="GenomicFeatures"))
 
+    checkException(exonsByRanges(txdb), silent = TRUE)
+    checkException(exonsByRanges(txdb, IRanges()), silent = TRUE)
+    checkException(exonsByRanges(txdb, RangedData(), columns = "bad"),
+                   silent = TRUE)
+
+    rd <- RangedData(ranges = IRanges(start=190000, end=280000),
+                     space  = "chr5", strand = strand("-"))
+    want <-
+      RangedData(IRanges(start=c(257875,269844,271208),
+                         end  =c(259073,269974,271297)),
+                 strand = strand(rep("-",3)),
+                 exon_id = 77:79,
+                 space = "chr5")
+    ranges(want) <- IRangesList(as.list(ranges(want)))
+    checkIdentical(exonsByRanges(txdb, rd), want)
+}
+
+test_cdsByRanges <- function()
+{
+    suppressMessages(library(IRanges))
+    suppressMessages(library(BSgenome))
+
+    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+                                     package="GenomicFeatures"))
+
+    checkException(cdsByRanges(txdb), silent = TRUE)
+    checkException(cdsByRanges(txdb, IRanges()), silent = TRUE)
+    checkException(cdsByRanges(txdb, RangedData(), columns = "bad"),
+                   silent = TRUE)
+
+    rd <- RangedData(ranges = IRanges(start=258412, end=269964),
+                     space  = "chr5", strand = strand("-"))
+    want <-
+      RangedData(IRanges(start=c(258412,269844),
+                         end  =c(259073,269964)),
+                    strand = strand(rep("-",2)),
+                    cds_id = 53:54,
+                    space  = "chr5")
+    ranges(want) <- IRangesList(as.list(ranges(want)))
+    checkIdentical(cdsByRanges(txdb, rd), want)
+}

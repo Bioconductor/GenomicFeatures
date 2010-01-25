@@ -43,7 +43,8 @@
   M. Carlson and P. Aboyoun
 }
 \seealso{
-  \link{TranscriptDb}, \code{\link{transcriptsByRanges}}
+  \link{TranscriptDb}, \code{\link{transcriptsByRanges}},
+  \code{\link{bindTranscripts}}
 }
 \examples{
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",

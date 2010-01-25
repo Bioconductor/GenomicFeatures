@@ -1,3 +1,119 @@
+## Get the list of possible values for a type from a table:
+.getValsFromTable <- function(txann, colname, table){
+  sql <- paste("SELECT", colname, "FROM", table)
+  as.character(unlist(unique(dbGetQuery(txann@conn, sql))))
+}
+
+## Check that the type of thing (chromosome, strand etc.) is in the
+## transcript table
+.checkFields <- function(txann, colname, data, table){
+  annot <- .getValsFromTable(txann, colname, table) 
+  all(data %in% annot)
+}
+
+
+## in the absence of chromosome and strand information, expand the query...
+.createUniqueChromStrand <- function(txdb, table, chrom, strand, colnames){
+  if(is.null(chrom) && !is.null(strand)){
+    allChrms = .getValsFromTable(txdb, colnames[1L], table)
+    uChromStrand <- unique(cbind(rep(allChrms,length(strand)),
+                                 rep(strand,each=length(allChrms))) )  
+  }
+  if(!is.null(chrom) && is.null(strand)){
+    allStrnds = .getValsFromTable(txdb, colnames[2L], table)
+    uChromStrand <- unique(cbind(rep(chrom,length(allStrnds)),
+                                 rep(allStrnds,each=length(chrom))) )  
+  }
+  if(is.null(strand) && is.null(chrom)){
+    allChrms = .getValsFromTable(txdb, colnames[1L], table)
+    allStrnds = .getValsFromTable(txdb, colnames[2L], table)
+    uChromStrand <- unique(cbind(rep(allChrms,length(allStrnds)),
+                                 rep(allStrnds,each=length(allChrms))))
+  }
+  if(!is.null(chrom) && !is.null(strand)){
+    uChromStrand <- unique(cbind(as.character(chrom),as.character(strand)))
+  }
+  uChromStrand
+}
+
+
+.setRange <- function(ranges, txdb, chrom, strand, chr, strnd){
+  if(is.null(chrom) && !is.null(strand)){
+    range <- ranges[strand==strnd]
+  }
+  if(!is.null(chrom) && is.null(strand)){
+    range <- ranges[chrom==chr]
+  }
+  if(is.null(strand) && is.null(chrom)){
+    range <- ranges
+  }
+  if(!is.null(chrom) && !is.null(strand)){
+    range <- ranges[chrom==chr & strand==strnd]
+  }
+  range
+}
+
+
+.mapFeatures <- function(txdb, sql, range, chrom, strnd, colprefix,
+                         type="any"){
+
+  sqlChrom <- paste(" AND ",colprefix,"_chrom = '",chrom,"'",sep="")
+  sqlStrand <- paste(" AND ",colprefix,"_strand = '",strnd,"'",sep="")
+  sql2 <- paste(sql, sqlChrom, sqlStrand)
+  res <- dbGetQuery(txdb@conn, sql2)
+  
+  ## Ranges is the query, the DB returned tx_start and tx_end will be the
+  ## subject
+  startName <- paste(colprefix,"_start",sep="")
+  endName <- paste(colprefix,"_end",sep="")
+  if(dim(res)[1] > 0){
+    map <- findOverlaps(range,
+                        IRanges(start = unlist(res[startName]),
+                                end = unlist(res[endName])),
+                        multiple=TRUE,
+                        type=type)
+  
+    ##Then subset the query result with only the matching stuff.
+    ##And I also have to match that up with the stuff in range...
+    matchRange <- range[map@matchMatrix[,1]]
+    if(!is.na(map@matchMatrix[1])){
+      ans <- cbind(as.data.frame(matchRange),res[map@matchMatrix[,2],])
+    }else{ans <- data.frame()}
+  }else{ans <- data.frame()}
+  ans
+}
+
+
+##Format the ranged data object depending on whether mapping or getting
+.formatRD <- function(ans, format, prefix){
+  switch(format,
+         "map" = return(RangedData(
+           ranges = IRanges(start = ans[["start"]],
+                              end = ans[["end"]]),
+           strand = factor(ans[[paste(prefix,"_strand",sep="")]],
+                           levels=c("-","+","*")),
+           space = ans[[paste(prefix,"_chrom",sep="")]])),
+         "get" = return(RangedData(
+           ranges = IRanges(start = ans[[paste(prefix,"_start",sep="")]],
+                              end = ans[[paste(prefix,"_end",sep="")]]),
+           strand = factor(ans[[paste(prefix,"_strand",sep="")]],
+                           levels=c("-","+","*")),
+           space = ans[[paste(prefix,"_chrom",sep="")]]))         
+         )
+}
+
+##Add addional data that was requested to the Ranged Data that is returned.
+.appendCols <- function(rd, ans, col){## for each value in cols
+  ## verify that cols are in ans
+  if(all(col %in% colnames(ans))){
+    for(i in seq_len(length(col))){
+      rd[[col[i]]] <- ans[[col[i]]]
+    }
+  }else{stop(paste("There is either a problem with the requested columns",
+                   "or the answer returned from the DB is not complete."))}
+  rd
+}
+
 ##TEMP (just untill we refactor bindTranscripts and bindExons)
 .mapTranscripts <- function(txdb, ranges=NULL, chrom=NULL,
                             strand=NULL, type="any",
