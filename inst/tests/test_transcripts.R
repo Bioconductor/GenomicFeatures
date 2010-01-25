@@ -27,7 +27,6 @@ test_transcripts <- function()
                        exon_id = IntegerList("3"=c(8,7,6,5), "15"=c(79,78,77)),
                        space   = c("chr1", "chr5"))
     want[["exon_id"]] <- IntegerList("3"=c(8,7,6,5), "15"=c(79,78,77))
-    
     checkIdentical(want,
                    transcripts(txdb, vals, columns = c("tx_id","tx_name","exon_id")))
 }
@@ -49,13 +48,41 @@ test_exons <- function()
                               exon_id = 1L,
                               space = "chr1"))
 
-    vals <- list(exon_chrom = c("chr1", "chr5"), exon_strand = "-")
     wantRanges <- IRanges(start = c(4269,4833,5659,6470,257875,269844,271208),
                           end   = c(4692,4901,5805,6628,259073,269974,271297))
     want <- RangedData(ranges  = wantRanges,
                        strand  = strand(rep("-", 7)),
                        exon_id   = c(5L, 6L, 7L, 8L, 77L, 78L, 79L),
                        space   = c(rep("chr1", 4), rep("chr5", 3)))
+    checkIdentical(want,
+                   exons(txdb,
+                         vals = list(exon_chrom = c("chr1", "chr5"),
+                                     exon_strand = "-")))
+}
 
-    checkIdentical(want, exons(txdb, vals))    
+test_cds <- function()
+{
+    suppressMessages(library(IRanges))
+    suppressMessages(library(BSgenome))
+
+    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+                         package="GenomicFeatures"))
+
+    checkException(cds(data.frame()), silent = TRUE)
+    checkException(cds(txdb, vals = list("bad" = 1:10)), silent = TRUE)
+
+    checkIdentical(cds(txdb, list("cds_id" = 91)),
+                   RangedData(IRanges(start=82997, end=84054),
+                              strand = strand("-"),
+                              cds_id = 91L,
+                              space = "chr10"))
+
+    want <- RangedData(ranges  = IRanges(start=c(258412,269844), end=c(259073,269964)),
+                       strand  = strand(c("-", "-")),
+                       cds_id  = 53:54,
+                       space   = c("chr5", "chr5"))
+    checkIdentical(want,
+                   cds(txdb,
+                       vals = list(cds_chrom = c("chr1", "chr5"),
+                                   cds_strand = "-")))
 }
