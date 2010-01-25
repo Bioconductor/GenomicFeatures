@@ -611,6 +611,13 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
 ### 'exons': Ranges object
 ### Returns a list with 2 elements (start and end), each of them being integer
 ### vectors of the same length as 'exons', and may contain NAs.
+### Notes:
+###   (1) In refGene track, transcript NM_017940: cds cumulative length is
+###       not a multiple of 3.
+###   (2) Same thing in ensGene track, transcript ENST00000371841.
+###   (3) All transcripts in knowGene track have a cds cumulative length that
+###       is a multiple of 3.
+### TODO: Investigate (1) and (2).
 .extractUCSCCdsStartEnd <- function(cds_start, cds_end, exons, tx_name)
 {
     ans_start <- ans_end <- integer(length(exons))
