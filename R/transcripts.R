@@ -14,7 +14,21 @@
 }
 
 
-## transcripts function and helper
+## transcripts function and helpers
+
+.geneCharacterList <- function(txdb, tx_ids)
+{
+  sqlIDs <- paste("(", paste(tx_ids, collapse=","), ")", sep="")
+  sql <- paste("SELECT gene_id, _tx_id FROM gene WHERE _tx_id IN ", sqlIDs,
+               sep="")
+  ans <- dbGetQuery(txdb@conn, sql)
+  ans[["_tx_id"]] <-
+    factor(as.character(ans[["_tx_id"]]), levels=as.character(tx_ids))
+  ans <- ans[order(ans[["_tx_id"]]), ,drop=FALSE]
+  IRanges:::newCompressedList("CompressedCharacterList",
+                              unlistData = ans[["gene_id"]],
+                              splitFactor = ans[["_tx_id"]])
+}
 
 .exonORcdsIntegerList <- function(txdb, tx_ids, type=c("exon", "cds"))
 {
@@ -22,14 +36,11 @@
   type_id <- paste("_", type, "_id", sep="")
   sqlIDs <- paste("(", paste(tx_ids, collapse=","), ")", sep="")
   sql <- paste("SELECT _tx_id, exon_rank, ", type_id, " ",
-               "FROM splicing AS s ",
-               "WHERE s._tx_id IN ", sqlIDs,
-               sep="")
+               "FROM splicing WHERE _tx_id IN ", sqlIDs, sep="")
   ans <- dbGetQuery(txdb@conn, sql)
   ans[["_tx_id"]] <-
     factor(as.character(ans[["_tx_id"]]), levels=as.character(tx_ids))
   ans <- ans[order(ans[["_tx_id"]], ans[["exon_rank"]]), ,drop=FALSE]
-  ## then just use split to break things up into a list
   IRanges:::newCompressedList("CompressedIntegerList",
                               unlistData = ans[[type_id]],
                               splitFactor = ans[["_tx_id"]])
@@ -68,14 +79,15 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
   }
 
   ## create SQL query
-  optionalColumns <- intersect(c("tx_name", "gene_id"), columns)
-  if (length(optionalColumns) > 0)
-    optionalColumns <- paste(", ", optionalColumns, sep="", collapse="")
+  optionalColumns <- intersect("tx_name", columns)
+  if ("tx_name" %in% columns)
+    optionalColumn <- ", tx_name"
+  else
+    optionalColumn <- ""
   sql <- paste("SELECT tx_chrom, tx_start, tx_end, tx_strand,",
-               "t._tx_id AS tx_id", optionalColumns,
-               "FROM transcript AS t, transcript_rtree AS trt,",
-               "gene AS g",
-               "WHERE t._tx_id=trt._tx_id AND t._tx_id=g._tx_id",
+               "t._tx_id AS tx_id", optionalColumn,
+               "FROM transcript AS t, transcript_rtree AS trt",
+               "WHERE t._tx_id=trt._tx_id",
                .sqlWhereVals(vals),
                "ORDER BY tx_chrom, tx_start, tx_end, tx_strand DESC")
 
@@ -88,13 +100,16 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
                ans[-c(1:4)],
                space = ans[["tx_chrom"]])
 
-  if(nrow(ans) > 0 && any(c("exon_id","cds_id") %in% columns)) {
-      if("exon_id" %in% columns) {
-          ans[["exon_id"]] <- .exonORcdsIntegerList(txdb, ans[["tx_id"]], "exon")
-      }
-      if("cds_id" %in% columns) {
-          ans[["cds_id"]] <- .exonORcdsIntegerList(txdb, ans[["tx_id"]], "cds")
-      }
+  if(nrow(ans) > 0 && any(c("gene_id", "exon_id","cds_id") %in% columns)) {
+    if("gene_id" %in% columns) {
+      ans[["gene_id"]] <- .geneCharacterList(txdb, ans[["tx_id"]])
+    }
+    if("exon_id" %in% columns) {
+      ans[["exon_id"]] <- .exonORcdsIntegerList(txdb, ans[["tx_id"]], "exon")
+    }
+    if("cds_id" %in% columns) {
+      ans[["cds_id"]] <- .exonORcdsIntegerList(txdb, ans[["tx_id"]], "cds")
+    }
   }
 
   if (!("tx_id" %in% columns))
