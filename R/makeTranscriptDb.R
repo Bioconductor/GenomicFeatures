@@ -607,38 +607,67 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
     IRanges(start=exon_start, end=exon_end)
 }
 
-### Can also be used to check the cdsEnd ambiguity.
-.checkCdsStartAmbiguity <- function(cdsStart, exonStarts, exonEnds, colname)
+### 'cds_start', 'cds_end': single integers
+### 'exons': Ranges object
+### Returns a list with 2 elements (start and end), each of them being integer
+### vectors of the same length as 'exons', and may contain NAs.
+.extractUCSCCdsStartEnd <- function(cds_start, cds_end, exons, tx_name)
 {
-    nhit <- mapply(function(start, i, end) sum(start <= i & i <= end),
-                   exonStarts, cdsStart, exonEnds)
-    if (!all(nhit == 1L))
-        stop("UCSC data ambiguity: some values in ",
-             "'ucsc_txtable$", colname, "' fall in 0 or more than 1 exon")
+    ans_start <- ans_end <- integer(length(exons))
+    ans_start[] <- NA_integer_
+    ans_end[] <- NA_integer_
+    if (cds_start > cds_end)
+        return(list(start=ans_start, end=ans_end))
+    first_exon_with_cds <- which(start(exons) <= cds_start
+                                 & cds_start <= end(exons))
+    if (length(first_exon_with_cds) != 1L)
+        stop("UCSC data ambiguity in transcript ", tx_name,
+             ": cannot determine first exon with cds ('cdsStart' ",
+             "falls in 0 or more than 1 exon)")
+    last_exon_with_cds <- which(start(exons) <= cds_end
+                                & cds_end <= end(exons))
+    if (length(last_exon_with_cds) != 1L)
+        stop("UCSC data ambiguity in transcript ", tx_name,
+             ": cannot determine last exon with cds ('cdsEnd' ",
+             "falls in 0 or more than 1 exon)")
+    if (last_exon_with_cds < first_exon_with_cds)
+        stop("UCSC data anomaly in transcript ", tx_name,
+             ": last exon with cds occurs before first exon with cds")
+    exons_with_cds <- first_exon_with_cds:last_exon_with_cds
+    ans_start[exons_with_cds] <- start(exons)[exons_with_cds]
+    ans_end[exons_with_cds] <- end(exons)[exons_with_cds]
+    ans_start[first_exon_with_cds] <- cds_start
+    ans_end[last_exon_with_cds] <- cds_end
+    if (sum(ans_end - ans_start + 1L, na.rm=TRUE) %% 3L != 0L)
+        warning("UCSC data anomaly in transcript ", tx_name,
+                ": the cds cumulative length is not a multiple of 3")
+    list(start=ans_start, end=ans_end)
 }
 
+### Takes more than 5 minutes on the knownGene track! FIX IT!
 .extractCdsRangesFromUCSCTxTable <- function(ucsc_txtable, exon_ranges)
 {
+    exon_count <- ucsc_txtable$exonCount
     cdsStart <- ucsc_txtable$cdsStart + 1L
     cdsEnd <- ucsc_txtable$cdsEnd
-    cds_idx <- cdsStart <= cdsEnd
-    exon_count <- ucsc_txtable$exonCount
-    f <- rep.int(seq_len(length(exon_count)), exon_count)
-    exonStarts <- split(start(exon_ranges), f)
-    exonEnds <- split(end(exon_ranges), f)
-    .checkCdsStartAmbiguity(cdsStart[cds_idx],
-        exonStarts[cds_idx], exonEnds[cds_idx], "cdsStart")
-    .checkCdsStartAmbiguity(cdsEnd[cds_idx],
-        exonStarts[cds_idx], exonEnds[cds_idx], "cdsEnd")
-    tmp_start <- rep.int(cdsStart, exon_count)
-    tmp_end <- rep.int(cdsEnd, exon_count)
-    tmp_ranges <- IRanges(start=tmp_start, end=tmp_end)
-    cds_ranges <- pintersect(tmp_ranges, exon_ranges)
-    cds_cumlength <- diff(c(0L, cumsum(width(cds_ranges))[cumsum(exon_count)]))
-    if (!all(cds_cumlength %% 3L == 0L))
-        warning("UCSC data anomaly: the cds cumulative lengths ",
-                "are not multiples of 3")
-    return(cds_ranges)
+    cdsStarts <- cdsEnds <- vector(mode="list", length=nrow(ucsc_txtable))
+    exon_ranges_offset <- 0L
+    for (i in seq_len(nrow(ucsc_txtable))) {
+        exons <- exon_ranges[exon_ranges_offset + seq_len(exon_count[i])]
+        exon_ranges_offset <- exon_ranges_offset + exon_count[i]
+        startend <- .extractUCSCCdsStartEnd(cdsStart[i], cdsEnd[i],
+                                            exons, ucsc_txtable$name[i])
+        cdsStarts[[i]] <- startend$start
+        cdsEnds[[i]] <- startend$end
+    }
+    if (nrow(ucsc_txtable) == 0L) {
+        ans_start <- integer(0)
+        ans_end <- integer(0)
+    } else {
+        ans_start <- unlist(cdsStarts)
+        ans_end <- unlist(cdsEnds)
+    }
+    return(list(start=ans_start, end=ans_end))
 }
 
 .makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, organism, track)
@@ -687,18 +716,14 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
              "non-positive values")
     splicings_tx_id <- rep.int(tx_id, exon_count)
     exon_ranges <- .extractExonRangesFromUCSCTxTable(ucsc_txtable)
-    cds_ranges <- .extractCdsRangesFromUCSCTxTable(ucsc_txtable, exon_ranges)
-    cds_start <- start(cds_ranges)
-    cds_start[width(cds_ranges) == 0L] <- NA_integer_
-    cds_end <- end(cds_ranges)
-    cds_end[width(cds_ranges) == 0L] <- NA_integer_
+    cds_startend <- .extractCdsRangesFromUCSCTxTable(ucsc_txtable, exon_ranges)
     splicings <- data.frame(
         tx_id=splicings_tx_id,
         exon_rank=.makeExonRank(exon_count, ucsc_txtable$strand),
         exon_start=start(exon_ranges),
         exon_end=end(exon_ranges),
-        cds_start=cds_start,
-        cds_end=cds_end
+        cds_start=cds_startend$start,
+        cds_end=cds_startend$end
     )
 
     ## Prepare the 'genes' data frame.
