@@ -10,6 +10,13 @@ test_transcripts <- function()
     checkException(transcripts(txdb, vals = list("bad" = 1:10)), silent = TRUE)
     checkException(transcripts(txdb, columns = "bad"), silent = TRUE)
 
+    checkIdentical(transcripts(txdb, list("tx_id" = 3)),
+                   RangedData(IRanges(start=4269, end=6628),
+                              strand = strand("-"),
+                              tx_id = 3L,
+                              tx_name = "uc009vis.1",
+                              space = "chr1"))
+
     vals <- list(tx_chrom = c("chr1", "chr5"), tx_strand = "-")
     wantRanges <- IRanges(start = c(4269, 257875),
                           end   = c(6628, 271297))
@@ -35,6 +42,12 @@ test_exons <- function()
 
     checkException(exons(data.frame()), silent = TRUE)
     checkException(exons(txdb, vals = list("bad" = 1:10)), silent = TRUE)
+
+    checkIdentical(exons(txdb, list("exon_id" = 1)),
+                   RangedData(IRanges(start=1116, end=2090),
+                              strand = strand("+"),
+                              exon_id = 1L,
+                              space = "chr1"))
 
     vals <- list(exon_chrom = c("chr1", "chr5"), exon_strand = "-")
     wantRanges <- IRanges(start = c(4269,4833,5659,6470,257875,269844,271208),

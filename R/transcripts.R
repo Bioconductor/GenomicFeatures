@@ -54,6 +54,10 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
     stop("'vals' must be NULL or a list with names being a combination of ",
          paste(dQuote(validValNames), collapse = ", "))
   }
+  whichId <- which(names(vals) == "tx_id")
+  if(length(whichId) > 0) {
+    names(vals)[whichId] <- "t._tx_id"
+  }
 
   ## check the columns argument
   validColumns <- c("tx_id", "tx_name", "gene_id", "exon_id","cds_id")
@@ -120,6 +124,10 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
       !all(names(vals) %in% validValNames))) {
     stop("'vals' must be NULL or a list with names being a combination of ",
          paste(dQuote(validValNames), collapse = ", "))
+  }
+  whichId <- which(names(vals) == paste(type, "_id", sep=""))
+  if(length(whichId) > 0) {
+      names(vals)[whichId] <- paste("x._", type, "_id", sep="")
   }
 
   ## create base SQL query
