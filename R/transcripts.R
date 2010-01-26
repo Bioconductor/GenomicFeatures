@@ -16,6 +16,11 @@
 
 ## transcripts function and helpers
 
+.newListBySplit <- function(class, x, f)
+{
+  IRanges:::newCompressedList(class, unlistData = x, splitFactor = f)
+}
+
 .geneCharacterList <- function(txdb, tx_ids)
 {
   sqlIDs <- paste("(", paste(tx_ids, collapse=","), ")", sep="")
@@ -25,9 +30,7 @@
   ans[["_tx_id"]] <-
     factor(as.character(ans[["_tx_id"]]), levels=as.character(tx_ids))
   ans <- ans[order(ans[["_tx_id"]]), ,drop=FALSE]
-  IRanges:::newCompressedList("CompressedCharacterList",
-                              unlistData = ans[["gene_id"]],
-                              splitFactor = ans[["_tx_id"]])
+  .newListBySplit("CompressedCharacterList", ans[["gene_id"]], ans[["_tx_id"]])
 }
 
 .exonORcdsIntegerList <- function(txdb, tx_ids, type=c("exon", "cds"))
@@ -41,9 +44,7 @@
   ans[["_tx_id"]] <-
     factor(as.character(ans[["_tx_id"]]), levels=as.character(tx_ids))
   ans <- ans[order(ans[["_tx_id"]], ans[["exon_rank"]]), ,drop=FALSE]
-  IRanges:::newCompressedList("CompressedIntegerList",
-                              unlistData = ans[[type_id]],
-                              splitFactor = ans[["_tx_id"]])
+  .newListBySplit("CompressedIntegerList", ans[[type_id]], ans[["_tx_id"]])
 }
 
 
