@@ -13,8 +13,8 @@
 \alias{makeTranscriptDbFromBiomart}
 \alias{makeTranscriptDb}
 
+\alias{show,TranscriptDb-method}
 \alias{as.list,TranscriptDb-method}
-\alias{as.data.frame,TranscriptDb-method}
 
 \title{
   Creating TranscriptDb objects from publicly available sources.

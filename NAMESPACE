@@ -41,5 +41,6 @@ export(
 )
 
 exportMethods(
+  show,
   as.list
 )

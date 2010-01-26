@@ -417,6 +417,25 @@ loadFeatures <- function(file)
     }
 }
 
+.writeMetadataTable <- function(conn)
+{
+    transcript_nrow <- dbGetQuery(conn, "SELECT COUNT(*) FROM transcript")[[1L]]
+    exon_nrow <- dbGetQuery(conn, "SELECT COUNT(*) FROM exon")[[1L]]
+    cds_nrow <- dbGetQuery(conn, "SELECT COUNT(*) FROM cds")[[1L]]
+    mat <- matrix(c(
+        "DbType",  "TranscriptDb",
+        "CreationDate", date(),
+        "transcript_nrow", transcript_nrow,
+        "exon_nrow", exon_nrow,
+        "cds_nrow", cds_nrow),
+        ncol=2, byrow=TRUE
+    )
+    colnames(mat) <- c("name", "value")
+    metadata <- data.frame(name=mat[ , "name"], value=mat[ , "value"],
+                           stringsAsFactors=FALSE)
+    dbWriteTable(conn, "metadata", metadata, row.names=FALSE)
+}
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### makeTranscriptDb().
@@ -524,6 +543,7 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
                         splicings_internal_exon_id,
                         splicings_internal_cds_id)
     .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
+    .writeMetadataTable(conn)
     new("TranscriptDb", conn=conn)
 }
 
@@ -1005,6 +1025,27 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     ## Call makeTranscriptDb().
     makeTranscriptDb(transcripts, splicings, genes)
 }
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### "show" method for TranscriptDb objects.
+###
+
+setMethod("show", "TranscriptDb",
+    function(object)
+    {
+        cat("TranscriptDb object:\n")
+        metadata <- dbReadTable(object@conn, "metadata")
+        creation_date <- metadata[metadata$name == "CreationDate", "value"]
+        transcript_nrow <- metadata[metadata$name == "transcript_nrow", "value"]
+        exon_nrow <- metadata[metadata$name == "exon_nrow", "value"]
+        cds_nrow <- metadata[metadata$name == "cds_nrow", "value"]
+        cat("| Creation Date: ", creation_date, "\n", sep="")
+        cat("| Nb of rows in transcript table: ", transcript_nrow, "\n", sep="")
+        cat("| Nb of rows in exon table: ", exon_nrow, "\n", sep="")
+        cat("| Nb of rows in cds table: ", cds_nrow, "\n", sep="")
+    }
+)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
