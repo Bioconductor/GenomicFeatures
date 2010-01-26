@@ -21,6 +21,18 @@ test_transcriptsByRanges <- function()
                  space = "chr5")
     ranges(want) <- IRangesList(as.list(ranges(want)))
     checkIdentical(transcriptsByRanges(txdb, rd), want)
+
+    ranges <- IRanges(start = c(1000, 1000, 20000, 30000),
+                      end   = c(4000, 4000, 30000, 40000))
+    chrom <- c("chr1", "chr1", "chr2", "chr2")
+    strand <- strand(c("+", "-", "+", "-"))
+    rd <- RangedData(ranges, space = chrom, strand = strand)
+    want <- RangedData(IRanges(start = c(1116, 1116, 31608),
+                               end   = c(4121, 4272, 36385)),
+                       strand = strand(c("+", "+", "-")),
+                       tx_id = c(1L,2L,4L),
+                       space = c("chr1", "chr1", "chr2"))
+    checkIdentical(want, transcriptsByRanges(txdb, rd, columns="tx_id"))
 }
 
 test_exonsByRanges <- function()
