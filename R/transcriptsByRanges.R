@@ -1,5 +1,5 @@
 .txdbByRanges <-
-function(txdb, ranges, restrict, chromName, FUN, ...)
+function(txdb, ranges, restrict, FUN, prefix, ...)
 {
     ## check that txdb is a TranscriptDb object
     if (!is(txdb, "TranscriptDb"))
@@ -11,6 +11,7 @@ function(txdb, ranges, restrict, chromName, FUN, ...)
 
     useStrand <- ("strand" %in% colnames(ranges))
 
+    chromName <- paste(prefix, "_chrom", sep="")
     do.call(c,
             lapply(names(ranges),
                    function(chrom) {
@@ -18,7 +19,7 @@ function(txdb, ranges, restrict, chromName, FUN, ...)
                        subject <-
                          FUN(txdb, structure(list(chrom), names=chromName), ...)
                        overlaps <-
-                         findOverlaps(ranges(ranges)[[1L]],
+                         findOverlaps(ranges(query)[[1L]],
                                       ranges(subject)[[1L]],
                                       type = restrict)
                        hits <- subjectHits(overlaps)
@@ -37,19 +38,19 @@ function(txdb, ranges, restrict = c("any", "start", "end", "within", "equal"),
          columns = c("tx_id", "tx_name"))
 {
     .txdbByRanges(txdb=txdb, ranges=ranges, restrict=match.arg(restrict),
-                  chromName="tx_chrom", FUN=transcripts, columns=columns)
+                  FUN=transcripts, prefix="tx", columns=columns)
 }
 
 exonsByRanges <-
 function(txdb, ranges, restrict = c("any", "start", "end", "within", "equal"))
 {
     .txdbByRanges(txdb=txdb, ranges=ranges, restrict=match.arg(restrict),
-                  chromName="exon_chrom", FUN=exons)
+                  FUN=exons, prefix="exon")
 }
 
 cdsByRanges <-
 function(txdb, ranges, restrict = c("any", "start", "end", "within", "equal"))
 {
     .txdbByRanges(txdb=txdb, ranges=ranges, restrict=match.arg(restrict),
-                  chromName="cds_chrom", FUN=cds)
+                  FUN=cds, prefix="cds")
 }
