@@ -23,6 +23,7 @@ export(
   introns,
   extractTranscriptsFromGenome,
   makeTranscriptDb,
+  supportedUCSCtables,
   makeTranscriptDbFromUCSC,
   makeTranscriptDbFromBiomart,
   saveFeatures,

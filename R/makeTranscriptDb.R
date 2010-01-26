@@ -532,19 +532,6 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
 ### makeTranscriptDbFromUCSC() and UCSC-specific helper functions.
 ###
 
-### Could belong to rtracklayer.
-.getOrganismFromUCSCgenome <- function(genome)
-{
-    ## Work around a bug in ucscGenomes().
-    if (genome == "hg19")
-        return("Human")
-    ucsc_genomes <- ucscGenomes()
-    which_genome <- match(genome, as.character(ucsc_genomes[ , "db"]))
-    if (is.na(which_genome))
-        stop("'genome' not in ucscGenomes()")
-    as.character(ucsc_genomes[which_genome, "organism"])
-}
-
 .makeExonRank <- function(exonCount, exonStrand)
 {
     ans <- lapply(seq_len(length(exonCount)),
@@ -815,21 +802,19 @@ supportedUCSCtables <- function()
 ###   - for genome="hg18" and tablename="knownGene":
 ###       (1) download takes about 40-50 sec.
 ###       (2) db creation takes about 30-35 sec.
-makeTranscriptDbFromUCSC <- function(genome="hg18",
-                                     tablename=c("knownGene","refGene","ensGene"))
+makeTranscriptDbFromUCSC <- function(genome="hg18", tablename="knownGene")
 {
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
-    organism <- .getOrganismFromUCSCgenome(genome)
-    tablename <- match.arg(tablename)
-    if (tablename == "knownGene" && !(organism %in% c("Human", "Mouse", "Rat")))
-        stop("UCSC \"knownGene\" table is only available ",
-             "for Human, Mouse and Rat")
+    if (!isSingleString(tablename))
+        stop("'tablename' must be a single string")
     track <- supportedUCSCtables()[tablename, "track"]
+    if (is.na(track))
+        stop("track \"", track, "\" is not supported")
     session <- browserSession()
     genome(session) <- genome
     ## Download the transcript table.
-    query1 <- ucscTableQuery(session, tablename)
+    query1 <- ucscTableQuery(session, track, table=tablename)
     ucsc_txtable <- getTable(query1)
     ## Download the tx_name-to-gene_id mapping.
     txname2gene_mapinfo <- .UCSC_TXNAME2GENEID_MAPINFO[[tablename]]
@@ -838,12 +823,12 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
         gene_id_type <- NA
     } else {
         tablename2 <- txname2gene_mapinfo[1L]
-        query2 <- ucscTableQuery(session, track=track, table=tablename2)
+        query2 <- ucscTableQuery(session, track, table=tablename2)
         ucsc_genetable <- getTable(query2)
         tx_name <- ucsc_genetable[[txname2gene_mapinfo[2L]]]
         gene_id <- ucsc_genetable[[txname2gene_mapinfo[3L]]]
         if (is.null(tx_name) || is.null(gene_id))
-            stop("expected cols \"", txname2gene_mapinfo[2L], "\" and \"",
+            stop("expected cols \"", txname2gene_mapinfo[2L], "\" or/and \"",
                  txname2gene_mapinfo[3L], "\" not found in table ", tablename2)
         if (!is.character(tx_name))
             tx_name <- as.character(tx_name)

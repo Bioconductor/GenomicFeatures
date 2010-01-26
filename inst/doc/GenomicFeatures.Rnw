@@ -76,6 +76,8 @@ The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC Genome
 Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
 \Rcode{"refGene"}, \Rcode{"ensGene"}) for a genome build (e.g.
 \Rcode{"mm9"}, \Rcode{"hg19"}).
+Use the \Rfunction{supportedUCSCtables} utility function to get the
+list of supported tables.
 
 <<makeTranscriptDbFromUCSC, eval=FALSE>>=
 mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", tablename = "knownGene")

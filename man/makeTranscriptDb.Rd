@@ -8,6 +8,7 @@
 \alias{class:TranscriptDb}
 \alias{TranscriptDb}
 
+\alias{supportedUCSCtables}
 \alias{makeTranscriptDbFromUCSC}
 \alias{makeTranscriptDbFromBiomart}
 \alias{makeTranscriptDb}
@@ -24,8 +25,8 @@
   or from user supplied annotations.
 }
 \usage{
-  makeTranscriptDbFromUCSC(genome="hg18",
-                           tablename=c("knownGene","refGene","ensGene"))
+  supportedUCSCtables()
+  makeTranscriptDbFromUCSC(genome="hg18", tablename="knownGene")
   makeTranscriptDbFromBiomart(biomart, dataset, ensembl_transcript_ids=NULL)
   makeTranscriptDb(transcripts, splicings, genes=NULL, ...)
 }
@@ -33,7 +34,9 @@
   \item{genome}{genome abbreviation used by UCSC and obtained by
     \code{ucscGenomes()[ , "db"]}. For example: hg18.}
   \item{tablename}{name of the UCSC table containing the transcript
-    annotations to retrieve. One of "refGene", "knownGene", or "ensGene".}
+    annotations to retrieve. Use the \code{supportedUCSCtables} utility
+    function to get the list of supported tables. Note that not all
+    tables are available for all genomes.}
   \item{biomart}{which mart from BioMart}
   \item{dataset}{which dataset from BioMart}
   \item{ensembl_transcript_ids}{optionally, only retrieve transcript
