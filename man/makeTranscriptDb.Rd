@@ -25,15 +25,15 @@
 }
 \usage{
   makeTranscriptDbFromUCSC(genome="hg18",
-                           track=c("knownGene","refGene","ensGene"))
+                           tablename=c("knownGene","refGene","ensGene"))
   makeTranscriptDbFromBiomart(biomart, dataset, ensembl_transcript_ids=NULL)
   makeTranscriptDb(transcripts, splicings, genes=NULL, ...)
 }
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
     \code{ucscGenomes()[ , "db"]}. For example: hg18.}
-  \item{track}{name of the UCSC track containing the transcript annotations
-    to retrieve. One of "refGene", "knownGene", or "ensGene".}
+  \item{tablename}{name of the UCSC table containing the transcript
+    annotations to retrieve. One of "refGene", "knownGene", or "ensGene".}
   \item{biomart}{which mart from BioMart}
   \item{dataset}{which dataset from BioMart}
   \item{ensembl_transcript_ids}{optionally, only retrieve transcript

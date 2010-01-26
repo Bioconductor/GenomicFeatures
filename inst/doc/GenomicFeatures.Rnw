@@ -73,12 +73,12 @@ creating new \Rclass{TranscriptDb} objects:
 \subsubsection{UCSC Genome Bioinformatics}
 
 The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC Genome
-Bioinformatics transcript tracks (e.g. \Rcode{"knownGene"},
+Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
 \Rcode{"refGene"}, \Rcode{"ensGene"}) for a genome build (e.g.
 \Rcode{"mm9"}, \Rcode{"hg19"}).
 
 <<makeTranscriptDbFromUCSC, eval=FALSE>>=
-mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", track = "knownGene")
+mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", tablename = "knownGene")
 mm9KG
 @
 
