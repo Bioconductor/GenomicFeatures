@@ -6,10 +6,9 @@ License: Artistic-2.0
 Description: Infrastructure shared by the annotation packages containing genomic
 	features and tools for producing them.
 Maintainer: Biocore Team c/o BioC user list <bioconductor@stat.math.ethz.ch>
-Imports: methods, DBI, RSQLite (>= 0.8-1), IRanges (>= 1.3.14), Biostrings (>= 2.13.54), BSgenome, rtracklayer, biomaRt, AnnotationDbi, annotate
+Imports: methods, DBI, RSQLite (>= 0.8-1), IRanges (>= 1.3.14), Biostrings (>= 2.13.54), BSgenome, rtracklayer, biomaRt
 Suggests: GenomicFeatures.Hsapiens.UCSC.hg18,
           BSgenome.Hsapiens.UCSC.hg18 (>= 1.3.14),
-          org.Mm.eg.db,
           RUnit
 Collate: AllClasses.R
 	 utils.R

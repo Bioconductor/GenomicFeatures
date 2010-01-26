@@ -15,14 +15,6 @@ importFrom(rtracklayer,
   getTable
 )
 
-importFrom(AnnotationDbi,
-  mget,
-  revmap,
-  unlist2
-)
-
-importFrom(annotate, getAnnMap)
-
 exportClasses(GenomicFeatures, TranscriptDb)
 
 export(

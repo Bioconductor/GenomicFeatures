@@ -545,36 +545,6 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
     as.character(ucsc_genomes[which_genome, "organism"])
 }
 
-### TODO: This mapping from organism to org package could be generically
-### useful in annotate.
-.getOrgPkgFromOrganism <- function(organism)
-{
-    ### TODO: This mapping from organism to orgcode could be generically
-    ### useful in annotate.
-    ORGANISM2ORGCODE <- c(
-        `A. gambiae`="Ag",
-        `Cow`="Bt",
-        `C. elegans`="Ce",
-        `Dog`="Cf",
-        `D. melanogaster`="Dm",
-        `Zebrafish`="Dr",
-        ## "EcK12"
-        ## "EcSakai"
-        `Chicken`="Gg",
-        `Human`="Hs",
-        `Mouse`="Mm",
-        `Rhesus`="Mmu",
-        `Chimp`="Pt",
-        `Rat`="Rn"
-        ## "Ss"
-        ## "Xl"
-    )
-    orgcode <- unname(ORGANISM2ORGCODE[organism]) 
-    if (is.na(orgcode))
-        stop("no org.*.eg.db package for ", organism)
-    paste("org", orgcode, "eg.db", sep=".")
-}
-
 .makeExonRank <- function(exonCount, exonStrand)
 {
     ans <- lapply(seq_len(length(exonCount)),
@@ -693,7 +663,7 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
     return(list(start=ans_start, end=ans_end))
 }
 
-.makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, organism, tablename)
+.makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes, gene_id_type)
 {
     COL2CLASS <- c(
         name="character",
@@ -711,16 +681,7 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
                                          drop.extra.cols=TRUE)
 
     ## Prepare the 'transcripts' data frame.
-    ## For some UCSC tables (e.g. knownGene), the 'name' col seems to
-    ## contain a unique transcript identifier. But that's not always
-    ## the case! For example, the refGene table uses the same transcript
-    ## name for different transcripts. In that case, we need to generate
-    ## our own transcript ids.
-    if (tablename %in% c("knownGene", "ensGene")) {
-        tx_id <- ucsc_txtable$name
-    } else {
-        tx_id <- seq_len(nrow(ucsc_txtable))
-    }
+    tx_id <- seq_len(nrow(ucsc_txtable))
     transcripts <- data.frame(
         tx_id=tx_id,
         tx_name=ucsc_txtable$name,
@@ -750,47 +711,7 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
     )
 
     ## Prepare the 'genes' data frame.
-    ## Map the transcript IDs in 'ucsc_txtable$name' to the corresponding
-    ## Entrez Gene IDs. Depending on the value of 'tablename' ("knownGene",
-    ## "refGene" or "ensGene") this is done by using either the UCSCKG, the
-    ## REFSEQ or the ENSEMBLTRANS map from the appropriate org package.
-    ## TODO: Get rid of the org package dependency by downloading the
-    ## appropriate mapping directly from UCSC. For example, for hg18, it
-    ## seems that the mappings can be found in
-    ##   ftp://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/
-    ##     - use knownToLocusLink.txt.gz file for knownGene table
-    ##     - use refLink.txt.gz file for refGene table
-    ##     - which file to use for the ensGene table?
-    ## This will also solve the current problem of using mappings that don't
-    ## match the genome build (e.g. we use the mappings from the org.Hs.eg.db
-    ## package for hg18 and hg19 transcripts).
-    orgpkg <- .getOrgPkgFromOrganism(organism)
-    UCSCTABLE2MAPNAME <- c(
-        knownGene="UCSCKG",
-        refGene="REFSEQ",
-        ensGene="ENSEMBLTRANS"
-    )
-    mapname <- unname(UCSCTABLE2MAPNAME[tablename])
-    if (is.na(mapname))
-        stop("don't know which map in ", orgpkg, " to use to map the ",
-             "transcript IDs in table \"", tablename, "\" to Entrez Gene IDs")
-    map <- suppressMessages(getAnnMap(mapname, orgpkg))
-    genes <- toTable(map)
-    MAPNAME2MAPCOLNAMES <- list(
-        UCSCKG=c("gene_id", "ucsc_id"),
-        REFSEQ=c("gene_id", "accession"),
-        ENSEMBLTRANS=c("gene_id", "trans_id")
-    )
-    expected_colnames <- MAPNAME2MAPCOLNAMES[[mapname]]
-    if (!identical(colnames(genes), expected_colnames))
-        stop(mapname, " map from ", orgpkg, " has unexpected colnames")
-    UCSCTABLE2GENESCOLNAMES <- list(
-        knownGene=c("gene_id", "tx_id"),
-        refGene=c("gene_id", "tx_name"),
-        ensGene=c("gene_id", "tx_id")
-    )
-    colnames(genes) <- UCSCTABLE2GENESCOLNAMES[[tablename]]
-    genes <- genes[genes[[2L]] %in% ucsc_txtable$name, ]
+    #genes <- genes[genes$tx_name %in% ucsc_txtable$name, ]
 
     ## Call makeTranscriptDb().
     makeTranscriptDb(transcripts, splicings, genes)
@@ -830,11 +751,20 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
   "acescan",                   "ACEScan",        NA
 )
 
+supportedUCSCtables <- function()
+{
+    mat <- matrix(.SUPPORTED_UCSC_TABLES, ncol=3, byrow=TRUE)
+    colnames(mat) <- c("tablename", "track", "subtrack")
+    data.frame(track=mat[ , "track"], subtrack=mat[ , "subtrack"],
+               row.names=mat[ , "tablename"],
+               stringsAsFactors=FALSE)
+}
+
 ### The table names above (unique key) must be used to name the elements of
 ### the list below. When a table name is missing, it means that the
-### tx_id-to-gene_id mapping is not available so makeTranscriptDbFromUCSC()
+### tx_name-to-gene_id mapping is not available so makeTranscriptDbFromUCSC()
 ### will leave the gene table empty.
-.UCSC_TXNAME2GENEID_MAPPINGS <- list(
+.UCSC_TXNAME2GENEID_MAPINFO <- list(
     knownGene=c(             # left table (i.e. on the left side of the join)
         "knownToLocusLink",  # right table (i.e. on the right side of the join)
         "name",              # joining col in the right table
@@ -877,13 +807,6 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
         "Ensembl gene ID")
 )
 
-supportedUCSCtables <- function()
-{
-    ans <- matrix(.SUPPORTED_UCSC_TABLES, ncol=3, byrow=TRUE)
-    colnames(ans) <- c("track", "subtrack", "tablename")
-    as.data.frame(ans)
-}
-
 ### The 2 main tasks that makeTranscriptDbFromUCSC() performs are:
 ###   (1) download the data from UCSC into a data.frame (the getTable() call);
 ###   (2) store that data.frame in an SQLite db (the
@@ -900,13 +823,36 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
     organism <- .getOrganismFromUCSCgenome(genome)
     tablename <- match.arg(tablename)
     if (tablename == "knownGene" && !(organism %in% c("Human", "Mouse", "Rat")))
-        stop("UCSC \"knownGene\" tablename is only supported ",
+        stop("UCSC \"knownGene\" table is only available ",
              "for Human, Mouse and Rat")
+    track <- supportedUCSCtables()[tablename, "track"]
     session <- browserSession()
     genome(session) <- genome
-    query <- ucscTableQuery(session, tablename)
-    ucsc_txtable <- getTable(query)  # download the data
-    .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, organism, tablename)
+    ## Download the transcript table.
+    query1 <- ucscTableQuery(session, tablename)
+    ucsc_txtable <- getTable(query1)
+    ## Download the tx_name-to-gene_id mapping.
+    txname2gene_mapinfo <- .UCSC_TXNAME2GENEID_MAPINFO[[tablename]]
+    if (is.null(txname2gene_mapinfo)) {
+        genes <- NULL
+        gene_id_type <- NA
+    } else {
+        tablename2 <- txname2gene_mapinfo[1L]
+        query2 <- ucscTableQuery(session, track=track, table=tablename2)
+        ucsc_genetable <- getTable(query2)
+        tx_name <- ucsc_genetable[[txname2gene_mapinfo[2L]]]
+        gene_id <- ucsc_genetable[[txname2gene_mapinfo[3L]]]
+        if (is.null(tx_name) || is.null(gene_id))
+            stop("expected cols \"", txname2gene_mapinfo[2L], "\" and \"",
+                 txname2gene_mapinfo[3L], "\" not found in table ", tablename2)
+        if (!is.character(tx_name))
+            tx_name <- as.character(tx_name)
+        if (!is.character(gene_id))
+            gene_id <- as.character(gene_id)
+        genes <- data.frame(tx_name=tx_name, gene_id=gene_id)
+        gene_id_type <- txname2gene_mapinfo[4L]
+    }
+    .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, genes, gene_id_type)
 }
 
 
@@ -988,12 +934,13 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
             sapply(split(width(ans), bm_table$ensembl_transcript_id), sum)
         if (!all(cds_cumlength[as.vector(bm_table$ensembl_transcript_id)]
                  == bm_table$cds_length, na.rm=TRUE))
-            stop("BioMart data anomaly: the cds cumulative lengths ",
-                 "inferred from the exon and UTR info don't match ",
-                 "the \"cds_length\" attribute from BioMart")
-        if (!all(cds_cumlength %% 3L == 0L))
-            warning("BioMart data anomaly: the cds cumulative lengths ",
-                    "(\"cds_length\" attribute) are not multiples of 3")
+            stop("BioMart data anomaly: for some transcripts, the cds ",
+                 "cumulative length inferred from the exon and UTR info ",
+                 "doesn't match the \"cds_length\" attribute from BioMart")
+        #if (!all(cds_cumlength %% 3L == 0L))
+        #    warning("BioMart data anomaly: for some transcripts, the cds ",
+        #            "cumulative length (\"cds_length\" attribute) is not ",
+        #            "a multiple of 3")
     }
     ans
 }
