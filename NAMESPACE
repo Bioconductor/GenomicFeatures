@@ -43,7 +43,8 @@ export(
   exonsByRanges,
   cdsByRanges,
   bindTranscripts,
-  bindExons
+  bindExons,
+  bindCDS
 )
 
 exportMethods(

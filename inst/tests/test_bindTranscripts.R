@@ -1,43 +1,65 @@
-## test_mapTranscripts <- function()
-## {
-##     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-##                                       package="GenomicFeatures"))
-##     suppressMessages(library(IRanges))
-##     ranges <- IRanges(start = c(1,20,300,31000),end =c(22,41,321,37000))
-##     chrom <- c("chr1", "chr1", "chr2", "chr2")
-##     strand <- c("-", "-", "+", "-")
-
-##     want <- RangedData(ranges     = IRanges(start = rep(31000,2),
-##                                             end   = rep(37000,2) ),
-##                    strand   = factor(rep("-",2),
-##                                      levels=c("-","+","*")),
-##                    tx_id    = rep(37L,2),
-##                    tx_name  = rep("uc002qvt.1",2),
-##                    space    = rep("chr2",2) )
-    
-##     checkEquals(want, GenomicFeatures:::.mapTranscripts(txdb, ranges,
-##                                                         chrom, strand))
-
-## }
-
-
 test_bindTranscripts <- function()
 {
+    suppressMessages(library(IRanges))
+    suppressMessages(library(BSgenome))
+
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                       package="GenomicFeatures"))
-    suppressMessages(library(IRanges))
-    ranges <- IRanges(start = c(1,20,300,31000),end =c(22,41,321,37000))
-    chrom <- c("chr1", "chr1", "chr2", "chr2")
-    strand <- c("-", "-", "+", "-")
 
-    want <- RangedData(ranges     = IRanges(start = rep(31000,2),
-                                            end   = rep(37000,2) ),
-                   strand   = factor(rep("-",2),
-                                     levels=c("-","+","*")),
-                   tx_id    = rep(37L,2),
-                   tx_name  = rep("uc002qvt.1",2),
-                   space    = rep("chr2",2) )
-    
+    checkException(bindTranscripts(txdb), silent = TRUE)
+    checkException(bindTranscripts(txdb, IRanges()), silent = TRUE)
+
+    ranges <- IRanges(start = c(1000, 1000, 20000, 30000),
+                      end   = c(4000, 4000, 30000, 40000))
+    chrom <- c("chr1", "chr1", "chr2", "chr2")
+    strand <- strand(c("+", "-", "+", "-"))
     rd <- RangedData(ranges, space = chrom, strand = strand)
-    checkEquals(want, bindTranscripts(txdb, rd))
+    want <- rd
+    want[["tx_id"]] <- IntegerList(list(1:2, integer(), integer(), 4))
+    want[["tx_name"]] <-
+      CharacterList(list(c("uc001aaa.2","uc009vip.1"),
+                         character(), character(), "uc002qvt.1"))
+    checkIdentical(want, bindTranscripts(txdb, rd))
+}
+
+test_bindExons <- function()
+{
+    suppressMessages(library(IRanges))
+    suppressMessages(library(BSgenome))
+
+    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                                     package="GenomicFeatures"))
+
+    checkException(bindExons(txdb), silent = TRUE)
+    checkException(bindExons(txdb, IRanges()), silent = TRUE)
+
+    ranges <- IRanges(start = c(1000, 1000, 20000, 30000),
+                      end   = c(4000, 4000, 30000, 40000))
+    chrom <- c("chr1", "chr1", "chr2", "chr2")
+    strand <- strand(c("+", "-", "+", "-"))
+    rd <- RangedData(ranges, space = chrom, strand = strand)
+    want <- rd
+    want[["exon_id"]] <- IntegerList(list(c(1,2,4,3), integer(), integer(), 9:10))
+    checkIdentical(want, bindExons(txdb, rd))
+}
+
+test_bindCDS <- function()
+{
+    suppressMessages(library(IRanges))
+    suppressMessages(library(BSgenome))
+
+    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                    package="GenomicFeatures"))
+
+    checkException(bindCDS(txdb), silent = TRUE)
+    checkException(bindCDS(txdb, IRanges()), silent = TRUE)
+
+    ranges <- IRanges(start = c(1000, 1000, 20000, 30000),
+                      end   = c(4000, 4000, 30000, 40000))
+    chrom <- c("chr1", "chr1", "chr2", "chr2")
+    strand <- strand(c("+", "-", "+", "-"))
+    rd <- RangedData(ranges, space = chrom, strand = strand)
+    want <- rd
+    want[["cds_id"]] <- IntegerList(list(integer(), integer(), integer(), 1:2))
+    checkIdentical(want, bindCDS(txdb, rd))
 }
