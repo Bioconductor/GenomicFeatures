@@ -49,12 +49,11 @@ As the suffix of the class name suggests, \Rclass{TranscriptDb}
 objects are backed by a SQLite database. This database manages:
 
 \begin{enumerate}
-\item genes and their associated mRNA transcripts
-\item pre-mRNA transcript genomic locations for mRNA transcripts
-\item exon genomic locations
-\item protein coding sequence contig genomic locations
-\item the relationships amongst mRNA transcripts, exons, and
-      protein coding sequence contigs
+\item genomic locations for pre-processed mRNA transcripts
+\item genomic locations for exons 
+\item genomic locations for protein coding sequences 
+\item the relationships amongst mRNA transcripts, exons, protein
+  coding sequences and associated gene IDs.
 \end{enumerate}
 
 
