@@ -173,6 +173,20 @@ bindExons(txdb, rd)
 @
 
 
+%% TODO: 
+%% 1) Add section for an RNA-seq application 
+%%   a. spoof some data 
+%%   b. findOverlaps() = counts between fake-data and data from 
+%%      transcriptsByRanges() OR you can just use bindTranscripts().
+%%   c. count how many of each gene are hit for each mapped (unique) range 
+%% 2) Add an example for a chip-seq application.
+%%   a. spoof data and then EXTEND it so that it can "overlap" in next step 
+%%   b. call transcriptsByRanges to get relevant data or bindTranscripts()
+%%   c. get the list of gene IDs out
+%%   d. do GSEA on the gene list
+
+
+
 \section{Session Information}
 
 The version number of R and packages loaded for generating the vignette were:
