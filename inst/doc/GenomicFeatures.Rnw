@@ -185,6 +185,12 @@ bindExons(txdb, rd)
 %%   c. get the list of gene IDs out
 %%   d. do GSEA on the gene list
 
+%% To this end the better part of our test database to test against is 
+%% probably chromosome 5: 
+%% specifically:
+%% 153478      chr5        +           193373.0    243087.0  
+%% 389257      chr5        +           244626.0    248468.0  
+%% 133957      chr5        -           257875.0    271297.0  
 
 
 \section{Session Information}
