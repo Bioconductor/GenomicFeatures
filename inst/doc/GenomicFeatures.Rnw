@@ -173,6 +173,38 @@ bindExons(txdb, rd)
 @
 
 
+\subsection{Example: Retrieving data from an RNA-seq experiment}
+
+Lets take the case where you have some RNA-seq data and you want to
+convert your ranges into counts representing how many hits per gene.
+
+
+<<RNASEQ1, eval=FALSE>>=
+##rd will represent the RangedData object that you have (your data)
+rd <- RangedData(ranges = IRanges(start = c(244620,244670,245804,247502),
+                                    end = c(244652,244702,245836,247534)),
+                 space = "chr5", 
+                 strand = "+")
+
+##recover the annotations
+annotRD <- transcriptsByRanges(txdb, rd, columns=c("tx_id","tx_name","gene_id"))
+
+##Get the overlap between the annotations and your data
+OL <- findOverlaps(rd,annotRD, multiple=TRUE)
+
+##ugly code to display the annotations and the data as they match up to each
+##other
+cbind(as.data.frame(rd[queryHits(OL),]),
+      as.data.frame(annotRD[subjectHits(OL),]) )
+
+##use countOverlaps to find the number of things we have
+countOverlaps(ranges(rd),ranges(annotRD))
+
+@
+
+
+
+
 %% TODO: 
 %% 1) Add section for an RNA-seq application 
 %%   a. spoof some data 
