@@ -150,10 +150,10 @@ bindTranscripts(txdb, rd)
 @
 
 
-\subsection{Transcript Overlap Counts}
 
+\subsection{Examples}
 
-\subsection{Example: Retrieving data from an experiment}
+\subsubsection{Example: Retrieving data from an experiment}
 
 So lets suppose that you have run an experiment. After mapping all
 your reads to a genome and collapsing them into a set of ranges, you
@@ -169,11 +169,10 @@ rd <- RangedData(ranges = IRanges(start=6700,end=7700),
 bindTranscripts(txdb, rd)
 
 bindExons(txdb, rd)
-
 @
 
 
-\subsection{Example: Retrieving data from an RNA-seq experiment}
+\subsubsection{Example: Retrieving data from an RNA-seq experiment}
 
 Lets take the case where you have some RNA-seq data and you want to
 convert your ranges into counts representing how many hits per gene.
@@ -192,15 +191,65 @@ annotRD <- transcriptsByRanges(txdb, rd, columns=c("tx_id","tx_name","gene_id"))
 ##Get the overlap between the annotations and your data
 OL <- findOverlaps(rd,annotRD, multiple=TRUE)
 
-##ugly code to display the annotations and the data as they match up to each
-##other
-cbind(as.data.frame(rd[queryHits(OL),]),
-      as.data.frame(annotRD[subjectHits(OL),]) )
+##just get the data that you want
+data <- annotRD[subjectHits(OL),]
 
-##use countOverlaps to find the number of things we have
-countOverlaps(ranges(rd),ranges(annotRD))
+##And then get the count per transcript:
+#table(annotRD[subjectHits(OL),]$tx_id)
+table(data$tx_id)
 
+##And the count per gene:
+table(unlist(data$gene_id))
 @
+
+
+
+%%TODO: work with Herve to improve the toy annotations so that we can have more interesting results in the example.
+
+\subsubsection{Example: Finding data for a Chip-seq experiment}
+
+What would we do differently if we had chip-seq data?  Lets imagine
+the we have a collection of reads in a \Rclass{RangedData} object
+as below.  We want to learn if these reads are 1) near to any
+transcript annotations and 2) if the list of things that they are near
+to are interesting or not.
+
+<<CHIPSEQ1, eval=FALSE>>=
+## rd will represent the RangedData object that you have (your data)
+rd <- RangedData(ranges = IRanges(start = c(244501,244553,244580,244523),
+                                    end = c(244533,244585,244612,244555)),
+                 space = "chr5", 
+                 strand = "+")
+
+## If we try to find annotations for this we discover that there are none
+## overlapping this feature...
+transcriptsByRanges(txdb, rd, columns=c("tx_id","tx_name","gene_id"))
+
+
+## So we will extend the rd object by a constant amount of 200 base pairs so
+## that each read has an opportunity to overlap with something interesting.
+rdExt <- rd
+ranges(rdExt) <- ranges(rdExt)+100
+
+##Then collapse the annotations
+rdExt <- reduce(rdExt)
+
+##And recover the annotations that match
+annotRD <- transcriptsByRanges(txdb, rdExt, 
+                               columns=c("tx_id","tx_name","gene_id"))
+
+##Then find the number of unique matching gene IDs 
+unique(unlist(annotRD$gene_id))
+@
+
+
+Once you have a gene list, you should be able to do a GSEA analysis using the Category or GOstats packages.
+
+
+
+% To answer the question of whether or not the reduced and extended peaks overlap with interesting genes, we can just call unique on the gene_id column and then apass that along to a 
+
+%%next just need the example data above to include starts and stops to land near a few related things, THEN I just need to show how you can get the unique(gene)ids) out and pass those along to a GSEA
 
 
 
