@@ -8,27 +8,27 @@
   Retrieving genomic features from a TranscriptDb object.
 }
 \description{
-  Functions to retrieve genomic features for IDs of types specified by the
-  vals parameter.
+  Functions to retrieve genomic features from a \link{TranscriptDb} object.
 }
 \usage{
-  transcripts(txdb, vals, columns=c("tx_id", "tx_name"))
-  exons(txdb, vals)
-  cds(txdb, vals)
+  transcripts(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
+  exons(txdb, vals=NULL)
+  cds(txdb, vals=NULL)
 }
 \arguments{  
   \item{txdb}{A \link{TranscriptDb} object.}
-  \item{vals}{Either NULL or a named list of vectors to be used to restrict
-    the output.
-    For \code{transcripts} the element names can be "gene_id", "tx_id",
-    "tx_name", "tx_chrom", and "tx_strand".
-    For \code{exons} the element names can be "exon_id", "exon_chrom", and
-    "exon_strand".
-    For \code{cds} the element names can be "cds_id", "cds_chrom", and
-    "cds_strand".}
-  \item{columns}{columns to include in the output. Can be NULL or
-    a combination of "tx_id", "tx_name", "gene_id", "exon_id", and
-    "cds_id".}
+  \item{vals}{Either \code{NULL} or a named list of vectors to be used to
+    restrict the output.
+    For \code{transcripts} the element names can be \code{"gene_id"},
+    \code{"tx_id"}, \code{"tx_name"}, \code{"tx_chrom"},
+    and \code{"tx_strand"}.
+    For \code{exons} the element names can be \code{"exon_id"},
+    \code{"exon_chrom"}, and \code{"exon_strand"}.
+    For \code{cds} the element names can be \code{"cds_id"},
+    \code{"cds_chrom"}, and \code{"cds_strand"}.}
+  \item{columns}{columns to include in the output.
+    Can be \code{NULL} or a combination of \code{"tx_id"}, \code{"tx_name"},
+    \code{"gene_id"}, \code{"exon_id"}, and \code{"cds_id"}.}
 }
 \details{
   These are the main functions for retrieving transcript information from
