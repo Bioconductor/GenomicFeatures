@@ -202,27 +202,28 @@ table(tdata$tx_id)
 table(unlist(tdata$gene_id))
 @
 
-Now lets assume that you want to search ONLY the exons for your
-transcripts (and not just the entire transcript as is done above). How
-could you do that?
+% Now lets assume that you want to search ONLY the exons for your
+% transcripts (and not just the entire transcript as is done above). How
+% could you do that?
 
-<<RNASEQ2, eval=FALSE>>=
-## recover the exon annotations
-annotRDEx <- exonsByRanges(txdb, rd)
+%<<RNASEQ2, eval=FALSE>>=
+%## recover the exon annotations
+%annotRDEx <- exonsByRanges(txdb, rd)
 
-## Get the overlap between the annotations and your data
-OL <- findOverlaps(rd,annotRDEx, multiple=TRUE)
+%## Get the overlap between the annotations and your data
+%OL <- findOverlaps(rd,annotRDEx, multiple=TRUE)
 
-## just get the data that you want
-edata <- annotRDEx[subjectHits(OL),]
+%## just get the data that you want
+%edata <- annotRDEx[subjectHits(OL),]
 
-## And then get the count per exon:
-table(edata$exon_id)
+%## And then get the count per exon:
+%table(edata$exon_id)
 
-## For each exon ID, you can retrieve potential Gene IDs from our previous
-## call to transcriptsByRanges()
+%## For each exon ID, you can retrieve potential Gene IDs from our previous
+%## call to transcriptsByRanges() BUT, be warned that this can be a many to
+%## many relationship
 
-@
+%@
 
 
 
