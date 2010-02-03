@@ -62,8 +62,7 @@
   \code{transcripts} must have 1 row per transcript and the following
   columns:
   \itemize{
-  \item \code{tx_id}: Transcript ID. Character vector (or factor) or
-        integer vector. No NAs. No duplicates. 
+  \item \code{tx_id}: Transcript ID. Integer vector. No NAs. No duplicates. 
   \item \code{tx_name}: [optional] Transcript name. Character vector (or factor).
   \item \code{tx_chrom}: Transcript chromosome. Character vector (or factor)
         with no NAs.
@@ -82,13 +81,16 @@
         data frame to a unique row in the \code{transcripts} data frame.
         Note that more than 1 row in \code{splicings} can be linked to the
         same row in \code{transcripts} (many-to-one relationship).
-        Same type as \code{transcripts$tx_id}. No NAs. All the values in
-        this column must be present in \code{transcripts$tx_id}.
+        Same type as \code{transcripts$tx_id} (integer vector). No NAs.
+        All the values in this column must be present in
+        \code{transcripts$tx_id}.
   \item \code{exon_rank}: The rank of the exon in the transcript.
         Integer vector with no NAs. (\code{tx_id}, \code{exon_rank})
         pairs must be unique.
   \item \code{exon_id}: [optional] Exon ID.
-        Character vector (or factor) or integer vector. No NAs.
+        Integer vector. No NAs.
+  \item \code{exon_name}: [optional] Exon name.
+        Character vector (or factor).
   \item \code{exon_chrom}: [optional] Exon chromosome.
         Character vector (or factor) with no NAs.
         If missing then \code{transcripts$tx_chrom} is used.
@@ -99,8 +101,11 @@
         and \code{exon_chrom} must be missing too.
   \item \code{exon_start}, \code{exon_end}: Exon start and end.
         Integer vectors with no NAs.
-  \item \code{cds_id}: [optional] cds ID.
-        Character vector (or factor) or integer vector.
+  \item \code{cds_id}: [optional] cds ID. Integer vector.
+        If present then \code{cds_start} and \code{cds_end} must be too.
+        NAs are allowed and must match NAs in \code{cds_start}
+        and \code{cds_end}.
+  \item \code{cds_name}: [optional] cds name. Character vector (or factor).
         If present then \code{cds_start} and \code{cds_end} must be too.
         NAs are allowed and must match NAs in \code{cds_start}
         and \code{cds_end}.

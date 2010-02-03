@@ -55,14 +55,11 @@ loadFeatures <- function(file)
     is.character(x) || (is.factor(x) && is.character(levels(x)))
 }
 
-.checkForeignKey <- function(referring_vals, referred_vals,
-                             referring_colname, referred_colname)
+.checkIntForeignKey <- function(referring_vals, referred_vals,
+                                referring_colname, referred_colname)
 {
-    if (!(.isCharacterVectorOrFactor(referring_vals)
-          && .isCharacterVectorOrFactor(referred_vals))
-     && !(is.integer(referring_vals) && is.integer(referred_vals)))
-        stop("'", referring_colname, "' must have the ",
-             "same type as '", referred_colname, "'")
+    if (!is.integer(referring_vals))
+        stop("'", referring_colname, "' must be an integer vector")
     if (any(is.na(referring_vals)))
         stop("'", referring_colname, "' cannot contain NAs")
     if (!all(referring_vals %in% referred_vals))
@@ -77,11 +74,8 @@ loadFeatures <- function(file)
     .checkargColnames(transcripts, .REQUIRED_COLS, .OPTIONAL_COLS,
                       "transcripts")
     ## Check 'tx_id'.
-    if (!(.isCharacterVectorOrFactor(transcripts$tx_id)
-          || is.integer(transcripts$tx_id))
-     || any(is.na(transcripts$tx_id)))
-        stop("'transcripts$tx_id' must be a character vector (or factor), ",
-             "or an integer vector, with no NAs")
+    if (!is.integer(transcripts$tx_id) || any(is.na(transcripts$tx_id)))
+        stop("'transcripts$tx_id' must be an integer vector, with no NAs")
     if (any(duplicated(transcripts$tx_id)))
         stop("'transcripts$tx_id' contains duplicated values")
     ## Check 'tx_name'.
@@ -121,12 +115,12 @@ loadFeatures <- function(file)
 .normargSplicings <- function(splicings, unique_tx_ids)
 {
     .REQUIRED_COLS <- c("tx_id", "exon_rank", "exon_start", "exon_end")
-    .OPTIONAL_COLS <- c("exon_id", "exon_chrom", "exon_strand",
-                        "cds_id", "cds_start", "cds_end")
+    .OPTIONAL_COLS <- c("exon_id", "exon_name", "exon_chrom", "exon_strand",
+                        "cds_id", "cds_name", "cds_start", "cds_end")
     .checkargColnames(splicings, .REQUIRED_COLS, .OPTIONAL_COLS, "splicings")
     ## Check 'tx_id'.
-    .checkForeignKey(splicings$tx_id, unique_tx_ids,
-                     "splicings$tx_id", "transcripts$tx_id")
+    .checkIntForeignKey(splicings$tx_id, unique_tx_ids,
+                        "splicings$tx_id", "transcripts$tx_id")
     ## Check 'exon_rank'.
     if (!is.numeric(splicings$exon_rank)
      || any(is.na(splicings$exon_rank)))
@@ -137,10 +131,12 @@ loadFeatures <- function(file)
         stop("'splicings$exon_rank' contains non-positive values")
     ## Check 'exon_id'.
     if ("exon_id" %in% colnames(splicings)
-     && (!(.isCharacterVectorOrFactor(splicings$exon_id)
-           || is.integer(splicings$exon_id)) || any(is.na(splicings$exon_id))))
-        stop("'splicings$exon_id' must be a character vector (or factor), ",
-             "or an integer vector, with no NAs")
+     && (!is.integer(splicings$exon_id) || any(is.na(splicings$exon_id))))
+        stop("'splicings$exon_id' must be an integer vector, with no NAs")
+    ## Check 'exon_name'.
+    if ("exon_name" %in% colnames(splicings)
+     && !.isCharacterVectorOrFactor(splicings$exon_name))
+        stop("'splicings$exon_name' must be a character vector (or factor)")
     ## Check 'exon_chrom'.
     if ("exon_chrom" %in% colnames(splicings)
      && (!.isCharacterVectorOrFactor(splicings$exon_chrom)
@@ -199,12 +195,21 @@ loadFeatures <- function(file)
         if (is.null(splicings$cds_start))
             stop("'splicings' has a \"cds_id\" col ",
                  "but no \"cds_start\"/\"cds_end\" cols")
-        if (!.isCharacterVectorOrFactor(splicings$cds_id)
-         && !is.integer(splicings$cds_id))
-            stop("'splicings$cds_id' must be a character vector (or factor), ",
-                 "or an integer vector")
+        if (!is.integer(splicings$cds_id))
+            stop("'splicings$cds_id' must be an integer vector")
         if (!all(is.na(splicings$cds_id) == is.na(splicings$cds_start)))
             stop("NAs in 'splicings$cds_id' don't match ",
+                 "NAs in 'splicings$cds_start'")
+    }
+    ## Check 'cds_name'.
+    if (!is.null(splicings$cds_name)) {
+        if (is.null(splicings$cds_start))
+            stop("'splicings' has a \"cds_name\" col ",
+                 "but no \"cds_start\"/\"cds_end\" cols")
+        if (!.isCharacterVectorOrFactor(splicings$cds_name))
+            stop("'splicings$cds_name' must be a character vector (or factor)")
+        if (!all(is.na(splicings$cds_name) == is.na(splicings$cds_start)))
+            stop("NAs in 'splicings$cds_name' don't match ",
                  "NAs in 'splicings$cds_start'")
     }
     splicings
@@ -234,8 +239,8 @@ loadFeatures <- function(file)
                                            unique_tx_ids, "tx_id")
     } else {
         ## Check 'tx_id'.
-        .checkForeignKey(genes$tx_id, unique_tx_ids,
-                         "genes$tx_id", "transcripts$tx_id")
+        .checkIntForeignKey(genes$tx_id, unique_tx_ids,
+                            "genes$tx_id", "transcripts$tx_id")
     }
     genes
 }
@@ -271,7 +276,6 @@ loadFeatures <- function(file)
 .writeFeatureCoreTables <- function(conn,
                                     feature,
                                     internal_id,
-                                    external_id,
                                     name,
                                     chrom,
                                     strand,
@@ -283,7 +287,6 @@ loadFeatures <- function(file)
         name <- rep.int(NA_character_, length(internal_id))
     table <- data.frame(
         internal_id=internal_id,
-        external_id=external_id,
         name=name,
         chrom=chrom,
         strand=strand,
@@ -296,10 +299,9 @@ loadFeatures <- function(file)
     sql <- c(
         "CREATE TABLE ", feature, " (\n",
         "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
-        "  ", colnames[2L], " TEXT UNIQUE NOT NULL,\n",
-        "  ", colnames[3L], " TEXT NULL,\n",
-        "  ", colnames[4L], " TEXT NOT NULL,\n",
-        "  ", colnames[5L], " TEXT NOT NULL\n",
+        "  ", colnames[2L], " TEXT NULL,\n",
+        "  ", colnames[3L], " TEXT NOT NULL,\n",
+        "  ", colnames[4L], " TEXT NOT NULL\n",
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
@@ -308,10 +310,10 @@ loadFeatures <- function(file)
     ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
     ## when the nb of rows to insert is 0, hence the following test.
     if (nrow(table) != 0L) {
-        sql <- c("INSERT INTO ", feature, " VALUES (?,?,?,?,?)")
+        sql <- c("INSERT INTO ", feature, " VALUES (?,?,?,?)")
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
-                                   table[1:5])
+                                   table[1:4])
         dbClearResult(res)
         dbCommit(conn)
     }
@@ -320,8 +322,8 @@ loadFeatures <- function(file)
     sql <- c(
         "CREATE VIRTUAL TABLE ", feature, "_rtree USING rtree (\n",
         "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
-        "  ", colnames[6L], " INTEGER, -- NOT NULL is implicit in rtree\n",
-        "  ", colnames[7L], " INTEGER  -- NOT NULL is implicit in rtree\n",
+        "  ", colnames[5L], " INTEGER, -- NOT NULL is implicit in rtree\n",
+        "  ", colnames[6L], " INTEGER  -- NOT NULL is implicit in rtree\n",
         "  -- FOREIGN KEY (", colnames[1L], ") REFERENCES ", feature, "\n",
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
@@ -332,7 +334,7 @@ loadFeatures <- function(file)
         sql <- c("INSERT INTO ", feature, "_rtree VALUES (?,?,?)")
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
-                                   table[c(1L, 6:7)])
+                                   table[c(1L, 5:6)])
         dbClearResult(res)
         dbCommit(conn)
     }
@@ -387,14 +389,14 @@ loadFeatures <- function(file)
     }
 }
 
-.writeGeneTable <- function(conn, geneId, internal_tx_id)
+.writeGeneTable <- function(conn, gene_id, internal_tx_id)
 {
     table <- data.frame(
-        geneId=geneId,
+        gene_id=gene_id,
         internal_tx_id=internal_tx_id,
         stringsAsFactors=FALSE)
     table <- unique(table)
-    table <- table[!is.na(table$geneId), ]
+    table <- table[!is.na(table$gene_id), ]
     ## Create the 'gene' table.
     sql <- c(
         "CREATE TABLE gene (\n",
@@ -444,10 +446,10 @@ loadFeatures <- function(file)
 .importTranscripts <- function(conn, transcripts, internal_tx_id)
 {
     .writeFeatureCoreTables(conn, "transcript",
-        internal_tx_id, transcripts$tx_id, transcripts$tx_name,
+        internal_tx_id, transcripts$tx_name,
         transcripts$tx_chrom, transcripts$tx_strand,
         transcripts$tx_start, transcripts$tx_end,
-        c("_tx_id", "tx_id", "tx_name",
+        c("_tx_id", "tx_name",
           "tx_chrom", "tx_strand",
           "tx_start", "tx_end"))
 }
@@ -455,26 +457,26 @@ loadFeatures <- function(file)
 .importExons <- function(conn, splicings, internal_exon_id)
 {
     .writeFeatureCoreTables(conn, "exon",
-        internal_exon_id, splicings$exon_id, NULL,
+        internal_exon_id, splicings$exon_name,
         splicings$exon_chrom, splicings$exon_strand,
         splicings$exon_start, splicings$exon_end,
-        c("_exon_id", "exon_id", "exon_name",
+        c("_exon_id", "exon_name",
           "exon_chrom", "exon_strand",
           "exon_start", "exon_end"))
 }
 
 .importCDS <- function(conn, splicings, internal_cds_id)
 {
-    external_cds_id <- splicings$cds_id[!is.na(internal_cds_id)]
+    cds_name <- splicings$cds_name[!is.na(internal_cds_id)]
     cds_chrom <- splicings$exon_chrom[!is.na(internal_cds_id)]
     cds_strand <- splicings$exon_strand[!is.na(internal_cds_id)]
     cds_start <- splicings$cds_start[!is.na(internal_cds_id)]
     cds_end <- splicings$cds_end[!is.na(internal_cds_id)]
     .writeFeatureCoreTables(conn, "cds",
-        internal_cds_id[!is.na(internal_cds_id)], external_cds_id, NULL,
+        internal_cds_id[!is.na(internal_cds_id)], cds_name,
         cds_chrom, cds_strand,
         cds_start, cds_end,
-        c("_cds_id", "cds_id", "cds_name",
+        c("_cds_id", "cds_name",
           "cds_chrom", "cds_strand",
           "cds_start", "cds_end"))
 }
@@ -488,33 +490,27 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
     names(unique_tx_ids) <- transcripts$tx_name
     splicings <- .normargSplicings(splicings, unique_tx_ids)
     genes <- .normargGenes(genes, unique_tx_ids)
-    ## Generate internal transcript id.
-    if (is.integer(unique_tx_ids)) {
-        transcripts_internal_tx_id <- unique_tx_ids
-        splicings_internal_tx_id <- splicings$tx_id
-        genes_internal_tx_id <- genes$tx_id
-    } else {
-        transcripts_internal_tx_id <- seq_len(length(unique_tx_ids))
-        splicings_internal_tx_id <- as.integer(factor(splicings$tx_id,
-                                                      levels=unique_tx_ids))
-        genes_internal_tx_id <- as.integer(factor(genes$tx_id,
-                                                  levels=unique_tx_ids))
-    }
+    transcripts_internal_tx_id <- unique_tx_ids
+    splicings_internal_tx_id <- splicings$tx_id
+    genes_internal_tx_id <- genes$tx_id
     ## Infer 'splicings$exon_chrom' and 'splicings$exon_strand' when missing
     ## and generate internal exon id.
     if (is.null(splicings$exon_chrom))
         splicings$exon_chrom <- transcripts$tx_chrom[splicings_internal_tx_id]
     if (is.null(splicings$exon_strand))
         splicings$exon_strand <- transcripts$tx_strand[splicings_internal_tx_id]
-    if (is.null(splicings$exon_id)) {
+    if (!is.null(splicings$exon_id)) {
+        splicings_internal_exon_id <- splicings$exon_id
+    } else if (!is.null(splicings$exon_name)) {
+        splicings_internal_exon_id <-
+            .makeInternalIdsFromExternalIds(splicings$exon_name)
+        #splicings$exon_id <- splicings_internal_exon_id
+    } else {
         splicings_internal_exon_id <-
             .makeInternalIdsForUniqueLocs(
                 splicings$exon_chrom, splicings$exon_strand,
                 splicings$exon_start, splicings$exon_end)
-        splicings$exon_id <- splicings_internal_exon_id
-    } else {
-        splicings_internal_exon_id <-
-            .makeInternalIdsFromExternalIds(splicings$exon_id)
+        #splicings$exon_id <- splicings_internal_exon_id
     }
     ## Infer 'splicings$cds_start' and 'splicings$cds_end' when missing
     ## and generate internal cds id.
@@ -522,15 +518,18 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
         splicings$cds_start <- rep.int(NA_integer_, nrow(splicings))
         splicings$cds_end <- splicings$cds_start
     }
-    if (is.null(splicings$cds_id)) {
+    if (!is.null(splicings$cds_id)) {
+        splicings_internal_cds_id <- splicings$cds_id
+    } else if (!is.null(splicings$cds_name)) {
+        splicings_internal_cds_id <-
+            .makeInternalIdsFromExternalIds(splicings$cds_name)
+        #splicings$cds_id <- splicings_internal_cds_id
+    } else {
         splicings_internal_cds_id <-
             .makeInternalIdsForUniqueLocs(
                 splicings$exon_chrom, splicings$exon_strand,
                 splicings$cds_start, splicings$cds_end)
-        splicings$cds_id <- splicings_internal_cds_id
-    } else {
-        splicings_internal_cds_id <-
-            .makeInternalIdsFromExternalIds(splicings$cds_id)
+        #splicings$cds_id <- splicings_internal_cds_id
     }
     ## Create the db in a temp file.
     conn <- dbConnect(SQLite(), dbname="")
@@ -972,8 +971,13 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                     "transcript_start",
                     "transcript_end")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
+    transcripts_tx_id <- seq_len(nrow(bm_table))
+    transcripts_tx_name <- bm_table$ensembl_transcript_id
+    if (any(duplicated(transcripts_tx_name)))
+        stop("the 'ensembl_transcript_id' field contains duplicates")
     transcripts <- data.frame(
-        tx_id=bm_table$ensembl_transcript_id,
+        tx_id=transcripts_tx_id,
+        tx_name=transcripts_tx_name,
         tx_chrom=bm_table$chromosome_name,
         tx_strand=ifelse(bm_table$strand == 1, "+", "-"),
         tx_start=bm_table$transcript_start,
@@ -1001,15 +1005,17 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
         "cds_length"
     )
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
+    splicings_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
+                                         levels=transcripts_tx_name))
     cds_ranges <- .extractCdsRangesFromBiomartTable(bm_table)
     cds_start <- start(cds_ranges)
     cds_start[width(cds_ranges) == 0L] <- NA_integer_
     cds_end <- end(cds_ranges)
     cds_end[width(cds_ranges) == 0L] <- NA_integer_
     splicings <- data.frame(
-        tx_id=bm_table$ensembl_transcript_id,
+        tx_id=splicings_tx_id,
         exon_rank=bm_table$rank,
-        exon_id=bm_table$ensembl_exon_id,
+        exon_name=bm_table$ensembl_exon_id,
         exon_start=bm_table$exon_chrom_start,
         exon_end=bm_table$exon_chrom_end,
         cds_start=cds_start,
@@ -1018,8 +1024,10 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     ## Download and prepare the 'genes' data frame.
     attributes <- c("ensembl_gene_id", "ensembl_transcript_id")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
+    genes_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
+                                     levels=transcripts_tx_name))
     genes <- data.frame(
-        tx_id=bm_table$ensembl_transcript_id,
+        tx_id=genes_tx_id,
         gene_id=bm_table$ensembl_gene_id
     )
     ## Call makeTranscriptDb().
@@ -1062,7 +1070,7 @@ setMethod("as.list", "TranscriptDb",
     {
         ## Retrieve the "transcripts" element.
         sql <- paste(
-            "SELECT tx_id, tx_name,",
+            "SELECT transcript._tx_id AS tx_id, tx_name,",
             "tx_chrom, tx_strand, tx_start, tx_end",
             "FROM transcript INNER JOIN transcript_rtree",
             "ON (transcript._tx_id=transcript_rtree._tx_id)",
@@ -1070,7 +1078,7 @@ setMethod("as.list", "TranscriptDb",
         )
         transcripts <- dbGetQuery(x@conn, sql)
         COL2CLASS <- c(
-             tx_id="character",
+             tx_id="integer",
              tx_name="character",
              tx_chrom="factor",
              tx_strand="factor",
@@ -1081,9 +1089,12 @@ setMethod("as.list", "TranscriptDb",
 
         ## Retrieve the "splicings" element.
         sql <- paste(
-            "SELECT tx_id, exon_rank,",
-            "exon_id, exon_chrom, exon_strand, exon_start, exon_end,",
-            "cds_id, cds_start, cds_end",
+            "SELECT transcript._tx_id AS tx_id, exon_rank,",
+            "exon._exon_id AS exon_id, exon_name,",
+            "exon_chrom, exon_strand, exon_start, exon_end,",
+            #"cds._cds_id AS cds_id, cds_name,",
+            "cds._cds_id AS cds_id,",
+            "cds_start, cds_end",
             "FROM transcript INNER JOIN transcript_rtree",
             "ON (transcript._tx_id=transcript_rtree._tx_id)",
             "INNER JOIN splicing",
@@ -1100,19 +1111,24 @@ setMethod("as.list", "TranscriptDb",
         )
         splicings <- dbGetQuery(x@conn, sql)
         COL2CLASS <- c(
-             tx_id="character",
+             tx_id="integer",
              exon_rank="integer",
-             exon_id="character",
+             exon_id="integer",
+             exon_name="character",
              exon_chrom="factor",
              exon_strand="factor",
              exon_start="integer",
-             exon_end="integer"
+             exon_end="integer",
+             cds_id="integer",
+             #cds_name="character",
+             cds_start="integer",
+             cds_end="integer"
         )
         splicings <- setDataFrameColClass(splicings, COL2CLASS)
 
         ## Retrieve the "genes" element.
         sql <- paste(
-            "SELECT tx_id, gene_id",
+            "SELECT transcript._tx_id AS tx_id, gene_id",
             "FROM transcript INNER JOIN transcript_rtree",
             "ON (transcript._tx_id=transcript_rtree._tx_id)",
             "INNER JOIN gene",
@@ -1121,7 +1137,7 @@ setMethod("as.list", "TranscriptDb",
         )
         genes <- dbGetQuery(x@conn, sql)
         COL2CLASS <- c(
-             tx_id="character",
+             tx_id="integer",
              gene_id="character"
         )
         genes <- setDataFrameColClass(genes, COL2CLASS)
