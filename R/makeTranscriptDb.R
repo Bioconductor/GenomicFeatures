@@ -565,28 +565,11 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
     unlist(ans)
 }
 
-.extractExonRangesFromUCSCTxTable <- function(ucsc_txtable)
-{
-    exon_count <- ucsc_txtable$exonCount
-    if (length(exon_count) == 0L)
-        return(IRanges())
-    ucsc_exonStarts <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonStarts)
-    if (!identical(elementLengths(ucsc_exonStarts), exon_count))
-        stop("UCSC data anomaly: 'ucsc_txtable$exonStarts' ",
-             "inconsistent with 'ucsc_txtable$exonCount'")
-    exon_start <- unlist(ucsc_exonStarts) + 1L
-    ucsc_exonEnds <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonEnds)
-    if (!identical(elementLengths(ucsc_exonEnds), exon_count))
-        stop("UCSC data anomaly: 'ucsc_txtable$exonEnds' ",
-             "inconsistent with 'ucsc_txtable$exonCount'")
-    exon_end <- unlist(ucsc_exonEnds)
-    IRanges(start=exon_start, end=exon_end)
-}
-
-### 'cds_start', 'cds_end': single integers
-### 'exons': Ranges object
-### Returns a list with 2 elements (start and end), each of them being integer
-### vectors of the same length as 'exons', and may contain NAs.
+### 'cdsStart0', 'cdsEnd1': single integers (resp. 0-based and 1-based).
+### 'exon_start0', 'exon_end1': integer vectors of equal lengths (resp.
+### 0-based and 1-based).
+### Returns a list with 2 elements, each of them being an integer vector of
+### the same length as 'exon_start0', and may contain NAs.
 ### Notes:
 ###   (1) In refGene table, transcript NM_001146685: cds cumulative length is
 ###       not a multiple of 3:
@@ -610,21 +593,22 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
 ###   (3) All transcripts in knowGene table have a cds cumulative length that
 ###       is a multiple of 3.
 ### TODO: Investigate (1) and (2).
-.extractUCSCCdsStartEnd <- function(cds_start, cds_end, exons, tx_name)
+.extractUCSCCdsStartEnd <- function(cdsStart0, cdsEnd1,
+                                    exon_start0, exon_end1, tx_name)
 {
-    ans_start <- ans_end <- integer(length(exons))
-    ans_start[] <- NA_integer_
-    ans_end[] <- NA_integer_
-    if (cds_start > cds_end)
-        return(list(start=ans_start, end=ans_end))
-    first_exon_with_cds <- which(start(exons) <= cds_start
-                                 & cds_start <= end(exons))
+    cds_start0 <- cds_end1 <- integer(length(exon_start0))
+    cds_start0[] <- NA_integer_
+    cds_end1[] <- NA_integer_
+    if (cdsStart0 >= cdsEnd1)
+        return(list(cds_start0, cds_end1))
+    first_exon_with_cds <- which(exon_start0 <= cdsStart0
+                                 & cdsStart0 < exon_end1)
     if (length(first_exon_with_cds) != 1L)
         stop("UCSC data ambiguity in transcript ", tx_name,
              ": cannot determine first exon with cds ('cdsStart' ",
              "falls in 0 or more than 1 exon)")
-    last_exon_with_cds <- which(start(exons) <= cds_end
-                                & cds_end <= end(exons))
+    last_exon_with_cds <- which(exon_start0 < cdsEnd1
+                                & cdsEnd1 <= exon_end1)
     if (length(last_exon_with_cds) != 1L)
         stop("UCSC data ambiguity in transcript ", tx_name,
              ": cannot determine last exon with cds ('cdsEnd' ",
@@ -633,40 +617,39 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
         stop("UCSC data anomaly in transcript ", tx_name,
              ": last exon with cds occurs before first exon with cds")
     exons_with_cds <- first_exon_with_cds:last_exon_with_cds
-    ans_start[exons_with_cds] <- start(exons)[exons_with_cds]
-    ans_end[exons_with_cds] <- end(exons)[exons_with_cds]
-    ans_start[first_exon_with_cds] <- cds_start
-    ans_end[last_exon_with_cds] <- cds_end
-    if (sum(ans_end - ans_start + 1L, na.rm=TRUE) %% 3L != 0L)
+    cds_start0[exons_with_cds] <- exon_start0[exons_with_cds]
+    cds_end1[exons_with_cds] <- exon_end1[exons_with_cds]
+    cds_start0[first_exon_with_cds] <- cdsStart0
+    cds_end1[last_exon_with_cds] <- cdsEnd1
+    if (sum(cds_end1 - cds_start0, na.rm=TRUE) %% 3L != 0L)
         warning("UCSC data anomaly in transcript ", tx_name,
                 ": the cds cumulative length is not a multiple of 3")
-    list(start=ans_start, end=ans_end)
+    list(cds_start0, cds_end1)
 }
 
-### Takes more than 5 minutes on the knownGene table! FIX IT!
-.extractCdsRangesFromUCSCTxTable <- function(ucsc_txtable, exon_ranges)
+.extractExonsAndCdsFromUCSCTxTable <- function(ucsc_txtable)
 {
     exon_count <- ucsc_txtable$exonCount
-    cdsStart <- ucsc_txtable$cdsStart + 1L
+    exon_start <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonStarts)
+    if (!identical(elementLengths(exon_start), exon_count))
+        stop("UCSC data anomaly: 'ucsc_txtable$exonStarts' ",
+             "inconsistent with 'ucsc_txtable$exonCount'")
+    exon_end <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonEnds)
+    if (!identical(elementLengths(exon_end), exon_count))
+        stop("UCSC data anomaly: 'ucsc_txtable$exonEnds' ",
+             "inconsistent with 'ucsc_txtable$exonCount'")
+    cdsStart <- ucsc_txtable$cdsStart
     cdsEnd <- ucsc_txtable$cdsEnd
-    cdsStarts <- cdsEnds <- vector(mode="list", length=nrow(ucsc_txtable))
-    exon_ranges_offset <- 0L
+    cds_start <- cds_end <- vector(mode="list", length=nrow(ucsc_txtable))
     for (i in seq_len(nrow(ucsc_txtable))) {
-        exons <- exon_ranges[exon_ranges_offset + seq_len(exon_count[i])]
-        exon_ranges_offset <- exon_ranges_offset + exon_count[i]
         startend <- .extractUCSCCdsStartEnd(cdsStart[i], cdsEnd[i],
-                                            exons, ucsc_txtable$name[i])
-        cdsStarts[[i]] <- startend$start
-        cdsEnds[[i]] <- startend$end
+                                            exon_start[[i]], exon_end[[i]],
+                                            ucsc_txtable$name[i])
+        cds_start[[i]] <- startend[[1L]]
+        cds_end[[i]] <- startend[[2L]]
     }
-    if (nrow(ucsc_txtable) == 0L) {
-        ans_start <- integer(0)
-        ans_end <- integer(0)
-    } else {
-        ans_start <- unlist(cdsStarts)
-        ans_end <- unlist(cdsEnds)
-    }
-    return(list(start=ans_start, end=ans_end))
+    return(list(exon_start=exon_start, exon_end=exon_end,
+                cds_start=cds_start, cds_end=cds_end))
 }
 
 .makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes, gene_id_type)
@@ -701,19 +684,28 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
     ## Exon starts and ends are multi-valued fields (comma-separated) that
     ## need to be expanded.
     exon_count <- ucsc_txtable$exonCount
-    if (min(exon_count) <= 0L)
-        stop("UCSC data anomaly: 'ucsc_txtable$exonCount' contains ",
-             "non-positive values")
     splicings_tx_id <- rep.int(tx_id, exon_count)
-    exon_ranges <- .extractExonRangesFromUCSCTxTable(ucsc_txtable)
-    cds_startend <- .extractCdsRangesFromUCSCTxTable(ucsc_txtable, exon_ranges)
+    if (length(exon_count) == 0L) {
+        exon_rank <- exon_start <- exon_end <-
+            cds_start <- cds_end <- integer(0)
+    } else {
+        if (min(exon_count) <= 0L)
+            stop("UCSC data anomaly: 'ucsc_txtable$exonCount' contains ",
+                 "non-positive values")
+        exon_rank <- .makeExonRank(exon_count, ucsc_txtable$strand)
+        exons_and_cds <- .extractExonsAndCdsFromUCSCTxTable(ucsc_txtable)
+        exon_start <- unlist(exons_and_cds$exon_start) + 1L
+        exon_end <- unlist(exons_and_cds$exon_end)
+        cds_start <- unlist(exons_and_cds$cds_start) + 1L
+        cds_end <- unlist(exons_and_cds$cds_end)
+    }
     splicings <- data.frame(
         tx_id=splicings_tx_id,
-        exon_rank=.makeExonRank(exon_count, ucsc_txtable$strand),
-        exon_start=start(exon_ranges),
-        exon_end=end(exon_ranges),
-        cds_start=cds_startend$start,
-        cds_end=cds_startend$end
+        exon_rank=exon_rank,
+        exon_start=exon_start,
+        exon_end=exon_end,
+        cds_start=cds_start,
+        cds_end=cds_end
     )
 
     ## Prepare the 'genes' data frame.
