@@ -2,7 +2,7 @@
 \Rdversion{1.1}
 \alias{transcripts_deprecated}
 \alias{exons_deprecated}
-\alias{introns}
+\alias{introns_deprecated}
 \title{
   Functions that compute genomic regions of interest.
 }
@@ -14,7 +14,7 @@
 \usage{
 transcripts_deprecated(genes, proximal = 500, distal = 10000)
 exons_deprecated(genes)
-introns(genes)
+introns_deprecated(genes)
 }
 \arguments{
   \item{genes}{ A data.frame like that returned by
@@ -40,7 +40,7 @@ introns(genes)
   there are columns for each type of region (promoter, threeprime,
   upstream, and downstream).
   For \code{exons_deprecated}, each element corresponds to an exon.
-  For \code{introns}, each element corresponds to an intron.
+  For \code{introns_deprecated}, each element corresponds to an intron.
 }
 \author{
   M. Lawrence.

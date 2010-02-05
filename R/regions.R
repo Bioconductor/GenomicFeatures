@@ -62,7 +62,7 @@ exons_deprecated <- function(genes) {
 ## RG thinks that there is always one more exon than intron
 ## and that the first intron comes after the first exon
 ## For this data at least, I believe that RG is correct. -MC
-introns <- function(genes) {
+introns_deprecated <- function(genes) {
   ## [intron:start, intron:end]
   tmp <- .countPos(genes$intronStarts)
   nIntrons <- sapply(tmp, length)

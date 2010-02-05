@@ -20,7 +20,7 @@ exportClasses(GenomicFeatures, TranscriptDb)
 export(
   transcripts_deprecated,
   exons_deprecated,
-  introns,
+  introns_deprecated,
   extractTranscriptsFromGenome,
   makeTranscriptDb,
   supportedUCSCtables,
