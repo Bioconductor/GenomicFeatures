@@ -28,7 +28,7 @@
   supportedUCSCtables()
   makeTranscriptDbFromUCSC(genome="hg18", tablename="knownGene")
   makeTranscriptDbFromBiomart(biomart, dataset, ensembl_transcript_ids=NULL)
-  makeTranscriptDb(transcripts, splicings, genes=NULL, ...)
+  makeTranscriptDb(transcripts, splicings, genes=NULL, metadata=NULL, ...)
 }
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
@@ -47,6 +47,10 @@
     of a set of transcripts}
   \item{genes}{data frame containing the genes associated to a set
     of transcripts}
+  \item{metadata}{2-column data frame containing meta information about
+    this set of transcripts like species, organism, genome, UCSC table, etc...
+    The names of the columns must be \code{"name"} and \code{"value"}
+    and their type must be character.}
   \item{...}{ignored for now}
 }
 \details{

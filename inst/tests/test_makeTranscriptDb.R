@@ -26,7 +26,8 @@ test_makeTranscriptDbFromUCSCTxTable <- function()
     genes <- data.frame(tx_name=UCSC_knownToLocusLink_sample$name,
                         gene_id=UCSC_knownToLocusLink_sample$value)
     txdb1 <- GenomicFeatures:::.makeTranscriptDbFromUCSCTxTable(
-                 UCSC_knownGene_sample, genes, "Entrez Gene ID")
+                 UCSC_knownGene_sample, genes,
+                 "hg18", "knownGene", "Entrez Gene ID")
 
     ## compare
     ok <- GenomicFeatures:::compareTranscriptDbs(txdb1, txdb0)

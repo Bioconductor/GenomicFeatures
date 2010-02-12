@@ -419,22 +419,33 @@ loadFeatures <- function(file)
     }
 }
 
-.writeMetadataTable <- function(conn)
+.writeMetadataTable <- function(conn, metadata)
 {
     transcript_nrow <- dbGetQuery(conn, "SELECT COUNT(*) FROM transcript")[[1L]]
     exon_nrow <- dbGetQuery(conn, "SELECT COUNT(*) FROM exon")[[1L]]
     cds_nrow <- dbGetQuery(conn, "SELECT COUNT(*) FROM cds")[[1L]]
-    mat <- matrix(c(
-        "DbType",  "TranscriptDb",
-        "CreationDate", date(),
-        "transcript_nrow", transcript_nrow,
-        "exon_nrow", exon_nrow,
-        "cds_nrow", cds_nrow),
+    thispkg_version <- installed.packages()['GenomicFeatures', 'Version']
+    rsqlite_version <- installed.packages()['RSQLite', 'Version']
+    mat1 <- matrix(c(
+        "Db type",         "TranscriptDb"),
         ncol=2, byrow=TRUE
     )
-    colnames(mat) <- c("name", "value")
-    metadata <- data.frame(name=mat[ , "name"], value=mat[ , "value"],
-                           stringsAsFactors=FALSE)
+    mat2 <- matrix(c(
+        "transcript_nrow", transcript_nrow,
+        "exon_nrow",       exon_nrow,
+        "cds_nrow",        cds_nrow,
+        "Db created by",   "GenomicFeatures package from Bioconductor",
+        "Creation date",   date(),
+        "GenomicFeatures version", thispkg_version,
+        "RSQLite version", rsqlite_version),
+        ncol=2, byrow=TRUE
+    )
+    colnames(mat1) <- colnames(mat2) <- c("name", "value")
+    metadata <- rbind(data.frame(name=mat1[ , "name"], value=mat1[ , "value"],
+                                 stringsAsFactors=FALSE),
+                      metadata,
+                      data.frame(name=mat2[ , "name"], value=mat2[ , "value"],
+                                 stringsAsFactors=FALSE))
     dbWriteTable(conn, "metadata", metadata, row.names=FALSE)
 }
 
@@ -481,7 +492,8 @@ loadFeatures <- function(file)
           "cds_start", "cds_end"))
 }
 
-makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
+makeTranscriptDb <- function(transcripts, splicings,
+                             genes=NULL, metadata=NULL, ...)
 {
     if (length(list(...)) != 0L)
         warning("extra args are ignored for now")
@@ -542,7 +554,7 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
                         splicings_internal_exon_id,
                         splicings_internal_cds_id)
     .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
-    .writeMetadataTable(conn)
+    .writeMetadataTable(conn, metadata)
     new("TranscriptDb", conn=conn)
 }
 
@@ -652,7 +664,8 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
                 cds_start=cds_start, cds_end=cds_end))
 }
 
-.makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes, gene_id_type)
+.makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes,
+                                             genome, tablename, gene_id_type)
 {
     COL2CLASS <- c(
         name="character",
@@ -711,8 +724,14 @@ makeTranscriptDb <- function(transcripts, splicings, genes=NULL, ...)
     ## Prepare the 'genes' data frame.
     #genes <- genes[genes$tx_name %in% ucsc_txtable$name, ]
 
+    ## Prepare the 'metadata' data frame.
+    metadata <- data.frame(
+        name=c("Data source", "Genome", "UCSC Table", "Type of Gene ID"),
+        value=c("UCSC", genome, tablename, gene_id_type)
+    )
+
     ## Call makeTranscriptDb().
-    makeTranscriptDb(transcripts, splicings, genes)
+    makeTranscriptDb(transcripts, splicings, genes=genes, metadata=metadata)
 }
 
 ### Lookup between UCSC tables and tracks in the "Genes and Gene Prediction"
@@ -848,7 +867,8 @@ makeTranscriptDbFromUCSC <- function(genome="hg18", tablename="knownGene")
         genes <- data.frame(tx_name=tx_name, gene_id=gene_id)
         gene_id_type <- txname2gene_mapinfo[4L]
     }
-    .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, genes, gene_id_type)
+    .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, genes,
+                                     genome, tablename, gene_id_type)
 }
 
 
@@ -956,6 +976,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
             stop("'ensembl_transcript_ids' must be ",
                  "a character vector with no NAs")
     }
+
     ## Download and prepare the 'transcripts' data frame.
     attributes <- c("ensembl_transcript_id",
                     "chromosome_name",
@@ -975,6 +996,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
         tx_start=bm_table$transcript_start,
         tx_end=bm_table$transcript_end
     )
+
     ## Download and prepare the 'splicings' data frame.
     ## Ironically the cds_start and cds_end attributes that we get from
     ## BioMart are pretty useless because they are relative to the coding
@@ -1013,6 +1035,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
         cds_start=cds_start,
         cds_end=cds_end
     )
+
     ## Download and prepare the 'genes' data frame.
     attributes <- c("ensembl_gene_id", "ensembl_transcript_id")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
@@ -1022,8 +1045,15 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
         tx_id=genes_tx_id,
         gene_id=bm_table$ensembl_gene_id
     )
+
+    ## Prepare the 'metadata' data frame.
+    metadata <- data.frame(
+        name=c("Data source", "biomart", "dataset"),
+        value=c("BioMart", biomart, dataset)
+    )
+
     ## Call makeTranscriptDb().
-    makeTranscriptDb(transcripts, splicings, genes)
+    makeTranscriptDb(transcripts, splicings, genes=genes, metadata=metadata)
 }
 
 
@@ -1036,14 +1066,10 @@ setMethod("show", "TranscriptDb",
     {
         cat("TranscriptDb object:\n")
         metadata <- dbReadTable(object@conn, "metadata")
-        creation_date <- metadata[metadata$name == "CreationDate", "value"]
-        transcript_nrow <- metadata[metadata$name == "transcript_nrow", "value"]
-        exon_nrow <- metadata[metadata$name == "exon_nrow", "value"]
-        cds_nrow <- metadata[metadata$name == "cds_nrow", "value"]
-        cat("| Creation Date: ", creation_date, "\n", sep="")
-        cat("| Nb of rows in transcript table: ", transcript_nrow, "\n", sep="")
-        cat("| Nb of rows in exon table: ", exon_nrow, "\n", sep="")
-        cat("| Nb of rows in cds table: ", cds_nrow, "\n", sep="")
+        for (i in seq_len(nrow(metadata))) {
+            cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
+                "\n", sep="")
+        }
     }
 )
 
