@@ -436,8 +436,8 @@ loadFeatures <- function(file)
         "cds_nrow",        cds_nrow,
         "Db created by",   "GenomicFeatures package from Bioconductor",
         "Creation date",   date(),
-        "GenomicFeatures version", thispkg_version,
-        "RSQLite version", rsqlite_version),
+        "GenomicFeatures version at creation time", thispkg_version,
+        "RSQLite version at creation time", rsqlite_version),
         ncol=2, byrow=TRUE
     )
     colnames(mat1) <- colnames(mat2) <- c("name", "value")
@@ -665,7 +665,8 @@ makeTranscriptDb <- function(transcripts, splicings,
 }
 
 .makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes,
-                                             genome, tablename, gene_id_type)
+                                             genome, tablename, gene_id_type,
+                                             full_dataset)
 {
     COL2CLASS <- c(
         name="character",
@@ -726,8 +727,10 @@ makeTranscriptDb <- function(transcripts, splicings,
 
     ## Prepare the 'metadata' data frame.
     metadata <- data.frame(
-        name=c("Data source", "Genome", "UCSC Table", "Type of Gene ID"),
-        value=c("UCSC", genome, tablename, gene_id_type)
+        name=c("Data source", "Genome", "UCSC Table",
+               "Type of Gene ID", "Full dataset"),
+        value=c("UCSC", genome, tablename,
+                gene_id_type, ifelse(full_dataset, "yes", "no"))
     )
 
     ## Call makeTranscriptDb().
@@ -832,7 +835,9 @@ supportedUCSCtables <- function()
 ###   - for genome="hg18" and tablename="knownGene":
 ###       (1) download takes about 40-50 sec.
 ###       (2) db creation takes about 30-35 sec.
-makeTranscriptDbFromUCSC <- function(genome="hg18", tablename="knownGene")
+makeTranscriptDbFromUCSC <- function(genome="hg18",
+                                     tablename="knownGene",
+                                     transcript_ids=NULL)
 {
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
@@ -841,10 +846,15 @@ makeTranscriptDbFromUCSC <- function(genome="hg18", tablename="knownGene")
     track <- supportedUCSCtables()[tablename, "track"]
     if (is.na(track))
         stop("track \"", track, "\" is not supported")
+    if (!is.null(transcript_ids)) {
+        if (!is.character(transcript_ids) || any(is.na(transcript_ids)))
+            stop("'transcript_ids' must be a character vector with no NAs")
+    }
     session <- browserSession()
     genome(session) <- genome
     ## Download the transcript table.
-    query1 <- ucscTableQuery(session, track, table=tablename)
+    query1 <- ucscTableQuery(session, track, table=tablename,
+                             names=transcript_ids)
     ucsc_txtable <- getTable(query1)
     ## Download the tx_name-to-gene_id mapping.
     txname2gene_mapinfo <- .UCSC_TXNAME2GENEID_MAPINFO[[tablename]]
@@ -868,7 +878,8 @@ makeTranscriptDbFromUCSC <- function(genome="hg18", tablename="knownGene")
         gene_id_type <- txname2gene_mapinfo[4L]
     }
     .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, genes,
-                                     genome, tablename, gene_id_type)
+                                     genome, tablename, gene_id_type,
+                                     full_dataset=is.null(transcript_ids))
 }
 
 
@@ -963,18 +974,17 @@ makeTranscriptDbFromUCSC <- function(genome="hg18", tablename="knownGene")
 
 makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                         dataset="hsapiens_gene_ensembl",
-                                        ensembl_transcript_ids=NULL)
+                                        transcript_ids=NULL)
 {
     mart <- useMart(biomart=biomart, dataset=dataset)
-    if (is.null(ensembl_transcript_ids)) {
+    if (is.null(transcript_ids)) {
         filters <- values <- ""
-    } else if (is.character(ensembl_transcript_ids)
-            && !any(is.na(ensembl_transcript_ids))) {
+    } else if (is.character(transcript_ids)
+            && !any(is.na(transcript_ids))) {
         filters <- "ensembl_transcript_id"
-        values <- ensembl_transcript_ids
+        values <- transcript_ids
     } else {
-            stop("'ensembl_transcript_ids' must be ",
-                 "a character vector with no NAs")
+            stop("'transcript_ids' must be a character vector with no NAs")
     }
 
     ## Download and prepare the 'transcripts' data frame.
@@ -1048,8 +1058,10 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
 
     ## Prepare the 'metadata' data frame.
     metadata <- data.frame(
-        name=c("Data source", "biomart", "dataset"),
-        value=c("BioMart", biomart, dataset)
+        name=c("Data source", "biomart", "dataset",
+               "Full dataset"),
+        value=c("BioMart", biomart, dataset,
+                ifelse(is.null(transcript_ids), "yes", "no"))
     )
 
     ## Call makeTranscriptDb().

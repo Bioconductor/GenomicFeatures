@@ -27,7 +27,7 @@ test_makeTranscriptDbFromUCSCTxTable <- function()
                         gene_id=UCSC_knownToLocusLink_sample$value)
     txdb1 <- GenomicFeatures:::.makeTranscriptDbFromUCSCTxTable(
                  UCSC_knownGene_sample, genes,
-                 "hg18", "knownGene", "Entrez Gene ID")
+                 "hg18", "knownGene", "Entrez Gene ID", FALSE)
 
     ## compare
     ok <- GenomicFeatures:::compareTranscriptDbs(txdb1, txdb0)
@@ -44,7 +44,7 @@ test_makeTranscriptDbFromBiomart <- function()
     txdb0 <- loadFeatures(txdb0_file)
 
     ## get
-    some_ids <- c(
+    transcript_ids <- c(
          "ENST00000400839",
          "ENST00000400840",
          "ENST00000478783",
@@ -53,7 +53,7 @@ test_makeTranscriptDbFromBiomart <- function()
          "ENST00000313243",
          "ENST00000341724"
     )
-    txdb1 <- makeTranscriptDbFromBiomart(ensembl_transcript_ids=some_ids)
+    txdb1 <- makeTranscriptDbFromBiomart(transcript_ids=transcript_ids)
 
     ## compare
     ok <- GenomicFeatures:::compareTranscriptDbs(txdb1, txdb0)

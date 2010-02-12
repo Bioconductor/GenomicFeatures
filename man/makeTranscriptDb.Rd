@@ -26,8 +26,12 @@
 }
 \usage{
   supportedUCSCtables()
-  makeTranscriptDbFromUCSC(genome="hg18", tablename="knownGene")
-  makeTranscriptDbFromBiomart(biomart, dataset, ensembl_transcript_ids=NULL)
+  makeTranscriptDbFromUCSC(genome="hg18",
+                           tablename="knownGene",
+                           transcript_ids=NULL)
+  makeTranscriptDbFromBiomart(biomart="ensembl",
+                              dataset="hsapiens_gene_ensembl",
+                              transcript_ids=NULL)
   makeTranscriptDb(transcripts, splicings, genes=NULL, metadata=NULL, ...)
 }
 \arguments{
@@ -37,10 +41,13 @@
     annotations to retrieve. Use the \code{supportedUCSCtables} utility
     function to get the list of supported tables. Note that not all
     tables are available for all genomes.}
+  \item{transcript_ids}{optionally, only retrieve transcript
+    annotation data for the specified set of transcript ids.
+    If this is used, then the meta information displayed for the
+    resulting TranscriptDb object will say 'Full dataset: no'.
+    Otherwise it will say 'Full dataset: yes'.}
   \item{biomart}{which mart from BioMart}
   \item{dataset}{which dataset from BioMart}
-  \item{ensembl_transcript_ids}{optionally, only retrieve transcript
-    annotation data for the specified set of Ensembl transcript ids}
   \item{transcripts}{data frame containing the genomic locations of
     a set of transcripts}
   \item{splicings}{data frame containing the exon and cds locations
@@ -146,13 +153,26 @@
 }
 
 \examples{
-\dontrun{
-txdb1 <- makeTranscriptDbFromUCSC()
+## Retrieving a full transcript dataset for Yeast from UCSC:
+txdb1 <- makeTranscriptDbFromUCSC(genome="sacCer2", tablename="ensGene")
+txdb1
 
-txdb2 <- makeTranscriptDbFromBiomart()
-}
-## Make a tiny TranscriptDb object:
-some_ids <- c(
+## Retrieving an incomplete transcript dataset for Mouse from UCSC
+## (only transcripts linked to Entrez Gene ID 22290):
+transcript_ids <- c(
+    "uc009uzf.1",
+    "uc009uzg.1",
+    "uc009uzh.1",
+    "uc009uzi.1",
+    "uc009uzj.1"
+)
+
+txdb2 <- makeTranscriptDbFromUCSC(genome="mm9", tablename="knownGene",
+                                  transcript_ids=transcript_ids)
+txdb2
+
+## Retrieving an incomplete transcript dataset for Human from Ensembl:
+transcript_ids <- c(
     "ENST00000400839",
     "ENST00000400840",
     "ENST00000478783",
@@ -161,9 +181,9 @@ some_ids <- c(
     "ENST00000313243",
     "ENST00000341724"
 )
-tiny_txdb <- makeTranscriptDbFromBiomart(ensembl_transcript_ids=some_ids)
+txdb3 <- makeTranscriptDbFromBiomart(transcript_ids=transcript_ids)
 
-## From user supplied annotations.
+## Making a TranscriptDb object from user supplied annotations.
 transcripts <- data.frame(
                    tx_id=1:3,
                    tx_chrom="chr1",
