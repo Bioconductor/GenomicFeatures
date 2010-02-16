@@ -860,7 +860,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
     txname2gene_mapinfo <- .UCSC_TXNAME2GENEID_MAPINFO[[tablename]]
     if (is.null(txname2gene_mapinfo)) {
         genes <- NULL
-        gene_id_type <- NA
+        gene_id_type <- "no gene ids"
     } else {
         tablename2 <- txname2gene_mapinfo[1L]
         query2 <- ucscTableQuery(session, track, table=tablename2)
