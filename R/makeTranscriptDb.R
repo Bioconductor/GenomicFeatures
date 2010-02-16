@@ -4,6 +4,25 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Validity of a TranscriptDb object.
+###
+
+### TODO: Many more checkings should be added here!
+.valid.TranscriptDb <- function(x)
+{
+    if (!dbExistsTable(x@conn, "metadata"))
+        return("no metadata table")
+    metadata <- dbReadTable(x@conn, "metadata")
+    db_type <- metadata[["value"]][metadata[["name"]] == "Db type"]
+    if (db_type != "TranscriptDb")
+        return("'Db type' is not \"TranscriptDb\"")
+    NULL
+}
+
+setValidity2("TranscriptDb", .valid.TranscriptDb)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Saving/loading.
 ###
 
@@ -16,8 +35,6 @@ saveFeatures <- function(x, file)
     sqliteCopyDatabase(x@conn, file)
 }
 
-### FIXME: loadFeatures() needs to put the db back into memory (it's currently
-### returning a TranscriptDb object that points to the on-disk db).
 loadFeatures <- function(file)
 {
     if (!isSingleString(file))
