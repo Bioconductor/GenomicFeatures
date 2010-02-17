@@ -5,28 +5,28 @@ function(txdb, ranges, restrict, FUN, prefix, ...)
     if (!is(txdb, "TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
 
-    ## check that ranges is a RangedData object
-    if (!is(ranges, "RangedData"))
-        stop("'ranges' must be a RangedData object")
+    ## check that ranges is a GenomicFeature object
+    if (!is(ranges, "GenomicFeature"))
+        stop("'ranges' must be a GenomicFeature object")
 
-    useStrand <- ("strand" %in% colnames(ranges))
+    useStrand <- !all(is.na(strand(ranges)) | strand(ranges) == "*")
 
     chromName <- paste(prefix, "_chrom", sep="")
     do.call(c,
-            lapply(names(ranges),
+            lapply(unique(seqnames(ranges)),
                    function(chrom) {
-                       query <- ranges[chrom]
+                       query <- seqselect(ranges, seqnames(ranges) == chrom)
                        subject <-
                          FUN(txdb, structure(list(chrom), names=chromName), ...)
                        overlaps <-
-                         findOverlaps(ranges(query)[[1L]],
-                                      ranges(subject)[[1L]],
+                         findOverlaps(ranges(query), ranges(subject),
                                       type = restrict)
                        hits <- subjectHits(overlaps)
                        if (useStrand) {
                            hits <-
-                             hits[strand(subject)[hits] ==
-                                  strand(query)[queryHits(overlaps)]]
+                             seqselect(hits,
+                                       strand(subject)[hits] ==
+                                         strand(query)[queryHits(overlaps)])
                        }
                        subject[sort(unique(hits)), , drop=FALSE]
                    }))

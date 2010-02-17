@@ -22,7 +22,7 @@
 }
 \arguments{  
   \item{txdb}{A \link{TranscriptDb} object.}
-  \item{ranges}{A \link[IRanges]{RangedData} object to restrict the output.}
+  \item{ranges}{A \link[BSgenome]{GenomicFeature} object to restrict the output.}
   \item{restrict}{How to perform the interval overlap operations of the
     \code{ranges}. See the
     \code{\link[IRanges:IntervalTree-class]{findOverlaps}} manual page
@@ -37,7 +37,7 @@
   using the results of \code{\link[IRanges:IntervalTree-class]{findOverlaps}}
   calls based on the specified \code{ranges}.
 }
-\value{ a RangedData object }
+\value{ a GenomicFeature object }
 \author{
   P. Aboyoun and M. Carlson
 }
@@ -49,8 +49,8 @@
   library(BSgenome)
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                    package="GenomicFeatures"))
-  rd <- RangedData(ranges = IRanges(start=c(500,10500), end=c(10000,30000)),
-                   space  = rep("chr1",2), 
-                   strand = strand(rep("-",2)))
-  transcriptsByRanges(txdb,rd)
+  gf <- GenomicFeature(seqnames = rep("chr1",2),
+                       ranges = IRanges(start=c(500,10500), end=c(10000,30000)),
+                       strand = strand(rep("-",2)))
+  transcriptsByRanges(txdb, gf)
 }

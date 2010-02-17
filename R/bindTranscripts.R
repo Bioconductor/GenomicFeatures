@@ -5,11 +5,11 @@ function(txdb, ranges, restrict, bind, prefix, FUN, ...)
     if (!is(txdb, "TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
 
-    ## check that ranges is a RangedData object
-    if (!is(ranges, "RangedData"))
-        stop("'ranges' must be a RangedData object")
+    ## check that ranges is a GenomicFeature object
+    if (!is(ranges, "GenomicFeature"))
+        stop("'ranges' must be a GenomicFeature object")
 
-    useStrand <- ("strand" %in% colnames(ranges))
+    useStrand <- !all(is.na(strand(ranges)) | strand(ranges) == "*")
 
     idName <- paste(prefix, "_id", sep="")
     nameName <- ifelse(prefix == "tx", paste(prefix, "_name", sep=""), "")
@@ -17,14 +17,13 @@ function(txdb, ranges, restrict, bind, prefix, FUN, ...)
     rangesName <- paste(prefix, "_ranges", sep="")
     strandName <- paste(prefix, "_strand", sep="")
     do.call(c,
-            lapply(names(ranges),
+            lapply(unique(seqnames(ranges)),
                    function(chrom) {
-                       query <- ranges[chrom]
+                       query <- seqselect(ranges, seqnames(ranges) == chrom)
                        subject <-
                          FUN(txdb, structure(list(chrom), names=chromName), ...)
                        overlaps <-
-                         findOverlaps(ranges(query)[[1L]],
-                                      ranges(subject)[[1L]],
+                         findOverlaps(ranges(query), ranges(subject),
                                       type = restrict)
                        hitMatrix <- as.matrix(overlaps)
                        hitMatrix <-
@@ -32,40 +31,40 @@ function(txdb, ranges, restrict, bind, prefix, FUN, ...)
                                    drop=FALSE]
                        if (useStrand) {
                            hitMatrix <-
-                             hitMatrix[strand(subject)[subjectHits(overlaps)] ==
-                                       strand(query)[queryHits(overlaps)], ,
+                             hitMatrix[as.vector(strand(subject)[subjectHits(overlaps)] ==
+                                                 strand(query)[queryHits(overlaps)]), ,
                                        drop=FALSE]
                        }
                        alignedSubject <- subject[hitMatrix[,2L],,drop=FALSE]
                        queryGroup <-
                          factor(as.character(hitMatrix[,1L]),
-                                levels=as.character(seq_len(nrow(query))))
+                                levels=as.character(seq_len(length(query))))
                        if (idName %in% bind) {
-                           query[[idName]] <-
+                           values(query)[[idName]] <-
                              unname(.newListBySplit("CompressedIntegerList",
-                                                    alignedSubject[[idName]],
+                                                    values(alignedSubject)[[idName]],
                                                     queryGroup))
                        }
                        if (nameName %in% bind) {
-                           query[[nameName]] <-
+                           values(query)[[nameName]] <-
                              unname(.newListBySplit("CompressedCharacterList",
-                                                    alignedSubject[[nameName]],
+                                                    values(alignedSubject)[[nameName]],
                                                     queryGroup))
                        }
                        if (chromName %in% bind) {
-                           query[[chromName]] <-
+                           values(query)[[chromName]] <-
                              unname(.newListBySplit("CompressedCharacterList",
-                                                    space(alignedSubject),
+                                                    seqnames(alignedSubject),
                                                     queryGroup))
                        }
                        if (rangesName %in% bind) {
-                           query[[chromName]] <-
+                           values(query)[[chromName]] <-
                              unname(.newListBySplit("CompressedIRangesList",
-                                                    ranges(alignedSubject)[[1L]],
+                                                    ranges(alignedSubject),
                                                     queryGroup))
                        }
                        if (strandName %in% bind) {
-                           query[[strandName]] <-
+                           values(query)[[strandName]] <-
                              unname(.newListBySplit("CompressedCharacterList",
                                                     as.character(strand(alignedSubject)),
                                                     queryGroup))

@@ -95,26 +95,26 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
   ## get the data from the database
   ans <- dbGetQuery(txdb@conn, sql)
   ans <-
-    RangedData(ranges = IRanges(start = ans[["tx_start"]],
-                                  end = ans[["tx_end"]]),
-               strand = strand(ans[["tx_strand"]]),
-               ans[-c(1:4)],
-               space = ans[["tx_chrom"]])
+    GenomicFeature(seqnames = ans[["tx_chrom"]],
+                   ranges = IRanges(start = ans[["tx_start"]],
+                                    end = ans[["tx_end"]]),
+                   strand = strand(ans[["tx_strand"]]),
+                   ans[-c(1:4)])
 
   if(nrow(ans) > 0 && any(c("gene_id", "exon_id","cds_id") %in% columns)) {
     if("gene_id" %in% columns) {
-      ans[["gene_id"]] <- .geneCharacterList(txdb, ans[["tx_id"]])
+      values(ans)[["gene_id"]] <- .geneCharacterList(txdb, ans[["tx_id"]])
     }
     if("exon_id" %in% columns) {
-      ans[["exon_id"]] <- .exonORcdsIntegerList(txdb, ans[["tx_id"]], "exon")
+      values(ans)[["exon_id"]] <- .exonORcdsIntegerList(txdb, ans[["tx_id"]], "exon")
     }
     if("cds_id" %in% columns) {
-      ans[["cds_id"]] <- .exonORcdsIntegerList(txdb, ans[["tx_id"]], "cds")
+      values(ans)[["cds_id"]] <- .exonORcdsIntegerList(txdb, ans[["tx_id"]], "cds")
     }
   }
 
   if (!("tx_id" %in% columns))
-    ans[["tx_id"]] <- NULL
+    values(ans)[["tx_id"]] <- NULL
 
   ans
 }
@@ -122,7 +122,7 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
 
 ## exon and cds functions and helper
 
-.exonORcdsRangedData <- function(txdb, vals=NULL, type=c("exon", "cds"))
+.exonORcdsGenomicFeature <- function(txdb, vals=NULL, type=c("exon", "cds"))
 {
   type <- match.arg(type)
 
@@ -159,11 +159,11 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
   ## get the data from the database
   ans <- dbGetQuery(txdb@conn, sql)
   ans <-
-    RangedData(ranges = IRanges(start = ans[[paste(type, "_start", sep="")]],
-                                  end = ans[[paste(type, "_end", sep="")]]),
-               strand = strand(ans[[paste(type, "_strand", sep="")]]),
-               "TYPE_id" = ans[[paste(type, "_id", sep="")]],
-               space = ans[[paste(type, "_chrom", sep="")]])
+    GenomicFeature(seqnames = ans[[paste(type, "_chrom", sep="")]],
+                   ranges = IRanges(start = ans[[paste(type, "_start", sep="")]],
+                                    end = ans[[paste(type, "_end", sep="")]]),
+                   strand = strand(ans[[paste(type, "_strand", sep="")]]),
+                   "TYPE_id" = ans[[paste(type, "_id", sep="")]])
   colnames(ans) <- gsub("TYPE", type, colnames(ans))
 
   ans
@@ -172,11 +172,11 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
 
 exons <- function(txdb, vals=NULL)
 {
-  .exonORcdsRangedData(txdb, vals=vals, type="exon")
+  .exonORcdsGenomicFeature(txdb, vals=vals, type="exon")
 }
 
 
 cds <- function(txdb, vals=NULL)
 {
-  .exonORcdsRangedData(txdb, vals=vals, type="cds")
+  .exonORcdsGenomicFeature(txdb, vals=vals, type="cds")
 }

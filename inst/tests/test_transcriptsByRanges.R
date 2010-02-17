@@ -8,31 +8,32 @@ test_transcriptsByRanges <- function()
 
     checkException(transcriptsByRanges(txdb), silent = TRUE)
     checkException(transcriptsByRanges(txdb, IRanges()), silent = TRUE)
-    checkException(transcriptsByRanges(txdb, RangedData(), columns = "bad"),
+    checkException(transcriptsByRanges(txdb, GenomicFeature(), columns = "bad"),
                    silent = TRUE)
 
-    rd <- RangedData(ranges = IRanges(start=190000, end=280000),
-                     space  = "chr5", strand = strand("-"))
+    gf <- GenomicFeature(seqnames = "chr5",
+                         ranges = IRanges(start=190000, end=280000),
+                         strand = strand("-"))
     want <-
-      RangedData(IRanges(start=257875, end=271297),
-                 strand = strand("-"),
-                 tx_id = 15L,
-                 tx_name = "uc003jam.1",
-                 space = "chr5")
+      split(GenomicFeature(seqnames = "chr5",
+                           ranges = IRanges(start=257875, end=271297),
+                           strand = strand("-"),
+                           tx_id = 15L,
+                           tx_name = "uc003jam.1"))
     ranges(want) <- IRangesList(as.list(ranges(want)))
-    checkIdentical(transcriptsByRanges(txdb, rd), want)
+    checkIdentical(transcriptsByRanges(txdb, gf), want)
 
     ranges <- IRanges(start = c(1000, 1000, 20000, 30000),
                       end   = c(4000, 4000, 30000, 40000))
     chrom <- c("chr1", "chr1", "chr2", "chr2")
     strand <- strand(c("+", "-", "+", "-"))
-    rd <- RangedData(ranges, space = chrom, strand = strand)
-    want <- RangedData(IRanges(start = c(1116, 1116, 31608),
-                               end   = c(4121, 4272, 36385)),
-                       strand = strand(c("+", "+", "-")),
-                       tx_id = c(1L,2L,4L),
-                       space = c("chr1", "chr1", "chr2"))
-    checkIdentical(want, transcriptsByRanges(txdb, rd, columns="tx_id"))
+    gf <- GenomicFeature(seqnames = chrom, ranges = ranges, strand = strand)
+    want <- GenomicFeature(space = c("chr1", "chr1", "chr2"),
+                           ranges = IRanges(start = c(1116, 1116, 31608),
+                                            end   = c(4121, 4272, 36385)),
+                           strand = strand(c("+", "+", "-")),
+                           tx_id = c(1L,2L,4L))
+    checkIdentical(want, transcriptsByRanges(txdb, gf, columns="tx_id"))
 }
 
 test_exonsByRanges <- function()
@@ -45,19 +46,20 @@ test_exonsByRanges <- function()
 
     checkException(exonsByRanges(txdb), silent = TRUE)
     checkException(exonsByRanges(txdb, IRanges()), silent = TRUE)
-    checkException(exonsByRanges(txdb, RangedData(), columns = "bad"),
+    checkException(exonsByRanges(txdb, GenomicFeature(), columns = "bad"),
                    silent = TRUE)
 
-    rd <- RangedData(ranges = IRanges(start=190000, end=280000),
-                     space  = "chr5", strand = strand("-"))
+    gf <- GenomicFeature(seqnames = "chr5",
+                         ranges = IRanges(start=190000, end=280000),
+                         strand = strand("-"))
     want <-
-      RangedData(IRanges(start=c(257875,269844,271208),
-                         end  =c(259073,269974,271297)),
-                 strand = strand(rep("-",3)),
-                 exon_id = 77:79,
-                 space = "chr5")
+      GenomicFeature(seqnames = "chr5",
+                     ranges = IRanges(start=c(257875,269844,271208),
+                                      end  =c(259073,269974,271297)),
+                     strand = strand(rep("-",3)),
+                     exon_id = 77:79)
     ranges(want) <- IRangesList(as.list(ranges(want)))
-    checkIdentical(exonsByRanges(txdb, rd), want)
+    checkIdentical(exonsByRanges(txdb, gf), want)
 }
 
 test_cdsByRanges <- function()
@@ -70,17 +72,18 @@ test_cdsByRanges <- function()
 
     checkException(cdsByRanges(txdb), silent = TRUE)
     checkException(cdsByRanges(txdb, IRanges()), silent = TRUE)
-    checkException(cdsByRanges(txdb, RangedData(), columns = "bad"),
+    checkException(cdsByRanges(txdb, GenomicFeature(), columns = "bad"),
                    silent = TRUE)
 
-    rd <- RangedData(ranges = IRanges(start=258412, end=269964),
-                     space  = "chr5", strand = strand("-"))
+    gf <- GenomicFeature(seqnames  = "chr5",
+                         ranges = IRanges(start=258412, end=269964),
+                         strand = strand("-"))
     want <-
-      RangedData(IRanges(start=c(258412,269844),
-                         end  =c(259073,269964)),
-                    strand = strand(rep("-",2)),
-                    cds_id = 53:54,
-                    space  = "chr5")
+      GenomicFeature(seqnames = "chr5",
+                     ranges = IRanges(start=c(258412,269844),
+                                      end  =c(259073,269964)),
+                     strand = strand(rep("-",2)),
+                     cds_id = 53:54))
     ranges(want) <- IRangesList(as.list(ranges(want)))
-    checkIdentical(cdsByRanges(txdb, rd), want)
+    checkIdentical(cdsByRanges(txdb, gf), want)
 }

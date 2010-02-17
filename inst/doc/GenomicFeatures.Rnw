@@ -127,26 +127,26 @@ txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
 
 \subsection{Getting Overlapped Transcript Ranges}
 
-The \Rfunction{transcriptsByRanges} function returns a \Rclass{RangedData}
-object containing metadata for transcripts that are overlapped by
-specified locations from a \Rclass{RangedData} object.
+The \Rfunction{transcriptsByRanges} function returns a
+\Rclass{GenomicFeatureList} object containing metadata for transcripts that
+are overlapped by specified locations from a \Rclass{GenomicFeature} object.
 
 <<transcriptsByRanges>>=
-rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
-                 space = rep("chr1",2), 
-                 strand = rep("-",2))
-transcriptsByRanges(txdb, rd)
+gf <- GenomicFeature(seqnames = rep("chr1",2),
+                     ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
+                     strand = rep("-",2))
+transcriptsByRanges(txdb, gf)
 @
 
 
-\subsection{Binding Transcript Data to a RangedData Object}
+\subsection{Binding Transcript Data to a GenomicFeature Object}
 
 
 <<bindTranscripts>>=
-rd <- RangedData(ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
-                 space = rep("chr1",2), 
-                 strand = rep("-",2))
-bindTranscripts(txdb, rd)
+gf <- GenomicFeature(seqnames = rep("chr1",2),
+                     ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
+                     strand = rep("-",2))
+bindTranscripts(txdb, gf)
 @
 
 
