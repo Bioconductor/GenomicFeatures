@@ -161,14 +161,14 @@ want to find out what genomic Features a particular range overlaps
 with.  Here is how you might proceed:
 
 <<mapTranscripts 1, eval=FALSE>>=
-##rd will represent the RangedData object that you have (your data)
-rd <- RangedData(ranges = IRanges(start=6700,end=7700),
-                 space = "chr1", 
-                 strand = "-")
+##gf will represent the GenomicFeature object that you have (your data)
+gf <- GenomicFeature(seqnames = "chr1",
+                     ranges = IRanges(start=6700,end=7700),
+                     strand = "-")
 
-bindTranscripts(txdb, rd)
+bindTranscripts(txdb, gf)
 
-bindExons(txdb, rd)
+bindExons(txdb, gf)
 @
 
 
@@ -179,21 +179,21 @@ convert your ranges into counts representing how many hits per gene.
 
 
 <<RNASEQ1, eval=FALSE>>=
-## rd will represent the RangedData object that you have (your data)
-rd <- RangedData(ranges = IRanges(start = c(244620,244670,245804,247502),
-                                    end = c(244652,244702,245836,247534)),
-                 space = "chr5", 
-                 strand = "+")
+## gf will represent the GenomicFeature object that you have (your data)
+gf <- GenomicFeature(seqnames = "chr5",
+                     ranges = IRanges(start = c(244620,244670,245804,247502),
+                                      end = c(244652,244702,245836,247534)),
+                     strand = "+")
 
 ## recover the annotations
-annotRD <- transcriptsByRanges(txdb, rd, columns=c("tx_id","tx_name",
+annotGF <- transcriptsByRanges(txdb, gf, columns=c("tx_id","tx_name",
                                            "gene_id", "exon_id"))
 
 ## Get the overlap between the annotations and your data
-OL <- findOverlaps(rd,annotRD, multiple=TRUE)
+OL <- findOverlaps(gf, annotGF, multiple=TRUE)
 
 ## just get the data that you want
-tdata <- annotRD[subjectHits(OL),]
+tdata <- annotGF[subjectHits(OL),]
 
 ## And then get the count per transcript:
 table(tdata$tx_id)
@@ -208,13 +208,13 @@ table(unlist(tdata$gene_id))
 
 %<<RNASEQ2, eval=FALSE>>=
 %## recover the exon annotations
-%annotRDEx <- exonsByRanges(txdb, rd)
+%annotGFEx <- exonsByRanges(txdb, gf)
 
 %## Get the overlap between the annotations and your data
-%OL <- findOverlaps(rd,annotRDEx, multiple=TRUE)
+%OL <- findOverlaps(gf, annotGFEx, multiple=TRUE)
 
 %## just get the data that you want
-%edata <- annotRDEx[subjectHits(OL),]
+%edata <- annotGFEx[subjectHits(OL),]
 
 %## And then get the count per exon:
 %table(edata$exon_id)
@@ -232,37 +232,37 @@ table(unlist(tdata$gene_id))
 \subsubsection{Example: Finding data for a Chip-seq experiment}
 
 What would we do differently if we had chip-seq data?  Lets imagine
-the we have a collection of reads in a \Rclass{RangedData} object
+the we have a collection of reads in a \Rclass{GenomicFeature} object
 as below.  We want to learn if these reads are 1) near to any
 transcript annotations and 2) if the list of things that they are near
 to are interesting or not.
 
 <<CHIPSEQ1, eval=FALSE>>=
-## rd will represent the RangedData object that you have (your data)
-rd <- RangedData(ranges = IRanges(start = c(244501,244553,244580,244523),
-                                    end = c(244533,244585,244612,244555)),
-                 space = "chr5", 
-                 strand = "+")
+## gf will represent the GenomicFeature object that you have (your data)
+gf <- GenomicFeature(seqnames = "chr5",
+                     ranges = IRanges(start = c(244501,244553,244580,244523),
+                                      end = c(244533,244585,244612,244555)), 
+                     strand = "+")
 
 ## If we try to find annotations for this we discover that there are none
 ## overlapping this feature...
-transcriptsByRanges(txdb, rd, columns=c("tx_id","tx_name","gene_id"))
+transcriptsByRanges(txdb, gf, columns=c("tx_id","tx_name","gene_id"))
 
 
-## So we will extend the rd object by a constant amount of 200 base pairs so
+## So we will extend the gf object by a constant amount of 200 base pairs so
 ## that each read has an opportunity to overlap with something interesting.
-rdExt <- rd
-ranges(rdExt) <- ranges(rdExt)+100
+gfExt <- gf
+ranges(gfExt) <- ranges(gfExt)+100
 
 ## Then collapse the annotations
-rdExt <- reduce(rdExt)
+gfExt <- reduce(gfExt)
 
 ## And recover the annotations that match
-annotRD <- transcriptsByRanges(txdb, rdExt, 
+annotGF <- transcriptsByRanges(txdb, gfExt, 
                                columns=c("tx_id","tx_name","gene_id"))
 
 ## Then find the number of unique matching gene IDs 
-unique(unlist(annotRD$gene_id))
+unique(unlist(values(annotGF)$gene_id))
 @
 
 
