@@ -5,7 +5,7 @@
 \alias{bindCDS}
 
 \title{
-  Binds genomic features from a TranscriptDb object to a GenomicFeature object
+  Binds genomic features from a TranscriptDb object to a GRanges object
 }
 \description{
   Functions to bind the features in a TranscriptDb object to a set of ranges.
@@ -21,7 +21,7 @@
 }
 \arguments{
   \item{txdb}{A \link{TranscriptDb} object.}
-  \item{ranges}{A \link[BSgenome]{GenomicFeature} object to restrict the output.}
+  \item{ranges}{A \link[BSgenome]{GRanges} object to restrict the output.}
   \item{restrict}{How to perform the interval overlap operations of the
     \code{ranges}. See the
     \code{\link[IRanges:IntervalTree-class]{findOverlaps}} manual page
@@ -59,7 +59,7 @@
   "cds_ranges" <CompressedIRangesList>, and 
   "cds_strand" <CompressedCharacterList>.
 }
-\value{ a GenomicFeature object }
+\value{ a GRanges object }
 \author{
   P. Aboyoun and M. Carlson
 }
@@ -71,8 +71,8 @@
   library(BSgenome)
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                    package="GenomicFeatures"))
-  gf <- GenomicFeature(seqnames = rep("chr1",2),
+  gr <- GRanges(seqnames = rep("chr1",2),
                        ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
                        strand = rep("-",2))
-  bindTranscripts(txdb, gf)
+  bindTranscripts(txdb, gr)
 }

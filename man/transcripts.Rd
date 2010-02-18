@@ -38,7 +38,7 @@
   \code{\link{exonsByRanges}}, and \code{\link{cdsByRanges}}
   functions.
 }
-\value{ a GenomicFeature object }
+\value{ a GRanges object }
 \author{
   M. Carlson and P. Aboyoun
 }

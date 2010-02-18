@@ -5,9 +5,12 @@ function(txdb, ranges, restrict, FUN, prefix, ...)
     if (!is(txdb, "TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
 
-    ## check that ranges is a GenomicFeature object
-    if (!is(ranges, "GenomicFeature"))
-        stop("'ranges' must be a GenomicFeature object")
+    ## check that ranges is a GRanges object
+    if (!is(ranges, "GRanges"))
+        stop("'ranges' must be a GRanges object")
+
+    if (length(ranges) == 0)
+        ranges <- GRanges(seqnames = "__EMPTY__", ranges = IRanges(1, 0))
 
     useStrand <- !all(is.na(strand(ranges)) | strand(ranges) == "*")
 
