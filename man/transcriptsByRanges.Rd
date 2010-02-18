@@ -45,10 +45,9 @@
   \link{TranscriptDb}, \code{\link{transcripts}}, \code{\link{bindTranscripts}}
 }
 \examples{
-  library(IRanges)
   library(BSgenome)
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                                   package="GenomicRanges"))
+                                   package="GenomicFeatures"))
   gr <- GRanges(seqnames = rep("chr1",2),
                 ranges = IRanges(start=c(500,10500), end=c(10000,30000)),
                 strand = strand(rep("-",2)))
