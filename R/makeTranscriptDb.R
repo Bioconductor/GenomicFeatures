@@ -2,6 +2,9 @@
 ### Making TranscriptDb objects
 ### -------------------------------------------------------------------------
 
+.DB_TYPE_NAME <- "Db type"
+.DB_TYPE_VALUE <- "TranscriptDb"  # same as the name of the class
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Validity of a TranscriptDb object.
@@ -10,12 +13,20 @@
 ### TODO: Many more checkings should be added here!
 .valid.TranscriptDb <- function(x)
 {
-    if (!dbExistsTable(x@conn, "metadata"))
-        return("no metadata table")
+    tmp <- try(dbExistsTable(x@conn, "metadata"), silent=TRUE)
+    if (is(tmp, "try-error"))
+        return("invalid DB file")
+    if (!tmp)
+        return("the DB has no metadata table")
     metadata <- dbReadTable(x@conn, "metadata")
-    db_type <- metadata[["value"]][metadata[["name"]] == "Db type"]
-    if (db_type != "TranscriptDb")
-        return("'Db type' is not \"TranscriptDb\"")
+    db_type_row <- which(metadata[["name"]] == .DB_TYPE_NAME)
+    if (length(db_type_row) != 1L)
+        return(paste("the metadata table in the DB has 0 or more ",
+                     "than 1 '", .DB_TYPE_NAME, "' entries", sep=""))
+    db_type <- metadata[["value"]][db_type_row]
+    if (is.na(db_type) || db_type != .DB_TYPE_VALUE)
+        return(paste("'", .DB_TYPE_NAME, "' is not \"", .DB_TYPE_VALUE,
+                     "\"", sep=""))
     NULL
 }
 
@@ -444,7 +455,7 @@ loadFeatures <- function(file)
     thispkg_version <- installed.packages()['GenomicFeatures', 'Version']
     rsqlite_version <- installed.packages()['RSQLite', 'Version']
     mat1 <- matrix(c(
-        "Db type",         "TranscriptDb"),
+        .DB_TYPE_NAME,     .DB_TYPE_VALUE),
         ncol=2, byrow=TRUE
     )
     mat2 <- matrix(c(

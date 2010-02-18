@@ -153,6 +153,13 @@
 }
 
 \examples{
+## Display the list of genomes available at UCSC:
+library(rtracklayer)
+ucscGenomes()[ , "db"]
+
+## Display the list of tables supported by makeTranscriptDbFromUCSC():
+supportedUCSCtables()
+
 ## Retrieving a full transcript dataset for Yeast from UCSC:
 txdb1 <- makeTranscriptDbFromUCSC(genome="sacCer2", tablename="ensGene")
 txdb1
