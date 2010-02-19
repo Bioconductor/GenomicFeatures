@@ -1,0 +1,14 @@
+- makeTranscriptDbFromUCSC() - Address the CDS non-completeness issue.
+  The status of the CDS (complete or not) can be inferred from the
+  cds*Stat field (when present) of the UCSC table.
+
+- makeTranscriptDbFromBiomart() - Only biomart="ensembl" is supported for
+  now. Other databases could be supported e.g. bacterial_mart_3, fungal_mart_3,
+  metazoa_mart_3, plant_mart_3, protist_mart_3. They have all the attributes
+  required by makeTranscriptDbFromBiomart() except for the cds/utr attributes
+  that are missing. The function could easily be adapted to support this and
+  issue a warning that no CDS will be stored in the TranscriptDb object.
+
+- makeTranscriptDbFromGFF3() - Primary target: GFF3 files on the TAIR,
+  Flybase and Wormbase websites/FTP servers.
+
