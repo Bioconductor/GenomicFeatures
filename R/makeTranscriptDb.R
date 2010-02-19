@@ -1000,11 +1000,80 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
     ans
 }
 
+### Here is the status of some of the available BioMart databases returned by
+### listMarts() as of 2/18/2010:
+###
+### biomart: ensembl
+### version: ENSEMBL 56 GENES (SANGER UK)
+###   50 datasets, one per organism, all named *_gene_ensembl.
+###   Examples: hsapiens_gene_ensembl, mmusculus_gene_ensembl,
+###             btaurus_gene_ensembl, cfamiliaris_gene_ensembl,
+###             drerio_gene_ensembl, ggallus_gene_ensembl,
+###             dmelanogaster_gene_ensembl, celegans_gene_ensembl,
+###             scerevisiae_gene_ensembl, ...
+###   -> they are ALL GOOD
+###
+### biomart: bacterial_mart_3
+### version: ENSEMBL BACTERIA 3 (EBI UK)
+###   134 datasets, all named *_gene
+###   -> they all lack CDS/UTR information
+###
+### biomart: fungal_mart_3
+### version: ENSEMBL FUNGAL 3 (EBI UK)
+###   10 datasets, all named *_eg_gene
+###   -> they all lack CDS/UTR information
+###
+### biomart: metazoa_mart_3
+### version: ENSEMBL METAZOA 3 (EBI UK)
+###   21 datasets, all named *_eg_gene
+###   -> they all lack CDS/UTR information
+###
+### biomart: plant_mart_3
+### version: ENSEMBL PLANT 3 (EBI UK)
+###   Arabidopsis is here ("athaliana_eg_gene" dataset)
+###   8 datasets, all named *_eg_gene
+###   -> they all lack CDS/UTR information
+###
+### biomart: protist_mart_3
+### version: ENSEMBL PROTISTS 3 (EBI UK)
+###   3 datasets, all named *_gene
+###   -> they all lack CDS/UTR information
+###
+### biomart: wormbase_current
+### version: WORMBASE (CSHL US)
+###   ?? (TODO)
+###
+### biomart: ENSEMBL_MART_ENSEMBL
+### version: GRAMENE 30 ENSEMBL GENES
+###   ?? (TODO)
+###
+### Note that listMarts() and listDatasets() are returning data frames where
+### the columns are character factors for the former and "AsIs" character
+### vectors for the latter.
 makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                         dataset="hsapiens_gene_ensembl",
                                         transcript_ids=NULL)
 {
+    ## Could be that the user got the 'biomart' and/or 'dataset' values
+    ## programmatically via calls to listMarts() and/or listDatasets().
+    if (is.factor(biomart))
+        biomart <- as.character(biomart)
+    if (is(dataset, "AsIs"))
+        dataset <- as.character(dataset)
+    if (!isSingleString(biomart))
+        stop("'biomart' must be a single string")
+    if (biomart != "ensembl")
+        stop("only 'biomart=\"ensembl\"' is supported for now")
     mart <- useMart(biomart=biomart, dataset=dataset)
+    datasets <- listDatasets(mart)
+    dataset_row <- which(as.character(datasets$dataset) == dataset)
+    ## This should never happen (the above call to useMart() would have failed
+    ## in the first place).
+    if (length(dataset_row) != 1L)
+        stop("the BioMart database \"", biomart, "\" has 0 (or ",
+             "more than 1) \"", dataset, "\" datasets")
+    description <- as.character(datasets$description)[dataset_row]
+    version <- as.character(datasets$version)[dataset_row]
     if (is.null(transcript_ids)) {
         filters <- values <- ""
     } else if (is.character(transcript_ids)
@@ -1041,21 +1110,19 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     ## mRNA. However, the utr coordinates are relative to the chromosome so
     ## we use them to infer the cds coordinates. We also retrieve the
     ## cds_length attribute as a sanity check.
-    attributes <- c(
-        "ensembl_transcript_id",
-        "strand",
-        "rank",
-        "ensembl_exon_id",
-        "exon_chrom_start",
-        "exon_chrom_end",
-        "5_utr_start",
-        "5_utr_end",
-        "3_utr_start",
-        "3_utr_end",
-        #"cds_start",
-        #"cds_end",
-        "cds_length"
-    )
+    attributes <- c("ensembl_transcript_id",
+                    "strand",
+                    "rank",
+                    "ensembl_exon_id",
+                    "exon_chrom_start",
+                    "exon_chrom_end",
+                    "5_utr_start",
+                    "5_utr_end",
+                    "3_utr_start",
+                    "3_utr_end",
+                    #"cds_start",
+                    #"cds_end",
+                    "cds_length")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
     splicings_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
                                          levels=transcripts_tx_name))
@@ -1086,9 +1153,17 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
 
     ## Prepare the 'metadata' data frame.
     metadata <- data.frame(
-        name=c("Data source", "biomart", "dataset",
+        name=c("Data source",
+               "BioMart database",
+               "BioMart dataset",
+               "BioMart dataset description",
+               "BioMart dataset version",
                "Full dataset"),
-        value=c("BioMart", biomart, dataset,
+        value=c("BioMart",
+                biomart,
+                dataset,
+                description,
+                version,
                 ifelse(is.null(transcript_ids), "yes", "no"))
     )
 

@@ -17,11 +17,11 @@
 \alias{as.list,TranscriptDb-method}
 
 \title{
-  Creating TranscriptDb objects from publicly available sources.
+  Making a TranscriptDb objects from publicly available sources.
 }
 \description{
-  Flexible tools for creating a TranscriptDb object from
-  a publicly available source (like the UCSC genome browser or BioMart),
+  Flexible tools for making a TranscriptDb object from a publicly
+  available source (like the UCSC genome browser or a BioMart database),
   or from user supplied annotations.
 }
 \usage{
@@ -36,7 +36,8 @@
 }
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
-    \code{ucscGenomes()[ , "db"]}. For example: hg18.}
+    \code{\link[rtracklayer]{ucscGenomes}()[ , "db"]}.
+    For example: \code{"hg18"}.}
   \item{tablename}{name of the UCSC table containing the transcript
     annotations to retrieve. Use the \code{supportedUCSCtables} utility
     function to get the list of supported tables. Note that not all
@@ -46,8 +47,14 @@
     If this is used, then the meta information displayed for the
     resulting TranscriptDb object will say 'Full dataset: no'.
     Otherwise it will say 'Full dataset: yes'.}
-  \item{biomart}{which mart from BioMart}
-  \item{dataset}{which dataset from BioMart}
+  \item{biomart}{which BioMart database to use. Only \code{"ensembl"}
+    (the default) is supported for now.}
+  \item{dataset}{which dataset from BioMart. For example:
+    \code{"hsapiens_gene_ensembl"}, \code{"mmusculus_gene_ensembl"},
+    \code{"dmelanogaster_gene_ensembl"}, \code{"celegans_gene_ensembl"},
+    \code{"scerevisiae_gene_ensembl"}, etc. See the examples section
+    below for how to discover which datasets are available in a given
+    BioMart database.}
   \item{transcripts}{data frame containing the genomic locations of
     a set of transcripts}
   \item{splicings}{data frame containing the exon and cds locations
@@ -152,7 +159,17 @@
   M. Carlson and H. Pages
 }
 
+\seealso{
+  \code{\link[rtracklayer]{ucscGenomes}},
+  \code{\link[biomaRt]{useMart}},
+  \code{\link[biomaRt]{listDatasets}}
+}
+
 \examples{
+## ---------------------------------------------------------------------
+## A. MAKING A TranscriptDb OBJECT FROM UCSC
+## ---------------------------------------------------------------------
+
 ## Display the list of genomes available at UCSC:
 library(rtracklayer)
 ucscGenomes()[ , "db"]
@@ -178,7 +195,17 @@ txdb2 <- makeTranscriptDbFromUCSC(genome="mm9", tablename="knownGene",
                                   transcript_ids=transcript_ids)
 txdb2
 
-## Retrieving an incomplete transcript dataset for Human from Ensembl:
+## ---------------------------------------------------------------------
+## B. MAKING A TranscriptDb OBJECT FROM A BioMart DATABASE
+## ---------------------------------------------------------------------
+
+## Discover which datasets are available in the "ensembl" BioMart
+## database:
+library(biomaRt)
+listDatasets(useMart("ensembl"))
+
+## Retrieving an incomplete transcript dataset for Human from the
+## "ensembl" BioMart database:
 transcript_ids <- c(
     "ENST00000400839",
     "ENST00000400840",
@@ -189,8 +216,12 @@ transcript_ids <- c(
     "ENST00000341724"
 )
 txdb3 <- makeTranscriptDbFromBiomart(transcript_ids=transcript_ids)
+txdb3  # note that these annotations match the GRCh37 genome assembly
 
-## Making a TranscriptDb object from user supplied annotations.
+## ---------------------------------------------------------------------
+## C. MAKING A TranscriptDb OBJECT FROM USER SUPPLIED ANNOTATIONS
+## ---------------------------------------------------------------------
+
 transcripts <- data.frame(
                    tx_id=1:3,
                    tx_chrom="chr1",
