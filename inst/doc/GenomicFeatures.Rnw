@@ -313,7 +313,7 @@ controlled by the groupBy argument.  There is an accessor for
 transcript ranges, exon ranges and cds ranges.
 
 So for example, to extract all the transcripts grouped by their exons
-I would call:
+you can call:
 
 <<transcriptsBy>>=
 txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
@@ -321,6 +321,19 @@ txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
 GRList <- transcriptsBy(txdb, "gene")
 GRList
 @
+
+
+Similarly, to extract all the exons for each transcript you can call:
+<<exonsBy>>=
+txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                                 package="GenomicFeatures"))
+GRList <- exonsBy(txdb, "tx")
+GRList
+@
+
+This GRangesList object can then be used with findOverlaps to only
+search the spaces that are specified by each contained GRanges object,
+which allows you to contextualize the search.
 
 
 \section{Session Information}
