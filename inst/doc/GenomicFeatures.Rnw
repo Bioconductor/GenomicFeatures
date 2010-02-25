@@ -297,6 +297,32 @@ Once you have a gene list, you should be able to do a GSEA analysis using the Ca
 %% 133957      chr5        -           257875.0    271297.0  
 
 
+
+\subsection{Working with GRangesLists}
+
+Sometimes you will want to consider ranged annotation data that is
+grouped in a specific way.  There is a known relationship for example
+between a gene and it stranscripts along with the exons that each
+transcript contains.  And these relationships are preserved for you
+along with their data in each TranscriptDb database.  In order to
+allow easy access to this data and to its complex relational nature,
+GenomicFeatures provides a special set of accessors.  These accessors
+each return a GRangesList object.  The GRangesList object groups the
+GRanges objects into a named list structure.  The grouping is in turn
+controlled by the groupBy argument.  There is an accessor for
+transcript ranges, exon ranges and cds ranges.
+
+So for example, to extract all the transcripts grouped by their exons
+I would call:
+
+<<transcriptsBy>>=
+txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                                 package="GenomicFeatures"))
+GRList <- transcriptsBy(txdb, "gene")
+GRList
+@
+
+
 \section{Session Information}
 
 The version number of R and packages loaded for generating the vignette were:

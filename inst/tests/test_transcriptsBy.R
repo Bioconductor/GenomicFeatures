@@ -9,9 +9,11 @@ test_transcriptsBy <- function()
 
     checkIdentical(transcriptsBy(txdb, "gene")[[1]],
                    GRanges(seqnames = "chr21_random",
-                                  ranges = IRanges(start=103280, end=164670),
-                                  strand = strand("-"),
-                                  tx_name = "uc002zka.1"))
+                                  ranges   = IRanges(start=103280, end=164670),
+                                  strand   = strand("-"),
+                                  tx_name  = "uc002zka.1",
+                                  tx_id    = 120L,
+                                  gene_id  = "100132288"))
 }
 
 
@@ -30,12 +32,9 @@ test_exonsBy <- function()
                                               end = c(2090,4272)),
                            strand = strand(c("+","+")),
                            exon_name = as.character(c(NA,NA)),
-                           exon_rank = c(1L,2L),
-                           tx_name = c("uc009vip.1","uc009vip.1"),
-                           tx_chrom = c("chr1","chr1"),
-                           tx_strand = c("+","+")
-                           ))
+                           exon_id = c(1L,4L) ))
 }
+
 
 
 test_cdsBy <- function()
@@ -48,13 +47,9 @@ test_cdsBy <- function()
 
     checkIdentical(cdsBy(txdb, "gene")[[6]],
                    GRanges(seqnames = c("chr5","chr5"),
-                           ranges = IRanges(start = c(269844,258412),
-                                              end = c(269964,259073)),
+                           ranges = IRanges(start = c(258412,269844),
+                                              end = c(259073,269964)),
                            strand = strand(c("-","-")),
                            cds_name = as.character(c(NA,NA)),
-                           exon_rank = c(2L,3L),
-                           tx_name = c("uc003jam.1","uc003jam.1"),
-                           tx_chrom = c("chr5","chr5"),
-                           tx_strand = c("-","-")
-                           ))
+                           cds_id = c(53L,54L) ))
 }

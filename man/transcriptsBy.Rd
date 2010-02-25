@@ -20,7 +20,9 @@
 \arguments{  
   \item{txdb}{A \link{TranscriptDb} object.}
   \item{groupBy}{Any of "tx", "gene", "exon" or "cds".  Used to
-  determine how the results that are returned are grouped.
+  determine how the results that are returned are grouped.  You cannot
+  however groupBy the same thing as you are retrieving since in that
+  case you should probably use the more basic accessors.
 }
 }
 \details{
@@ -30,6 +32,11 @@
   (which typically have several range elements each) in a sensible way.
   These accessors return annotations grouped in the way that the user
   requests and packaged into a convenient GRangesList object
+
+  Implicit ordering: When groupBy is set to "tx", any exon or cds ranges
+  returned will be grouped by the exon ranking in the transcript.  When
+  groupBy is set to any other permitted value, the ordering will be
+  based on order along the chromosome.
 }
 \value{ a GRangesList object }
 \author{
