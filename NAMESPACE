@@ -37,7 +37,10 @@ export(
   cdsByRanges,
   bindTranscripts,
   bindExons,
-  bindCDS
+  bindCDS,
+  transcriptsBy,
+  exonsBy,
+  cdsBy
 )
 
 exportMethods(

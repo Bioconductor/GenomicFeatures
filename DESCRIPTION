@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Support package for genomic annotations
-Version: 0.3.35
+Version: 0.3.36
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan, D. Sarkar, M. Lawrence
 License: Artistic-2.0
 Description: Infrastructure shared by the annotation packages containing genomic
@@ -17,6 +17,7 @@ Collate: AllClasses.R
 	 transcripts.R
 	 transcriptsByRanges.R
 	 bindTranscripts.R
+         transcriptsBy.R
 	 regions.R
 	 GenomicFeaturesForge.R
 	 extractTranscriptsFromGenome.R
