@@ -27,9 +27,10 @@
   each of the elements are ordered according to the following rule:
 
   When using \code{exonsBy} and \code{cdsBy} with \code{by = "tx"},
-  the ranges are returned in the order they appear in the transcript.
-  In all other cases, the ranges will be ordered by chromosome, start,
-  and end values.
+  the ranges are returned in the order they appear in the transcript,
+  i.e. order by the splicing.exon_rank field in \code{txdb}'s internal
+  database. In all other cases, the ranges will be ordered by chromosome,
+  strand, start, and end values.
 }
 \value{ a GRangesList object }
 \author{
