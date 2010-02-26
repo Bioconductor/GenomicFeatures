@@ -6,6 +6,8 @@
 \newcommand{\Rfunction}[1]{{\texttt{#1}}}
 \newcommand{\Robject}[1]{{\texttt{#1}}}
 \newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\texttt{#1}}}
+\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
 \newcommand{\Rclass}[1]{{\textit{#1}}}
 \newcommand{\Rcode}[1]{{\texttt{#1}}}
 
@@ -266,7 +268,8 @@ unique(unlist(values(annotGR)$gene_id))
 @
 
 
-Once you have a gene list, you should be able to do a GSEA analysis using the Category or GOstats packages.
+Once you have a gene list, you should be able to do a GSEA analysis using the
+Category or GOstats packages.
 
 
 
@@ -298,19 +301,14 @@ Once you have a gene list, you should be able to do a GSEA analysis using the Ca
 
 
 
-\subsection{Working with GRangesLists}
+\subsection{Working with Grouped Features}
 
 Sometimes you will want to consider ranged annotation data that is
-grouped in a specific way.  There is a known relationship for example
-between a gene and it stranscripts along with the exons that each
-transcript contains.  And these relationships are preserved for you
-along with their data in each TranscriptDb database.  In order to
-allow easy access to this data and to its complex relational nature,
-GenomicFeatures provides a special set of accessors.  These accessors
-each return a GRangesList object.  The GRangesList object groups the
-GRanges objects into a named list structure.  The grouping is in turn
-controlled by the groupBy argument.  There is an accessor for
-transcript ranges, exon ranges and cds ranges.
+grouped in a specific way, e.g. the transcripts associated with a
+gene and the exon composition of a transcript. These relationships
+are maintained with \Rclass{TranscriptDb} objects and can be
+accessed through the \Rfunction{transcriptsBy}, \Rfunction{exonsBy},
+and \Rfunction{cdsBy} functions.
 
 So for example, to extract all the transcripts grouped by their exons
 you can call:
@@ -324,6 +322,7 @@ GRList
 
 
 Similarly, to extract all the exons for each transcript you can call:
+
 <<exonsBy>>=
 txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                  package="GenomicFeatures"))
@@ -331,9 +330,10 @@ GRList <- exonsBy(txdb, "tx")
 GRList
 @
 
-This GRangesList object can then be used with findOverlaps to only
-search the spaces that are specified by each contained GRanges object,
-which allows you to contextualize the search.
+These functions return \Rclass{GRangesList} objects that contain
+locations and identifiers. These objects can be used in downstream
+analyses such as using \Rfunction{findOverlaps} contextualize the
+alignments from high-throughput sequencing.
 
 
 \section{Session Information}

@@ -1,12 +1,15 @@
 .transcriptsORexonsORcdsBy <-
-function(txdb, groupBy = c("gene", "tx", "exon", "cds"),
+function(txdb, by = c("gene", "tx", "exon", "cds"),
          type = c("tx", "exon", "cds"))
 {
+    if(!is(txdb,"TranscriptDb"))
+        stop("'txdb' must be a TranscriptDb object")
+
     gsubSQL <- function(long, short, sql) {
         gsub("LONG", long, gsub("SHORT", short, sql))
     }
 
-    groupBy <- match.arg(groupBy)
+    by <- match.arg(by)
 
     type <- match.arg(type)
     long <- ifelse(type == "tx", "transcript", type)
@@ -16,23 +19,23 @@ function(txdb, groupBy = c("gene", "tx", "exon", "cds"),
     selectClause <-
       paste("SELECT DISTINCT SHORT_chrom, SHORT_start, SHORT_end,",
             "SHORT_strand, SHORT_name, LONG._SHORT_id AS SHORT_id")
-    if (groupBy != "gene") {
+    if (by != "gene") {
         selectClause <-
           paste(selectClause, ", splicing._GROUPBY_id AS GROUPBY_id", sep = "")
     }
-    if (type == "tx" || groupBy == "gene") {
+    if (type == "tx" || by == "gene") {
         selectClause <- paste(selectClause, ", gene_id", sep = "")
     }
     fromClause <-
       paste("FROM LONG INNER JOIN LONG_rtree",
             "ON (LONG._SHORT_id=LONG_rtree._SHORT_id)")
-    if (!(type == "tx" && groupBy == "gene")) {
+    if (!(type == "tx" && by == "gene")) {
         fromClause <-
           paste(fromClause,
                 "INNER JOIN splicing",
                 "ON (LONG._SHORT_id=splicing._SHORT_id)")
     }
-    if (type == "tx" || groupBy == "gene") {
+    if (type == "tx" || by == "gene") {
         selectClause <- paste(selectClause, ", gene_id", sep = "")
         fromClause <-
           paste(fromClause,
@@ -42,7 +45,7 @@ function(txdb, groupBy = c("gene", "tx", "exon", "cds"),
     }
     whereClause <- "WHERE GROUPBY_id IS NOT NULL"
     orderByClause <-  "ORDER BY GROUPBY_id"
-    if (type %in% c("exon", "cds") && groupBy == "tx") {
+    if (type %in% c("exon", "cds") && by == "tx") {
         orderByClause <- paste(orderByClause, ", splicing.exon_rank", sep = "")
     } else {
         orderByClause <-
@@ -53,7 +56,7 @@ function(txdb, groupBy = c("gene", "tx", "exon", "cds"),
     sql <- paste(selectClause, fromClause, whereClause, orderByClause)
     sql <- gsub("LONG", long, sql)
     sql <- gsub("SHORT", short, sql)
-    sql <- gsub("GROUPBY", groupBy, sql)
+    sql <- gsub("GROUPBY", by, sql)
 
     ## get the data from the database
     ans <- dbGetQuery(txdb@conn, sql)
@@ -71,30 +74,21 @@ function(txdb, groupBy = c("gene", "tx", "exon", "cds"),
               ans[cols])
 
     ## split by grouping variable
-    split(grngs, ans[[paste(groupBy, "_id", sep="")]])
+    split(grngs, ans[[paste(by, "_id", sep="")]])
 }
 
 
-transcriptsBy <- function(txdb, groupBy = c("gene", "exon", "cds"))
+transcriptsBy <- function(txdb, by = c("gene", "exon", "cds"))
 {
-    if(!is(txdb,"TranscriptDb"))
-        stop("'txdb' must be a TranscriptDb object")
-    groupBy <- match.arg(groupBy)
-    .transcriptsORexonsORcdsBy(txdb, groupBy, "tx")
+    .transcriptsORexonsORcdsBy(txdb, match.arg(by), "tx")
 }
 
-exonsBy <- function(txdb, groupBy = c("tx", "gene"))
+exonsBy <- function(txdb, by = c("tx", "gene"))
 {
-    if(!is(txdb,"TranscriptDb"))
-        stop("'txdb' must be a TranscriptDb object")
-    groupBy <- match.arg(groupBy)
-    .transcriptsORexonsORcdsBy(txdb, groupBy, "exon")
+    .transcriptsORexonsORcdsBy(txdb, match.arg(by), "exon")
 }
 
-cdsBy <- function(txdb, groupBy = c("tx", "gene"))
+cdsBy <- function(txdb, by = c("tx", "gene"))
 {
-    if(!is(txdb,"TranscriptDb"))
-        stop("'txdb' must be a TranscriptDb object")
-    groupBy <- match.arg(groupBy)
-    .transcriptsORexonsORcdsBy(txdb, groupBy, "cds")
+    .transcriptsORexonsORcdsBy(txdb, match.arg(by), "cds")
 }

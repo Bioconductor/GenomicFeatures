@@ -13,20 +13,20 @@
   that are grouped by gene, transcript, exon or cds.
 }
 \usage{
-  transcriptsBy(txdb, groupBy = c("gene", "exon", "cds"))
-  exonsBy(txdb, groupBy = c("tx", "gene"))
-  cdsBy(txdb, groupBy = c("tx", "gene"))
+  transcriptsBy(txdb, by = c("gene", "exon", "cds"))
+  exonsBy(txdb, by = c("tx", "gene"))
+  cdsBy(txdb, by = c("tx", "gene"))
 }
 \arguments{
   \item{txdb}{A \link{TranscriptDb} object.}
-  \item{groupBy}{One of "tx", "gene", "exon" or "cds". Determines
+  \item{by}{One of "tx", "gene", "exon" or "cds". Determines
     how to group the results.}
 }
 \details{
   These function return a GRangesList object where the ranges within
   each of the elements are ordered according to the following rule:
 
-  When using \code{exonsBy} and \code{cdsBy} with \code{groupBy = "tx"},
+  When using \code{exonsBy} and \code{cdsBy} with \code{by = "tx"},
   the ranges are returned in the order they appear in the transcript.
   In all other cases, the ranges will be ordered by chromosome, start,
   and end values.
