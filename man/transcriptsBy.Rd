@@ -5,42 +5,35 @@
 \alias{cdsBy}
 
 \title{
-  Retrieve a GRangeList from a TranscriptDb object grouped by gene,
-  transcript, exon or cds.
+  Retrieving genomic features from a TranscriptDb object that are
+  grouped by gene, transcript, exon or cds IDs.
 }
 \description{
-  Functions to retrieve a GRangesList from a \link{TranscriptDb}
-  object grouped by gene, transcript, exon or cds.
+  Functions to retrieve genomic features from a \link{TranscriptDb}
+  that are grouped by gene, transcript, exon or cds.
 }
 \usage{
-  transcriptsBy(txdb, groupBy)
-  exonsBy(txdb, groupBy)
-  cdsBy(txdb, groupBy)
+  transcriptsBy(txdb, groupBy = c("gene", "exon", "cds"))
+  exonsBy(txdb, groupBy = c("tx", "gene"))
+  cdsBy(txdb, groupBy = c("tx", "gene"))
 }
-\arguments{  
+\arguments{
   \item{txdb}{A \link{TranscriptDb} object.}
-  \item{groupBy}{Any of "tx", "gene", "exon" or "cds".  Used to
-  determine how the results that are returned are grouped.  You cannot
-  however groupBy the same thing as you are retrieving since in that
-  case you should probably use the more basic accessors.
-}
+  \item{groupBy}{One of "tx", "gene", "exon" or "cds". Determines
+    how to group the results.}
 }
 \details{
-  These are functions for retrieving grouped transcript information from
-  a \link{TranscriptDb} object.  A GRangesList class is designed to hold
-  collections of GRanges objects and thus group things like transcripts
-  (which typically have several range elements each) in a sensible way.
-  These accessors return annotations grouped in the way that the user
-  requests and packaged into a convenient GRangesList object
+  These function return a GRangesList object where the ranges within
+  each of the elements are ordered according to the following rule:
 
-  Implicit ordering: When groupBy is set to "tx", any exon or cds ranges
-  returned will be grouped by the exon ranking in the transcript.  When
-  groupBy is set to any other permitted value, the ordering will be
-  based on order along the chromosome.
+  When using \code{exonsBy} and \code{cdsBy} with \code{groupBy = "tx"},
+  the ranges are returned in the order they appear in the transcript.
+  In all other cases, the ranges will be ordered by chromosome, start,
+  and end values.
 }
 \value{ a GRangesList object }
 \author{
-  M. Carlson
+  M. Carlson and P. Aboyoun
 }
 \seealso{
   \link{TranscriptDb}, \code{\link{transcripts}},

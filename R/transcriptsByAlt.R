@@ -75,7 +75,7 @@ function(txdb, groupBy = c("gene", "tx", "exon", "cds"),
 }
 
 
-transcriptsBy <- function(txdb, groupBy = c("gene", "exon", "cds"))
+transcriptsByAlt <- function(txdb, groupBy = c("gene", "exon", "cds"))
 {
     if(!is(txdb,"TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
@@ -83,7 +83,7 @@ transcriptsBy <- function(txdb, groupBy = c("gene", "exon", "cds"))
     .transcriptsORexonsORcdsBy(txdb, groupBy, "tx")
 }
 
-exonsBy <- function(txdb, groupBy = c("tx", "gene"))
+exonsByAlt <- function(txdb, groupBy = c("tx", "gene"))
 {
     if(!is(txdb,"TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
@@ -91,7 +91,7 @@ exonsBy <- function(txdb, groupBy = c("tx", "gene"))
     .transcriptsORexonsORcdsBy(txdb, groupBy, "exon")
 }
 
-cdsBy <- function(txdb, groupBy = c("tx", "gene"))
+cdsByAlt <- function(txdb, groupBy = c("tx", "gene"))
 {
     if(!is(txdb,"TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
