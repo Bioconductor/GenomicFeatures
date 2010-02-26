@@ -1,16 +1,20 @@
 ## convert a named list into a SQL where condition
-.sqlWhereVals <- function(vals)
+.sqlWhereIn <- function(vals)
 {
-  sql <-
-    lapply(seq_len(length(vals)), function(i) {
-             v <- vals[[i]]
-             if (!is.numeric(v))
-               v <- paste("'", v, "'", sep="")
-             v <- paste("(", paste(v, collapse=","), ")", sep="")
-             v <- paste(names(vals)[i], " IN ", v, sep="")
-             paste("AND (", v, ")", sep="")
-          })
-  paste(unlist(sql), collapse = " ")
+  if (length(vals) == 0) {
+    character(0)
+  } else {
+    sql <-
+      lapply(seq_len(length(vals)), function(i) {
+               v <- vals[[i]]
+               if (!is.numeric(v))
+                 v <- paste("'", v, "'", sep="")
+               v <- paste("(", paste(v, collapse=","), ")", sep="")
+               v <- paste(names(vals)[i], " IN ", v, sep="")
+               paste("(", v, ")", sep="")
+            })
+    paste("WHERE", paste(unlist(sql), collapse = " AND "))
+  }
 }
 
 
@@ -68,7 +72,7 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
   }
   whichId <- which(names(vals) == "tx_id")
   if(length(whichId) > 0) {
-    names(vals)[whichId] <- "t._tx_id"
+    names(vals)[whichId] <- "transcript._tx_id"
   }
 
   ## check the columns argument
@@ -86,10 +90,10 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
   else
     optionalColumn <- ""
   sql <- paste("SELECT tx_chrom, tx_start, tx_end, tx_strand,",
-               "t._tx_id AS tx_id", optionalColumn,
-               "FROM transcript AS t, transcript_rtree AS trt",
-               "WHERE t._tx_id=trt._tx_id",
-               .sqlWhereVals(vals),
+               "transcript._tx_id AS tx_id", optionalColumn,
+               "FROM transcript INNER JOIN transcript_rtree",
+               "ON (transcript._tx_id=transcript_rtree._tx_id)",
+               .sqlWhereIn(vals),
                "ORDER BY tx_chrom, tx_start, tx_end, tx_strand DESC")
 
   ## get the data from the database
@@ -146,17 +150,17 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
   }
   whichId <- which(names(vals) == paste(type, "_id", sep=""))
   if(length(whichId) > 0) {
-      names(vals)[whichId] <- paste("x._", type, "_id", sep="")
+      names(vals)[whichId] <- paste("TYPE._", type, "_id", sep="")
   }
 
   ## create base SQL query
   sql <-
     gsub("TYPE", type,
          paste("SELECT TYPE_chrom, TYPE_start, TYPE_end, TYPE_strand,",
-               "x._TYPE_id AS TYPE_id",
-               "FROM TYPE AS x, TYPE_rtree AS rt",
-               "WHERE x._TYPE_id=rt._TYPE_id",
-               .sqlWhereVals(vals),
+               "TYPE._TYPE_id AS TYPE_id",
+               "FROM TYPE INNER JOIN TYPE_rtree",
+               "ON (TYPE._TYPE_id=TYPE_rtree._TYPE_id)",
+               .sqlWhereIn(vals),
                "ORDER BY TYPE_chrom, TYPE_start, TYPE_end, TYPE_strand DESC"))
 
   ## get the data from the database
