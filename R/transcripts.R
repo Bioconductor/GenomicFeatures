@@ -94,7 +94,7 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
                "FROM transcript INNER JOIN transcript_rtree",
                "ON (transcript._tx_id=transcript_rtree._tx_id)",
                .sqlWhereIn(vals),
-               "ORDER BY tx_chrom, tx_start, tx_end, tx_strand DESC")
+               "ORDER BY tx_chrom, tx_strand, tx_start, tx_end")
 
   ## get the data from the database
   ans <- dbGetQuery(txdb@conn, sql)
@@ -161,7 +161,7 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
                "FROM TYPE INNER JOIN TYPE_rtree",
                "ON (TYPE._TYPE_id=TYPE_rtree._TYPE_id)",
                .sqlWhereIn(vals),
-               "ORDER BY TYPE_chrom, TYPE_start, TYPE_end, TYPE_strand DESC"))
+               "ORDER BY TYPE_chrom, TYPE_strand, TYPE_start, TYPE_end"))
 
   ## get the data from the database
   ans <- dbGetQuery(txdb@conn, sql)

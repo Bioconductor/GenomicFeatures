@@ -49,8 +49,8 @@ function(txdb, by = c("gene", "tx", "exon", "cds"),
         orderByClause <- paste(orderByClause, ", splicing.exon_rank", sep = "")
     } else {
         orderByClause <-
-          paste(orderByClause, ", LONG.SHORT_chrom, ",
-                "LONG_rtree.SHORT_start, LONG_rtree.SHORT_end", sep = "")
+          paste(orderByClause, ", SHORT_chrom, SHORT_strand, ",
+                "SHORT_start, SHORT_end", sep = "")
     }
 
     sql <- paste(selectClause, fromClause, whereClause, orderByClause)
