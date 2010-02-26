@@ -46,7 +46,7 @@ function(txdb, by = c("gene", "tx", "exon", "cds"),
     whereClause <- "WHERE GROUPBY_id IS NOT NULL"
     orderByClause <-  "ORDER BY GROUPBY_id"
     if (type %in% c("exon", "cds") && by == "tx") {
-        orderByClause <- paste(orderByClause, ", splicing.exon_rank", sep = "")
+        orderByClause <- paste(orderByClause, ", exon_rank", sep = "")
     } else {
         orderByClause <-
           paste(orderByClause, ", SHORT_chrom, SHORT_strand, ",
