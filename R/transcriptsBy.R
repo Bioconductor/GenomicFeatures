@@ -36,7 +36,6 @@ function(txdb, by = c("gene", "tx", "exon", "cds"),
                 "ON (LONG._SHORT_id=splicing._SHORT_id)")
     }
     if (type == "tx" || by == "gene") {
-        selectClause <- paste(selectClause, ", gene_id", sep = "")
         fromClause <-
           paste(fromClause,
                 " INNER JOIN gene",
