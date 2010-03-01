@@ -23,20 +23,18 @@ test_transcriptsBy <- function()
                            ranges   = IRanges(start=103280, end=164670),
                            strand   = strand("-"),
                            tx_name  = "uc002zka.1",
-                           tx_id    = 120L,
-                           gene_id  = "100132288"))
+                           tx_id    = 120L))
 
     ## transcripts by exon
     txByExon <- transcriptsBy(txdb, "exon")
     checkTrue(validObject(txByExon))
     checkIdentical(dupCount(txByExon), 0L)
     checkIdentical(txByExon[[1]],
-                   GRanges(seqnames = "chr1",
-                           ranges   = IRanges(start=4269, end=6628),
-                           strand   = strand("-"),
-                           tx_name  = "uc009vis.1",
-                           tx_id    = 3L,
-                           gene_id  = "653635"))
+                   GRanges(seqnames = c("chr1", "chr1"),
+                           ranges   = IRanges(start=1116, end=c(4121, 4272)),
+                           strand   = strand(c("+", "+")),
+                           tx_name  = c("uc001aaa.2", "uc009vip.1"),
+                           tx_id    = c(1L, 2L)))
 
     ## transcripts by cds
     txByCds <- transcriptsBy(txdb, "cds")
@@ -47,8 +45,7 @@ test_transcriptsBy <- function()
                            ranges   = IRanges(start=31608, end=36385),
                            strand   = strand("-"),
                            tx_name  = "uc002qvt.1",
-                           tx_id    = 4L,
-                           gene_id  = "642273"))
+                           tx_id    = 4L))
 }
 
 test_exonsBy <- function()

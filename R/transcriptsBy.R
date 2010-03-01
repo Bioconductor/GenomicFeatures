@@ -1,41 +1,38 @@
-.transcriptsORexonsORcdsBy <-
-function(txdb, by = c("gene", "tx", "exon", "cds"),
-         type = c("tx", "exon", "cds"))
+.featuresBy <- function(txdb, by, type,
+                        distinct=FALSE,
+                        splicing_in_join=TRUE,
+                        gene_in_join=FALSE,
+                        order_by_exon_rank=TRUE)
 {
     if(!is(txdb,"TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
 
-    gsubSQL <- function(long, short, sql) {
-        gsub("LONG", long, gsub("SHORT", short, sql))
-    }
-
-    by <- match.arg(by)
-
-    type <- match.arg(type)
     long <- ifelse(type == "tx", "transcript", type)
     short <- type
 
     ## create SQL query
+    selectClause <- "SELECT"
+    if (distinct)
+        selectClause <- paste(selectClause, "DISTINCT")
     selectClause <-
-      paste("SELECT DISTINCT SHORT_chrom, SHORT_start, SHORT_end,",
+      paste(selectClause, "SHORT_chrom, SHORT_start, SHORT_end,",
             "SHORT_strand, SHORT_name, LONG._SHORT_id AS SHORT_id")
-    if (by != "gene") {
+    if (by == "gene") {
+        selectClause <- paste(selectClause, ", gene_id", sep = "")
+    } else {
         selectClause <-
           paste(selectClause, ", splicing._GROUPBY_id AS GROUPBY_id", sep = "")
-    }
-    if (type == "tx" || by == "gene") {
-        selectClause <- paste(selectClause, ", gene_id", sep = "")
     }
     fromClause <-
       paste("FROM LONG INNER JOIN LONG_rtree",
             "ON (LONG._SHORT_id=LONG_rtree._SHORT_id)")
-    if (!(type == "tx" && by == "gene")) {
+    if (splicing_in_join) {
         fromClause <-
           paste(fromClause,
                 "INNER JOIN splicing",
                 "ON (LONG._SHORT_id=splicing._SHORT_id)")
     }
-    if (type == "tx" || by == "gene") {
+    if (gene_in_join) {
         fromClause <-
           paste(fromClause,
                 " INNER JOIN gene",
@@ -44,7 +41,7 @@ function(txdb, by = c("gene", "tx", "exon", "cds"),
     }
     whereClause <- "WHERE GROUPBY_id IS NOT NULL"
     orderByClause <-  "ORDER BY GROUPBY_id"
-    if (type %in% c("exon", "cds") && by == "tx") {
+    if (order_by_exon_rank) {
         orderByClause <- paste(orderByClause, ", exon_rank", sep = "")
     } else {
         orderByClause <-
@@ -65,9 +62,6 @@ function(txdb, by = c("gene", "tx", "exon", "cds"),
 
     ## create the GRanges object
     cols <- gsub("TYPE", type, c("TYPE_name", "TYPE_id"))
-    if (type == "tx") {
-        cols <- c(cols, "gene_id")
-    }
     grngs <-
       GRanges(seqnames = ans[[paste(type, "_chrom", sep="")]],
               ranges = IRanges(start = ans[[paste(type, "_start", sep="")]],
@@ -79,18 +73,50 @@ function(txdb, by = c("gene", "tx", "exon", "cds"),
     split(grngs, ans[[paste(by, "_id", sep="")]])
 }
 
+###                    use  splicing      gene
+###   type    by  DISTINCT   in JOIN   in JOIN   ORDER BY
+##    ----  ----  --------  --------  --------  ---------
+###     tx  gene        no        no       yes      locus
+###     tx  exon        no       yes        no      locus
+###     tx   cds        no       yes        no      locus
+###   exon    tx        no       yes        no  exon_rank
+###   exon  gene       yes       yes       yes      locus
+###    cds    tx        no       yes        no  exon_rank
+###    cds  gene       yes       yes       yes      locus
 
 transcriptsBy <- function(txdb, by = c("gene", "exon", "cds"))
 {
-    .transcriptsORexonsORcdsBy(txdb, match.arg(by), "tx")
+    by <- match.arg(by)
+    splicing_in_join <- by != "gene"
+    gene_in_join <- by == "gene"
+    .featuresBy(txdb, by, "tx",
+                distinct=FALSE,
+                splicing_in_join=splicing_in_join,
+                gene_in_join=gene_in_join,
+                order_by_exon_rank=FALSE)
 }
 
 exonsBy <- function(txdb, by = c("tx", "gene"))
 {
-    .transcriptsORexonsORcdsBy(txdb, match.arg(by), "exon")
+    by <- match.arg(by)
+    distinct <- gene_in_join <- by == "gene"
+    order_by_exon_rank <- by == "tx"
+    .featuresBy(txdb, by, "exon",
+                distinct=distinct,
+                splicing_in_join=TRUE,
+                gene_in_join=gene_in_join,
+                order_by_exon_rank=order_by_exon_rank)
 }
 
 cdsBy <- function(txdb, by = c("tx", "gene"))
 {
-    .transcriptsORexonsORcdsBy(txdb, match.arg(by), "cds")
+    by <- match.arg(by)
+    distinct <- gene_in_join <- by == "gene"
+    order_by_exon_rank <- by == "tx"
+    .featuresBy(txdb, by, "cds",
+                distinct=distinct,
+                splicing_in_join=TRUE,
+                gene_in_join=gene_in_join,
+                order_by_exon_rank=order_by_exon_rank)
 }
+
