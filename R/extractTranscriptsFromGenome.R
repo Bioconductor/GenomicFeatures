@@ -68,13 +68,24 @@
 ###   transcripts <- extractTranscriptsFromGenome(Hsapiens, geneHuman())
 ### TODO: Improve implementation: ideally, we shouldn't need to use
 ###       intermediate representation as character vector.
-extractTranscriptsFromGenome <- function(genome, txdb)
+extractTranscriptsFromGenome <- function(genome, txdb, use.tx_id=FALSE)
 {
     if (!is(genome, "BSgenome"))
         stop("'genome' must be a BSgenome object")
     if (is(txdb, "TranscriptDb")) {
-        exons_by_tx <- exonsBy(txdb, by="tx")
-        genes <- .exonsByTxAsCompactDataFrame(exons_by_tx,
+        if (!isTRUEorFALSE(use.tx_id))
+            stop("'use.tx_id' must be TRUE or FALSE")
+        exbytx <- exonsBy(txdb, by="tx")
+        if (!use.tx_id) {
+            tx <- transcripts(txdb)
+            id2name <- values(tx)[ , "tx_name"]
+            names(id2name) <- as.character(values(tx)[ , "tx_id"])
+            names(exbytx) <- id2name[names(exbytx)]
+            if (any(is.na(names(exbytx))))
+                warning("some transcript names are NAs, use ",
+                        "'use.tx_id=TRUE' to use their internal ids instead")
+        }
+        genes <- .exonsByTxAsCompactDataFrame(exbytx,
                      reorder.exons.on.minus.strand=FALSE)
         reorder.exons <- FALSE
     } else if (is.data.frame(txdb)) {

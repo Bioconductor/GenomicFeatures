@@ -11,7 +11,7 @@
 }
 
 \usage{
-  extractTranscriptsFromGenome(genome, txdb)
+  extractTranscriptsFromGenome(genome, txdb, use.tx_id=FALSE)
 }
 
 \arguments{
@@ -23,6 +23,12 @@
   \item{txdb}{
     A \link{TranscriptDb} object or a data frame like that returned
     by \code{\link[GenomicFeatures.Hsapiens.UCSC.hg18]{geneHuman}}.
+  }
+  \item{use.tx_id}{
+    \code{TRUE} or \code{FALSE}. Whether the transcript ids
+    (\code{"tx_id"}) should be used instead of the transcript names
+    (\code{"tx_name"}) to name the sequences.
+    Ignored when \code{txdb} is a data frame.
   }
 }
 
@@ -52,13 +58,28 @@
 }
 
 \examples{
+  library(BSgenome.Hsapiens.UCSC.hg18)  # load the genome
+
+  ## ---------------------------------------------------------------------
+  ## USING A TranscriptDb OBJECT
+  ## ---------------------------------------------------------------------
+  txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                           package="GenomicFeatures")
+  txdb <- loadFeatures(txdb_file)
+  transcripts <- extractTranscriptsFromGenome(Hsapiens, txdb)
+  transcripts
+
+  ## ---------------------------------------------------------------------
+  ## USING A UCSC-LIKE DATA FRAME
+  ## ---------------------------------------------------------------------
+  ## IMPORTANT NOTE: This is provided for compatibility with the old
+  ## GenomicFeatures.*.UCSC.* packages and might be removed at any time.
   library(GenomicFeatures.Hsapiens.UCSC.hg18)  # load the gene table
   genes <- geneHuman()
   library(Biostrings)  # for transcriptWidths()
   tw <- transcriptWidths(genes$exonStarts, genes$exonEnds)
 
   if (interactive()) {
-    library(BSgenome.Hsapiens.UCSC.hg18)  # load the genome
     ## Takes about 30 sec.:
     transcripts <- extractTranscriptsFromGenome(Hsapiens, genes)
     ## Sanity check:
