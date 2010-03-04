@@ -45,7 +45,6 @@
   \link{TranscriptDb}, \code{\link{transcripts}}, \code{\link{bindTranscripts}}
 }
 \examples{
-  library(BSgenome)
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                    package="GenomicFeatures"))
   gr <- GRanges(seqnames = rep("chr1",2),

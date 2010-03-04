@@ -1,8 +1,5 @@
 test_transcriptsBy <- function()
 {
-    suppressMessages(library(IRanges))
-    suppressMessages(library(BSgenome))
-
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
@@ -50,9 +47,6 @@ test_transcriptsBy <- function()
 
 test_exonsBy <- function()
 {
-    suppressMessages(library(IRanges))
-    suppressMessages(library(BSgenome))
-
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
@@ -85,9 +79,6 @@ test_exonsBy <- function()
 
 test_cdsBy <- function()
 {
-    suppressMessages(library(IRanges))
-    suppressMessages(library(BSgenome))
-
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 

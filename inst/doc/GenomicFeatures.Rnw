@@ -30,7 +30,6 @@ ChIP-chip, ChIP-seq, and RNA-seq analyses. It is currently focused on
 transcript-related features, but its scope will grow in future releases.
 
 <<loadGenomicFeatures>>=
-library(BSgenome)
 library(GenomicFeatures)
 @
 
