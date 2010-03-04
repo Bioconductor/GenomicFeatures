@@ -11,7 +11,7 @@
 }
 
 \usage{
-  extractTranscriptsFromGenome(genome, genes)
+  extractTranscriptsFromGenome(genome, txdb)
 }
 
 \arguments{
@@ -20,9 +20,9 @@
     See the \code{\link[BSgenome]{available.genomes}} function
     in the BSgenome package for how to install a genome.
   }
-  \item{genes}{
-    A data.frame like that returned by
-    \code{\link[GenomicFeatures.Hsapiens.UCSC.hg18]{geneHuman}}.
+  \item{txdb}{
+    A \link{TranscriptDb} object or a data frame like that returned
+    by \code{\link[GenomicFeatures.Hsapiens.UCSC.hg18]{geneHuman}}.
   }
 }
 
