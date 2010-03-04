@@ -2,6 +2,7 @@
 ### Making TranscriptDb objects
 ### -------------------------------------------------------------------------
 
+
 .DB_TYPE_NAME <- "Db type"
 .DB_TYPE_VALUE <- "TranscriptDb"  # same as the name of the class
 
@@ -292,24 +293,15 @@ loadFeatures <- function(file)
     ans
 }
 
-### Because we use SQLite "rtree" feature, .writeFeatureCoreTables() creates
-### the 5 following tables:
-###   (1) '<feature>'
-###   (2) '<feature>_rtree'
-###   (3) '<feature>_rtree_node'
-###   (4) '<feature>_rtree_parent'
-###   (5) '<feature>_rtree_rowid'
-### Note that only (1) and (2) are explicitely created. (3), (4) and (5) are
-### automatically created by the SQLite engine.
-.writeFeatureCoreTables <- function(conn,
-                                    feature,
-                                    internal_id,
-                                    name,
-                                    chrom,
-                                    strand,
-                                    start,
-                                    end,
-                                    colnames)
+.writeFeatureTable <- function(conn,
+                               feature,
+                               internal_id,
+                               name,
+                               chrom,
+                               strand,
+                               start,
+                               end,
+                               colnames)
 {
     if (is.null(name))
         name <- rep.int(NA_character_, length(internal_id))
@@ -329,7 +321,9 @@ loadFeatures <- function(file)
         "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
         "  ", colnames[2L], " TEXT NULL,\n",
         "  ", colnames[3L], " TEXT NOT NULL,\n",
-        "  ", colnames[4L], " TEXT NOT NULL\n",
+        "  ", colnames[4L], " TEXT NOT NULL,\n",
+        "  ", colnames[5L], " INTEGER NOT NULL,\n",
+        "  ", colnames[6L], " INTEGER NOT NULL\n",
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
@@ -338,31 +332,10 @@ loadFeatures <- function(file)
     ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
     ## when the nb of rows to insert is 0, hence the following test.
     if (nrow(table) != 0L) {
-        sql <- c("INSERT INTO ", feature, " VALUES (?,?,?,?)")
+        sql <- c("INSERT INTO ", feature, " VALUES (?,?,?,?,?,?)")
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
-                                   table[1:4])
-        dbClearResult(res)
-        dbCommit(conn)
-    }
-
-    ## Create the '<feature>_rtree' table.
-    sql <- c(
-        "CREATE VIRTUAL TABLE ", feature, "_rtree USING rtree (\n",
-        "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
-        "  ", colnames[5L], " INTEGER, -- NOT NULL is implicit in rtree\n",
-        "  ", colnames[6L], " INTEGER  -- NOT NULL is implicit in rtree\n",
-        "  -- FOREIGN KEY (", colnames[1L], ") REFERENCES ", feature, "\n",
-        ")")
-    res <- dbSendQuery(conn, paste(sql, collapse=""))
-    dbClearResult(res)
-
-    ## Fill the '<feature>_rtree' table.
-    if (nrow(table) != 0L) {
-        sql <- c("INSERT INTO ", feature, "_rtree VALUES (?,?,?)")
-        dbBeginTransaction(conn)
-        res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
-                                   table[c(1L, 5:6)])
+                                   table)
         dbClearResult(res)
         dbCommit(conn)
     }
@@ -484,7 +457,7 @@ loadFeatures <- function(file)
 
 .importTranscripts <- function(conn, transcripts, internal_tx_id)
 {
-    .writeFeatureCoreTables(conn, "transcript",
+    .writeFeatureTable(conn, "transcript",
         internal_tx_id, transcripts$tx_name,
         transcripts$tx_chrom, transcripts$tx_strand,
         transcripts$tx_start, transcripts$tx_end,
@@ -495,7 +468,7 @@ loadFeatures <- function(file)
 
 .importExons <- function(conn, splicings, internal_exon_id)
 {
-    .writeFeatureCoreTables(conn, "exon",
+    .writeFeatureTable(conn, "exon",
         internal_exon_id, splicings$exon_name,
         splicings$exon_chrom, splicings$exon_strand,
         splicings$exon_start, splicings$exon_end,
@@ -511,7 +484,7 @@ loadFeatures <- function(file)
     cds_strand <- splicings$exon_strand[!is.na(internal_cds_id)]
     cds_start <- splicings$cds_start[!is.na(internal_cds_id)]
     cds_end <- splicings$cds_end[!is.na(internal_cds_id)]
-    .writeFeatureCoreTables(conn, "cds",
+    .writeFeatureTable(conn, "cds",
         internal_cds_id[!is.na(internal_cds_id)], cds_name,
         cds_chrom, cds_strand,
         cds_start, cds_end,
@@ -1201,14 +1174,11 @@ setMethod("show", "TranscriptDb",
 setMethod("as.list", "TranscriptDb",
     function(x, ...)
     {
+        ORDER_BY <- "ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id"
         ## Retrieve the "transcripts" element.
-        sql <- paste(
-            "SELECT transcript._tx_id AS tx_id, tx_name,",
-            "tx_chrom, tx_strand, tx_start, tx_end",
-            "FROM transcript INNER JOIN transcript_rtree",
-            "ON (transcript._tx_id=transcript_rtree._tx_id)",
-            "ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id"
-        )
+        sql <- paste("SELECT transcript._tx_id AS tx_id, tx_name,",
+                     "tx_chrom, tx_strand, tx_start, tx_end FROM transcript",
+                     ORDER_BY)
         transcripts <- dbGetQuery(x@conn, sql)
         COL2CLASS <- c(
              tx_id="integer",
@@ -1228,20 +1198,14 @@ setMethod("as.list", "TranscriptDb",
             #"cds._cds_id AS cds_id, cds_name,",
             "cds._cds_id AS cds_id,",
             "cds_start, cds_end",
-            "FROM transcript INNER JOIN transcript_rtree",
-            "ON (transcript._tx_id=transcript_rtree._tx_id)",
+            "FROM transcript",
             "INNER JOIN splicing",
             "ON (transcript._tx_id=splicing._tx_id)",
             "INNER JOIN exon",
             "ON (splicing._exon_id=exon._exon_id)",
-            "INNER JOIN exon_rtree",
-            "ON (exon._exon_id=exon_rtree._exon_id)",
             "LEFT JOIN cds",
             "ON (splicing._cds_id=cds._cds_id)",
-            "LEFT JOIN cds_rtree",
-            "ON (cds._cds_id=cds_rtree._cds_id)",
-            "ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id, exon_rank"
-        )
+            ORDER_BY, ", exon_rank")
         splicings <- dbGetQuery(x@conn, sql)
         COL2CLASS <- c(
              tx_id="integer",
@@ -1262,12 +1226,10 @@ setMethod("as.list", "TranscriptDb",
         ## Retrieve the "genes" element.
         sql <- paste(
             "SELECT transcript._tx_id AS tx_id, gene_id",
-            "FROM transcript INNER JOIN transcript_rtree",
-            "ON (transcript._tx_id=transcript_rtree._tx_id)",
+            "FROM transcript",
             "INNER JOIN gene",
             "ON (transcript._tx_id=gene._tx_id)",
-            "ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id, gene_id"
-        )
+            ORDER_BY, ", gene_id")
         genes <- dbGetQuery(x@conn, sql)
         COL2CLASS <- c(
              tx_id="integer",

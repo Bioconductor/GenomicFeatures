@@ -91,8 +91,7 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
     optionalColumn <- ""
   sql <- paste("SELECT tx_chrom, tx_start, tx_end, tx_strand,",
                "transcript._tx_id AS tx_id", optionalColumn,
-               "FROM transcript INNER JOIN transcript_rtree",
-               "ON (transcript._tx_id=transcript_rtree._tx_id)",
+               "FROM transcript",
                .sqlWhereIn(vals),
                "ORDER BY tx_chrom, tx_strand, tx_start, tx_end")
 
@@ -157,15 +156,11 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
   }
 
   ## create base SQL query
-  sql <-
-    gsub("TYPE", type,
-         paste("SELECT TYPE_chrom, TYPE_start, TYPE_end, TYPE_strand,",
-               "TYPE._TYPE_id AS TYPE_id",
-               "FROM TYPE INNER JOIN TYPE_rtree",
-               "ON (TYPE._TYPE_id=TYPE_rtree._TYPE_id)",
+  sql <- paste("SELECT TYPE_chrom, TYPE_start, TYPE_end, TYPE_strand,",
+               "TYPE._TYPE_id AS TYPE_id FROM TYPE",
                .sqlWhereIn(vals),
-               "ORDER BY TYPE_chrom, TYPE_strand, TYPE_start, TYPE_end"))
-
+               "ORDER BY TYPE_chrom, TYPE_strand, TYPE_start, TYPE_end")
+  sql <- gsub("TYPE", type, sql)
   if (getOption("verbose", FALSE))
     cat("SQL QUERY: ", sql, "\n\n", sep = "")
 

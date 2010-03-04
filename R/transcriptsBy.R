@@ -23,9 +23,7 @@
         selectClause <-
           paste(selectClause, ", splicing._GROUPBY_id AS GROUPBY_id", sep = "")
     }
-    fromClause <-
-      paste("FROM LONG INNER JOIN LONG_rtree",
-            "ON (LONG._SHORT_id=LONG_rtree._SHORT_id)")
+    fromClause <- "FROM LONG"
     if (splicing_in_join) {
         fromClause <-
           paste(fromClause,
