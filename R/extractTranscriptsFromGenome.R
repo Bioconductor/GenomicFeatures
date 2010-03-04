@@ -3,6 +3,23 @@
 ### -------------------------------------------------------------------------
 
 
+.exonsByTx <- function(txdb, use.tx_id=FALSE)
+{
+    if (!isTRUEorFALSE(use.tx_id))
+        stop("'use.tx_id' must be TRUE or FALSE")
+    exbytx <- exonsBy(txdb, by="tx")
+    if (use.tx_id)
+        return(exbytx)
+    tx <- transcripts(txdb)
+    id2name <- values(tx)[ , "tx_name"]
+    names(id2name) <- as.character(values(tx)[ , "tx_id"])
+    names(exbytx) <- id2name[names(exbytx)]
+    if (any(is.na(names(exbytx))))
+        warning("some transcript names are NAs, use 'use.tx_id=TRUE' ",
+                "to use their internal ids instead")
+    exbytx
+}
+
 ### 'x' must be a GRangesList object containing exons grouped by transcripts.
 ### Unlike the "as.data.frame" method for GRangesList, this function produces
 ### a data frame with 1 row per list element (a GRanges) and the following
@@ -73,35 +90,24 @@ extractTranscriptsFromGenome <- function(genome, txdb, use.tx_id=FALSE)
     if (!is(genome, "BSgenome"))
         stop("'genome' must be a BSgenome object")
     if (is(txdb, "TranscriptDb")) {
-        if (!isTRUEorFALSE(use.tx_id))
-            stop("'use.tx_id' must be TRUE or FALSE")
-        exbytx <- exonsBy(txdb, by="tx")
-        if (!use.tx_id) {
-            tx <- transcripts(txdb)
-            id2name <- values(tx)[ , "tx_name"]
-            names(id2name) <- as.character(values(tx)[ , "tx_id"])
-            names(exbytx) <- id2name[names(exbytx)]
-            if (any(is.na(names(exbytx))))
-                warning("some transcript names are NAs, use ",
-                        "'use.tx_id=TRUE' to use their internal ids instead")
-        }
-        genes <- .exonsByTxAsCompactDataFrame(exbytx,
-                     reorder.exons.on.minus.strand=FALSE)
+        exbytx <- .exonsByTx(txdb, use.tx_id=use.tx_id)
+        txtable <- .exonsByTxAsCompactDataFrame(exbytx,
+                       reorder.exons.on.minus.strand=FALSE)
         reorder.exons <- FALSE
     } else if (is.data.frame(txdb)) {
         REQUIRED_COLS <- c("name", "chrom", "strand", "exonStarts", "exonEnds")
         if (!all(REQUIRED_COLS %in% names(txdb)))
             stop("'txdb' data frame must have columns: ",
                  paste(REQUIRED_COLS, collapse=", "))
-        genes <- txdb
+        txtable <- txdb
         reorder.exons <- TRUE
     } else {
         stop("'txdb' must be a TranscriptDb object or a data frame")
     }
     ## The 3 lists below have identical names (the REFSEQnames)
-    REFSEQnames2strand <- split(genes$strand, genes$chrom, drop=TRUE)
-    REFSEQnames2exonStarts <- split(genes$exonStarts, genes$chrom, drop=TRUE)
-    REFSEQnames2exonEnds <- split(genes$exonEnds, genes$chrom, drop=TRUE)
+    REFSEQnames2strand <- split(txtable$strand, txtable$chrom, drop=TRUE)
+    REFSEQnames2exonStarts <- split(txtable$exonStarts, txtable$chrom, drop=TRUE)
+    REFSEQnames2exonEnds <- split(txtable$exonEnds, txtable$chrom, drop=TRUE)
     REFSEQnames <- names(REFSEQnames2strand)  # REFSEQnames has no duplicates
     extractTranscriptSeqsFromREFSEQ <- function(REFSEQname)
     {
@@ -117,8 +123,8 @@ extractTranscriptsFromGenome <- function(genome, txdb, use.tx_id=FALSE)
         as.character(transcripts)
     }
     REFSEQnames2seqs <- lapply(REFSEQnames, extractTranscriptSeqsFromREFSEQ)
-    ans <- unsplit(REFSEQnames2seqs, genes$chrom, drop=TRUE)
-    names(ans) <- genes$name
+    ans <- unsplit(REFSEQnames2seqs, txtable$chrom, drop=TRUE)
+    names(ans) <- txtable$name
     DNAStringSet(ans)
 }
 
