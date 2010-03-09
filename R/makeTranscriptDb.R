@@ -508,10 +508,11 @@ makeTranscriptDb <- function(transcripts, splicings,
     genes_internal_tx_id <- genes$tx_id
     ## Infer 'splicings$exon_chrom' and 'splicings$exon_strand' when missing
     ## and generate internal exon id.
+    splicings2transcripts <- match(splicings_internal_tx_id, unique_tx_ids)
     if (is.null(splicings$exon_chrom))
-        splicings$exon_chrom <- transcripts$tx_chrom[splicings_internal_tx_id]
+        splicings$exon_chrom <- transcripts$tx_chrom[splicings2transcripts]
     if (is.null(splicings$exon_strand))
-        splicings$exon_strand <- transcripts$tx_strand[splicings_internal_tx_id]
+        splicings$exon_strand <- transcripts$tx_strand[splicings2transcripts]
     if (!is.null(splicings$exon_id)) {
         splicings_internal_exon_id <- splicings$exon_id
     } else if (!is.null(splicings$exon_name)) {
