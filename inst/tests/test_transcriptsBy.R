@@ -1,5 +1,49 @@
 test_transcriptsBy <- function()
 {
+    ## AN UNREALISTIC EDGE CASE
+    ## ------------------------
+    transcripts0 <- data.frame(
+                        tx_id=c(26L, 5L, 11L),
+                        tx_chrom=c("chr1", "chr2", "chr2"),
+                        tx_strand=c("+", "-", "-"),
+                        tx_start=c(1L, 16844685L, 16844685L),
+                        tx_end=c(100L, 16844760L, 16844760L))
+    splicings0 <-  data.frame(
+                        tx_id=c(26L, 5L, 26L, 11L),
+                        exon_rank=c(2L, 1L, 1L, 1L),
+                        exon_start=c(1L, 16844685L, 1L, 16844685L),
+                        exon_end=c(100L, 16844760L, 100L, 16844760L))
+    txdb0 <- makeTranscriptDb(transcripts0, splicings0)
+
+    ans <- transcriptsBy(txdb0, "exon")
+    grg1 <- GRanges(seqnames="chr1",
+                    ranges=IRanges(start=1, end=100),
+                    strand=strand("+"),
+                    tx_name=NA_character_,
+                    tx_id=26L)
+    grg2 <- GRanges(seqnames=c("chr2", "chr2"),
+                    ranges=IRanges(start=c(16844685, 16844685),
+                                   end=c(16844760,16844760)),
+                    strand=strand(c("-", "-")),
+                    tx_name=as.character(c(NA, NA)),
+                    tx_id=c(5L, 11L))
+    checkIdentical(ans, GRangesList(`1`=grg1, `2`=grg2))
+
+    ans <- exonsBy(txdb0, "tx")
+    grg5 <- GRanges(seqnames="chr2",
+                    ranges=IRanges(start=16844685, end=16844760),
+                    strand=strand("-"),
+                    exon_name=NA_character_,
+                    exon_id=2L)
+    grg26 <- GRanges(seqnames="chr1",
+                    ranges=IRanges(start=1, end=100),
+                    strand=strand("+"),
+                    exon_name=NA_character_,
+                    exon_id=1L)[c(1L, 1L)]
+    checkIdentical(ans, GRangesList(`5`=grg5, `11`=grg5, `26`=grg26))
+                    
+    ## WITH REAL DATA
+    ## --------------
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 

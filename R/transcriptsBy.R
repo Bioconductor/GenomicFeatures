@@ -75,8 +75,8 @@
 ###   type    by  DISTINCT   in JOIN   in JOIN   ORDER BY
 ##    ----  ----  --------  --------  --------  ---------
 ###     tx  gene        no        no       yes      locus
-###     tx  exon        no       yes        no      locus
-###     tx   cds        no       yes        no      locus
+###     tx  exon       yes       yes        no      locus
+###     tx   cds       yes       yes        no      locus
 ###   exon    tx        no       yes        no  exon_rank
 ###   exon  gene       yes       yes       yes      locus
 ###    cds    tx        no       yes        no  exon_rank
@@ -85,10 +85,10 @@
 transcriptsBy <- function(txdb, by = c("gene", "exon", "cds"))
 {
     by <- match.arg(by)
-    splicing_in_join <- by != "gene"
+    distinct <- splicing_in_join <- by != "gene"
     gene_in_join <- by == "gene"
     .featuresBy(txdb, by, "tx",
-                distinct=FALSE,
+                distinct=distinct,
                 splicing_in_join=splicing_in_join,
                 gene_in_join=gene_in_join,
                 order_by_exon_rank=FALSE)
