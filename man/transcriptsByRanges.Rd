@@ -22,7 +22,7 @@
 }
 \arguments{  
   \item{txdb}{A \link{TranscriptDb} object.}
-  \item{ranges}{A \link[BSgenome]{GRanges} object to restrict the output.}
+  \item{ranges}{A \link[GenomicRanges]{GRanges} object to restrict the output.}
   \item{restrict}{How to perform the interval overlap operations of the
     \code{ranges}. See the
     \code{\link[IRanges:IntervalTree-class]{findOverlaps}} manual page

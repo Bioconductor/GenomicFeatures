@@ -16,7 +16,7 @@
 
 \arguments{
   \item{genome}{
-    A \code{\link[BSgenome:BSgenome-class]{BSgenome}} object.
+    A \code{\link[BSgenome]{BSgenome}} object.
     See the \code{\link[BSgenome]{available.genomes}} function
     in the BSgenome package for how to install a genome.
   }
@@ -33,16 +33,16 @@
 }
 
 \value{
-  A \code{\link[Biostrings:XStringSet-class]{DNAStringSet}} object.
+  A \code{\link[Biostrings]{DNAStringSet}} object.
 }
 
 \note{
   \code{extractTranscriptsFromGenome} is based on the
-  \code{\link[Biostrings:extractTranscripts]{extractTranscripts}}
+  \code{\link[Biostrings]{extractTranscripts}}
   function defined in the Biostrings package.
-  See \code{?`\link[Biostrings:extractTranscripts]{extractTranscripts}`}
+  See \code{?`\link[Biostrings]{extractTranscripts}`}
   for more information and related functions like
-  \code{\link[Biostrings:extractTranscripts]{transcriptLocs2refLocs}}
+  \code{\link[Biostrings]{transcriptLocs2refLocs}}
   for converting transcript-based locations into chromosome-based
   (aka reference-based) locations.
 }
@@ -52,9 +52,9 @@
 }
 
 \seealso{
-  \code{\link[BSgenome:available.genomes]{available.genomes}},
+  \code{\link[BSgenome]{available.genomes}},
   \code{\link[GenomicFeatures.Hsapiens.UCSC.hg18]{geneHuman}},
-  \code{\link[Biostrings:extractTranscripts]{transcriptLocs2refLocs}}
+  \code{\link[Biostrings]{transcriptLocs2refLocs}}
 }
 
 \examples{

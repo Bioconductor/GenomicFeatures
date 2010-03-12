@@ -2,8 +2,8 @@ import(methods)
 import(DBI)
 import(RSQLite)
 import(IRanges)
+import(GenomicRanges)
 import(Biostrings)
-import(BSgenome)
 import(biomaRt)
 
 importFrom(rtracklayer,
