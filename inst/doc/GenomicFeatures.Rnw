@@ -24,10 +24,10 @@
 
 \section{Introduction}
 
-The \Rpackage{GenomicFeatures} package is designed to obtain genomic
-features metadata from UCSC Genome Bioinformatics and BioMart for
-ChIP-chip, ChIP-seq, and RNA-seq analyses. It is currently focused on
-transcript-related features, but its scope will grow in future releases.
+The \Rpackage{GenomicFeatures} package retrieves and manages
+transcript-related features from UCSC Genome Bioinformatics and
+BioMart data resources. The package is useful for ChIP-chip, ChIP-seq,
+and RNA-seq analyses.
 
 <<loadGenomicFeatures>>=
 library(GenomicFeatures)
@@ -44,57 +44,46 @@ the 5' untranslated regions (UTRs), protein coding sequence (CDSs),
 and 3' UTRs for a set mRNA transcripts to their associated genome,
 where the combined 5' UTR, CDS, and 3' UTR region for an mRNA
 transcript either originated from a single exon or from multiple
-exons that were spliced together post-transcription.
+exons that were post-transcriptionally spliced.
 
 As the suffix of the class name suggests, \Rclass{TranscriptDb}
-objects are backed by a SQLite database. This database manages:
-
-\begin{enumerate}
-\item genomic locations for pre-processed mRNA transcripts
-\item genomic locations for exons 
-\item genomic locations for protein coding sequences 
-\item the relationships amongst mRNA transcripts, exons, protein
-  coding sequences and associated gene IDs.
-\end{enumerate}
-
+objects are backed by a SQLite database. This database manages genomic
+locations and the relationships between pre-processed mRNA
+transcripts, exons, protein coding sequences, and their related gene
+IDs.
 
 \subsection{Creating New \Rclass{TranscriptDb} Objects}
 
-The \Rpackage{GenomicFeatures} package contains three methods for
-creating new \Rclass{TranscriptDb} objects:
-
+There are three methods for creating new \Rclass{TranscriptDb} objects
+in the \Rpackage{GenomicFeatures} package:
 \begin{enumerate}
-\item Download from a UCSC Genome Bioinformatics
-\item Download from BioMart
-\item Use \Rclass{data.frame} objects containing transcript metadata
+\item Download from UCSC Genome Bioinformatics;
+\item Download from BioMart;
+\item Use a \Rclass{data.frame} containing transcript metadata.
 \end{enumerate}
 
-
-\subsubsection{UCSC Genome Bioinformatics}
-
-The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC Genome
-Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
+The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC
+Genome Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
 \Rcode{"refGene"}, \Rcode{"ensGene"}) for a genome build (e.g.
-\Rcode{"mm9"}, \Rcode{"hg19"}).
-Use the \Rfunction{supportedUCSCtables} utility function to get the
-list of supported tables.
-
+\Rcode{"mm9"}, \Rcode{"hg19"}).  Use the
+\Rfunction{supportedUCSCtables} utility function to get the list of
+supported tables.
+%% 
+<<supportedUCSCtables>>=
+supportedUCSCtables()
+@ 
 <<makeTranscriptDbFromUCSC, eval=FALSE>>=
 mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", tablename = "knownGene")
-mm9KG
 @
 
-
-\subsubsection{BioMart}
-
+Retrieve data from BioMart by specifying the `mart' and data set (not
+all BioMart data sets are currently supported):
+%% 
 <<makeTranscriptDbFromBiomart, eval=FALSE>>=
 mmusculusEnsembl <- 
   makeTranscriptDbFromBiomart(biomart = "ensembl",
                               dataset = "mmusculus_gene_ensembl")
 @
-
-
-\subsubsection{\Rclass{data.frame} Inputs}
 
 The function \Rfunction{makeTranscriptDb} creates \Rclass{TransctriptDb}
 objects from \Rclass{data.frame} objects.
@@ -102,59 +91,72 @@ objects from \Rclass{data.frame} objects.
 
 \subsection{Saving and Loading a TranscriptDb Object}
 
-When you 1st make your \Rclass{TranscriptDb} object, it is running from a
-temporary file.  In order to save it you need to use the
-\Rfunction{saveFeatures} function.
-
+\Rclass{TranscriptDb} objects can be saved as sqlite files for future
+access (e.g., to easily reproduce results with identical genomic
+feature data at a later date, or for access from programs other than
+R).  
+%% 
 <<saveFeatures 1, eval=FALSE>>=
-saveFeatures(txAnn, file="fileName.sqlite")
+saveFeatures(mm9KG, file="fileName.sqlite")
 @
-
-To retrieve the \Rclass{TranscriptDb} object, you only need to use the
-\Rfunction{loadFeatures} function.
-
-<<loadFeatures 1, eval=FALSE>>=
-loadFeatures("fileName.sqlite")
+%% 
+Load a saved \Rclass{TranscriptDb} object with
+\Rfunction{loadFeatures}:
+## 
+<<loadFeatures-1, eval=FALSE>>=
+mm9KG <- loadFeatures("fileName.sqlite")
 @
-
+%% 
+For instance, a sample of UCSC known genes is included in
+\Rpackage{GenomicFeatures}.
 <<load_UCSC_KG>>=
-txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                                 package="GenomicFeatures"))
-@
+exampleFile <-
+    system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                package="GenomicFeatures")
+txdb <- loadFeatures(exampleFile)
+txdb
+@ 
+%% 
+In addition to transcript data, the object contains information about
+how it was created (e.g., the number of transcripts, exons, and coding
+sequence rows) and about software versions and creation dates.
 
+\section{Retrieving Transcript, Exon, and Coding Sequence Ranges}
 
-\subsection{Getting Transcript Ranges}
-
-
-\subsection{Getting Overlapped Transcript Ranges}
-
-The \Rfunction{transcriptsByRanges} function returns a
-\Rclass{GRangesList} object containing metadata for transcripts that
-are overlapped by specified locations from a \Rclass{GRanges} object.
-
+The \Rfunction{transcriptsByRanges}, \Rfunction{exonsByRanges} and
+\Rfunction{cdsByRanges} functions return a \Rclass{GRangesList} object
+containing data about transcripts, exons, or coding sequences that
+overlap genomic coordinates specified by a \Rclass{GRanges}
+object.
+%% 
 <<transcriptsByRanges>>=
-gr <- GRanges(seqnames = rep("chr1",2),
-              ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
-              strand = rep("-",2))
+library(org.Mm.eg.db)
+set.seed(0L)
+idx <- sample(length(org.Mm.egCHRLOC), 50)
+tbl <- unique(merge(toTable(org.Mm.egCHRLOC[idx]), 
+                    toTable(org.Mm.egCHRLOCEND[idx])))
+gr <- with(tbl, {
+    lvls <- paste("chr", c(1:19, "X", "Y", "MT", "Un"), sep="")
+    GRanges(seqnames=factor(paste("chr", Chromosome, sep=""), 
+                            levels=lvls),
+            ranges=IRanges(abs(start_location), abs(end_location)), 
+            strand=ifelse(start_location >= 0, "+", "-"),
+            egid=gene_id)
+})
 transcriptsByRanges(txdb, gr)
 @
 
-
-\subsection{Binding Transcript Data to a GRanges Object}
-
-
+The \Rfunction{bindTranscripts}, \Rfunction{bindExons} and
+\Rfunction{bindCDS} add transcript, exon, or coding sequence data to
+rows of a \code{GRanges} object.
+%% 
 <<bindTranscripts>>=
-gr <- GRanges(seqnames = rep("chr1",2),
-              ranges = IRanges(start=c(500,10500),end=c(10000,30000)),
-              strand = rep("-",2))
 bindTranscripts(txdb, gr)
 @
 
+\section{Examples}
 
-
-\subsection{Examples}
-
-\subsubsection{Example: Retrieving data from an experiment}
+\subsection{Features overlapped by experimental data}
 
 So lets suppose that you have run an experiment. After mapping all
 your reads to a genome and collapsing them into a set of ranges, you
@@ -168,12 +170,11 @@ gr <- GRanges(seqnames = "chr1",
               strand = "-")
 
 bindTranscripts(txdb, gr)
-
 bindExons(txdb, gr)
 @
 
 
-\subsubsection{Example: Retrieving data from an RNA-seq experiment}
+\subsection{Retrieving data from an RNA-seq experiment}
 
 Lets take the case where you have some RNA-seq data and you want to
 convert your ranges into counts representing how many hits per gene.
@@ -230,7 +231,7 @@ table(unlist(tdata$gene_id))
 
 %%TODO: work with Herve to improve the toy annotations so that we can have more interesting results in the example.
 
-\subsubsection{Example: Finding data for a Chip-seq experiment}
+\subsection{Finding data for a Chip-seq experiment}
 
 What would we do differently if we had chip-seq data?  Lets imagine
 the we have a collection of reads in a \Rclass{GRanges} object

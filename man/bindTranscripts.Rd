@@ -59,12 +59,13 @@
   "cds_ranges" <CompressedIRangesList>, and 
   "cds_strand" <CompressedCharacterList>.
 }
-\value{ a GRanges object }
+\value{ a \code{\linkS4class{GRanges}} object }
 \author{
   P. Aboyoun and M. Carlson
 }
 \seealso{
-  \link{TranscriptDb}, \code{\link{transcripts}}, \code{\link{transcriptsByRanges}}
+  \code{\linkS4class{TranscriptDb}}, \code{\link{transcripts}},
+  \code{\link{transcriptsByRanges}}
 }
 \examples{
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
