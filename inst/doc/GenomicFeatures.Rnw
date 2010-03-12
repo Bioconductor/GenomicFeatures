@@ -102,7 +102,6 @@ saveFeatures(mm9KG, file="fileName.sqlite")
 %% 
 Load a saved \Rclass{TranscriptDb} object with
 \Rfunction{loadFeatures}:
-## 
 <<loadFeatures-1, eval=FALSE>>=
 mm9KG <- loadFeatures("fileName.sqlite")
 @
@@ -148,7 +147,7 @@ transcriptsByRanges(txdb, gr)
 
 The \Rfunction{bindTranscripts}, \Rfunction{bindExons} and
 \Rfunction{bindCDS} add transcript, exon, or coding sequence data to
-rows of a \code{GRanges} object.
+rows of a \Rclass{GRanges} object.
 %% 
 <<bindTranscripts>>=
 bindTranscripts(txdb, gr)
