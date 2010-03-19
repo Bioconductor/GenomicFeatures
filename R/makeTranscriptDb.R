@@ -436,7 +436,7 @@ loadFeatures <- function(file)
         "exon_nrow",       exon_nrow,
         "cds_nrow",        cds_nrow,
         "Db created by",   "GenomicFeatures package from Bioconductor",
-        "Creation date",   date(),
+        "Creation time",   svn.time(),
         "GenomicFeatures version at creation time", thispkg_version,
         "RSQLite version at creation time", rsqlite_version),
         ncol=2, byrow=TRUE
