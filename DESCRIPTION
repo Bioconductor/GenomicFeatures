@@ -1,13 +1,13 @@
 Package: GenomicFeatures
 Title: Support package for genomic annotations
-Version: 0.4.3
+Version: 0.4.4
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
 Description: Infrastructure shared by the annotation packages
              containing genomic features and tools for producing them.
 Maintainer: Biocore Team c/o BioC user list <bioconductor@stat.math.ethz.ch>
-Depends: IRanges (>= 1.5.65), GenomicRanges (>= 0.0.0)
+Depends: IRanges (>= 1.5.67), GenomicRanges (>= 0.0.8)
 Imports: methods, DBI (>= 0.2-5), RSQLite (>= 0.8-1), IRanges, GenomicRanges,
          Biostrings (>= 2.13.54), rtracklayer (>= 1.7.11), biomaRt
 Suggests: GenomicFeatures.Hsapiens.UCSC.hg18,

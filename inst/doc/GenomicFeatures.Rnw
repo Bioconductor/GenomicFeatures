@@ -263,7 +263,7 @@ annotGR <- transcriptsByRanges(txdb, grExt,
                                columns=c("tx_id","tx_name","gene_id"))
 
 ## Then find the number of unique matching gene IDs 
-unique(unlist(values(annotGR)$gene_id))
+unique(unlist(elementMetadata(annotGR)[,"gene_id"]))
 @
 
 

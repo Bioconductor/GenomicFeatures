@@ -12,8 +12,9 @@ test_bindTranscripts <- function()
     strand <- strand(c("+", "-", "+", "-"))
     gr <- GRanges(seqnames = chrom, ranges = ranges, strand = strand)
     want <- gr
-    values(want)[["tx_id"]] <- IntegerList(list(1:2, integer(), integer(), 4))
-    values(want)[["tx_name"]] <-
+    elementMetadata(want)[["tx_id"]] <-
+      IntegerList(list(1:2, integer(), integer(), 4))
+    elementMetadata(want)[["tx_name"]] <-
       CharacterList(list(c("uc001aaa.2","uc009vip.1"),
                          character(), character(), "uc002qvt.1"))
     checkIdentical(want, bindTranscripts(txdb, gr))
@@ -33,7 +34,8 @@ test_bindExons <- function()
     strand <- strand(c("+", "-", "+", "-"))
     gr <- GRanges(seqnames = chrom, ranges = ranges, strand = strand)
     want <- gr
-    values(want)[["exon_id"]] <- IntegerList(list(c(1,2,4,3), integer(), integer(), 9:10))
+    elementMetadata(want)[["exon_id"]] <-
+      IntegerList(list(c(1,2,4,3), integer(), integer(), 9:10))
     checkIdentical(want, bindExons(txdb, gr))
 }
 
@@ -51,6 +53,7 @@ test_bindCDS <- function()
     strand <- strand(c("+", "-", "+", "-"))
     gr <- GRanges(seqnames = chrom, ranges = ranges, strand = strand)
     want <- gr
-    values(want)[["cds_id"]] <- IntegerList(list(integer(), integer(), integer(), 1:2))
+    elementMetadata(want)[["cds_id"]] <-
+      IntegerList(list(integer(), integer(), integer(), 1:2))
     checkIdentical(want, bindCDS(txdb, gr))
 }

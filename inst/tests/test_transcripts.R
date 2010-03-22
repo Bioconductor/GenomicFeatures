@@ -23,7 +23,8 @@ test_transcripts <- function()
                     tx_id   = c(3L, 15L),
                     tx_name = c("uc009vis.1", "uc003jam.1"),
                     exon_id = IntegerList("3"=c(8,7,6,5), "15"=c(79,78,77)))
-    values(want)[["exon_id"]] <- IntegerList("3"=c(8,7,6,5), "15"=c(79,78,77))
+    elementMetadata(want)[["exon_id"]] <-
+      IntegerList("3"=c(8,7,6,5), "15"=c(79,78,77))
     checkIdentical(want,
                    transcripts(txdb, vals, columns = c("tx_id","tx_name","exon_id")))
 }

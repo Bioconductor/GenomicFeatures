@@ -11,8 +11,8 @@
     if (use.tx_id)
         return(exbytx)
     tx <- transcripts(txdb)
-    id2name <- values(tx)[ , "tx_name"]
-    names(id2name) <- as.character(values(tx)[ , "tx_id"])
+    id2name <- elementMetadata(tx)[ , "tx_name"]
+    names(id2name) <- as.character(elementMetadata(tx)[ , "tx_id"])
     names(exbytx) <- id2name[names(exbytx)]
     if (any(is.na(names(exbytx))))
         warning("some transcript names are NAs, use 'use.tx_id=TRUE' ",

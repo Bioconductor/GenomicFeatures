@@ -109,21 +109,21 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
 
   if(length(ans) > 0 && any(c("gene_id", "exon_id","cds_id") %in% columns)) {
     if("gene_id" %in% columns) {
-      values(ans)[["gene_id"]] <-
-        .geneCharacterList(txdb, values(ans)[["tx_id"]])
+      elementMetadata(ans)[["gene_id"]] <-
+        .geneCharacterList(txdb, elementMetadata(ans)[["tx_id"]])
     }
     if("exon_id" %in% columns) {
-      values(ans)[["exon_id"]] <-
-        .exonORcdsIntegerList(txdb, values(ans)[["tx_id"]], "exon")
+      elementMetadata(ans)[["exon_id"]] <-
+        .exonORcdsIntegerList(txdb, elementMetadata(ans)[["tx_id"]], "exon")
     }
     if("cds_id" %in% columns) {
-      values(ans)[["cds_id"]] <-
-        .exonORcdsIntegerList(txdb, values(ans)[["tx_id"]], "cds")
+      elementMetadata(ans)[["cds_id"]] <-
+        .exonORcdsIntegerList(txdb, elementMetadata(ans)[["tx_id"]], "cds")
     }
   }
 
   if (!("tx_id" %in% columns))
-    values(ans)[["tx_id"]] <- NULL
+    elementMetadata(ans)[["tx_id"]] <- NULL
 
   ans
 }

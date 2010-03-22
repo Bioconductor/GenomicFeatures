@@ -40,31 +40,31 @@ function(txdb, ranges, restrict, bind, prefix, FUN, ...)
                          factor(as.character(hitMatrix[,1L]),
                                 levels=as.character(seq_len(length(query))))
                        if (idName %in% bind) {
-                           values(query)[[idName]] <-
+                           elementMetadata(query)[[idName]] <-
                              unname(.newListBySplit("CompressedIntegerList",
-                                                    values(alignedSubject)[[idName]],
+                                                    elementMetadata(alignedSubject)[[idName]],
                                                     queryGroup))
                        }
                        if (nameName %in% bind) {
-                           values(query)[[nameName]] <-
+                           elementMetadata(query)[[nameName]] <-
                              unname(.newListBySplit("CompressedCharacterList",
-                                                    values(alignedSubject)[[nameName]],
+                                                    elementMetadata(alignedSubject)[[nameName]],
                                                     queryGroup))
                        }
                        if (chromName %in% bind) {
-                           values(query)[[chromName]] <-
+                           elementMetadata(query)[[chromName]] <-
                              unname(.newListBySplit("CompressedCharacterList",
                                                     seqnames(alignedSubject),
                                                     queryGroup))
                        }
                        if (rangesName %in% bind) {
-                           values(query)[[chromName]] <-
+                           elementMetadata(query)[[chromName]] <-
                              unname(.newListBySplit("CompressedIRangesList",
                                                     ranges(alignedSubject),
                                                     queryGroup))
                        }
                        if (strandName %in% bind) {
-                           values(query)[[strandName]] <-
+                           elementMetadata(query)[[strandName]] <-
                              unname(.newListBySplit("CompressedCharacterList",
                                                     as.character(strand(alignedSubject)),
                                                     queryGroup))

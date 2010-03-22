@@ -30,12 +30,12 @@ test_transcriptsBy <- function()
     checkIdentical(ans, GRangesList(`1`=grg1, `2`=grg2))
 
     ans <- exonsBy(txdb0, "tx")
-    grg5 <- GRanges(seqnames="chr2",
+    grg5 <- GRanges(seqnames=factor("chr2", levels=c("chr1", "chr2")),
                     ranges=IRanges(start=16844685, end=16844760),
                     strand=strand("-"),
                     exon_name=NA_character_,
                     exon_id=2L)
-    grg26 <- GRanges(seqnames="chr1",
+    grg26 <- GRanges(seqnames=factor("chr1", levels=c("chr1", "chr2")),
                     ranges=IRanges(start=1, end=100),
                     strand=strand("+"),
                     exon_name=NA_character_,
@@ -52,7 +52,7 @@ test_transcriptsBy <- function()
     checkException(transcriptsBy(txdb, "tx"), silent = TRUE)
 
     dupCount <- function(x) {
-        sum(sapply(x, function(y) anyDuplicated(values(y)[,"tx_id"])))
+        sum(sapply(x, function(y) anyDuplicated(elementMetadata(y)[,"tx_id"])))
     }
 
     ## transcripts by gene
@@ -60,7 +60,8 @@ test_transcriptsBy <- function()
     checkTrue(validObject(txByGene))
     checkIdentical(dupCount(txByGene), 0L)
     checkIdentical(txByGene[[1]],
-                   GRanges(seqnames = "chr21_random",
+                   GRanges(seqnames = factor("chr21_random",
+                                             levels=levels(seqnames(unlist(txByGene)))),
                            ranges   = IRanges(start=103280, end=164670),
                            strand   = strand("-"),
                            tx_name  = "uc002zka.1",
@@ -71,7 +72,8 @@ test_transcriptsBy <- function()
     checkTrue(validObject(txByExon))
     checkIdentical(dupCount(txByExon), 0L)
     checkIdentical(txByExon[[1]],
-                   GRanges(seqnames = c("chr1", "chr1"),
+                   GRanges(seqnames = factor(c("chr1", "chr1"),
+                                             levels=levels(seqnames(unlist(txByExon)))),
                            ranges   = IRanges(start=1116, end=c(4121, 4272)),
                            strand   = strand(c("+", "+")),
                            tx_name  = c("uc001aaa.2", "uc009vip.1"),
@@ -82,7 +84,8 @@ test_transcriptsBy <- function()
     checkTrue(validObject(txByCds))
     checkIdentical(dupCount(txByCds), 0L)
     checkIdentical(txByCds[[1]],
-                   GRanges(seqnames = "chr2",
+                   GRanges(seqnames = factor("chr2", 
+                                             levels=levels(seqnames(unlist(txByCds)))),
                            ranges   = IRanges(start=31608, end=36385),
                            strand   = strand("-"),
                            tx_name  = "uc002qvt.1",
@@ -100,7 +103,7 @@ test_exonsBy <- function()
     checkException(exonsBy(txdb, "cds"), silent = TRUE)
 
     dupCount <- function(x) {
-        sum(sapply(x, function(y) anyDuplicated(values(y)[,"exon_id"])))
+        sum(sapply(x, function(y) anyDuplicated(elementMetadata(y)[,"exon_id"])))
     }
 
     ## exons by transcript
@@ -108,7 +111,9 @@ test_exonsBy <- function()
     checkTrue(validObject(exonByTx))
     checkIdentical(dupCount(exonByTx), 0L)
     checkIdentical(exonByTx[[2]],
-                   GRanges(seqnames = c("chr1","chr1"),
+                   GRanges(seqnames =
+                           factor(c("chr1","chr1"),
+                                  levels = levels(seqnames(unlist(exonByTx)))),
                            ranges = IRanges(start = c(1116,2476),
                                               end = c(2090,4272)),
                            strand = strand(c("+","+")),
@@ -132,7 +137,7 @@ test_cdsBy <- function()
     checkException(cdsBy(txdb, "cds"), silent = TRUE)
 
     dupCount <- function(x) {
-        sum(sapply(x, function(y) anyDuplicated(values(y)[,"cds_id"])))
+        sum(sapply(x, function(y) anyDuplicated(elementMetadata(y)[,"cds_id"])))
     }
 
     ## cds by transcript
@@ -145,10 +150,12 @@ test_cdsBy <- function()
     checkTrue(validObject(cdsByGene))
     checkIdentical(dupCount(cdsByGene), 0L)
     checkIdentical(cdsByGene[[6]],
-                   GRanges(seqnames = c("chr5","chr5"),
+                   GRanges(seqnames =
+                           factor(c("chr5","chr5"),
+                                  levels = levels(seqnames(unlist(cdsByGene)))),
                            ranges = IRanges(start = c(258412,269844),
                                               end = c(259073,269964)),
                            strand = strand(c("-","-")),
                            cds_name = as.character(c(NA,NA)),
-                           cds_id = c(53L,54L) ))
+                           cds_id = c(53L,54L)))
 }
