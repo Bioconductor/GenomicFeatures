@@ -172,7 +172,8 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
                              end = ans[[paste(type, "_end", sep="")]]),
             strand = strand(ans[[paste(type, "_strand", sep="")]]),
             "TYPE_id" = ans[[paste(type, "_id", sep="")]])
-  colnames(ans) <- gsub("TYPE", type, colnames(ans))
+  colnames(elementMetadata(ans)) <-
+    gsub("TYPE", type, colnames(elementMetadata(ans)))
 
   ans
 }
