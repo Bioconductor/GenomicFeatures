@@ -17,6 +17,8 @@ Suggests: GenomicFeatures.Hsapiens.UCSC.hg18,
 Collate: AllClasses.R
      utils.R
      makeTranscriptDb.R
+     makeTranscriptDbFromUCSC.R
+     makeTranscriptDbFromBiomart.R
      transcripts.R
      transcriptsByRanges.R
      bindTranscripts.R

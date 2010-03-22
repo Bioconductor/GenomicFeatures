@@ -8,53 +8,26 @@
 \alias{class:TranscriptDb}
 \alias{TranscriptDb}
 
-\alias{supportedUCSCtables}
-\alias{makeTranscriptDbFromUCSC}
-\alias{makeTranscriptDbFromBiomart}
 \alias{makeTranscriptDb}
 
 \alias{show,TranscriptDb-method}
 \alias{as.list,TranscriptDb-method}
 
 \title{
-  Making a TranscriptDb objects from publicly available sources.
+  Making a TranscriptDb object from user supplied annotations
 }
 \description{
-  Flexible tools for making a TranscriptDb object from a publicly
-  available source (like the UCSC genome browser or a BioMart database),
-  or from user supplied annotations.
+  \code{makeTranscriptDb} is a low-level constructor for making
+  a TranscriptDb object from user supplied transcript annotations.
+  See \code{?\link{makeTranscriptDbFromUCSC}} and
+  \code{?\link{makeTranscriptDbFromBiomart}} for higher-level
+  functions that feed data from the UCSC or BioMart sources
+  to \code{makeTranscriptDb}.
 }
 \usage{
-  supportedUCSCtables()
-  makeTranscriptDbFromUCSC(genome="hg18",
-                           tablename="knownGene",
-                           transcript_ids=NULL)
-  makeTranscriptDbFromBiomart(biomart="ensembl",
-                              dataset="hsapiens_gene_ensembl",
-                              transcript_ids=NULL)
   makeTranscriptDb(transcripts, splicings, genes=NULL, metadata=NULL, ...)
 }
 \arguments{
-  \item{genome}{genome abbreviation used by UCSC and obtained by
-    \code{\link[rtracklayer]{ucscGenomes}()[ , "db"]}.
-    For example: \code{"hg18"}.}
-  \item{tablename}{name of the UCSC table containing the transcript
-    annotations to retrieve. Use the \code{supportedUCSCtables} utility
-    function to get the list of supported tables. Note that not all
-    tables are available for all genomes.}
-  \item{transcript_ids}{optionally, only retrieve transcript
-    annotation data for the specified set of transcript ids.
-    If this is used, then the meta information displayed for the
-    resulting TranscriptDb object will say 'Full dataset: no'.
-    Otherwise it will say 'Full dataset: yes'.}
-  \item{biomart}{which BioMart database to use. Only \code{"ensembl"}
-    (the default) is supported for now.}
-  \item{dataset}{which dataset from BioMart. For example:
-    \code{"hsapiens_gene_ensembl"}, \code{"mmusculus_gene_ensembl"},
-    \code{"dmelanogaster_gene_ensembl"}, \code{"celegans_gene_ensembl"},
-    \code{"scerevisiae_gene_ensembl"}, etc. See the examples section
-    below for how to discover which datasets are available in a given
-    BioMart database.}
   \item{transcripts}{data frame containing the genomic locations of
     a set of transcripts}
   \item{splicings}{data frame containing the exon and cds locations
@@ -68,14 +41,9 @@
   \item{...}{ignored for now}
 }
 \details{
-  \code{makeTranscriptDbFromUCSC} and \code{makeTranscriptDbFromBiomart}
-  are convenience functions that feed data from the UCSC or BioMart sources
-  to the lower level \code{makeTranscriptDb} function.
-
   The \code{transcripts}, \code{splicings} and \code{genes} arguments
-  of the \code{makeTranscriptDb} function must be data frames that
-  describe a set of transcripts and the genomic features related to
-  them (exons, cds and genes for now).
+  must be data frames that describe a set of transcripts and the genomic
+  features related to them (exons, cds and genes at the moment).
 
   \code{transcripts} must have 1 row per transcript and the following
   columns:
@@ -153,75 +121,18 @@
   Other columns, if any, are ignored (with a warning).
 }
 
-\value{All of these functions return a TranscriptDb object.}
+\value{A TranscriptDb object.}
 
 \author{
-  M. Carlson and H. Pages
+  H. Pages
 }
 
 \seealso{
-  \code{\link[rtracklayer]{ucscGenomes}},
-  \code{\link[biomaRt]{useMart}},
-  \code{\link[biomaRt]{listDatasets}}
+  \code{\link{makeTranscriptDbFromUCSC}},
+  \code{\link{makeTranscriptDbFromBiomart}}
 }
 
 \examples{
-## ---------------------------------------------------------------------
-## A. MAKING A TranscriptDb OBJECT FROM UCSC
-## ---------------------------------------------------------------------
-
-## Display the list of genomes available at UCSC:
-library(rtracklayer)
-ucscGenomes()[ , "db"]
-
-## Display the list of tables supported by makeTranscriptDbFromUCSC():
-supportedUCSCtables()
-
-## Retrieving a full transcript dataset for Yeast from UCSC:
-txdb1 <- makeTranscriptDbFromUCSC(genome="sacCer2", tablename="ensGene")
-txdb1
-
-## Retrieving an incomplete transcript dataset for Mouse from UCSC
-## (only transcripts linked to Entrez Gene ID 22290):
-transcript_ids <- c(
-    "uc009uzf.1",
-    "uc009uzg.1",
-    "uc009uzh.1",
-    "uc009uzi.1",
-    "uc009uzj.1"
-)
-
-txdb2 <- makeTranscriptDbFromUCSC(genome="mm9", tablename="knownGene",
-                                  transcript_ids=transcript_ids)
-txdb2
-
-## ---------------------------------------------------------------------
-## B. MAKING A TranscriptDb OBJECT FROM A BioMart DATABASE
-## ---------------------------------------------------------------------
-
-## Discover which datasets are available in the "ensembl" BioMart
-## database:
-library(biomaRt)
-listDatasets(useMart("ensembl"))
-
-## Retrieving an incomplete transcript dataset for Human from the
-## "ensembl" BioMart database:
-transcript_ids <- c(
-    "ENST00000400839",
-    "ENST00000400840",
-    "ENST00000478783",
-    "ENST00000435657",
-    "ENST00000268655",
-    "ENST00000313243",
-    "ENST00000341724"
-)
-txdb3 <- makeTranscriptDbFromBiomart(transcript_ids=transcript_ids)
-txdb3  # note that these annotations match the GRCh37 genome assembly
-
-## ---------------------------------------------------------------------
-## C. MAKING A TranscriptDb OBJECT FROM USER SUPPLIED ANNOTATIONS
-## ---------------------------------------------------------------------
-
 transcripts <- data.frame(
                    tx_id=1:3,
                    tx_chrom="chr1",
@@ -236,15 +147,15 @@ splicings <-  data.frame(
                    cds_start=c(1, 2022, 2101, 2131, NA, NA),
                    cds_end=c(999, 2085, 2144, 2193, NA, NA))
 
-txdb0 <- makeTranscriptDb(transcripts, splicings)
+txdb <- makeTranscriptDb(transcripts, splicings)
 
 ## Dump the entire TranscriptDb object into a list of data frames 'txdump'
 ## that can be used in 'do.call(makeTranscriptDb, txdump)' to make the db
 ## again with no loss of information.
 ## Note that the transcripts are dumped in a consistent order in all the
 ## elements of the result.
-txdump0 <- as.list(txdb0)
-txdump0
-txdb0b <- do.call(makeTranscriptDb, txdump0)
-stopifnot(identical(as.list(txdb0b), txdump0))
+txdump <- as.list(txdb)
+txdump
+txdb1 <- do.call(makeTranscriptDb, txdump)
+stopifnot(identical(as.list(txdb1), txdump))
 }
