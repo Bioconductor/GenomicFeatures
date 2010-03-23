@@ -88,53 +88,6 @@
     ans
 }
 
-### Here is the status of some of the available BioMart databases returned by
-### listMarts() as of 2/18/2010:
-###
-### biomart: ensembl
-### version: ENSEMBL 56 GENES (SANGER UK)
-###   50 datasets, one per organism, all named *_gene_ensembl.
-###   Examples: hsapiens_gene_ensembl, mmusculus_gene_ensembl,
-###             btaurus_gene_ensembl, cfamiliaris_gene_ensembl,
-###             drerio_gene_ensembl, ggallus_gene_ensembl,
-###             dmelanogaster_gene_ensembl, celegans_gene_ensembl,
-###             scerevisiae_gene_ensembl, ...
-###   -> they are ALL GOOD
-###
-### biomart: bacterial_mart_3
-### version: ENSEMBL BACTERIA 3 (EBI UK)
-###   134 datasets, all named *_gene
-###   -> they all lack CDS/UTR information
-###
-### biomart: fungal_mart_3
-### version: ENSEMBL FUNGAL 3 (EBI UK)
-###   10 datasets, all named *_eg_gene
-###   -> they all lack CDS/UTR information
-###
-### biomart: metazoa_mart_3
-### version: ENSEMBL METAZOA 3 (EBI UK)
-###   21 datasets, all named *_eg_gene
-###   -> they all lack CDS/UTR information
-###
-### biomart: plant_mart_3
-### version: ENSEMBL PLANT 3 (EBI UK)
-###   Arabidopsis is here ("athaliana_eg_gene" dataset)
-###   8 datasets, all named *_eg_gene
-###   -> they all lack CDS/UTR information
-###
-### biomart: protist_mart_3
-### version: ENSEMBL PROTISTS 3 (EBI UK)
-###   3 datasets, all named *_gene
-###   -> they all lack CDS/UTR information
-###
-### biomart: wormbase_current
-### version: WORMBASE (CSHL US)
-###   ?? (TODO)
-###
-### biomart: ENSEMBL_MART_ENSEMBL
-### version: GRAMENE 30 ENSEMBL GENES
-###   ?? (TODO)
-###
 ### Note that listMarts() and listDatasets() are returning data frames where
 ### the columns are character factors for the former and "AsIs" character
 ### vectors for the latter.
@@ -258,4 +211,159 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     ## Call makeTranscriptDb().
     makeTranscriptDb(transcripts, splicings, genes=genes, metadata=metadata)
 }
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Some non-exported tools to help exploring/scanning the BioMart landscape.
+###
+
+### 'mart' can be either a Mart object or the name of a Mart service (single
+### string). Returns a named list of 2-col data frames with one elt per
+### dataset in 'mart'. Each data frame describes the attributes that are
+### available for the corresponding dataset.
+### Typical use:
+###   ensembl_attrlist <- GenomicFeatures:::getMartAttribList("ensembl")
+###   sapply(ensembl_attrlist, nrow)
+getMartAttribList <- function(mart)
+{
+    if (!is(mart, "Mart"))
+        mart <- useMart(mart)
+    datasets <- listDatasets(mart)
+    ans_length <- nrow(datasets)
+    ans <- vector(mode="list", length=ans_length)
+    names(ans) <- as.character(datasets$dataset)
+    for (i in seq_len(ans_length)) {
+        dataset <- names(ans)[i]
+        mart <- useDataset(dataset, mart=mart)
+        message("Getting attributes for dataset \"", dataset, "\":")
+        ans[[i]] <- listAttributes(mart)
+    }
+    ans
+}
+
+### 'attribs' can be either a Mart object or a 2-col data frame as returned by
+### 'listAttributes()'.
+getDatasetAttrGroups <- function(attribs)
+{
+    if (is(attribs, "Mart"))
+        attribs <- listAttributes(attribs)
+    else if (!is.data.frame(attribs) ||
+             !identical(colnames(attribs), c("name", "description")))
+        stop("invalid 'attribs' object")
+    attrgroups <- "none"
+    ## Group A: Required attributes.
+    attrA <- c("ensembl_transcript_id",
+               "chromosome_name",
+               "strand",
+               "transcript_start",
+               "transcript_end",
+               "rank",
+               "exon_chrom_start",
+               "exon_chrom_end")
+    if (all(attrA %in% attribs$name))
+        attrgroups <- "A"
+    ## Groups B, C and D are optional attributes.
+    ## C is required for inferring the CDS (they cannot be inferred from D).
+    ## Therefore, if C is missing, the TranscriptDb object can still be made
+    ## but won't have any CDS (no row in the cds table).
+    if ("ensembl_exon_id" %in% attribs$name)
+        attrgroups <- paste(attrgroups, "B", sep="")
+    attrC <- c("5_utr_start",
+               "5_utr_end",
+               "3_utr_start",
+               "3_utr_end")
+    if (all(attrC %in% attribs$name))
+        attrgroups <- paste(attrgroups, "C", sep="")
+    attrD <- c("cds_start",
+               "cds_end",
+               "cds_length")
+    if (all(attrD %in% attribs$name))
+        attrgroups <- paste(attrgroups, "D", sep="")
+    attrgroups
+}
+
+### 'attrlist' can be a list (as returned by getMartAttribList()), a Mart
+### object, or the name of a Mart service (single string).
+### Typical use:
+###   ensembl_attrgroups <- GenomicFeatures:::getAllDatasetAttrGroups("ensembl")
+getAllDatasetAttrGroups <- function(attrlist)
+{
+    if (!is.list(attrlist))
+        attrlist <- getMartAttribList(attrlist)
+    sapply(attrlist, getDatasetAttrGroups)
+}
+
+scanMarts <- function(marts=NULL)
+{
+    if (is.null(marts))
+        marts <- listMarts()
+    biomarts <- as.character(marts$biomart)
+    versions <- as.character(marts$version)
+    for (i in seq_len(nrow(marts))) {
+        biomart <- biomarts[i]
+        version <- versions[i]
+        cat("Scanning ", biomart, "...", sep="")
+        suppressMessages(attrgroups <- getAllDatasetAttrGroups(biomart))
+        cat("OK\n")
+        cat("biomart: ", biomart, "\n", sep="")
+        cat("version: ", version, "\n", sep="")
+        tmp <- names(attrgroups)
+        if (length(tmp) > 3L)
+            tmp <- c(tmp[1:3], "...")
+        cat("nb of datasets: ", length(attrgroups),
+            " (", paste(tmp, collapse=", "), ")\n",
+            sep="")
+        tbl <- table(attrgroups)
+        tbl2 <- as.integer(tbl)
+        names(tbl2) <- names(tbl)
+        tmp <- paste(names(tbl2), ":", tbl2, sep="", collapse=", ")
+        cat("table of attribute groups: ", tmp, "\n", sep="")
+    }
+}
+
+### scanMarts() output as of 3/22/2010 (biomarts with no compatible attribute
+### groups were removed):
+###
+### biomart: ensembl
+### version: ENSEMBL GENES 57 (SANGER UK)
+### nb of datasets: 51 (hsapiens_gene_ensembl, oanatinus_gene_ensembl,
+###                     tguttata_gene_ensembl, cporcellus_gene_ensembl, ...)
+### table of attribute groups: ABCD:51
+###
+### biomart: bacterial_mart_4
+### version: ENSEMBL BACTERIA 4 (EBI UK)
+### nb of datasets: 176 (str_57_gene, esc_20_gene, myc_25994_gene, ...)
+### table of attribute groups: AB:176 
+###
+### biomart: fungal_mart_4
+### version: ENSEMBL FUNGAL 4 (EBI UK)
+### nb of datasets: 11 (aniger_eg_gene, aflavus_eg_gene, aterreus_eg_gene, ...)
+### table of attribute groups: AB:11 
+###
+### biomart: metazoa_mart_4
+### version: ENSEMBL METAZOA 4 (EBI UK)
+### nb of datasets: 22 (dgrimshawi_eg_gene, dpseudoobscura_eg_gene,
+###                     dsechellia_eg_gene, ...)
+### table of attribute groups: AB:22 
+###
+### biomart: plant_mart_4
+### version: ENSEMBL PLANT 4 (EBI UK)
+### nb of datasets: 8 (sbicolor_eg_gene, bdistachyon_eg_gene,
+###                    alyrata_eg_gene, ...)
+### table of attribute groups: AB:8 
+###
+### biomart: protist_mart_4
+### version: ENSEMBL PROTISTS 4 (EBI UK)
+### nb of datasets: 4 (pknowlesi_gene, pvivax_gene, pfalciparum_gene, ...)
+### table of attribute groups: AB:4 
+###
+### biomart: ensembl_expressionmart_48
+### version: EURATMART (EBI UK)
+### nb of datasets: 1 (rnorvegicus_expr_gene_ensembl)
+### table of attribute groups: A:1
+###
+### biomart: Ensembl56
+### version: PANCREATIC EXPRESSION DATABASE (INSTITUTE OF CANCER UK)
+### nb of datasets: 1 (hsapiens_gene_pancreas, NA, NA, ...)
+### table of attribute groups: ABCD:1
 
