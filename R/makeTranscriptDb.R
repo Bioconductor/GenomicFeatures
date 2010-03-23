@@ -201,7 +201,9 @@ loadFeatures <- function(file)
     if (is.null(splicings$cds_start) != is.null(splicings$cds_end))
         stop("'splicings' has a \"cds_start\" col ",
              "but no \"cds_end\" col, or vice versa")
-    if (!is.null(splicings$cds_start)) {
+    if (is.null(splicings$cds_start)) {
+        warning("no CDS information for this TranscriptDb object")
+    } else {
         if (!is.numeric(splicings$cds_start))
             stop("'splicings$cds_start' must be an integer vector")
         if (!is.integer(splicings$cds_start))

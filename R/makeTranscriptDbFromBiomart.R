@@ -160,6 +160,35 @@ getAllDatasetAttrGroups <- function(attrlist)
     ans
 }
 
+.makeBiomartMetadata <- function(mart, is_full_dataset)
+{
+    biomart <- biomaRt:::martBM(mart)
+    dataset <- biomaRt:::martDataset(mart)
+    datasets <- listDatasets(mart)
+    dataset_row <- which(as.character(datasets$dataset) == dataset)
+    ## This should never happen (the above call to useMart() would have failed
+    ## in the first place).
+    if (length(dataset_row) != 1L)
+        stop("the BioMart database \"", biomart, "\" has 0 (or ",
+             "more than 1) \"", dataset, "\" datasets")
+    description <- as.character(datasets$description)[dataset_row]
+    version <- as.character(datasets$version)[dataset_row]
+    data.frame(
+        name=c("Data source",
+               "BioMart database",
+               "BioMart dataset",
+               "BioMart dataset description",
+               "BioMart dataset version",
+               "Full dataset"),
+        value=c("BioMart",
+                biomart,
+                dataset,
+                description,
+                version,
+                ifelse(is_full_dataset, "yes", "no"))
+    )
+}
+
 ### Note that listMarts() and listDatasets() are returning data frames where
 ### the columns are character factors for the former and "AsIs" character
 ### vectors for the latter.
@@ -175,18 +204,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
         dataset <- as.character(dataset)
     if (!isSingleString(biomart))
         stop("'biomart' must be a single string")
-    if (biomart != "ensembl")
-        stop("only 'biomart=\"ensembl\"' is supported for now")
     mart <- useMart(biomart=biomart, dataset=dataset)
-    datasets <- listDatasets(mart)
-    dataset_row <- which(as.character(datasets$dataset) == dataset)
-    ## This should never happen (the above call to useMart() would have failed
-    ## in the first place).
-    if (length(dataset_row) != 1L)
-        stop("the BioMart database \"", biomart, "\" has 0 (or ",
-             "more than 1) \"", dataset, "\" datasets")
-    description <- as.character(datasets$description)[dataset_row]
-    version <- as.character(datasets$version)[dataset_row]
     if (is.null(transcript_ids)) {
         filters <- values <- ""
     } else if (is.character(transcript_ids)
@@ -218,24 +236,36 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     ## mRNA. However, the utr coordinates are relative to the chromosome so
     ## we use them to infer the cds coordinates. We also retrieve the
     ## cds_length attribute as a sanity check.
-    attributes <- c(.A2_ATTRIBS, .B_ATTRIB, .C_ATTRIBS, "cds_length")
+    allattribs <- listAttributes(mart)$name
+    attributes <- .A2_ATTRIBS
+    if (.B_ATTRIB %in% allattribs)
+        attributes <- c(attributes, .B_ATTRIB)
+    if (all(.C_ATTRIBS %in% allattribs))
+        attributes <- c(attributes, .C_ATTRIBS)
+    if ("cds_length" %in% allattribs)
+        attributes <- c(attributes, "cds_length")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
     splicings_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
                                          levels=transcripts_tx_name))
-    cds_ranges <- .extractCdsRangesFromBiomartTable(bm_table)
-    cds_start <- start(cds_ranges)
-    cds_start[width(cds_ranges) == 0L] <- NA_integer_
-    cds_end <- end(cds_ranges)
-    cds_end[width(cds_ranges) == 0L] <- NA_integer_
     splicings <- data.frame(
         tx_id=splicings_tx_id,
         exon_rank=bm_table$rank,
         exon_name=bm_table$ensembl_exon_id,
         exon_start=bm_table$exon_chrom_start,
-        exon_end=bm_table$exon_chrom_end,
-        cds_start=cds_start,
-        cds_end=cds_end
+        exon_end=bm_table$exon_chrom_end
     )
+    if (all(.C_ATTRIBS %in% allattribs) && ("cds_length" %in% allattribs)) {
+        cds_ranges <- .extractCdsRangesFromBiomartTable(bm_table)
+        cds_start <- start(cds_ranges)
+        cds_start[width(cds_ranges) == 0L] <- NA_integer_
+        cds_end <- end(cds_ranges)
+        cds_end[width(cds_ranges) == 0L] <- NA_integer_
+        splicings <- cbind(splicings,
+                           data.frame(
+                             cds_start=cds_start,
+                             cds_end=cds_end
+                           ))
+    }
 
     ## Download and prepare the 'genes' data frame.
     attributes <- c(.G_ATTRIB, "ensembl_transcript_id")
@@ -248,20 +278,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     )
 
     ## Prepare the 'metadata' data frame.
-    metadata <- data.frame(
-        name=c("Data source",
-               "BioMart database",
-               "BioMart dataset",
-               "BioMart dataset description",
-               "BioMart dataset version",
-               "Full dataset"),
-        value=c("BioMart",
-                biomart,
-                dataset,
-                description,
-                version,
-                ifelse(is.null(transcript_ids), "yes", "no"))
-    )
+    metadata <- .makeBiomartMetadata(mart, is.null(transcript_ids))
 
     ## Call makeTranscriptDb().
     makeTranscriptDb(transcripts, splicings, genes=genes, metadata=metadata)
@@ -331,42 +348,42 @@ scanMarts <- function(marts=NULL)
 ### version: ENSEMBL GENES 57 (SANGER UK)
 ### nb of datasets: 51 (hsapiens_gene_ensembl, oanatinus_gene_ensembl,
 ###                     tguttata_gene_ensembl, cporcellus_gene_ensembl, ...)
-### table of attribute groups: ABCD:51
+### table of attribute groups: ABCDG:51
 ###
 ### biomart: bacterial_mart_4
 ### version: ENSEMBL BACTERIA 4 (EBI UK)
 ### nb of datasets: 176 (str_57_gene, esc_20_gene, myc_25994_gene, ...)
-### table of attribute groups: AB:176 
+### table of attribute groups: ABG:176 
 ###
 ### biomart: fungal_mart_4
 ### version: ENSEMBL FUNGAL 4 (EBI UK)
 ### nb of datasets: 11 (aniger_eg_gene, aflavus_eg_gene, aterreus_eg_gene, ...)
-### table of attribute groups: AB:11 
+### table of attribute groups: ABG:11 
 ###
 ### biomart: metazoa_mart_4
 ### version: ENSEMBL METAZOA 4 (EBI UK)
 ### nb of datasets: 22 (dgrimshawi_eg_gene, dpseudoobscura_eg_gene,
 ###                     dsechellia_eg_gene, ...)
-### table of attribute groups: AB:22 
+### table of attribute groups: ABG:22 
 ###
 ### biomart: plant_mart_4
 ### version: ENSEMBL PLANT 4 (EBI UK)
 ### nb of datasets: 8 (sbicolor_eg_gene, bdistachyon_eg_gene,
 ###                    alyrata_eg_gene, ...)
-### table of attribute groups: AB:8 
+### table of attribute groups: ABG:8 
 ###
 ### biomart: protist_mart_4
 ### version: ENSEMBL PROTISTS 4 (EBI UK)
 ### nb of datasets: 4 (pknowlesi_gene, pvivax_gene, pfalciparum_gene, ...)
-### table of attribute groups: AB:4 
+### table of attribute groups: ABG:4 
 ###
 ### biomart: ensembl_expressionmart_48
 ### version: EURATMART (EBI UK)
 ### nb of datasets: 1 (rnorvegicus_expr_gene_ensembl)
-### table of attribute groups: A:1
+### table of attribute groups: AG:1
 ###
 ### biomart: Ensembl56
 ### version: PANCREATIC EXPRESSION DATABASE (INSTITUTE OF CANCER UK)
 ### nb of datasets: 1 (hsapiens_gene_pancreas, NA, NA, ...)
-### table of attribute groups: ABCD:1
+### table of attribute groups: ABCDG:1
 

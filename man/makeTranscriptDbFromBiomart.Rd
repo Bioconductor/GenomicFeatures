@@ -17,14 +17,19 @@
                               transcript_ids=NULL)
 }
 \arguments{
-  \item{biomart}{which BioMart database to use. Only \code{"ensembl"}
-    (the default) is supported for now.}
+  \item{biomart}{which BioMart database to use.
+    Get the list of all available BioMart databases with the
+    \code{\link[biomaRt]{listMarts}} function from the biomaRt
+    package. The list of BioMart databases with compatible transcript
+    annotations are (as of March 22, 2010): ensembl, bacterial_mart_4,
+    fungal_mart_4, metazoa_mart_4, plant_mart_4, protist_mart_4 and
+    Ensembl56. Only ensembl and Ensembl56 have CDS information.}
   \item{dataset}{which dataset from BioMart. For example:
     \code{"hsapiens_gene_ensembl"}, \code{"mmusculus_gene_ensembl"},
     \code{"dmelanogaster_gene_ensembl"}, \code{"celegans_gene_ensembl"},
-    \code{"scerevisiae_gene_ensembl"}, etc. See the examples section
-    below for how to discover which datasets are available in a given
-    BioMart database.}
+    \code{"scerevisiae_gene_ensembl"}, etc in the ensembl database.
+    See the examples section below for how to discover which datasets
+    are available in a given BioMart database.}
   \item{transcript_ids}{optionally, only retrieve transcript
     annotation data for the specified set of transcript ids.
     If this is used, then the meta information displayed for the
@@ -46,6 +51,7 @@
 }
 
 \seealso{
+  \code{\link[biomaRt]{listMarts}},
   \code{\link[biomaRt]{useMart}},
   \code{\link[biomaRt]{listDatasets}},
   \code{\link{makeTranscriptDbFromUCSC}},
@@ -53,10 +59,11 @@
 }
 
 \examples{
-## Discover which datasets are available in the "ensembl" BioMart
-## database:
+## Discover which datasets are available in the "ensembl" and
+## "plant_mart_4" BioMart databases:
 library(biomaRt)
 listDatasets(useMart("ensembl"))
+listDatasets(useMart("plant_mart_4"))
 
 ## Retrieving an incomplete transcript dataset for Human from the
 ## "ensembl" BioMart database:
