@@ -89,7 +89,7 @@ The function \Rfunction{makeTranscriptDb} creates \Rclass{TransctriptDb}
 objects from \Rclass{data.frame} objects.
 
 
-\subsection{Saving and Loading a TranscriptDb Object}
+\subsection{Saving and Loading a \Rclass{TranscriptDb} Object}
 
 \Rclass{TranscriptDb} objects can be saved as sqlite files for future
 access (e.g., to easily reproduce results with identical genomic
@@ -122,6 +122,81 @@ sequence rows) and about software versions and creation dates.
 
 \section{Retrieving Transcript, Exon, and Coding Sequence Ranges}
 
+
+\subsection{Working with Basic Features}
+
+The most basic operation for getting data out of a transcriptDb object
+is to simple retrieve the ranges of exons, transcripts or coding
+sequences into a GRanges object.  For this purpose, the functions
+\Rfunction{transcripts}, \Rfunction{exons}, and \Rfunction{cds} have
+been provided.
+
+So as an example, you can use \Rfunction{transcripts} to simply
+retrieve all the transcripts present in a \Rclass{TranscriptDb} object and
+return them as a single Granges object like this:
+
+<<transcriptsBy>>=
+txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                                 package="GenomicFeatures"))
+GR <- transcripts(txdb)
+GR
+@
+
+Now suppose that you wanted to further refine things and retrieve only the
+things that are present on the plus strand of chromosome 1.  Well the
+transcripts() function will allow you to do things like that too.
+
+<<transcriptsBy>>=
+GR <- transcripts(txdb, vals <- list(tx_chrom = "chr1", tx_strand = "+"))
+GR
+@
+
+The \Rfunction{exons}, and \Rfunction{cds} functions have a similar
+role to play and are used to retrieve just the exons or just the
+coding sequences.
+
+\subsection{Working with Grouped Features}
+
+Often it will not be enough to just get exons, cds or transcripts
+only.  Sometimes you will want to give greater consideration to the
+context of the data.  In these cases, you will want to think of the
+ranged annotation data as being grouped in a specific way, for
+example, you might want to consider that the transcripts are each
+associated with a specific gene or the exon composition of specific
+transcripts. These relationships are maintained with
+\Rclass{TranscriptDb} objects and can be accessed through the
+\Rfunction{transcriptsBy}, \Rfunction{exonsBy}, and \Rfunction{cdsBy}
+functions.
+
+So for example, to extract all the transcripts grouped by their exons
+you can call:
+
+<<transcriptsBy>>=
+txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                                 package="GenomicFeatures"))
+GRList <- transcriptsBy(txdb, "gene")
+GRList
+@
+
+
+Similarly, to extract all the exons for each transcript you can call:
+
+<<exonsBy>>=
+txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                                 package="GenomicFeatures"))
+GRList <- exonsBy(txdb, "tx")
+GRList
+@
+
+These functions return \Rclass{GRangesList} objects that contain
+locations and identifiers. These objects can be used in downstream
+analyses such as using \Rfunction{findOverlaps} contextualize the
+alignments from high-throughput sequencing.
+
+
+
+\subsection{Convenience functions}
+
 The \Rfunction{transcriptsByRanges}, \Rfunction{exonsByRanges} and
 \Rfunction{cdsByRanges} functions return a \Rclass{GRangesList} object
 containing data about transcripts, exons, or coding sequences that
@@ -153,186 +228,80 @@ rows of a \Rclass{GRanges} object.
 bindTranscripts(txdb, gr)
 @
 
+The convenience functions can be a great shortcut, but because they
+have to make assumptions about how the results are compared and
+represented, they are ultimately not as flexible as just using the
+basic and grouping accessors in combination with
+\Rfunction{findOverlaps}.
+
+
+
 \section{Examples}
-
-\subsection{Features overlapped by experimental data}
-
-So lets suppose that you have run an experiment. After mapping all
-your reads to a genome and collapsing them into a set of ranges, you
-want to find out what genomic Features a particular range overlaps
-with.  Here is how you might proceed:
-
-<<mapTranscripts 1, eval=FALSE>>=
-##gr will represent the GRanges object that you have (your data)
-gr <- GRanges(seqnames = "chr1",
-              ranges = IRanges(start=6700,end=7700),
-              strand = "-")
-
-bindTranscripts(txdb, gr)
-bindExons(txdb, gr)
-@
+Let's suppose that you have run an experiment. After mapping all your
+reads to a genome and collapsing them into a set of ranges, you want
+to find out what genomic Features a particular range overlaps with.
+How would be the usual way to proceed?  Here is an example:
 
 
 \subsection{Retrieving data from an RNA-seq experiment}
+Let's consider the case where you have some RNA-seq data and you want
+to convert your ranges into counts representing how hits per
+transcript.  For this example, let's also assume that you are only
+interested in counting ranges that overlap with exons (not introns).
 
-Lets take the case where you have some RNA-seq data and you want to
-convert your ranges into counts representing how many hits per gene.
-
-
+First lets say that this is your data:
 <<RNASEQ1, eval=FALSE>>=
-## gr will represent the GRanges object that you have (your data)
-gr <- GRanges(seqnames = "chr5",
+gr <- GRanges(seqnames = rep("chr5",4),
               ranges = IRanges(start = c(244620,244670,245804,247502),
                                end = c(244652,244702,245836,247534)),
-              strand = "+")
+              strand = rep("+",4))
+@ 
 
-## recover the annotations
-annotGR <- transcriptsByRanges(txdb, gr, columns=c("tx_id","tx_name",
-                                           "gene_id", "exon_id"))
+From our \Rclass{TranscriptDb} object, we want to recover the annotations for
+all of the relevant exons, but grouped according to their transcripts.
+Therefore, we want to use \Rfunction{exonsby} and group them by transcripts.
 
-## Get the overlap between the annotations and your data
-OL <- findOverlaps(gr, annotGR, multiple=TRUE)
-
-## just get the data that you want
-tdata <- annotGR[subjectHits(OL),]
-
-## And then get the count per transcript:
-table(tdata$tx_id)
-
-## And the count per gene:
-table(unlist(tdata$gene_id))
+<<exonsGroupedByTx>>=
+annotGr <- exonsBy(txdb, "tx")
 @
 
-% Now lets assume that you want to search ONLY the exons for your
-% transcripts (and not just the entire transcript as is done above). How
-% could you do that?
+Then we need to used \Rfunction{findOverlaps} to lean which of our
+data ranges dr, will overlap with the in exons that we have grouped by
+transcripts.
 
-%<<RNASEQ2, eval=FALSE>>=
-%## recover the exon annotations
-%annotGREx <- exonsByRanges(txdb, gr)
-
-%## Get the overlap between the annotations and your data
-%OL <- findOverlaps(gr, annotGREx, multiple=TRUE)
-
-%## just get the data that you want
-%edata <- annotGREx[subjectHits(OL),]
-
-%## And then get the count per exon:
-%table(edata$exon_id)
-
-%## For each exon ID, you can retrieve potential Gene IDs from our previous
-%## call to transcriptsByRanges() BUT, be warned that this can be a many to
-%## many relationship
-
-%@
-
-
-
-%%TODO: work with Herve to improve the toy annotations so that we can have more interesting results in the example.
-
-\subsection{Finding data for a Chip-seq experiment}
-
-What would we do differently if we had chip-seq data?  Lets imagine
-the we have a collection of reads in a \Rclass{GRanges} object
-as below.  We want to learn if these reads are 1) near to any
-transcript annotations and 2) if the list of things that they are near
-to are interesting or not.
-
-<<CHIPSEQ1, eval=FALSE>>=
-## gr will represent the GRanges object that you have (your data)
-gr <- GRanges(seqnames = "chr5",
-              ranges = IRanges(start = c(244501,244553,244580,244523),
-                               end = c(244533,244585,244612,244555)), 
-              strand = "+")
-
-## If we try to find annotations for this we discover that there are none
-## overlapping this feature...
-transcriptsByRanges(txdb, gr, columns=c("tx_id","tx_name","gene_id"))
-
-
-## So we will extend the gr object by a constant amount of 200 base pairs so
-## that each read has an opportunity to overlap with something interesting.
-grExt <- gr
-ranges(grExt) <- ranges(grExt)+100
-
-## Then collapse the annotations
-grExt <- reduce(grExt)
-
-## And recover the annotations that match
-annotGR <- transcriptsByRanges(txdb, grExt, 
-                               columns=c("tx_id","tx_name","gene_id"))
-
-## Then find the number of unique matching gene IDs 
-unique(unlist(elementMetadata(annotGR)[,"gene_id"]))
+<<findOverlaps>>=
+OL <- findOverlaps(annotGr, gr)
 @
 
+Finally, once we have called \Rfunction{FindOverlaps} we can subset
+out the annotations that meet our criteria.  The
+\Rfunction{subjectHits} method will allow us to retrieve only the
+things that overlapped with the subject in our original
+\Rfunction{findOverlaps} call. And once we have subesetted out
+annotations in this way, the lenth of this resulting GRangesList is
+also the number of transcripts that overlap with our data.
 
-Once you have a gene list, you should be able to do a GSEA analysis using the
-Category or GOstats packages.
+<<getAnswers>>=
+tdata <- annotGr[subjectHits(OL),]
+tdata 
 
-
-
-% To answer the question of whether or not the reduced and extended peaks overlap with interesting genes, we can just call unique on the gene_id column and then apass that along to a 
-
-%%next just need the example data above to include starts and stops to land near a few related things, THEN I just need to show how you can get the unique(gene)ids) out and pass those along to a GSEA
-
-
-
-
-%% TODO: 
-%% 1) Add section for an RNA-seq application 
-%%   a. spoof some data 
-%%   b. findOverlaps() = counts between fake-data and data from 
-%%      transcriptsByRanges() OR you can just use bindTranscripts().
-%%   c. count how many of each gene are hit for each mapped (unique) range 
-%% 2) Add an example for a chip-seq application.
-%%   a. spoof data and then EXTEND it so that it can "overlap" in next step 
-%%   b. call transcriptsByRanges to get relevant data or bindTranscripts()
-%%   c. get the list of gene IDs out
-%%   d. do GSEA on the gene list
-
-%% To this end the better part of our test database to test against is 
-%% probably chromosome 5: 
-%% specifically:
-%% 153478      chr5        +           193373.0    243087.0  
-%% 389257      chr5        +           244626.0    248468.0  
-%% 133957      chr5        -           257875.0    271297.0  
-
-
-
-\subsection{Working with Grouped Features}
-
-Sometimes you will want to consider ranged annotation data that is
-grouped in a specific way, e.g. the transcripts associated with a
-gene and the exon composition of a transcript. These relationships
-are maintained with \Rclass{TranscriptDb} objects and can be
-accessed through the \Rfunction{transcriptsBy}, \Rfunction{exonsBy},
-and \Rfunction{cdsBy} functions.
-
-So for example, to extract all the transcripts grouped by their exons
-you can call:
-
-<<transcriptsBy>>=
-txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                                 package="GenomicFeatures"))
-GRList <- transcriptsBy(txdb, "gene")
-GRList
+length(tdata)
 @
 
+By using \Rfunction{findOverlaps} along with the different accessors
+in this way, it is possible to connect any data that has been
+represented as a GRanges object with the annotations stored in a
+\Rclass{TranscriptDb} object.  Calling \Rfunction{findOverlaps} along
+with the appropriate Rclass{GRanges} object, not only allows users to
+quickly determine what has overlapped, but to also control what
+criteria are used for determining whether an overlap has occurred.
+This can be done by passing in an alternate type parameter to
+findOverlaps.  In addition, because the basic accesors allow for the
+users to retrieve data grouped in different ways, the user has control
+over which parts of a transcript or gene are included in the overlap.
 
-Similarly, to extract all the exons for each transcript you can call:
 
-<<exonsBy>>=
-txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                                 package="GenomicFeatures"))
-GRList <- exonsBy(txdb, "tx")
-GRList
-@
 
-These functions return \Rclass{GRangesList} objects that contain
-locations and identifiers. These objects can be used in downstream
-analyses such as using \Rfunction{findOverlaps} contextualize the
-alignments from high-throughput sequencing.
 
 
 \section{Session Information}
