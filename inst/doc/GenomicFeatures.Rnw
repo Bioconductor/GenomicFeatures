@@ -57,9 +57,9 @@ IDs.
 There are three methods for creating new \Rclass{TranscriptDb} objects
 in the \Rpackage{GenomicFeatures} package:
 \begin{enumerate}
-\item Download from UCSC Genome Bioinformatics;
-\item Download from BioMart;
-\item Use a \Rclass{data.frame} containing transcript metadata.
+\item Use \Rfunction{makeTranscriptDbFromUCSC} to download from UCSC Genome Bioinformatics.
+\item Use \Rfunction{makeTranscriptDbFromBiomart} to download from BioMart.
+\item Use a \Rclass{data.frame} containing transcript metadata with \Rfunction{makeTranscriptDb} to make a custom database. 
 \end{enumerate}
 
 The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC
@@ -178,7 +178,6 @@ GRList <- transcriptsBy(txdb, "gene")
 GRList
 @
 
-
 Similarly, to extract all the exons for each transcript you can call:
 
 <<exonsBy>>=
@@ -189,9 +188,35 @@ GRList
 @
 
 These functions return \Rclass{GRangesList} objects that contain
-locations and identifiers. These objects can be used in downstream
-analyses such as using \Rfunction{findOverlaps} contextualize the
-alignments from high-throughput sequencing.
+locations and identifiers all grouped according to the type of feature
+specified. These objects can be used in downstream analyses such as
+using \Rfunction{findOverlaps} contextualize the alignments from
+high-throughput sequencing.
+
+It is important to consider the context created when grouping by a
+particular feature.  For example, in the 1st example, where we grouped
+by genes, the name of the features is an Entrez Gene ID.  If the
+database had been based instead on ensembl sources, it would be an
+Ensembl Gene ID.  However, in the second example where we group by
+transcript, we see that the groups are labeled by an ID that is not a
+traditional transcript ID.  In this second case, we have been given an
+internally assigned database ID. This is because some sources may
+choose to overload their use of traditional transcript IDs in ways
+that would make the existance of our database schema impossible.  So
+in the second case we have to use an internal id to guarantee
+uniqueness.  This will happen whenever you group by anything that is
+not a gene.  So when you want to use traditional transcript IDs you
+can look them up using the appropriate basic accessors described in
+the preceding section.
+
+Another case where context can matter is when considering the order of
+the elements returned.  In most cases the grouped elements will be
+listed in the order that they occur along the chromosome.  But in the
+context where you have grouped exons or CDS by transcripts, they will
+instead be grouped according to their position along the transcript
+itself.  This is important because alternative splicing can mean that
+the order along the transcript can be different from that along the
+chromosome.
 
 
 
