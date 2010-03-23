@@ -12,6 +12,78 @@
 ###       (2) db creation takes about 60-65 sec.
 ###
 
+### Groups of BioMart attributes:
+###   - A1, A2 and G are required attributes;
+###   - B, C and D are optional attributes: C is required for inferring the
+###     CDS (they cannot be inferred from D). Therefore, if C is missing,
+###     the TranscriptDb object can still be made but won't have any CDS (no
+###     row in the cds table). D is only used for sanity check.
+.A1_ATTRIBS <- c("ensembl_transcript_id",
+                 "chromosome_name",
+                 "strand",
+                 "transcript_start",
+                 "transcript_end")
+
+.A2_ATTRIBS <- c("ensembl_transcript_id",
+                 "strand",
+                 "rank",
+                 "exon_chrom_start",
+                 "exon_chrom_end")
+
+.B_ATTRIB <- "ensembl_exon_id"
+
+.C_ATTRIBS <- c("5_utr_start",
+                "5_utr_end",
+                "3_utr_start",
+                "3_utr_end")
+
+.D_ATTRIBS <- c("cds_start",
+                "cds_end",
+                "cds_length")
+
+.G_ATTRIB <- "ensembl_gene_id"
+
+### 'attribs' can be either a Mart object or a 2-col data frame as returned by
+### 'listAttributes()'.
+.getDatasetAttrGroups <- function(attribs)
+{
+    if (is(attribs, "Mart"))
+        attribs <- listAttributes(attribs)
+    else if (!is.data.frame(attribs) ||
+             !identical(colnames(attribs), c("name", "description")))
+        stop("invalid 'attribs' object")
+    attrgroups <- "none"
+    ## Group A: Required attributes.
+    attrA <- unique(c(.A1_ATTRIBS, .A2_ATTRIBS))
+    if (all(attrA %in% attribs$name))
+        attrgroups <- "A"
+    ## Groups B, C and D are optional attributes.
+    ## C is required for inferring the CDS (they cannot be inferred from D).
+    ## Therefore, if C is missing, the TranscriptDb object can still be made
+    ## but won't have any CDS (no row in the cds table).
+    if (.B_ATTRIB %in% attribs$name)
+        attrgroups <- paste(attrgroups, "B", sep="")
+    if (all(.C_ATTRIBS %in% attribs$name))
+        attrgroups <- paste(attrgroups, "C", sep="")
+    if (all(.D_ATTRIBS %in% attribs$name))
+        attrgroups <- paste(attrgroups, "D", sep="")
+    ## Group G: Required attribute.
+    if (.G_ATTRIB %in% attribs$name)
+        attrgroups <- paste(attrgroups, "G", sep="")
+    attrgroups
+}
+
+### 'attrlist' can be a list (as returned by getMartAttribList()), a Mart
+### object, or the name of a Mart service (single string).
+### Typical use:
+###   ensembl_attrgroups <- GenomicFeatures:::getAllDatasetAttrGroups("ensembl")
+getAllDatasetAttrGroups <- function(attrlist)
+{
+    if (!is.list(attrlist))
+        attrlist <- getMartAttribList(attrlist)
+    sapply(attrlist, .getDatasetAttrGroups)
+}
+
 .extractCdsRangesFromBiomartTable <- function(bm_table)
 {
     strand <- bm_table[["strand"]]
@@ -126,12 +198,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     }
 
     ## Download and prepare the 'transcripts' data frame.
-    attributes <- c("ensembl_transcript_id",
-                    "chromosome_name",
-                    "strand",
-                    "transcript_start",
-                    "transcript_end")
-    bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
+    bm_table <- getBM(.A1_ATTRIBS, filters=filters, values=values, mart=mart)
     transcripts_tx_id <- seq_len(nrow(bm_table))
     transcripts_tx_name <- bm_table$ensembl_transcript_id
     if (any(duplicated(transcripts_tx_name)))
@@ -151,19 +218,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     ## mRNA. However, the utr coordinates are relative to the chromosome so
     ## we use them to infer the cds coordinates. We also retrieve the
     ## cds_length attribute as a sanity check.
-    attributes <- c("ensembl_transcript_id",
-                    "strand",
-                    "rank",
-                    "ensembl_exon_id",
-                    "exon_chrom_start",
-                    "exon_chrom_end",
-                    "5_utr_start",
-                    "5_utr_end",
-                    "3_utr_start",
-                    "3_utr_end",
-                    #"cds_start",
-                    #"cds_end",
-                    "cds_length")
+    attributes <- c(.A2_ATTRIBS, .B_ATTRIB, .C_ATTRIBS, "cds_length")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
     splicings_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
                                          levels=transcripts_tx_name))
@@ -183,7 +238,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     )
 
     ## Download and prepare the 'genes' data frame.
-    attributes <- c("ensembl_gene_id", "ensembl_transcript_id")
+    attributes <- c(.G_ATTRIB, "ensembl_transcript_id")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
     genes_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
                                      levels=transcripts_tx_name))
@@ -239,58 +294,6 @@ getMartAttribList <- function(mart)
         ans[[i]] <- listAttributes(mart)
     }
     ans
-}
-
-### 'attribs' can be either a Mart object or a 2-col data frame as returned by
-### 'listAttributes()'.
-getDatasetAttrGroups <- function(attribs)
-{
-    if (is(attribs, "Mart"))
-        attribs <- listAttributes(attribs)
-    else if (!is.data.frame(attribs) ||
-             !identical(colnames(attribs), c("name", "description")))
-        stop("invalid 'attribs' object")
-    attrgroups <- "none"
-    ## Group A: Required attributes.
-    attrA <- c("ensembl_transcript_id",
-               "chromosome_name",
-               "strand",
-               "transcript_start",
-               "transcript_end",
-               "rank",
-               "exon_chrom_start",
-               "exon_chrom_end")
-    if (all(attrA %in% attribs$name))
-        attrgroups <- "A"
-    ## Groups B, C and D are optional attributes.
-    ## C is required for inferring the CDS (they cannot be inferred from D).
-    ## Therefore, if C is missing, the TranscriptDb object can still be made
-    ## but won't have any CDS (no row in the cds table).
-    if ("ensembl_exon_id" %in% attribs$name)
-        attrgroups <- paste(attrgroups, "B", sep="")
-    attrC <- c("5_utr_start",
-               "5_utr_end",
-               "3_utr_start",
-               "3_utr_end")
-    if (all(attrC %in% attribs$name))
-        attrgroups <- paste(attrgroups, "C", sep="")
-    attrD <- c("cds_start",
-               "cds_end",
-               "cds_length")
-    if (all(attrD %in% attribs$name))
-        attrgroups <- paste(attrgroups, "D", sep="")
-    attrgroups
-}
-
-### 'attrlist' can be a list (as returned by getMartAttribList()), a Mart
-### object, or the name of a Mart service (single string).
-### Typical use:
-###   ensembl_attrgroups <- GenomicFeatures:::getAllDatasetAttrGroups("ensembl")
-getAllDatasetAttrGroups <- function(attrlist)
-{
-    if (!is.list(attrlist))
-        attrlist <- getMartAttribList(attrlist)
-    sapply(attrlist, getDatasetAttrGroups)
 }
 
 scanMarts <- function(marts=NULL)
