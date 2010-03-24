@@ -57,9 +57,11 @@ IDs.
 There are three methods for creating new \Rclass{TranscriptDb} objects
 in the \Rpackage{GenomicFeatures} package:
 \begin{enumerate}
-\item Use \Rfunction{makeTranscriptDbFromUCSC} to download from UCSC Genome Bioinformatics.
+\item Use \Rfunction{makeTranscriptDbFromUCSC} to download from UCSC Genome
+  Bioinformatics.
 \item Use \Rfunction{makeTranscriptDbFromBiomart} to download from BioMart.
-\item Use a \Rclass{data.frame} containing transcript metadata with \Rfunction{makeTranscriptDb} to make a custom database. 
+\item Use a \Rclass{data.frame} containing transcript metadata with
+  \Rfunction{makeTranscriptDb} to make a custom database. 
 \end{enumerate}
 
 The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC
@@ -91,7 +93,7 @@ objects from \Rclass{data.frame} objects.
 
 \subsection{Saving and Loading a \Rclass{TranscriptDb} Object}
 
-\Rclass{TranscriptDb} objects can be saved as sqlite files for future
+\Rclass{TranscriptDb} objects can be saved as SQLite files for future
 access (e.g., to easily reproduce results with identical genomic
 feature data at a later date, or for access from programs other than
 R).  
@@ -133,7 +135,7 @@ been provided.
 
 So as an example, you can use \Rfunction{transcripts} to simply
 retrieve all the transcripts present in a \Rclass{TranscriptDb} object and
-return them as a single Granges object like this:
+return them as a single \Rclass{GRanges} object like this:
 
 <<transcriptsBy>>=
 txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
@@ -144,7 +146,7 @@ GR
 
 Now suppose that you wanted to further refine things and retrieve only the
 things that are present on the plus strand of chromosome 1.  Well the
-transcripts() function will allow you to do things like that too.
+\Rfunction{transcripts} function will allow you to do things like that too.
 
 <<transcriptsBy>>=
 GR <- transcripts(txdb, vals <- list(tx_chrom = "chr1", tx_strand = "+"))
@@ -196,13 +198,13 @@ high-throughput sequencing.
 It is important to consider the context created when grouping by a
 particular feature.  For example, in the 1st example, where we grouped
 by genes, the name of the features is an Entrez Gene ID.  If the
-database had been based instead on ensembl sources, it would be an
+database had been based instead on Ensembl sources, it would be an
 Ensembl Gene ID.  However, in the second example where we group by
 transcript, we see that the groups are labeled by an ID that is not a
 traditional transcript ID.  In this second case, we have been given an
 internally assigned database ID. This is because some sources may
 choose to overload their use of traditional transcript IDs in ways
-that would make the existance of our database schema impossible.  So
+that would make the existence of our database schema impossible.  So
 in the second case we have to use an internal id to guarantee
 uniqueness.  This will happen whenever you group by anything that is
 not a gene.  So when you want to use traditional transcript IDs you
@@ -290,21 +292,22 @@ Therefore, we want to use \Rfunction{exonsby} and group them by transcripts.
 annotGr <- exonsBy(txdb, "tx")
 @
 
-Then we need to used \Rfunction{findOverlaps} to lean which of our
-data ranges dr, will overlap with the in exons that we have grouped by
-transcripts.
+Then we need to used \Rfunction{findOverlaps} to learn which of our
+data ranges, \Robject{gr}, will overlap with the in exons that we have
+grouped by transcripts.
 
 <<findOverlaps>>=
 OL <- findOverlaps(annotGr, gr)
 @
 
-Finally, once we have called \Rfunction{FindOverlaps} we can subset
+Finally, once we have called \Rfunction{findOverlaps} we can subset
 out the annotations that meet our criteria.  The
 \Rfunction{subjectHits} method will allow us to retrieve only the
 things that overlapped with the subject in our original
-\Rfunction{findOverlaps} call. And once we have subesetted out
-annotations in this way, the lenth of this resulting GRangesList is
-also the number of transcripts that overlap with our data.
+\Rfunction{findOverlaps} call. And once we have subsetted out
+annotations in this way, the length of the resulting
+\Rclass{GRangesList} object is also the number of transcripts that
+overlap with our data.
 
 <<getAnswers>>=
 tdata <- annotGr[subjectHits(OL),]
@@ -315,15 +318,16 @@ length(tdata)
 
 By using \Rfunction{findOverlaps} along with the different accessors
 in this way, it is possible to connect any data that has been
-represented as a GRanges object with the annotations stored in a
-\Rclass{TranscriptDb} object.  Calling \Rfunction{findOverlaps} along
-with the appropriate Rclass{GRanges} object, not only allows users to
-quickly determine what has overlapped, but to also control what
+represented as a \Rclass{GRanges} object with the annotations stored in
+a \Rclass{TranscriptDb} object.  Calling \Rfunction{findOverlaps} along
+with the appropriate \Rclass{GRanges} object not only allows users to
+quickly determine what has overlapped, but also controls what
 criteria are used for determining whether an overlap has occurred.
-This can be done by passing in an alternate type parameter to
-findOverlaps.  In addition, because the basic accesors allow for the
-users to retrieve data grouped in different ways, the user has control
-over which parts of a transcript or gene are included in the overlap.
+This can be done by passing in an alternate \Rfunarg{type} parameter to
+\Rfunction{findOverlaps}.  In addition, because the basic accesors allow
+for the users to retrieve data grouped in different ways, the user has
+control over which parts of a transcript or gene are included in the
+overlap.
 
 
 
