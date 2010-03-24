@@ -2,10 +2,6 @@
   The status of the CDS (complete or not) can be inferred from the
   cds*Stat field (when present) of the UCSC table.
 
-- makeTranscriptDbFromBiomart() - Catch invalid transcript ids and
-  raise an error (or maybe just a warning?). Also nicely handle
-  'transcript_ids=character(0)'.
-
 - makeTranscriptDbFromGFF3() - Primary target: GFF3 files on the TAIR,
   Flybase and Wormbase websites/FTP servers.
 

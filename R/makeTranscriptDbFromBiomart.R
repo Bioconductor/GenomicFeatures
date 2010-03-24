@@ -12,6 +12,7 @@
 ###       (2) db creation takes about 60-65 sec.
 ###
 
+
 ### Groups of BioMart attributes:
 ###   - A1, A2 and G are required attributes;
 ###   - B, C and D are optional attributes: C is required for inferring the
@@ -84,25 +85,77 @@ getAllDatasetAttrGroups <- function(attrlist)
     sapply(attrlist, .getDatasetAttrGroups)
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Download and prepare the 'transcripts' data frame.
+###
+
+.makeBiomartTranscripts <- function(filters, values, mart, transcript_ids)
+{
+    bm_table <- getBM(.A1_ATTRIBS, filters=filters, values=values, mart=mart)
+    if (!is.null(transcript_ids)) {
+        idx <- !(transcript_ids %in% bm_table$ensembl_transcript_id)
+        if (any(idx)) {
+            bad_ids <- transcript_ids[idx]
+            stop("invalid transcript ids: ",
+                 paste(bad_ids, collapse=", "), sep="")
+        }
+    }
+    ## Those are the strictly required fields.
+    transcripts0 <- data.frame(
+        tx_id=integer(0),
+        tx_chrom=character(0),
+        tx_strand=character(0),
+        tx_start=integer(0),
+        tx_end=integer(0)
+    )
+    if (nrow(bm_table) == 0L)
+        return(transcripts0)
+    transcripts_tx_id <- seq_len(nrow(bm_table))
+    transcripts_tx_name <- bm_table$ensembl_transcript_id
+    if (any(duplicated(transcripts_tx_name)))
+        stop("the 'ensembl_transcript_id' attribute contains duplicated values")
+    data.frame(
+        tx_id=transcripts_tx_id,
+        tx_name=transcripts_tx_name,
+        tx_chrom=bm_table$chromosome_name,
+        tx_strand=ifelse(bm_table$strand == 1, "+", "-"),
+        tx_start=bm_table$transcript_start,
+        tx_end=bm_table$transcript_end
+    )
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Download and prepare the 'splicings' data frame.
+###
+
+.normUtrCoords <- function(coords)
+{
+    if (is.numeric(coords))
+        return(coords)
+    if (is.logical(coords) && all(is.na(coords)))
+        return(as.integer(coords))
+    stop("BioMart data anomaly: utr coordinates don't ",
+         "have a numeric type")
+}
+
 .extractCdsRangesFromBiomartTable <- function(bm_table)
 {
+    if (nrow(bm_table) == 0L)
+        return(IRanges())
     strand <- bm_table[["strand"]]
     cds_start <- exon_start <- bm_table[["exon_chrom_start"]]
     cds_end <- exon_end <- bm_table[["exon_chrom_end"]]
-    utr5_start <- bm_table[["5_utr_start"]]
-    utr5_end <- bm_table[["5_utr_end"]]
-    utr3_start <- bm_table[["3_utr_start"]]
-    utr3_end <- bm_table[["3_utr_end"]]
+    utr5_start <- .normUtrCoords(bm_table[["5_utr_start"]])
+    utr5_end <- .normUtrCoords(bm_table[["5_utr_end"]])
+    utr3_start <- .normUtrCoords(bm_table[["3_utr_start"]])
+    utr3_end <- .normUtrCoords(bm_table[["3_utr_end"]])
 
     if (!all(strand %in% c(1, -1)))
         stop("BioMart data anomaly: \"strand\" attribute should be 1 or -1")
-    if (!is.numeric(exon_start)
-     || !is.numeric(exon_end)
-     || !is.numeric(utr5_start)
-     || !is.numeric(utr5_end)
-     || !is.numeric(utr3_start)
-     || !is.numeric(utr3_end))
-        stop("BioMart data anomaly: exon or utr coordinates don't ",
+    if (!is.numeric(exon_start) || !is.numeric(exon_end))
+        stop("BioMart data anomaly: exon coordinates don't ",
              "have a numeric type")
     no_utr5 <- is.na(utr5_start)
     if (!identical(no_utr5, is.na(utr5_end)))
@@ -160,6 +213,79 @@ getAllDatasetAttrGroups <- function(attrlist)
     ans
 }
 
+.makeCdsDataFrameFromRanges <- function(cds_ranges)
+{
+    nocds_idx <- width(cds_ranges) == 0L
+    cds_start <- start(cds_ranges)
+    cds_start[nocds_idx] <- NA_integer_
+    cds_end <- end(cds_ranges)
+    cds_end[nocds_idx] <- NA_integer_
+    data.frame(cds_start=cds_start, cds_end=cds_end)
+}
+
+### Ironically the cds_start and cds_end attributes that we get from
+### BioMart are pretty useless because they are relative to the coding
+### mRNA. However, the utr coordinates are relative to the chromosome so
+### we use them to infer the cds coordinates. We also retrieve the
+### cds_length attribute as a sanity check.
+.makeBiomartSplicings <- function(filters, values, mart, transcripts_tx_name)
+{
+    ## Those are the strictly required fields.
+    splicings0 <- data.frame(
+        tx_id=integer(0),
+        exon_rank=integer(0),
+        exon_start=integer(0),
+        exon_end=integer(0)
+    )
+    if (length(transcripts_tx_name) == 0L)
+        return(splicings0)
+    allattribs <- listAttributes(mart)$name
+    attributes <- .A2_ATTRIBS
+    if (.B_ATTRIB %in% allattribs)
+        attributes <- c(attributes, .B_ATTRIB)
+    if (all(.C_ATTRIBS %in% allattribs))
+        attributes <- c(attributes, .C_ATTRIBS)
+    if ("cds_length" %in% allattribs)
+        attributes <- c(attributes, "cds_length")
+    bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
+    splicings_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
+                                         levels=transcripts_tx_name))
+    splicings <- data.frame(
+        tx_id=splicings_tx_id,
+        exon_rank=bm_table$rank,
+        exon_name=bm_table$ensembl_exon_id,
+        exon_start=bm_table$exon_chrom_start,
+        exon_end=bm_table$exon_chrom_end
+    )
+    if (all(.C_ATTRIBS %in% allattribs) && ("cds_length" %in% allattribs)) {
+        cds_ranges <- .extractCdsRangesFromBiomartTable(bm_table)
+        splicings <- cbind(splicings, .makeCdsDataFrameFromRanges(cds_ranges))
+    }
+    splicings
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Download and prepare the 'genes' data frame.
+###
+
+.makeBiomartGenes <- function(filters, values, mart, transcripts_tx_name)
+{
+    attributes <- c(.G_ATTRIB, "ensembl_transcript_id")
+    bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
+    genes_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
+                                     levels=transcripts_tx_name))
+    data.frame(
+        tx_id=genes_tx_id,
+        gene_id=bm_table$ensembl_gene_id
+    )
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Prepare the 'metadata' data frame.
+###
+
 .makeBiomartMetadata <- function(mart, is_full_dataset)
 {
     biomart <- biomaRt:::martBM(mart)
@@ -189,6 +315,11 @@ getAllDatasetAttrGroups <- function(attrlist)
     )
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### makeTranscriptDbFromBiomart()
+###
+
 ### Note that listMarts() and listDatasets() are returning data frames where
 ### the columns are character factors for the former and "AsIs" character
 ### vectors for the latter.
@@ -210,72 +341,24 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     } else if (is.character(transcript_ids)
             && !any(is.na(transcript_ids))) {
         filters <- "ensembl_transcript_id"
-        values <- transcript_ids
+        if (length(transcript_ids) == 0L)
+            values <- "____a_very_unlikely_valid_transcript_id____"
+        else
+            values <- transcript_ids
     } else {
-            stop("'transcript_ids' must be a character vector with no NAs")
+        stop("'transcript_ids' must be a character vector with no NAs")
     }
 
     ## Download and prepare the 'transcripts' data frame.
-    bm_table <- getBM(.A1_ATTRIBS, filters=filters, values=values, mart=mart)
-    transcripts_tx_id <- seq_len(nrow(bm_table))
-    transcripts_tx_name <- bm_table$ensembl_transcript_id
-    if (any(duplicated(transcripts_tx_name)))
-        stop("the 'ensembl_transcript_id' field contains duplicates")
-    transcripts <- data.frame(
-        tx_id=transcripts_tx_id,
-        tx_name=transcripts_tx_name,
-        tx_chrom=bm_table$chromosome_name,
-        tx_strand=ifelse(bm_table$strand == 1, "+", "-"),
-        tx_start=bm_table$transcript_start,
-        tx_end=bm_table$transcript_end
-    )
+    transcripts <- .makeBiomartTranscripts(filters, values, mart,
+                                           transcript_ids)
 
     ## Download and prepare the 'splicings' data frame.
-    ## Ironically the cds_start and cds_end attributes that we get from
-    ## BioMart are pretty useless because they are relative to the coding
-    ## mRNA. However, the utr coordinates are relative to the chromosome so
-    ## we use them to infer the cds coordinates. We also retrieve the
-    ## cds_length attribute as a sanity check.
-    allattribs <- listAttributes(mart)$name
-    attributes <- .A2_ATTRIBS
-    if (.B_ATTRIB %in% allattribs)
-        attributes <- c(attributes, .B_ATTRIB)
-    if (all(.C_ATTRIBS %in% allattribs))
-        attributes <- c(attributes, .C_ATTRIBS)
-    if ("cds_length" %in% allattribs)
-        attributes <- c(attributes, "cds_length")
-    bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
-    splicings_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
-                                         levels=transcripts_tx_name))
-    splicings <- data.frame(
-        tx_id=splicings_tx_id,
-        exon_rank=bm_table$rank,
-        exon_name=bm_table$ensembl_exon_id,
-        exon_start=bm_table$exon_chrom_start,
-        exon_end=bm_table$exon_chrom_end
-    )
-    if (all(.C_ATTRIBS %in% allattribs) && ("cds_length" %in% allattribs)) {
-        cds_ranges <- .extractCdsRangesFromBiomartTable(bm_table)
-        cds_start <- start(cds_ranges)
-        cds_start[width(cds_ranges) == 0L] <- NA_integer_
-        cds_end <- end(cds_ranges)
-        cds_end[width(cds_ranges) == 0L] <- NA_integer_
-        splicings <- cbind(splicings,
-                           data.frame(
-                             cds_start=cds_start,
-                             cds_end=cds_end
-                           ))
-    }
+    splicings <- .makeBiomartSplicings(filters, values, mart,
+                                       transcripts$tx_name)
 
     ## Download and prepare the 'genes' data frame.
-    attributes <- c(.G_ATTRIB, "ensembl_transcript_id")
-    bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
-    genes_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
-                                     levels=transcripts_tx_name))
-    genes <- data.frame(
-        tx_id=genes_tx_id,
-        gene_id=bm_table$ensembl_gene_id
-    )
+    genes <- .makeBiomartGenes(filters, values, mart, transcripts$tx_name)
 
     ## Prepare the 'metadata' data frame.
     metadata <- .makeBiomartMetadata(mart, is.null(transcript_ids))
