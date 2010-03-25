@@ -44,8 +44,8 @@ export(
 )
 
 exportMethods(
-  #seqnames,
-  #seqlengths,
+  seqnames,
+  seqlengths,
   show,
   as.list
 )

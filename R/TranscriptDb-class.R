@@ -164,6 +164,35 @@ loadFeatures <- function(file)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Accessors.
+###
+
+.getChromInfo <- function(x)
+{
+    sql <- "SELECT chrom, length FROM chrominfo ORDER BY _chrom_id"
+    dbGetQuery(x@conn, sql)
+}
+
+setMethod("seqnames", "TranscriptDb",
+    function(x)
+    {
+        data <- .getChromInfo(x)
+        data[["chrom"]]
+    }
+)
+
+setMethod("seqlengths", "TranscriptDb",
+    function(x)
+    {
+        data <- .getChromInfo(x)
+        ans <- data[["length"]]
+        names(ans) <- data[["chrom"]]
+        ans
+    }
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### "show" method for TranscriptDb objects.
 ###
 
@@ -256,8 +285,7 @@ setMethod("as.list", "TranscriptDb",
         genes <- setDataFrameColClass(genes, COL2CLASS)
 
         ## Retrieve the "chrominfo" element.
-        sql <- "SELECT chrom, length FROM chrominfo ORDER BY _chrom_id"
-        chrominfo <- dbGetQuery(x@conn, sql)
+        chrominfo <- .getChromInfo(x)
 
         list(transcripts=transcripts, splicings=splicings,
              genes=genes, chrominfo=chrominfo)
