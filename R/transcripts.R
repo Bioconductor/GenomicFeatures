@@ -100,12 +100,14 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
 
   ## get the data from the database
   ans <- dbGetQuery(txdb@conn, sql)
+  seqlengths <- seqlengths(txdb)
   ans <-
-    GRanges(seqnames = ans[["tx_chrom"]],
+    GRanges(seqnames = factor(ans[["tx_chrom"]], levels = names(seqlengths)),
             ranges = IRanges(start = ans[["tx_start"]],
                              end = ans[["tx_end"]]),
             strand = strand(ans[["tx_strand"]]),
-            ans[-c(1:4)])
+            ans[-c(1:4)],
+            seqlengths = seqlengths)
 
   if(length(ans) > 0 && any(c("gene_id", "exon_id","cds_id") %in% columns)) {
     if("gene_id" %in% columns) {
@@ -166,12 +168,16 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
 
   ## get the data from the database
   ans <- dbGetQuery(txdb@conn, sql)
+  seqlengths <- seqlengths(txdb)
   ans <-
-    GRanges(seqnames = ans[[paste(type, "_chrom", sep="")]],
+    GRanges(seqnames =
+            factor(ans[[paste(type, "_chrom", sep="")]],
+                   levels = names(seqlengths)),
             ranges = IRanges(start = ans[[paste(type, "_start", sep="")]],
                              end = ans[[paste(type, "_end", sep="")]]),
             strand = strand(ans[[paste(type, "_strand", sep="")]]),
-            "TYPE_id" = ans[[paste(type, "_id", sep="")]])
+            "TYPE_id" = ans[[paste(type, "_id", sep="")]],
+            seqlengths = seqlengths)
   colnames(elementMetadata(ans)) <-
     gsub("TYPE", type, colnames(elementMetadata(ans)))
 

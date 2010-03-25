@@ -60,12 +60,16 @@
 
     ## create the GRanges object
     cols <- gsub("TYPE", type, c("TYPE_name", "TYPE_id"))
+    seqlengths <- seqlengths(txdb)
     grngs <-
-      GRanges(seqnames = ans[[paste(type, "_chrom", sep="")]],
+      GRanges(seqnames =
+              factor(ans[[paste(type, "_chrom", sep="")]],
+                     levels = names(seqlengths)),
               ranges = IRanges(start = ans[[paste(type, "_start", sep="")]],
                                end = ans[[paste(type, "_end", sep="")]]),
               strand = strand(ans[[paste(type, "_strand", sep="")]]),
-              ans[cols])
+              ans[cols],
+              seqlengths = seqlengths)
 
     ## split by grouping variable
     split(grngs, ans[[paste(by, "_id", sep="")]])

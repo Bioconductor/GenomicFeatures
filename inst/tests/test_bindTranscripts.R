@@ -42,7 +42,7 @@ test_bindExons <- function()
 test_bindCDS <- function()
 {
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                    package="GenomicFeatures"))
+                         package="GenomicFeatures"))
 
     checkException(bindCDS(txdb), silent = TRUE)
     checkException(bindCDS(txdb, IRanges()), silent = TRUE)
