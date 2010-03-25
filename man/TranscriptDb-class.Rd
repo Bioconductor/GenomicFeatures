@@ -9,6 +9,8 @@
 \alias{TranscriptDb}
 
 \alias{show,TranscriptDb-method}
+\alias{seqnames,TranscriptDb-method}
+\alias{seqlengths,TranscriptDb-method}
 \alias{as.list,TranscriptDb-method}
 
 \title{TranscriptDb objects}
@@ -28,6 +30,22 @@
   In the code snippets below, \code{x} is a TranscriptDb object.
 
   \describe{
+    \item{}{
+      \code{seqnames(x)}:
+      Returns the names of all chromosomes in a character vector.
+      Note that "all" here means at least the chromosomes that have
+      features. But some TranscriptDb objects (in particular those
+      created with \code{\link{makeTranscriptDbFromUCSC}})
+      are storing the names of all the chromosomes forming the genome.
+    }
+    \item{}{
+      \code{seqlengths(x)}:
+      Returns the lengths of the chromosomes \emph{or NAs}
+      in an integer vector which names are \code{seqnames(x)}.
+      It's important to note that either \emph{all} elements are NAs
+      or \emph{none} is, depending on the avaibality of this
+      information at creation time.
+    }
     \item{}{
       \code{as.list(x)}:
       Dumps the entire db into a list of data frames \code{txdump} that can
@@ -59,6 +77,9 @@ txdb_file <- system.file("extdata", "Biomart_Ensembl_sample.sqlite",
                          package="GenomicFeatures")
 txdb <- loadFeatures(txdb_file)
 txdb
+
+seqnames(txdb)
+seqlengths(txdb)
 
 txdump <- as.list(txdb)
 txdump

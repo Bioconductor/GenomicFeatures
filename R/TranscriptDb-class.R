@@ -177,7 +177,7 @@ setMethod("seqnames", "TranscriptDb",
     function(x)
     {
         data <- .getChromInfo(x)
-        data[["chrom"]]
+        as.character(data[["chrom"]])
     }
 )
 
@@ -185,8 +185,8 @@ setMethod("seqlengths", "TranscriptDb",
     function(x)
     {
         data <- .getChromInfo(x)
-        ans <- data[["length"]]
-        names(ans) <- data[["chrom"]]
+        ans <- as.integer(data[["length"]])
+        names(ans) <- as.character(data[["chrom"]])
         ans
     }
 )
