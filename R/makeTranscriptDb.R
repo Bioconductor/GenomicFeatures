@@ -298,7 +298,7 @@
         name <- rep.int(NA_character_, length(internal_id))
     if (is.na(feature_shortname))
         feature_shortname <- tablename
-    colnames <- .makeFeatureColnames(feature_shortname)
+    colnames <- makeFeatureColnames(feature_shortname)
     table <- data.frame(
         internal_id=internal_id,
         name=name,
