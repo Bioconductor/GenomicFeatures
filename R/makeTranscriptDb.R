@@ -6,29 +6,121 @@
 .DB_TYPE_NAME <- "Db type"
 .DB_TYPE_VALUE <- "TranscriptDb"  # same as the name of the class
 
+.makeFeatureColnames <- function(feature_shortname)
+{
+    suffixes <- c("_id", "_name", "_chrom", "_strand", "_start", "_end")
+    prefixes <- c("_", rep.int("", length(suffixes) - 1L))
+    paste(prefixes, feature_shortname, suffixes, sep="")
+}
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Validity of a TranscriptDb object.
 ###
 
-### TODO: Many more checkings should be added here!
-.valid.TranscriptDb <- function(x)
+### The specified table must have *at least* the cols specified in 'colnames'.
+### It's OK if it has more cols or if it has them in a different order.
+.valid.table.colnames <- function(conn, tablename, colnames)
 {
-    tmp <- try(dbExistsTable(x@conn, "metadata"), silent=TRUE)
+    tmp <- try(dbExistsTable(conn, tablename), silent=TRUE)
     if (is(tmp, "try-error"))
         return("invalid DB file")
     if (!tmp)
-        return("the DB has no metadata table")
-    metadata <- dbReadTable(x@conn, "metadata")
-    db_type_row <- which(metadata[["name"]] == .DB_TYPE_NAME)
-    if (length(db_type_row) != 1L)
-        return(paste("the metadata table in the DB has 0 or more ",
-                     "than 1 '", .DB_TYPE_NAME, "' entries", sep=""))
-    db_type <- metadata[["value"]][db_type_row]
-    if (is.na(db_type) || db_type != .DB_TYPE_VALUE)
-        return(paste("'", .DB_TYPE_NAME, "' is not \"", .DB_TYPE_VALUE,
-                     "\"", sep=""))
+        return(paste("the DB has no ", tablename, " table", sep=""))
+    sql0 <- paste("SELECT * FROM ", tablename, " LIMIT 0", sep="")
+    data0 <- dbGetQuery(conn, sql0)
+    colnames0 <- colnames(data0)
+    if (!all(colnames %in% colnames0)) {
+        msg <- paste("the ", tablename, " table in the DB doesn't have ",
+                     "all the expected columns (",
+                     paste("\"", colnames, "\"", sep="", collapse=", "),
+                     ")", sep="")
+        return(msg)
+    }
     NULL
+}
+
+.valid.metadata.table <- function(conn)
+{
+    colnames <- c("name", "value")
+    msg <- .valid.table.colnames(conn, "metadata", colnames)
+    if (!is.null(msg))
+        return(msg)
+    sql <- paste("SELECT * FROM metadata",
+                 " WHERE name = '", .DB_TYPE_NAME, "'", sep="")
+    data <- dbGetQuery(conn, sql)
+    if (nrow(data) != 1L) {
+        msg <- paste("the metadata table in the DB has 0 or more ",
+                     "than 1 '", .DB_TYPE_NAME, "' entries", sep="")
+        return(msg)
+    }
+    db_type <- data[["value"]]
+    if (is.na(db_type) || db_type != .DB_TYPE_VALUE) {
+        msg <- paste("'", .DB_TYPE_NAME, "' is not \"", .DB_TYPE_VALUE,
+                     "\"", sep="")
+        return(msg)
+    }
+    NULL
+}
+
+### TODO: Add more checks!
+.valid.transcript.table <- function(conn)
+{
+    colnames <- .makeFeatureColnames("tx")
+    msg <- .valid.table.colnames(conn, "transcript", colnames)
+    if (!is.null(msg))
+        return(msg)
+    NULL
+}
+
+### TODO: Add more checks!
+.valid.exon.table <- function(conn)
+{
+    colnames <- .makeFeatureColnames("exon")
+    msg <- .valid.table.colnames(conn, "exon", colnames)
+    if (!is.null(msg))
+        return(msg)
+    NULL
+}
+
+### TODO: Add more checks!
+.valid.cds.table <- function(conn)
+{
+    colnames <- .makeFeatureColnames("cds")
+    msg <- .valid.table.colnames(conn, "cds", colnames)
+    if (!is.null(msg))
+        return(msg)
+    NULL
+}
+
+### TODO: Add more checks!
+.valid.splicing.table <- function(conn)
+{
+    colnames <- c("_tx_id", "exon_rank", "_exon_id", "_cds_id")
+    msg <- .valid.table.colnames(conn, "splicing", colnames)
+    if (!is.null(msg))
+        return(msg)
+    NULL
+}
+
+### TODO: Add more checks!
+.valid.gene.table <- function(conn)
+{
+    colnames <- c("gene_id", "_tx_id")
+    msg <- .valid.table.colnames(conn, "gene", colnames)
+    if (!is.null(msg))
+        return(msg)
+    NULL
+}
+
+.valid.TranscriptDb <- function(x)
+{
+    c(.valid.metadata.table(x@conn),
+      .valid.transcript.table(x@conn),
+      .valid.exon.table(x@conn),
+      .valid.cds.table(x@conn),
+      .valid.splicing.table(x@conn),
+      .valid.gene.table(x@conn))
 }
 
 setValidity2("TranscriptDb", .valid.TranscriptDb)
@@ -296,17 +388,20 @@ loadFeatures <- function(file)
 }
 
 .writeFeatureTable <- function(conn,
-                               feature,
+                               tablename,
                                internal_id,
                                name,
                                chrom,
                                strand,
                                start,
                                end,
-                               colnames)
+                               feature_shortname=NA)
 {
     if (is.null(name))
         name <- rep.int(NA_character_, length(internal_id))
+    if (is.na(feature_shortname))
+        feature_shortname <- tablename
+    colnames <- .makeFeatureColnames(feature_shortname)
     table <- data.frame(
         internal_id=internal_id,
         name=name,
@@ -317,9 +412,9 @@ loadFeatures <- function(file)
         stringsAsFactors=FALSE)
     table <- unique(table)
 
-    ## Create the '<feature>' table.
+    ## Create the '<tablename>' table.
     sql <- c(
-        "CREATE TABLE ", feature, " (\n",
+        "CREATE TABLE ", tablename, " (\n",
         "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
         "  ", colnames[2L], " TEXT NULL,\n",
         "  ", colnames[3L], " TEXT NOT NULL,\n",
@@ -330,11 +425,11 @@ loadFeatures <- function(file)
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
 
-    ## Fill the '<feature>' table.
+    ## Fill the '<tablename>' table.
     ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
     ## when the nb of rows to insert is 0, hence the following test.
     if (nrow(table) != 0L) {
-        sql <- c("INSERT INTO ", feature, " VALUES (?,?,?,?,?,?)")
+        sql <- c("INSERT INTO ", tablename, " VALUES (?,?,?,?,?,?)")
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
                                    table)
@@ -463,9 +558,7 @@ loadFeatures <- function(file)
         internal_tx_id, transcripts$tx_name,
         transcripts$tx_chrom, transcripts$tx_strand,
         transcripts$tx_start, transcripts$tx_end,
-        c("_tx_id", "tx_name",
-          "tx_chrom", "tx_strand",
-          "tx_start", "tx_end"))
+        feature_shortname="tx")
 }
 
 .importExons <- function(conn, splicings, internal_exon_id)
@@ -473,10 +566,7 @@ loadFeatures <- function(file)
     .writeFeatureTable(conn, "exon",
         internal_exon_id, splicings$exon_name,
         splicings$exon_chrom, splicings$exon_strand,
-        splicings$exon_start, splicings$exon_end,
-        c("_exon_id", "exon_name",
-          "exon_chrom", "exon_strand",
-          "exon_start", "exon_end"))
+        splicings$exon_start, splicings$exon_end)
 }
 
 .importCDS <- function(conn, splicings, internal_cds_id)
@@ -489,10 +579,7 @@ loadFeatures <- function(file)
     .writeFeatureTable(conn, "cds",
         internal_cds_id[!is.na(internal_cds_id)], cds_name,
         cds_chrom, cds_strand,
-        cds_start, cds_end,
-        c("_cds_id", "cds_name",
-          "cds_chrom", "cds_strand",
-          "cds_start", "cds_end"))
+        cds_start, cds_end)
 }
 
 makeTranscriptDb <- function(transcripts, splicings,
@@ -558,7 +645,7 @@ makeTranscriptDb <- function(transcripts, splicings,
                         splicings_internal_exon_id,
                         splicings_internal_cds_id)
     .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
-    .writeMetadataTable(conn, metadata)
+    .writeMetadataTable(conn, metadata)  # must come last!
     new("TranscriptDb", conn=conn)
 }
 
