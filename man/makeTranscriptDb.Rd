@@ -1,24 +1,13 @@
 \name{makeTranscriptDb}
 
-\alias{GenomicFeatures-class}
-\alias{class:GenomicFeatures}
-\alias{GenomicFeatures}
-
-\alias{TranscriptDb-class}
-\alias{class:TranscriptDb}
-\alias{TranscriptDb}
-
 \alias{makeTranscriptDb}
-
-\alias{show,TranscriptDb-method}
-\alias{as.list,TranscriptDb-method}
 
 \title{
   Making a TranscriptDb object from user supplied annotations
 }
 \description{
   \code{makeTranscriptDb} is a low-level constructor for making
-  a TranscriptDb object from user supplied transcript annotations.
+  a \link{TranscriptDb} object from user supplied transcript annotations.
   See \code{?\link{makeTranscriptDbFromUCSC}} and
   \code{?\link{makeTranscriptDbFromBiomart}} for higher-level
   functions that feed data from the UCSC or BioMart sources
@@ -137,13 +126,14 @@
   Other columns, if any, are ignored (with a warning).
 }
 
-\value{A TranscriptDb object.}
+\value{A \link{TranscriptDb} object.}
 
 \author{
   H. Pages
 }
 
 \seealso{
+  \code{\link{TranscriptDb}},
   \code{\link{makeTranscriptDbFromUCSC}},
   \code{\link{makeTranscriptDbFromBiomart}}
 }
@@ -164,14 +154,4 @@ splicings <-  data.frame(
                    cds_end=c(999, 2085, 2144, 2193, NA, NA))
 
 txdb <- makeTranscriptDb(transcripts, splicings)
-
-## Dump the entire TranscriptDb object into a list of data frames 'txdump'
-## that can be used in 'do.call(makeTranscriptDb, txdump)' to make the db
-## again with no loss of information.
-## Note that the transcripts are dumped in a consistent order in all the
-## elements of the result.
-txdump <- as.list(txdb)
-txdump
-txdb1 <- do.call(makeTranscriptDb, txdump)
-stopifnot(identical(as.list(txdb1), txdump))
 }
