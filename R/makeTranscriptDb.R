@@ -113,6 +113,16 @@
     NULL
 }
 
+### TODO: Add more checks!
+.valid.chrominfo.table <- function(conn)
+{
+    colnames <- c("_chrom_id", "chrom", "length")
+    msg <- .valid.table.colnames(conn, "chrominfo", colnames)
+    if (!is.null(msg))
+        return(msg)
+    NULL
+}
+
 .valid.TranscriptDb <- function(x)
 {
     c(.valid.metadata.table(x@conn),
@@ -120,7 +130,8 @@
       .valid.exon.table(x@conn),
       .valid.cds.table(x@conn),
       .valid.splicing.table(x@conn),
-      .valid.gene.table(x@conn))
+      .valid.gene.table(x@conn),
+      .valid.chrominfo.table(x@conn))
 }
 
 setValidity2("TranscriptDb", .valid.TranscriptDb)
@@ -176,15 +187,17 @@ loadFeatures <- function(file)
     is.character(x) || (is.factor(x) && is.character(levels(x)))
 }
 
-.checkIntForeignKey <- function(referring_vals, referred_vals,
-                                referring_colname, referred_colname)
+.checkForeignKey <- function(referring_vals, referring_type, referring_colname,
+                             referred_vals, referred_type, referred_colname)
 {
-    if (!is.integer(referring_vals))
-        stop("'", referring_colname, "' must be an integer vector")
+    if (!is.na(referring_type) && !is(referring_vals, referring_type))
+        stop("'", referring_colname, "' must be of type ", referring_type)
+    if (!is.na(referred_type) && !is(referred_vals, referred_type))
+        stop("'", referred_colname, "' must be of type ", referred_type)
     if (any(is.na(referring_vals)))
         stop("'", referring_colname, "' cannot contain NAs")
     if (!all(referring_vals %in% referred_vals))
-        stop("all the values in '", referring_vals, "' must ",
+        stop("all the values in '", referring_colname, "' must ",
              "be present in '", referred_colname, "'")
 }
 
@@ -240,8 +253,8 @@ loadFeatures <- function(file)
                         "cds_id", "cds_name", "cds_start", "cds_end")
     .checkargColnames(splicings, .REQUIRED_COLS, .OPTIONAL_COLS, "splicings")
     ## Check 'tx_id'.
-    .checkIntForeignKey(splicings$tx_id, unique_tx_ids,
-                        "splicings$tx_id", "transcripts$tx_id")
+    .checkForeignKey(splicings$tx_id, "integer", "splicings$tx_id",
+                     unique_tx_ids, "integer", "transcripts$tx_id")
     ## Check 'exon_rank'.
     if (!is.numeric(splicings$exon_rank)
      || any(is.na(splicings$exon_rank)))
@@ -362,10 +375,52 @@ loadFeatures <- function(file)
                                            unique_tx_ids, "tx_id")
     } else {
         ## Check 'tx_id'.
-        .checkIntForeignKey(genes$tx_id, unique_tx_ids,
-                            "genes$tx_id", "transcripts$tx_id")
+        .checkForeignKey(genes$tx_id, "integer", "genes$tx_id",
+                         unique_tx_ids, "integer", "transcripts$tx_id")
     }
     genes
+}
+
+.normargChrominfo <- function(chrominfo, transcripts_tx_chrom,
+                              splicings_exon_chrom)
+{
+    if (is.null(chrominfo)) {
+        feature_chrom <- unique(c(as.character(transcripts_tx_chrom),
+                                  as.character(splicings_exon_chrom)))
+        chrominfo <- data.frame(
+            chrom=feature_chrom,
+            length=rep.int(NA_integer_, length(feature_chrom))
+        )
+        return(chrominfo)
+    }
+    .REQUIRED_COLS <- c("chrom", "length")
+    .OPTIONAL_COLS <- character(0)
+    .checkargColnames(chrominfo, .REQUIRED_COLS, .OPTIONAL_COLS, "chrominfo")
+    ## Check 'chrom'.
+    if (!.isCharacterVectorOrFactor(chrominfo$chrom)
+     || any(is.na(chrominfo$chrom)))
+        stop("'chrominfo$chrom' must be a character vector (or factor) ",
+             "with no NAs")
+    .checkForeignKey(transcripts_tx_chrom, NA, "transcripts$tx_chrom",
+                     chrominfo$chrom, NA, "chrominfo$chrom")
+    if (!is.null(splicings_exon_chrom))
+        .checkForeignKey(splicings_exon_chrom, NA, "splicings$exon_chrom",
+                         chrominfo$chrom, NA, "chrominfo$chrom")
+    ## Check 'length'.
+    if (!is.vector(chrominfo$length))
+        stop("'chrominfo$length' must be either all NAs ",
+             "or an integer vector with no NAs")
+    na_idx <- is.na(chrominfo$length)
+    if (!all(na_idx)) {
+        if (any(na_idx))
+            stop("'chrominfo$length' cannot mix NAs and non-NAs")
+        if (!is.numeric(chrominfo$length))
+            stop("'chrominfo$length' must be either all NAs ",
+                 "or an integer vector with no NAs")
+    }
+    if (!is.integer(chrominfo$length))
+        chrominfo$length <- as.integer(chrominfo$length)
+    chrominfo
 }
 
 .makeInternalIdsFromExternalIds <- function(external_id)
@@ -517,6 +572,34 @@ loadFeatures <- function(file)
     }
 }
 
+.writeChrominfoTable <- function(conn, chrominfo)
+{
+    table <- data.frame(
+        internal_chrom_id=seq_len(nrow(chrominfo)),
+        chrom=as.character(chrominfo$chrom),
+        length=chrominfo$length,
+        stringsAsFactors=FALSE)
+    ## Create the 'chrominfo' table.
+    sql <- c(
+        "CREATE TABLE chrominfo (\n",
+        "  _chrom_id INTEGER PRIMARY KEY,\n",
+        "  chrom TEXT UNIQUE NOT NULL,\n",
+        "  length INTEGER NULL\n",
+        ")")
+    res <- dbSendQuery(conn, paste(sql, collapse=""))
+    dbClearResult(res)
+    ## Fill the 'chrominfo' table.
+    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
+    ## when the nb of rows to insert is 0, hence the following test.
+    if (nrow(table) != 0L) {
+        sql <- "INSERT INTO chrominfo VALUES (?,?,?)"
+        dbBeginTransaction(conn)
+        res <- dbSendPreparedQuery(conn, sql, table)
+        dbClearResult(res)
+        dbCommit(conn)
+    }
+}
+
 .writeMetadataTable <- function(conn, metadata)
 {
     transcript_nrow <- dbGetQuery(conn, "SELECT COUNT(*) FROM transcript")[[1L]]
@@ -583,7 +666,7 @@ loadFeatures <- function(file)
 }
 
 makeTranscriptDb <- function(transcripts, splicings,
-                             genes=NULL, metadata=NULL, ...)
+                             genes=NULL, chrominfo=NULL, metadata=NULL, ...)
 {
     if (length(list(...)) != 0L)
         warning("extra args are ignored for now")
@@ -592,6 +675,8 @@ makeTranscriptDb <- function(transcripts, splicings,
     names(unique_tx_ids) <- transcripts$tx_name
     splicings <- .normargSplicings(splicings, unique_tx_ids)
     genes <- .normargGenes(genes, unique_tx_ids)
+    chrominfo <- .normargChrominfo(chrominfo, transcripts$tx_chrom,
+                                   splicings$exon_chrom)
     transcripts_internal_tx_id <- unique_tx_ids
     splicings_internal_tx_id <- splicings$tx_id
     genes_internal_tx_id <- genes$tx_id
@@ -645,6 +730,7 @@ makeTranscriptDb <- function(transcripts, splicings,
                         splicings_internal_exon_id,
                         splicings_internal_cds_id)
     .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
+    .writeChrominfoTable(conn, chrominfo)
     .writeMetadataTable(conn, metadata)  # must come last!
     new("TranscriptDb", conn=conn)
 }
@@ -742,7 +828,12 @@ setMethod("as.list", "TranscriptDb",
         )
         genes <- setDataFrameColClass(genes, COL2CLASS)
 
-        list(transcripts=transcripts, splicings=splicings, genes=genes)
+        ## Retrieve the "chrominfo" element.
+        sql <- "SELECT chrom, length FROM chrominfo ORDER BY _chrom_id"
+        chrominfo <- dbGetQuery(x@conn, sql)
+
+        list(transcripts=transcripts, splicings=splicings,
+             genes=genes, chrominfo=chrominfo)
     }
 )
 

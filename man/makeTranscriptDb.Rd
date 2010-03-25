@@ -25,7 +25,8 @@
   to \code{makeTranscriptDb}.
 }
 \usage{
-  makeTranscriptDb(transcripts, splicings, genes=NULL, metadata=NULL, ...)
+  makeTranscriptDb(transcripts, splicings,
+                   genes=NULL, chrominfo=NULL, metadata=NULL, ...)
 }
 \arguments{
   \item{transcripts}{data frame containing the genomic locations of
@@ -34,6 +35,8 @@
     of a set of transcripts}
   \item{genes}{data frame containing the genes associated to a set
     of transcripts}
+  \item{chrominfo}{data frame containing the chromosome information
+    of a set of transcripts}
   \item{metadata}{2-column data frame containing meta information about
     this set of transcripts like species, organism, genome, UCSC table, etc...
     The names of the columns must be \code{"name"} and \code{"value"}
@@ -41,9 +44,12 @@
   \item{...}{ignored for now}
 }
 \details{
-  The \code{transcripts}, \code{splicings} and \code{genes} arguments
-  must be data frames that describe a set of transcripts and the genomic
-  features related to them (exons, cds and genes at the moment).
+  The \code{transcripts} (required), \code{splicings} (required)
+  and \code{genes} (optional) arguments must be data frames that
+  describe a set of transcripts and the genomic features related
+  to them (exons, cds and genes at the moment).
+  The \code{chrominfo} (optional) argument must be a data frame
+  containing chromosome information like the length of each chromosome.
 
   \code{transcripts} must have 1 row per transcript and the following
   columns:
@@ -74,7 +80,7 @@
         Integer vector with no NAs. (\code{tx_id}, \code{exon_rank})
         pairs must be unique.
   \item \code{exon_id}: [optional] Exon ID.
-        Integer vector. No NAs.
+        Integer vector with no NAs.
   \item \code{exon_name}: [optional] Exon name.
         Character vector (or factor).
   \item \code{exon_chrom}: [optional] Exon chromosome.
@@ -117,6 +123,16 @@
         Can be used as an alternative to the \code{genes$tx_id}
         foreign key.
   \item \code{gene_id}: Gene ID. Character vector (or factor). No NAs.
+  }
+  Other columns, if any, are ignored (with a warning).
+
+  \code{chrominfo} must have 1 row per chromosome and the following
+  columns:
+  \itemize{
+  \item \code{chrom}: Chromosome name.
+        Character vector (or factor) with no NAs.
+  \item \code{length}: Chromosome length.
+        Either all NAs or an integer vector with no NAs.
   }
   Other columns, if any, are ignored (with a warning).
 }

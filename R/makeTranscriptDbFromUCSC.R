@@ -104,6 +104,18 @@
                 cds_start=cds_start, cds_end=cds_end))
 }
 
+.downloadChromInfoFromUCSC <- function(genome)
+{
+    url <- paste("http://hgdownload.cse.ucsc.edu/goldenPath/", genome,
+                 "/database/chromInfo.txt.gz", sep="")
+    destfile <- tempfile()
+    download.file(url, destfile, quiet=TRUE)
+    colnames <- c("chrom", "size", "fileName")
+    ans <- read.table(destfile, sep="\t", quote="",
+                      col.names=colnames, comment.char="")
+    ans
+}
+
 .makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes,
                                              genome, tablename, gene_id_type,
                                              full_dataset)
@@ -165,6 +177,19 @@
     ## Prepare the 'genes' data frame.
     #genes <- genes[genes$tx_name %in% ucsc_txtable$name, ]
 
+    ## Download and prepare the 'chrominfo' table.
+    ucsc_chrominfotable <- .downloadChromInfoFromUCSC(genome)
+    COL2CLASS <- c(
+        chrom="character",
+        size="integer"
+    )
+    ucsc_chrominfotable <- setDataFrameColClass(ucsc_chrominfotable, COL2CLASS,
+                                                drop.extra.cols=TRUE)
+    chrominfo <- data.frame(
+        chrom=ucsc_chrominfotable$chrom,
+        length=ucsc_chrominfotable$size
+    )
+
     ## Prepare the 'metadata' data frame.
     metadata <- data.frame(
         name=c("Data source", "Genome", "UCSC Table",
@@ -174,7 +199,8 @@
     )
 
     ## Call makeTranscriptDb().
-    makeTranscriptDb(transcripts, splicings, genes=genes, metadata=metadata)
+    makeTranscriptDb(transcripts, splicings,
+                     genes=genes, chrominfo=chrominfo, metadata=metadata)
 }
 
 ### Lookup between UCSC tables and tracks in the "Genes and Gene Prediction"
@@ -292,10 +318,12 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
     }
     session <- browserSession()
     genome(session) <- genome
+
     ## Download the transcript table.
     query1 <- ucscTableQuery(session, track, table=tablename,
                              names=transcript_ids)
     ucsc_txtable <- getTable(query1)
+
     ## Download the tx_name-to-gene_id mapping.
     txname2gene_mapinfo <- .UCSC_TXNAME2GENEID_MAPINFO[[tablename]]
     if (is.null(txname2gene_mapinfo)) {
@@ -317,6 +345,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
         genes <- data.frame(tx_name=tx_name, gene_id=gene_id)
         gene_id_type <- txname2gene_mapinfo[4L]
     }
+
     .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, genes,
                                      genome, tablename, gene_id_type,
                                      full_dataset=is.null(transcript_ids))
