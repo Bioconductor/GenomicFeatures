@@ -150,27 +150,6 @@ makeIdsForUniqueDataFrameRows <- function(x)
 }
 
 
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Unit test related.
-###
-
-test_GenomicFeatures <- function(dir)
-{
-    if (missing(dir)) {
-        dir <- system.file("tests", package="GenomicFeatures")
-    }
-    require("RUnit", quietly=TRUE) || stop("RUnit package not found")
-    suite <- defineTestSuite(name="GenomicFeatures RUnit Tests", dirs=dir,
-                             testFileRegexp="^test_.*\\.R$",
-                             rngKind="default",
-                             rngNormalKind="default")
-    result <- runTestSuite(suite)
-    printTextProtocol(result, showDetails=FALSE)
-    if (.any_errors(result) || .any_fail(result)) {
-        stop("test_GenomicFeatures FAIL")
-    }
-    result
-}
 
 .any_errors <- function(result) {
     any(sapply(result, function(r) r$nErr > 0))

@@ -27,4 +27,5 @@ Collate: AllClasses.R
     regions.R
     GenomicFeaturesForge.R
     extractTranscriptsFromGenome.R
+    test_GenomicFeatures_package.R
 biocViews: Genetics, Infrastructure, Annotation
