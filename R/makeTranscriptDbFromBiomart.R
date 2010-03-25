@@ -118,7 +118,7 @@ getAllDatasetAttrGroups <- function(attrlist)
     data.frame(
         tx_id=transcripts_tx_id,
         tx_name=transcripts_tx_name,
-        tx_chrom=bm_table$chromosome_name,
+        tx_chrom=as.character(bm_table$chromosome_name),
         tx_strand=ifelse(bm_table$strand == 1, "+", "-"),
         tx_start=bm_table$transcript_start,
         tx_end=bm_table$transcript_end
