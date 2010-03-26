@@ -227,6 +227,7 @@
                               splicings_exon_chrom)
 {
     if (is.null(chrominfo)) {
+        warning("chromosome lengths not available for this TranscriptDb object")
         feature_chrom <- unique(c(as.character(transcripts_tx_chrom),
                                   as.character(splicings_exon_chrom)))
         chrominfo <- data.frame(

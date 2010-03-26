@@ -92,6 +92,8 @@ getAllDatasetAttrGroups <- function(attrlist)
 
 .makeBiomartTranscripts <- function(filters, values, mart, transcript_ids)
 {
+    message("Download and preprocess the 'transcripts' data frame ... ",
+            appendLF=FALSE)
     bm_table <- getBM(.A1_ATTRIBS, filters=filters, values=values, mart=mart)
     if (!is.null(transcript_ids)) {
         idx <- !(transcript_ids %in% bm_table$ensembl_transcript_id)
@@ -109,12 +111,15 @@ getAllDatasetAttrGroups <- function(attrlist)
         tx_start=integer(0),
         tx_end=integer(0)
     )
-    if (nrow(bm_table) == 0L)
+    if (nrow(bm_table) == 0L) {
+        message("OK")
         return(transcripts0)
+    }
     transcripts_tx_id <- seq_len(nrow(bm_table))
     transcripts_tx_name <- bm_table$ensembl_transcript_id
     if (any(duplicated(transcripts_tx_name)))
         stop("the 'ensembl_transcript_id' attribute contains duplicated values")
+    message("OK")
     data.frame(
         tx_id=transcripts_tx_id,
         tx_name=transcripts_tx_name,
@@ -123,6 +128,112 @@ getAllDatasetAttrGroups <- function(attrlist)
         tx_start=bm_table$transcript_start,
         tx_end=bm_table$transcript_end
     )
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Download and prepare the 'chrominfo' data frame.
+###
+
+.ENSEMBL_CURRENT_MYSQL_URL <- "ftp://ftp.ensembl.org/pub/current_mysql/"
+
+.fetchEnsemblCurrentMySQLsubdirs <- function()
+{
+    doc <- getURL(.ENSEMBL_CURRENT_MYSQL_URL)
+    tfile <- tempfile()
+    cat(doc, file=tfile)
+    subdirs <- read.table(tfile, quote="", comment.char="")
+    as.character(subdirs[[length(subdirs)]])
+}
+
+.ensemblDataset2CurrentMySQLcoresubdir <- function(dataset)
+{
+    shortname0 <- strsplit(dataset, "_", fixed=TRUE)[[1L]][1L]
+    subdirs <- .fetchEnsemblCurrentMySQLsubdirs()
+    subdirs <- subdirs[grep("_core_", subdirs, fixed=TRUE)]
+    shortnames <- sapply(strsplit(subdirs, "_", fixed=TRUE),
+                         function(x)
+                           paste(substr(x[1L], 1L, 1L), x[2L], sep=""))
+    ans <- subdirs[shortnames == shortname0]
+    if (length(ans) != 1L)
+        stop("found 0 or more than 1 subdir for \"", dataset, "\" dataset ",
+             "at ", .ENSEMBL_CURRENT_MYSQL_URL)
+    ans
+}
+
+#extra_seqnames <- unique(as.character(transcripts$tx_chrom))
+#extra_seqnames <- c("GL000217.1", "NC_012920")
+#.fetchChromLengthsFromEnsembl("hsapiens_gene_ensembl",
+#                              extra_seqnames=extra_seqnames))
+.fetchChromLengthsFromEnsembl <- function(dataset, extra_seqnames=NULL)
+{
+    coresubdir <- .ensemblDataset2CurrentMySQLcoresubdir(dataset)
+    ftpdir <- paste(.ENSEMBL_CURRENT_MYSQL_URL, coresubdir, "/", sep="")
+    ## Get seq_region table.
+    url <- paste(ftpdir, "seq_region.txt.gz", sep="")
+    destfile <- tempfile()
+    download.file(url, destfile, quiet=TRUE)
+    colnames <- c("seq_region_id", "name", "coord_system_id", "length")
+    seq_region <- read.table(destfile, sep="\t", quote="",
+                             col.names=colnames, comment.char="",
+                             stringsAsFactors=FALSE)
+    ## Get coord_system table.
+    url <- paste(ftpdir, "coord_system.txt.gz", sep="")
+    destfile <- tempfile()
+    download.file(url, destfile, quiet=TRUE)
+    colnames <- c("coord_system_id", "species_id", "name",
+                  "version", "rank", "attrib")
+    coord_system <- read.table(destfile, sep="\t", quote="",
+                               col.names=colnames, comment.char="",
+                               stringsAsFactors=FALSE)
+
+    ## First filtering: keep only "default_version" sequences.
+    idx1 <- coord_system$attrib == "default_version"
+    ids1 <- coord_system$coord_system_id[idx1]
+    seq_region <- seq_region[seq_region$coord_system_id %in% ids1, , drop=FALSE]
+
+    ## Get index of chromosome sequences.
+    idx2 <- idx1 & (coord_system$name == "chromosome")
+    ids2 <- coord_system$coord_system_id[idx2]
+    chrom_idx <- seq_region$coord_system_id %in% ids2
+
+    if (!is.null(extra_seqnames)) {
+        if (!all(extra_seqnames %in% seq_region$name))
+            stop("failed to fetch all chromosome lengths")
+        ## Add extra sequences to the index.
+        chrom_idx <- chrom_idx | (seq_region$name %in% extra_seqnames)
+    }
+
+    ## Second filtering. 
+    ans <- seq_region[chrom_idx, c("name", "length"), drop=FALSE]
+    row.names(ans) <- NULL
+    if (any(duplicated(ans$name)))
+        stop("failed to fetch all chromosome lengths unambiguously")
+    ans
+}
+
+### Silently returns NULL if it fails to fetch the chromosome lengths
+### from the remote resource.
+.makeBiomartChrominfo <- function(biomart, dataset, extra_seqnames=NULL)
+{
+    if (biomart == "ensembl") {
+        message("Download and preprocess the 'chrominfo' data frame ... ",
+                appendLF=FALSE)
+        chromlengths <- try(.fetchChromLengthsFromEnsembl(dataset,
+                                extra_seqnames=extra_seqnames),
+                            silent=TRUE)
+        if (is(chromlengths, "try-error")) {
+            message("FAILED! (=> skipped)")
+            return(NULL)
+        }
+        chrominfo <- data.frame(
+            chrom=chromlengths$name,
+            length=chromlengths$length
+        )
+        message("OK")
+        return(chrominfo)
+    }
+    NULL
 }
 
 
@@ -239,6 +350,8 @@ getAllDatasetAttrGroups <- function(attrlist)
     )
     if (length(transcripts_tx_name) == 0L)
         return(splicings0)
+    message("Download and preprocess the 'splicings' data frame ... ",
+            appendLF=FALSE)
     allattribs <- listAttributes(mart)$name
     attributes <- .A2_ATTRIBS
     if (.B_ATTRIB %in% allattribs)
@@ -261,6 +374,7 @@ getAllDatasetAttrGroups <- function(attrlist)
         cds_ranges <- .extractCdsRangesFromBiomartTable(bm_table)
         splicings <- cbind(splicings, .makeCdsDataFrameFromRanges(cds_ranges))
     }
+    message("OK")
     splicings
 }
 
@@ -271,95 +385,17 @@ getAllDatasetAttrGroups <- function(attrlist)
 
 .makeBiomartGenes <- function(filters, values, mart, transcripts_tx_name)
 {
+    message("Download and preprocess the 'genes' data frame ... ",
+            appendLF=FALSE)
     attributes <- c(.G_ATTRIB, "ensembl_transcript_id")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
     genes_tx_id <- as.integer(factor(bm_table$ensembl_transcript_id,
                                      levels=transcripts_tx_name))
+    message("OK")
     data.frame(
         tx_id=genes_tx_id,
         gene_id=bm_table$ensembl_gene_id
     )
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Download and prepare the 'chrominfo' data frame.
-###
-
-.ENSEMBL_CURRENT_MYSQL_URL <- "ftp://ftp.ensembl.org/pub/current_mysql/"
-
-.fetchEnsemblCurrentMySQLsubdirs <- function()
-{
-    doc <- getURL(.ENSEMBL_CURRENT_MYSQL_URL)
-    tfile <- tempfile()
-    cat(doc, file=tfile)
-    subdirs <- read.table(tfile, quote="", comment.char="")
-    as.character(subdirs[[length(subdirs)]])
-}
-
-.ensemblDataset2CurrentMySQLcoresubdir <- function(dataset)
-{
-    shortname0 <- strsplit(dataset, "_", fixed=TRUE)[[1L]][1L]
-    subdirs <- .fetchEnsemblCurrentMySQLsubdirs()
-    subdirs <- subdirs[grep("_core_", subdirs, fixed=TRUE)]
-    shortnames <- sapply(strsplit(subdirs, "_", fixed=TRUE),
-                         function(x)
-                           paste(substr(x[1L], 1L, 1L), x[2L], sep=""))
-    ans <- subdirs[shortnames == shortname0]
-    if (length(ans) != 1L)
-        stop("found 0 or more than 1 subdir for \"", dataset, "\" dataset ",
-             "at ", .ENSEMBL_CURRENT_MYSQL_URL)
-    ans
-}
-
-#extra_seqnames <- unique(as.character(transcripts$tx_chrom))
-#extra_seqnames <- c("GL000217.1", "NC_012920")
-#.fetchChromLengthsFromEnsembl("hsapiens_gene_ensembl", extra_seqnames))
-.fetchChromLengthsFromEnsembl <- function(dataset, extra_seqnames=NULL)
-{
-    coresubdir <- .ensemblDataset2CurrentMySQLcoresubdir(dataset)
-    ftpdir <- paste(.ENSEMBL_CURRENT_MYSQL_URL, coresubdir, "/", sep="")
-    ## Get seq_region table.
-    url <- paste(ftpdir, "seq_region.txt.gz", sep="")
-    destfile <- tempfile()
-    download.file(url, destfile, quiet=TRUE)
-    colnames <- c("seq_region_id", "name", "coord_system_id", "length")
-    seq_region <- read.table(destfile, sep="\t", quote="",
-                             col.names=colnames, comment.char="",
-                             stringsAsFactors=FALSE)
-    ## Get coord_system table.
-    url <- paste(ftpdir, "coord_system.txt.gz", sep="")
-    destfile <- tempfile()
-    download.file(url, destfile, quiet=TRUE)
-    colnames <- c("coord_system_id", "species_id", "name",
-                  "version", "rank", "attrib")
-    coord_system <- read.table(destfile, sep="\t", quote="",
-                               col.names=colnames, comment.char="",
-                               stringsAsFactors=FALSE)
-
-    ## First filtering: keep only "default_version" sequences.
-    idx1 <- coord_system$attrib == "default_version"
-    ids1 <- coord_system$coord_system_id[idx1]
-    seq_region <- seq_region[seq_region$coord_system_id %in% ids1, , drop=FALSE]
-
-    ## Get index of chromosome sequences.
-    idx2 <- idx1 & (coord_system$name == "chromosome")
-    ids2 <- coord_system$coord_system_id[idx2]
-    chrom_idx <- seq_region$coord_system_id %in% ids2
-
-    if (!is.null(extra_seqnames)) {
-        if (!all(extra_seqnames %in% seq_region$name))
-            stop("failed to fetch all chromosome lengths")
-        ## Add extra sequences to the index.
-        chrom_idx <- chrom_idx | (seq_region$name %in% extra_seqnames)
-    }
-
-    ## Second filtering. 
-    ans <- seq_region[chrom_idx, c("name", "length"), drop=FALSE]
-    row.names(ans) <- NULL
-    if (any(duplicated(ans$name)))
-        stop("failed to fetch all chromosome lengths unambiguously")
-    ans
 }
 
 
@@ -369,6 +405,8 @@ getAllDatasetAttrGroups <- function(attrlist)
 
 .makeBiomartMetadata <- function(mart, is_full_dataset)
 {
+    message("Prepare the 'metadata' data frame ... ",
+            appendLF=FALSE)
     biomart <- biomaRt:::martBM(mart)
     dataset <- biomaRt:::martDataset(mart)
     datasets <- listDatasets(mart)
@@ -380,6 +418,7 @@ getAllDatasetAttrGroups <- function(attrlist)
              "more than 1) \"", dataset, "\" datasets")
     description <- as.character(datasets$description)[dataset_row]
     version <- as.character(datasets$version)[dataset_row]
+    message("OK")
     data.frame(
         name=c("Data source",
                "BioMart database",
@@ -433,6 +472,10 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     ## Download and prepare the 'transcripts' data frame.
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
                                            transcript_ids)
+    
+    ## Download and prepare the 'chrominfo' data frame.
+    chrominfo <- .makeBiomartChrominfo(biomart, dataset,
+                                       extra_seqnames=transcripts$tx_chrom)
 
     ## Download and prepare the 'splicings' data frame.
     splicings <- .makeBiomartSplicings(filters, values, mart,
@@ -445,7 +488,12 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     metadata <- .makeBiomartMetadata(mart, is.null(transcript_ids))
 
     ## Call makeTranscriptDb().
-    makeTranscriptDb(transcripts, splicings, genes=genes, metadata=metadata)
+    message("Make the TranscriptDb object ... ", appendLF=FALSE)
+    txdb <- makeTranscriptDb(transcripts, splicings,
+                             genes=genes, chrominfo=chrominfo,
+                             metadata=metadata)
+    message("OK")
+    txdb
 }
 
 

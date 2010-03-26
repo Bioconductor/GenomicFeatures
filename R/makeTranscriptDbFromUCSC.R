@@ -177,7 +177,7 @@
     ## Prepare the 'genes' data frame.
     #genes <- genes[genes$tx_name %in% ucsc_txtable$name, ]
 
-    ## Download and prepare the 'chrominfo' table.
+    ## Download and prepare the 'chrominfo' data frame.
     ucsc_chrominfotable <- .downloadChromInfoFromUCSC(genome)
     COL2CLASS <- c(
         chrom="character",
