@@ -283,6 +283,61 @@ getAllDatasetAttrGroups <- function(attrlist)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Download and prepare the 'chrominfo' data frame.
+###
+
+#extra_seqnames <- unique(as.character(transcripts$tx_chrom))
+#extra_seqnames <- c("GL000217.1", "NC_012920")
+#.fetchChromLengthsFromEnsembl("homo_sapiens_core_57_37b", extra_seqnames))
+
+.fetchChromLengthsFromEnsembl <- function(ftpsubdir, extra_seqnames=NULL)
+{
+    ftpdir <- paste("ftp://ftp.ensembl.org/pub/current_mysql/",
+                    ftpsubdir, "/", sep="")
+    ## Get seq_region table.
+    url <- paste(ftpdir, "seq_region.txt.gz", sep="")
+    destfile <- tempfile()
+    download.file(url, destfile, quiet=TRUE)
+    colnames <- c("seq_region_id", "name", "coord_system_id", "length")
+    seq_region <- read.table(destfile, sep="\t", quote="",
+                             col.names=colnames, comment.char="")
+    ## Get coord_system table.
+    url <- paste(ftpdir, "coord_system.txt.gz", sep="")
+    destfile <- tempfile()
+    download.file(url, destfile, quiet=TRUE)
+    colnames <- c("coord_system_id", "species_id", "name",
+                  "version", "rank", "attrib")
+    coord_system <- read.table(destfile, sep="\t", quote="",
+                               col.names=colnames, comment.char="")
+
+    ## First filtering: keep only "default_version" sequences.
+    idx1 <- coord_system$attrib == "default_version"
+    ids1 <- coord_system$coord_system_id[idx1]
+    seq_region <- seq_region[seq_region$coord_system_id %in% ids1, ]
+
+    ## Get index of chromosome sequences.
+    idx2 <- (coord_system$attrib == "default_version") &
+            (coord_system$name == "chromosome")
+    ids2 <- coord_system$coord_system_id[idx2]
+    chrom_idx <- seq_region$coord_system_id %in% ids2
+
+    if (!is.null(extra_seqnames)) {
+        if (!all(extra_seqnames %in% seq_region$name))
+            stop("failed to fetch all chromosome lengths")
+        ## Add extra sequences to the index.
+        chrom_idx <- chrom_idx | (seq_region$name %in% extra_seqnames)
+    }
+
+    ## Second filtering. 
+    ans <- seq_region[chrom_idx, c("name", "length")]
+    row.names(ans) <- NULL
+    if (any(duplicated(ans$name)))
+        stop("failed to fetch all chromosome lengths unambiguously")
+    ans
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Prepare the 'metadata' data frame.
 ###
 
