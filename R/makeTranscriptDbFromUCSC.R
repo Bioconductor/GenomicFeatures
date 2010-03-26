@@ -3,6 +3,30 @@
 ### -------------------------------------------------------------------------
 
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Extract the 'transcripts' data frame from UCSC table.
+###
+
+.extractTranscriptsFromUCSCTable <- function(ucsc_txtable)
+{
+    transcripts <- data.frame(
+        tx_id=seq_len(nrow(ucsc_txtable)),
+        tx_name=ucsc_txtable$name,
+        tx_chrom=ucsc_txtable$chrom,
+        tx_strand=ucsc_txtable$strand,
+        tx_start=ucsc_txtable$txStart + 1L,
+        tx_end=ucsc_txtable$txEnd
+    )
+    transcripts
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Extract the 'splicings' data frame from UCSC table.
+###
+### Exon starts and ends are multi-valued fields (comma-separated) that
+### need to be expanded.
+
 .makeExonRank <- function(exonCount, exonStrand)
 {
     ans <- lapply(seq_len(length(exonCount)),
@@ -104,53 +128,10 @@
                 cds_start=cds_start, cds_end=cds_end))
 }
 
-.downloadChromInfoFromUCSC <- function(genome)
+.extractSplicingsFromUCSCTable <- function(ucsc_txtable, transcripts_tx_id)
 {
-    url <- paste("http://hgdownload.cse.ucsc.edu/goldenPath/", genome,
-                 "/database/chromInfo.txt.gz", sep="")
-    destfile <- tempfile()
-    download.file(url, destfile, quiet=TRUE)
-    colnames <- c("chrom", "size", "fileName")
-    ans <- read.table(destfile, sep="\t", quote="",
-                      col.names=colnames, comment.char="")
-    ans
-}
-
-.makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes,
-                                             genome, tablename, gene_id_type,
-                                             full_dataset)
-{
-    COL2CLASS <- c(
-        name="character",
-        chrom="factor",
-        strand="factor",
-        txStart="integer",
-        txEnd="integer",
-        cdsStart="integer",
-        cdsEnd="integer",
-        exonCount="integer",
-        exonStarts="character",
-        exonEnds="character"
-    )
-    ucsc_txtable <- setDataFrameColClass(ucsc_txtable, COL2CLASS,
-                                         drop.extra.cols=TRUE)
-
-    ## Prepare the 'transcripts' data frame.
-    tx_id <- seq_len(nrow(ucsc_txtable))
-    transcripts <- data.frame(
-        tx_id=tx_id,
-        tx_name=ucsc_txtable$name,
-        tx_chrom=ucsc_txtable$chrom,
-        tx_strand=ucsc_txtable$strand,
-        tx_start=ucsc_txtable$txStart + 1L,
-        tx_end=ucsc_txtable$txEnd
-    )
-
-    ## Prepare the 'splicings' data frame.
-    ## Exon starts and ends are multi-valued fields (comma-separated) that
-    ## need to be expanded.
     exon_count <- ucsc_txtable$exonCount
-    splicings_tx_id <- rep.int(tx_id, exon_count)
+    splicings_tx_id <- rep.int(transcripts_tx_id, exon_count)
     if (length(exon_count) == 0L) {
         exon_rank <- exon_start <- exon_end <-
             cds_start <- cds_end <- integer(0)
@@ -173,11 +154,39 @@
         cds_start=cds_start,
         cds_end=cds_end
     )
+    splicings
+}
 
-    ## Prepare the 'genes' data frame.
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Preprocess the 'genes' data frame.
+###
+
+.makeUCSCGenes <- function(genes, ucsc_txtable)
+{
     #genes <- genes[genes$tx_name %in% ucsc_txtable$name, ]
+    genes
+}
 
-    ## Download and prepare the 'chrominfo' data frame.
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Download and preprocess the 'chrominfo' data frame.
+###
+
+.downloadChromInfoFromUCSC <- function(genome)
+{
+    url <- paste("http://hgdownload.cse.ucsc.edu/goldenPath/", genome,
+                 "/database/chromInfo.txt.gz", sep="")
+    destfile <- tempfile()
+    download.file(url, destfile, quiet=TRUE)
+    colnames <- c("chrom", "size", "fileName")
+    ans <- read.table(destfile, sep="\t", quote="",
+                      col.names=colnames, comment.char="")
+    ans
+}
+
+.makeUCSCChrominfo <- function(genome)
+{
     ucsc_chrominfotable <- .downloadChromInfoFromUCSC(genome)
     COL2CLASS <- c(
         chrom="character",
@@ -189,14 +198,55 @@
         chrom=ucsc_chrominfotable$chrom,
         length=ucsc_chrominfotable$size
     )
+    chrominfo
+}
 
-    ## Prepare the 'metadata' data frame.
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Prepare the 'metadata' data frame.
+###
+
+.makeUCSCMetadata <- function(genome, tablename, gene_id_type, full_dataset)
+{
     metadata <- data.frame(
         name=c("Data source", "Genome", "UCSC Table",
                "Type of Gene ID", "Full dataset"),
         value=c("UCSC", genome, tablename,
                 gene_id_type, ifelse(full_dataset, "yes", "no"))
     )
+    metadata
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### makeTranscriptDbFromUCSC()
+###
+
+.makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes,
+                                             genome, tablename, gene_id_type,
+                                             full_dataset)
+{
+    COL2CLASS <- c(
+        name="character",
+        chrom="factor",
+        strand="factor",
+        txStart="integer",
+        txEnd="integer",
+        cdsStart="integer",
+        cdsEnd="integer",
+        exonCount="integer",
+        exonStarts="character",
+        exonEnds="character"
+    )
+    ucsc_txtable <- setDataFrameColClass(ucsc_txtable, COL2CLASS,
+                                         drop.extra.cols=TRUE)
+
+    transcripts <- .extractTranscriptsFromUCSCTable(ucsc_txtable)
+    splicings <- .extractSplicingsFromUCSCTable(ucsc_txtable,
+                                                transcripts$tx_id)
+    genes <- .makeUCSCGenes(genes, ucsc_txtable)
+    chrominfo <- .makeUCSCChrominfo(genome)
+    metadata <- .makeUCSCMetadata(genome, tablename, gene_id_type, full_dataset)
 
     ## Call makeTranscriptDb().
     makeTranscriptDb(transcripts, splicings,

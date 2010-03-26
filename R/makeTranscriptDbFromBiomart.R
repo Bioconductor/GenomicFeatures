@@ -87,7 +87,7 @@ getAllDatasetAttrGroups <- function(attrlist)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Download and prepare the 'transcripts' data frame.
+### Download and preprocess the 'transcripts' data frame.
 ###
 
 .makeBiomartTranscripts <- function(filters, values, mart, transcript_ids)
@@ -119,8 +119,7 @@ getAllDatasetAttrGroups <- function(attrlist)
     transcripts_tx_name <- bm_table$ensembl_transcript_id
     if (any(duplicated(transcripts_tx_name)))
         stop("the 'ensembl_transcript_id' attribute contains duplicated values")
-    message("OK")
-    data.frame(
+    transcripts <- data.frame(
         tx_id=transcripts_tx_id,
         tx_name=transcripts_tx_name,
         tx_chrom=as.character(bm_table$chromosome_name),
@@ -128,11 +127,13 @@ getAllDatasetAttrGroups <- function(attrlist)
         tx_start=bm_table$transcript_start,
         tx_end=bm_table$transcript_end
     )
+    message("OK")
+    transcripts
 }
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Download and prepare the 'chrominfo' data frame.
+### Download and preprocess the 'chrominfo' data frame.
 ###
 
 .ENSEMBL_CURRENT_MYSQL_URL <- "ftp://ftp.ensembl.org/pub/current_mysql/"
@@ -238,7 +239,7 @@ getAllDatasetAttrGroups <- function(attrlist)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Download and prepare the 'splicings' data frame.
+### Download and preprocess the 'splicings' data frame.
 ###
 
 .normUtrCoords <- function(coords)
@@ -380,7 +381,7 @@ getAllDatasetAttrGroups <- function(attrlist)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Download and prepare the 'genes' data frame.
+### Download and preprocess the 'genes' data frame.
 ###
 
 .makeBiomartGenes <- function(filters, values, mart, transcripts_tx_name)
@@ -469,25 +470,15 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
         stop("'transcript_ids' must be a character vector with no NAs")
     }
 
-    ## Download and prepare the 'transcripts' data frame.
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
                                            transcript_ids)
-    
-    ## Download and prepare the 'chrominfo' data frame.
     chrominfo <- .makeBiomartChrominfo(biomart, dataset,
                                        extra_seqnames=transcripts$tx_chrom)
-
-    ## Download and prepare the 'splicings' data frame.
     splicings <- .makeBiomartSplicings(filters, values, mart,
                                        transcripts$tx_name)
-
-    ## Download and prepare the 'genes' data frame.
     genes <- .makeBiomartGenes(filters, values, mart, transcripts$tx_name)
-
-    ## Prepare the 'metadata' data frame.
     metadata <- .makeBiomartMetadata(mart, is.null(transcript_ids))
 
-    ## Call makeTranscriptDb().
     message("Make the TranscriptDb object ... ", appendLF=FALSE)
     txdb <- makeTranscriptDb(transcripts, splicings,
                              genes=genes, chrominfo=chrominfo,
