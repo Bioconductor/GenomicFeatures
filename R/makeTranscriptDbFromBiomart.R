@@ -313,11 +313,10 @@ getAllDatasetAttrGroups <- function(attrlist)
     ## First filtering: keep only "default_version" sequences.
     idx1 <- coord_system$attrib == "default_version"
     ids1 <- coord_system$coord_system_id[idx1]
-    seq_region <- seq_region[seq_region$coord_system_id %in% ids1, ]
+    seq_region <- seq_region[seq_region$coord_system_id %in% ids1, , drop=FALSE]
 
     ## Get index of chromosome sequences.
-    idx2 <- (coord_system$attrib == "default_version") &
-            (coord_system$name == "chromosome")
+    idx2 <- idx1 & (coord_system$name == "chromosome")
     ids2 <- coord_system$coord_system_id[idx2]
     chrom_idx <- seq_region$coord_system_id %in% ids2
 
@@ -329,7 +328,7 @@ getAllDatasetAttrGroups <- function(attrlist)
     }
 
     ## Second filtering. 
-    ans <- seq_region[chrom_idx, c("name", "length")]
+    ans <- seq_region[chrom_idx, c("name", "length"), drop=FALSE]
     row.names(ans) <- NULL
     if (any(duplicated(ans$name)))
         stop("failed to fetch all chromosome lengths unambiguously")

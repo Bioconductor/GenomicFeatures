@@ -284,6 +284,34 @@
     ans
 }
 
+.writeChrominfoTable <- function(conn, chrominfo)
+{
+    table <- data.frame(
+        internal_chrom_id=seq_len(nrow(chrominfo)),
+        chrom=as.character(chrominfo$chrom),
+        length=chrominfo$length,
+        stringsAsFactors=FALSE)
+    ## Create the 'chrominfo' table.
+    sql <- c(
+        "CREATE TABLE chrominfo (\n",
+        "  _chrom_id INTEGER PRIMARY KEY,\n",
+        "  chrom TEXT UNIQUE NOT NULL,\n",
+        "  length INTEGER NULL\n",
+        ")")
+    res <- dbSendQuery(conn, paste(sql, collapse=""))
+    dbClearResult(res)
+    ## Fill the 'chrominfo' table.
+    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
+    ## when the nb of rows to insert is 0, hence the following test.
+    if (nrow(table) != 0L) {
+        sql <- "INSERT INTO chrominfo VALUES (?,?,?)"
+        dbBeginTransaction(conn)
+        res <- dbSendPreparedQuery(conn, sql, table)
+        dbClearResult(res)
+        dbCommit(conn)
+    }
+}
+
 .writeFeatureTable <- function(conn,
                                tablename,
                                internal_id,
@@ -317,7 +345,8 @@
         "  ", colnames[3L], " TEXT NOT NULL,\n",
         "  ", colnames[4L], " TEXT NOT NULL,\n",
         "  ", colnames[5L], " INTEGER NOT NULL,\n",
-        "  ", colnames[6L], " INTEGER NOT NULL\n",
+        "  ", colnames[6L], " INTEGER NOT NULL,\n",
+        "  FOREIGN KEY (", colnames[3L], ") REFERENCES chrominfo (chrom)\n",
         ")")
     res <- dbSendQuery(conn, paste(sql, collapse=""))
     dbClearResult(res)
@@ -407,34 +436,6 @@
     ## when the nb of rows to insert is 0, hence the following test.
     if (nrow(table) != 0L) {
         sql <- "INSERT INTO gene VALUES (?,?)"
-        dbBeginTransaction(conn)
-        res <- dbSendPreparedQuery(conn, sql, table)
-        dbClearResult(res)
-        dbCommit(conn)
-    }
-}
-
-.writeChrominfoTable <- function(conn, chrominfo)
-{
-    table <- data.frame(
-        internal_chrom_id=seq_len(nrow(chrominfo)),
-        chrom=as.character(chrominfo$chrom),
-        length=chrominfo$length,
-        stringsAsFactors=FALSE)
-    ## Create the 'chrominfo' table.
-    sql <- c(
-        "CREATE TABLE chrominfo (\n",
-        "  _chrom_id INTEGER PRIMARY KEY,\n",
-        "  chrom TEXT UNIQUE NOT NULL,\n",
-        "  length INTEGER NULL\n",
-        ")")
-    res <- dbSendQuery(conn, paste(sql, collapse=""))
-    dbClearResult(res)
-    ## Fill the 'chrominfo' table.
-    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
-    ## when the nb of rows to insert is 0, hence the following test.
-    if (nrow(table) != 0L) {
-        sql <- "INSERT INTO chrominfo VALUES (?,?,?)"
         dbBeginTransaction(conn)
         res <- dbSendPreparedQuery(conn, sql, table)
         dbClearResult(res)
@@ -563,6 +564,7 @@ makeTranscriptDb <- function(transcripts, splicings,
     }
     ## Create the db in a temp file.
     conn <- dbConnect(SQLite(), dbname="")
+    .writeChrominfoTable(conn, chrominfo)  # must come first
     .importTranscripts(conn, transcripts, transcripts_internal_tx_id)
     .importExons(conn, splicings, splicings_internal_exon_id)
     .importCDS(conn, splicings, splicings_internal_cds_id)
@@ -572,7 +574,6 @@ makeTranscriptDb <- function(transcripts, splicings,
                         splicings_internal_exon_id,
                         splicings_internal_cds_id)
     .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
-    .writeChrominfoTable(conn, chrominfo)
     .writeMetadataTable(conn, metadata)  # must come last!
     new("TranscriptDb", conn=conn)
 }
