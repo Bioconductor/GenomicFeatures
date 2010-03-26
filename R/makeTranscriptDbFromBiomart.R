@@ -286,21 +286,47 @@ getAllDatasetAttrGroups <- function(attrlist)
 ### Download and prepare the 'chrominfo' data frame.
 ###
 
+.ENSEMBL_CURRENT_MYSQL_URL <- "ftp://ftp.ensembl.org/pub/current_mysql/"
+
+.fetchEnsemblCurrentMySQLsubdirs <- function()
+{
+    doc <- getURL(.ENSEMBL_CURRENT_MYSQL_URL)
+    tfile <- tempfile()
+    cat(doc, file=tfile)
+    subdirs <- read.table(tfile, quote="", comment.char="")
+    as.character(subdirs[[length(subdirs)]])
+}
+
+.ensemblDataset2CurrentMySQLcoresubdir <- function(dataset)
+{
+    shortname0 <- strsplit(dataset, "_", fixed=TRUE)[[1L]][1L]
+    subdirs <- .fetchEnsemblCurrentMySQLsubdirs()
+    subdirs <- subdirs[grep("_core_", subdirs, fixed=TRUE)]
+    shortnames <- sapply(strsplit(subdirs, "_", fixed=TRUE),
+                         function(x)
+                           paste(substr(x[1L], 1L, 1L), x[2L], sep=""))
+    ans <- subdirs[shortnames == shortname0]
+    if (length(ans) != 1L)
+        stop("found 0 or more than 1 subdir for \"", dataset, "\" dataset ",
+             "at ", .ENSEMBL_CURRENT_MYSQL_URL)
+    ans
+}
+
 #extra_seqnames <- unique(as.character(transcripts$tx_chrom))
 #extra_seqnames <- c("GL000217.1", "NC_012920")
-#.fetchChromLengthsFromEnsembl("homo_sapiens_core_57_37b", extra_seqnames))
-
-.fetchChromLengthsFromEnsembl <- function(ftpsubdir, extra_seqnames=NULL)
+#.fetchChromLengthsFromEnsembl("hsapiens_gene_ensembl", extra_seqnames))
+.fetchChromLengthsFromEnsembl <- function(dataset, extra_seqnames=NULL)
 {
-    ftpdir <- paste("ftp://ftp.ensembl.org/pub/current_mysql/",
-                    ftpsubdir, "/", sep="")
+    coresubdir <- .ensemblDataset2CurrentMySQLcoresubdir(dataset)
+    ftpdir <- paste(.ENSEMBL_CURRENT_MYSQL_URL, coresubdir, "/", sep="")
     ## Get seq_region table.
     url <- paste(ftpdir, "seq_region.txt.gz", sep="")
     destfile <- tempfile()
     download.file(url, destfile, quiet=TRUE)
     colnames <- c("seq_region_id", "name", "coord_system_id", "length")
     seq_region <- read.table(destfile, sep="\t", quote="",
-                             col.names=colnames, comment.char="")
+                             col.names=colnames, comment.char="",
+                             stringsAsFactors=FALSE)
     ## Get coord_system table.
     url <- paste(ftpdir, "coord_system.txt.gz", sep="")
     destfile <- tempfile()
@@ -308,7 +334,8 @@ getAllDatasetAttrGroups <- function(attrlist)
     colnames <- c("coord_system_id", "species_id", "name",
                   "version", "rank", "attrib")
     coord_system <- read.table(destfile, sep="\t", quote="",
-                               col.names=colnames, comment.char="")
+                               col.names=colnames, comment.char="",
+                               stringsAsFactors=FALSE)
 
     ## First filtering: keep only "default_version" sequences.
     idx1 <- coord_system$attrib == "default_version"

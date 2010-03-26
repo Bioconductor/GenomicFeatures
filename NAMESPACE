@@ -15,6 +15,8 @@ importFrom(rtracklayer,
   getTable
 )
 
+importFrom(RCurl, getURL)
+
 exportClasses(GenomicFeatures, TranscriptDb)
 
 export(
