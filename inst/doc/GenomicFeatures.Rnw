@@ -13,7 +13,7 @@
 
 
 \title{Making and Utilizing TranscriptDb Objects}
-\author{Biocore Team}
+\author{Marc Carlson, Patrick Aboyoun, Herve Pages, Seth Falcon and Martin Morgaan}
 
 \SweaveOpts{keep.source=TRUE}
 
