@@ -56,7 +56,7 @@
         cat("SQL QUERY: ", sql, "\n\n", sep = "")
 
     ## get the data from the database
-    ans <- dbGetQuery(txdb@conn, sql)
+    ans <- dbGetQuery(txdbConn(txdb), sql)
 
     ## create the GRanges object
     cols <- gsub("TYPE", type, c("TYPE_name", "TYPE_id"))

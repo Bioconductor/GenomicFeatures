@@ -17,6 +17,15 @@ makeFeatureColnames <- function(feature_shortname)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Low-level accessor (not exported).
+###
+
+.getConn <- function(envir) get("conn", envir=envir, inherits=FALSE)
+
+txdbConn <- function(txdb) .getConn(txdb@envir)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Validity of a TranscriptDb object.
 ###
 
@@ -127,16 +136,32 @@ makeFeatureColnames <- function(feature_shortname)
 
 .valid.TranscriptDb <- function(x)
 {
-    c(.valid.metadata.table(x@conn),
-      .valid.transcript.table(x@conn),
-      .valid.exon.table(x@conn),
-      .valid.cds.table(x@conn),
-      .valid.splicing.table(x@conn),
-      .valid.gene.table(x@conn),
-      .valid.chrominfo.table(x@conn))
+    conn <- txdbConn(x)
+    c(.valid.metadata.table(conn),
+      .valid.transcript.table(conn),
+      .valid.exon.table(conn),
+      .valid.cds.table(conn),
+      .valid.splicing.table(conn),
+      .valid.gene.table(conn),
+      .valid.chrominfo.table(conn))
 }
 
 setValidity2("TranscriptDb", .valid.TranscriptDb)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Low-level constructor (not exported).
+###
+
+TranscriptDb <- function(conn)
+{
+    if (!is(conn, "SQLiteConnection"))
+        stop("'conn' must be an SQLiteConnection object")
+    envir <- new.env(parent=emptyenv())
+    assign("conn", conn, envir=envir)
+    reg.finalizer(envir, function(e) dbDisconnect(.getConn(e)))
+    new("TranscriptDb", envir=envir)
+}
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -149,7 +174,7 @@ saveFeatures <- function(x, file)
         stop("'x' must be a TranscriptDb object")
     if (!isSingleString(file))
         stop("'file' must be a single string")
-    sqliteCopyDatabase(x@conn, file)
+    sqliteCopyDatabase(txdbConn(x), file)
 }
 
 loadFeatures <- function(file)
@@ -159,7 +184,7 @@ loadFeatures <- function(file)
     if(!file.exists(file))
         stop("file '", file, "' does not exist")
     conn <- dbConnect(SQLite(), file)
-    new("TranscriptDb", conn=conn)
+    TranscriptDb(conn)
 }
 
 
@@ -170,7 +195,7 @@ loadFeatures <- function(file)
 .getChromInfo <- function(x)
 {
     sql <- "SELECT chrom, length FROM chrominfo ORDER BY _chrom_id"
-    dbGetQuery(x@conn, sql)
+    dbGetQuery(txdbConn(x), sql)
 }
 
 setMethod("seqnames", "TranscriptDb",
@@ -200,7 +225,7 @@ setMethod("show", "TranscriptDb",
     function(object)
     {
         cat("TranscriptDb object:\n")
-        metadata <- dbReadTable(object@conn, "metadata")
+        metadata <- dbReadTable(txdbConn(object), "metadata")
         for (i in seq_len(nrow(metadata))) {
             cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
                 "\n", sep="")
@@ -226,7 +251,7 @@ setMethod("as.list", "TranscriptDb",
         sql <- paste("SELECT transcript._tx_id AS tx_id, tx_name,",
                      "tx_chrom, tx_strand, tx_start, tx_end FROM transcript",
                      ORDER_BY)
-        transcripts <- dbGetQuery(x@conn, sql)
+        transcripts <- dbGetQuery(txdbConn(x), sql)
         COL2CLASS <- c(
              tx_id="integer",
              tx_name="character",
@@ -253,7 +278,7 @@ setMethod("as.list", "TranscriptDb",
             "LEFT JOIN cds",
             "ON (splicing._cds_id=cds._cds_id)",
             ORDER_BY, ", exon_rank")
-        splicings <- dbGetQuery(x@conn, sql)
+        splicings <- dbGetQuery(txdbConn(x), sql)
         COL2CLASS <- c(
              tx_id="integer",
              exon_rank="integer",
@@ -277,7 +302,7 @@ setMethod("as.list", "TranscriptDb",
             "INNER JOIN gene",
             "ON (transcript._tx_id=gene._tx_id)",
             ORDER_BY, ", gene_id")
-        genes <- dbGetQuery(x@conn, sql)
+        genes <- dbGetQuery(txdbConn(x), sql)
         COL2CLASS <- c(
              tx_id="integer",
              gene_id="character"

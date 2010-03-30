@@ -576,6 +576,6 @@ makeTranscriptDb <- function(transcripts, splicings,
                         splicings_internal_cds_id)
     .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
     .writeMetadataTable(conn, metadata)  # must come last!
-    new("TranscriptDb", conn=conn)
+    TranscriptDb(conn)
 }
 
