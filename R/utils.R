@@ -149,13 +149,3 @@ makeIdsForUniqueDataFrameRows <- function(x)
     as.integer(factor(prov_ids, levels=unique(prov_ids)))
 }
 
-
-
-.any_errors <- function(result) {
-    any(sapply(result, function(r) r$nErr > 0))
-}
-
-.any_fail <- function(result) {
-    any(sapply(result, function(r) r$nFail > 0))
-}
-
