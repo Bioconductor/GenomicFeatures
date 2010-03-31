@@ -56,14 +56,19 @@ get_dbtable <- function(tablename, datacache)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Data frame related.
+### Data frame related (NOT exported).
+###
+### TODO: Find a better home for these low-level data.frame utils.
 ###
 
-### Low-level util for setting the class of (all or some of) the columns of
-### a data.frame. Could go in a low-level infrastructure package but we don't
-### really have anything like that at the moment.
+### Not data.frame specific. Would work on any matrix-like object.
+hasCol <- function(x, colnames) {colnames %in% colnames(x)}
+
+### Sets the class of (all or some of) the columns of a data.frame.
 ### Typical use:
-###   x <- setDataFrameColClass(x, c(col2="integer", col5="factor"))
+###   x <- setDataFrameColClass(x, c(colA="integer", colB="factor"))
+### Note that if 'x' has more than one "colA" col, then *all* of them are
+### coerced to integer.
 setDataFrameColClass <- function(x, col2class, drop.extra.cols=FALSE)
 {
     if (!is.data.frame(x))
@@ -74,22 +79,26 @@ setDataFrameColClass <- function(x, col2class, drop.extra.cols=FALSE)
         stop("'col2class' has invalid names")
     if (!isTRUEorFALSE(drop.extra.cols))
         stop("'drop.extra.cols' must be TRUE or FALSE")
-    y <- lapply(names(col2class),
-                function(colname)
-                {
-                    class <- col2class[[colname]]
-                    if (identical(class, "factor"))
-                        as.factor(x[[colname]])
-                    else
-                        as(x[[colname]], class)
-                }
-         )
     if (drop.extra.cols) {
-        names(y) <- names(col2class)
-        return(as.data.frame(y, stringsAsFactors=FALSE))
+        col_idx <- which(colnames(x) %in% names(col2class))
+    } else {
+        col_idx <- seq_len(ncol(x))
     }
-    x[names(col2class)] <- y
-    x
+    tmp <- lapply(col_idx,
+                  function(j)
+                  {
+                      col <- x[[j]]
+                      colname <- colnames(x)[j]
+                      if (!(colname %in% names(col2class)))
+                          return(col)
+                      class <- col2class[[colname]]
+                      FUNname <- paste("as", class, sep=".")
+                      if (exists(FUNname) && is.function(FUN <- get(FUNname)))
+                          return(FUN(col))
+                      as(col, class)
+                  })
+    names(tmp) <- colnames(x)[col_idx]
+    return(data.frame(tmp, check.names=FALSE, stringsAsFactors=FALSE))
 }
 
 ### Acts like an SQL *inner* join.
@@ -110,7 +119,7 @@ joinDataFrameWithName2Val <- function(x, join_colname, name2val, vals_colname)
         stop("'name2val' must be a vector (or factor)")
     if (!is.atomic(name2val) || is.null(names(name2val)))
         stop("'name2val' must be atomic and have names")
-    if (!isSingleString(vals_colname) || !is.null(x[[vals_colname]]))
+    if (!isSingleString(vals_colname) || hasCol(x, vals_colname))
         stop("invalid 'vals_colname'")
     tmp <- split(as.vector(name2val), names(name2val))
     ## as.vector() is required below just because 'x[[join_colname]]' could
