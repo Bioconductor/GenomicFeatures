@@ -21,15 +21,15 @@ test_transcriptsBy <- function()
     grg1 <- GRanges(seqnames=factor("chr1", levels = seqlevels),
                     ranges=IRanges(start=1, end=100),
                     strand=strand("+"),
-                    tx_name=NA_character_,
                     tx_id=26L,
+                    tx_name=NA_character_,
                     seqlengths=seqlengths)
     grg2 <- GRanges(seqnames=factor(c("chr2", "chr2"), levels = seqlevels),
                     ranges=IRanges(start=c(16844685, 16844685),
                                    end=c(16844760,16844760)),
                     strand=strand(c("-", "-")),
-                    tx_name=as.character(c(NA, NA)),
                     tx_id=c(5L, 11L),
+                    tx_name=as.character(c(NA, NA)),
                     seqlengths=seqlengths)
     checkIdentical(ans, GRangesList(`1`=grg1, `2`=grg2))
 
@@ -37,15 +37,17 @@ test_transcriptsBy <- function()
     grg5 <- GRanges(seqnames=factor("chr2", levels=seqlevels),
                     ranges=IRanges(start=16844685, end=16844760),
                     strand=strand("-"),
-                    exon_name=NA_character_,
                     exon_id=2L,
+                    exon_name=NA_character_,
+                    exon_rank=1L,
                     seqlengths=seqlengths)
-    grg26 <- GRanges(seqnames=factor("chr1", levels=seqlevels),
+    grg26 <- GRanges(seqnames=factor("chr1", levels=seqlevels)[c(1L, 1L)],
                     ranges=IRanges(start=1, end=100),
                     strand=strand("+"),
-                    exon_name=NA_character_,
                     exon_id=1L,
-                    seqlengths=seqlengths)[c(1L, 1L)]
+                    exon_name=NA_character_,
+                    exon_rank=1:2,
+                    seqlengths=seqlengths)
     checkIdentical(ans, GRangesList(`5`=grg5, `11`=grg5, `26`=grg26))
                     
     ## WITH REAL DATA
@@ -71,8 +73,8 @@ test_transcriptsBy <- function()
                    GRanges(seqnames = factor("chr21_random", levels=seqlevels),
                            ranges   = IRanges(start=103280, end=164670),
                            strand   = strand("-"),
-                           tx_name  = "uc002zka.1",
                            tx_id    = 120L,
+                           tx_name  = "uc002zka.1",
                            seqlengths = seqlengths))
 
     ## transcripts by exon
@@ -83,8 +85,8 @@ test_transcriptsBy <- function()
                    GRanges(seqnames = factor(c("chr1", "chr1"), levels=seqlevels),
                            ranges   = IRanges(start=1116, end=c(4121, 4272)),
                            strand   = strand(c("+", "+")),
-                           tx_name  = c("uc001aaa.2", "uc009vip.1"),
                            tx_id    = c(1L, 2L),
+                           tx_name  = c("uc001aaa.2", "uc009vip.1"),
                            seqlengths = seqlengths))
 
     ## transcripts by cds
@@ -95,8 +97,8 @@ test_transcriptsBy <- function()
                    GRanges(seqnames = factor("chr2", levels=seqlevels),
                            ranges   = IRanges(start=31608, end=36385),
                            strand   = strand("-"),
-                           tx_name  = "uc002qvt.1",
                            tx_id    = 4L,
+                           tx_name  = "uc002qvt.1",
                            seqlengths = seqlengths))
 }
 
@@ -125,8 +127,9 @@ test_exonsBy <- function()
                            ranges = IRanges(start = c(1116,2476),
                                               end = c(2090,4272)),
                            strand = strand(c("+","+")),
-                           exon_name = as.character(c(NA,NA)),
                            exon_id = c(1L,4L),
+                           exon_name = as.character(c(NA,NA)),
+                           exon_rank = 1:2,
                            seqlengths = seqlengths))
 
     ## exons by gene
@@ -165,7 +168,7 @@ test_cdsBy <- function()
                            ranges = IRanges(start = c(258412,269844),
                                               end = c(259073,269964)),
                            strand = strand(c("-","-")),
-                           cds_name = as.character(c(NA,NA)),
                            cds_id = c(53L,54L),
+                           cds_name = as.character(c(NA,NA)),
                            seqlengths = seqlengths))
 }

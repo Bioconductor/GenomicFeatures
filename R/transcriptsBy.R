@@ -15,13 +15,15 @@
     if (distinct)
         selectClause <- paste(selectClause, "DISTINCT")
     selectClause <-
-      paste(selectClause, "SHORT_chrom, SHORT_start, SHORT_end,",
-            "SHORT_strand, SHORT_name, LONG._SHORT_id AS SHORT_id")
+      paste(selectClause, "LONG._SHORT_id AS SHORT_id, SHORT_name,",
+            "SHORT_chrom, SHORT_strand, SHORT_start, SHORT_end")
     if (by == "gene") {
         selectClause <- paste(selectClause, ", gene_id", sep = "")
-    } else {
+    } else if (splicing_in_join) {
         selectClause <-
           paste(selectClause, ", splicing._GROUPBY_id AS GROUPBY_id", sep = "")
+        if (order_by_exon_rank)
+            selectClause <- paste(selectClause, ", exon_rank", sep = "")
     }
     fromClause <- "FROM LONG"
     if (splicing_in_join) {
@@ -59,7 +61,9 @@
     ans <- dbGetQuery(txdbConn(txdb), sql)
 
     ## create the GRanges object
-    cols <- gsub("TYPE", type, c("TYPE_name", "TYPE_id"))
+    cols <- gsub("TYPE", type, c("TYPE_id", "TYPE_name"))
+    if (order_by_exon_rank)
+        cols <- c(cols, "exon_rank")
     seqlengths <- seqlengths(txdb)
     grngs <-
       GRanges(seqnames =
