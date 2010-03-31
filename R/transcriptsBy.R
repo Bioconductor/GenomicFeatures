@@ -132,7 +132,7 @@ cdsBy <- function(txdb, by = c("tx", "gene"))
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### fiveUTRsByTranscripts() and threeUTRsByTranscripts().
+### fiveUTRsByTranscript() and threeUTRsByTranscript().
 ###
 
 .getFullSplicings <- function(txdb, translated.transcripts.only=FALSE)
@@ -160,7 +160,7 @@ cdsBy <- function(txdb, by = c("tx", "gene"))
     ans
 }
 
-.makeUTRsByTranscripts <- function(splicings, utr_start, utr_end, seqlengths)
+.makeUTRsByTranscript <- function(splicings, utr_start, utr_end, seqlengths)
 {
     seqlevels <- names(seqlengths)
     grg <- GRanges(seqnames=factor(splicings$exon_chrom, levels=seqlevels),
@@ -174,7 +174,7 @@ cdsBy <- function(txdb, by = c("tx", "gene"))
     split(grg[idx], splicings$tx_id[idx])
 }
 
-fiveUTRsByTranscripts <- function(txdb)
+fiveUTRsByTranscript <- function(txdb)
 {
     splicings <- .getFullSplicings(txdb, translated.transcripts.only=TRUE)
 
@@ -204,10 +204,10 @@ fiveUTRsByTranscripts <- function(txdb)
 
     ## Make and return the GRangesList object.
     seqlengths <- seqlengths(txdb)
-    .makeUTRsByTranscripts(splicings, utr_start, utr_end, seqlengths)
+    .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
 }
 
-threeUTRsByTranscripts <- function(txdb)
+threeUTRsByTranscript <- function(txdb)
 {
     splicings <- .getFullSplicings(txdb, translated.transcripts.only=TRUE)
 
@@ -237,6 +237,6 @@ threeUTRsByTranscripts <- function(txdb)
 
     ## Make and return the GRangesList object.
     seqlengths <- seqlengths(txdb)
-    .makeUTRsByTranscripts(splicings, utr_start, utr_end, seqlengths)
+    .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
 }
 
