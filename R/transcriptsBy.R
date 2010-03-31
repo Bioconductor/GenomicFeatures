@@ -1,3 +1,7 @@
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### transcriptsBy(), exonsBy() and cdsBy().
+###
+
 .featuresBy <- function(txdb, by, type,
                         distinct=FALSE,
                         splicing_in_join=TRUE,
@@ -128,7 +132,7 @@ cdsBy <- function(txdb, by = c("tx", "gene"))
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### fiveUTRsByTranscripts() and threeUTRsByTranscripts()
+### fiveUTRsByTranscripts() and threeUTRsByTranscripts().
 ###
 
 .getFullSplicings <- function(txdb, translated.transcripts.only=FALSE)
@@ -176,16 +180,18 @@ fiveUTRsByTranscripts <- function(txdb)
 
     ## For each transcript, we keep only the first row with a CDS plus all
     ## previous rows (if any).
-    cdslist <- split(splicings$cds_id, splicings$tx_id)
-    tmp <- lapply(cdslist,
-                  function(cds_id)
-                  {
-                      W <- which(!is.na(cds_id))
-                      L <- W[1L]
-                      rep.int(c(TRUE, FALSE), c(L, length(cds_id)-L))
-                  })
-    idx <- unsplit(tmp, splicings$tx_id)
-    splicings <- splicings[idx, ]
+    if (nrow(splicings) != 0L) {
+        cdslist <- split(splicings$cds_id, splicings$tx_id)
+        tmp <- lapply(cdslist,
+                 function(cds_id)
+                 {
+                     W <- which(!is.na(cds_id))
+                     L <- W[1L]
+                     rep.int(c(TRUE, FALSE), c(L, length(cds_id)-L))
+                 })
+        idx <- unsplit(tmp, splicings$tx_id)
+        splicings <- splicings[idx, ]
+    }
 
     ## Compute the UTR starts/ends.
     utr_start <- splicings$exon_start
@@ -207,16 +213,18 @@ threeUTRsByTranscripts <- function(txdb)
 
     ## For each transcript, we keep only the last row with a CDS plus all
     ## following rows (if any).
-    cdslist <- split(splicings$cds_id, splicings$tx_id)
-    tmp <- lapply(cdslist,
-                  function(cds_id)
-                  {
-                      W <- which(!is.na(cds_id))
-                      L <- W[length(W)]
-                      rep.int(c(FALSE, TRUE), c(L-1L, length(cds_id)-L+1L))
-                  })
-    idx <- unsplit(tmp, splicings$tx_id)
-    splicings <- splicings[idx, ]
+    if (nrow(splicings) != 0L) {
+        cdslist <- split(splicings$cds_id, splicings$tx_id)
+        tmp <- lapply(cdslist,
+                 function(cds_id)
+                 {
+                     W <- which(!is.na(cds_id))
+                     L <- W[length(W)]
+                     rep.int(c(FALSE, TRUE), c(L-1L, length(cds_id)-L+1L))
+                 })
+        idx <- unsplit(tmp, splicings$tx_id)
+        splicings <- splicings[idx, ]
+    }
 
     ## Compute the UTR starts/ends.
     utr_start <- splicings$exon_start
