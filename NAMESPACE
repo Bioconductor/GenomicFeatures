@@ -37,6 +37,7 @@ export(
   transcriptsByRanges,
   exonsByRanges,
   cdsByRanges,
+  fiveUTRsByTranscripts, threeUTRsByTranscripts,
   bindTranscripts,
   bindExons,
   bindCDS,
