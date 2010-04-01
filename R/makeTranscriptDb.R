@@ -10,12 +10,12 @@
 .checkargColnames <- function(arg, required_colnames, optional_colnames,
                               argname)
 {
-    supported_colnames <- c(required_colnames, optional_colnames)
     if (!is.data.frame(arg))
         stop("'", argname, "' must be a data frame")
     if (!all(required_colnames %in% colnames(arg)))
         stop("'", argname, "' must have at least the following cols: ",
              paste(required_colnames, collapse=", "))
+    supported_colnames <- c(required_colnames, optional_colnames)
     is_supported_col <- colnames(arg) %in% supported_colnames
     if (any(duplicated(colnames(arg)[is_supported_col])))
         stop("'", argname, "' has duplicated colnames")
@@ -55,7 +55,7 @@
     if (any(duplicated(transcripts$tx_id)))
         stop("'transcripts$tx_id' contains duplicated values")
     ## Check 'tx_name'.
-    if ("tx_name" %in% colnames(transcripts)
+    if (hasCol(transcripts, "tx_name")
      && !.isCharacterVectorOrFactor(transcripts$tx_name))
         stop("'transcripts$tx_name' must be a character vector (or factor)")
     ## Check 'tx_chrom'.
@@ -106,27 +106,26 @@
     if (any(splicings$exon_rank <= 0L))
         stop("'splicings$exon_rank' contains non-positive values")
     ## Check 'exon_id'.
-    if ("exon_id" %in% colnames(splicings)
+    if (hasCol(splicings, "exon_id")
      && (!is.integer(splicings$exon_id) || any(is.na(splicings$exon_id))))
         stop("'splicings$exon_id' must be an integer vector, with no NAs")
     ## Check 'exon_name'.
-    if ("exon_name" %in% colnames(splicings)
+    if (hasCol(splicings, "exon_name")
      && !.isCharacterVectorOrFactor(splicings$exon_name))
         stop("'splicings$exon_name' must be a character vector (or factor)")
     ## Check 'exon_chrom'.
-    if ("exon_chrom" %in% colnames(splicings)
+    if (hasCol(splicings, "exon_chrom")
      && (!.isCharacterVectorOrFactor(splicings$exon_chrom)
          || any(is.na(splicings$exon_chrom))))
         stop("'splicings$exon_chrom' must be a character vector (or factor) ",
              "with no NAs")
     ## Check 'exon_strand'.
-    if ("exon_strand" %in% colnames(splicings)
+    if (hasCol(splicings, "exon_strand")
      && (!.isCharacterVectorOrFactor(splicings$exon_strand)
          || any(is.na(splicings$exon_strand))))
         stop("'splicings$exon_strand' must be a character vector (or factor) ",
              "with no NAs")
-    if (("exon_chrom" %in% colnames(splicings))
-     && !("exon_strand" %in% colnames(splicings)))
+    if (hasCol(splicings, "exon_chrom") && !hasCol(splicings, "exon_strand"))
         stop("if 'splicings' has an \"exon_chrom\" col then ",
              "it must have an \"exon_strand\" col too")
     ## Check 'exon_start'.
@@ -145,10 +144,10 @@
     if (any(splicings$exon_start > splicings$exon_end))
         stop("exon starts must be <= exon ends")
     ## Check 'cds_start', 'cds_end'.
-    if (is.null(splicings$cds_start) != is.null(splicings$cds_end))
+    if (hasCol(splicings, "cds_start") != hasCol(splicings, "cds_end"))
         stop("'splicings' has a \"cds_start\" col ",
              "but no \"cds_end\" col, or vice versa")
-    if (is.null(splicings$cds_start)) {
+    if (!hasCol(splicings, "cds_start")) {
         warning("no CDS information for this TranscriptDb object")
     } else {
         if (!is.numeric(splicings$cds_start))
@@ -169,8 +168,8 @@
             stop("cds starts/ends are incompatible with exon starts/ends")
     }
     ## Check 'cds_id'.
-    if (!is.null(splicings$cds_id)) {
-        if (is.null(splicings$cds_start))
+    if (hasCol(splicings, "cds_id")) {
+        if (!hasCol(splicings, "cds_start"))
             stop("'splicings' has a \"cds_id\" col ",
                  "but no \"cds_start\"/\"cds_end\" cols")
         if (!is.integer(splicings$cds_id))
@@ -180,8 +179,8 @@
                  "NAs in 'splicings$cds_start'")
     }
     ## Check 'cds_name'.
-    if (!is.null(splicings$cds_name)) {
-        if (is.null(splicings$cds_start))
+    if (hasCol(splicings, "cds_name")) {
+        if (!hasCol(splicings, "cds_start"))
             stop("'splicings' has a \"cds_name\" col ",
                  "but no \"cds_start\"/\"cds_end\" cols")
         if (!.isCharacterVectorOrFactor(splicings$cds_name))
@@ -209,7 +208,7 @@
     if (length(intersect(colnames(genes), .OPTIONAL_COLS)) != 1L)
         stop("'genes' must have either a \"tx_id\" ",
              "or a \"tx_name\" col but not both")
-    if (is.null(genes$tx_id)) {
+    if (!hasCol(genes, "tx_id")) {
         ## Remap 'gene_id' to 'tx_id'.
         if (is.null(names(unique_tx_ids)))
             stop("cannot map genes to transcripts, need 'transcripts$tx_name'")
@@ -527,13 +526,13 @@ makeTranscriptDb <- function(transcripts, splicings,
     ## Infer 'splicings$exon_chrom' and 'splicings$exon_strand' when missing
     ## and generate internal exon id.
     splicings2transcripts <- match(splicings_internal_tx_id, unique_tx_ids)
-    if (is.null(splicings$exon_chrom))
+    if (!hasCol(splicings, "exon_chrom"))
         splicings$exon_chrom <- transcripts$tx_chrom[splicings2transcripts]
-    if (is.null(splicings$exon_strand))
+    if (!hasCol(splicings, "exon_strand"))
         splicings$exon_strand <- transcripts$tx_strand[splicings2transcripts]
-    if (!is.null(splicings$exon_id)) {
+    if (hasCol(splicings, "exon_id")) {
         splicings_internal_exon_id <- splicings$exon_id
-    } else if (!is.null(splicings$exon_name)) {
+    } else if (hasCol(splicings, "exon_name")) {
         splicings_internal_exon_id <-
             .makeInternalIdsFromExternalIds(splicings$exon_name)
         #splicings$exon_id <- splicings_internal_exon_id
@@ -546,13 +545,13 @@ makeTranscriptDb <- function(transcripts, splicings,
     }
     ## Infer 'splicings$cds_start' and 'splicings$cds_end' when missing
     ## and generate internal cds id.
-    if (is.null(splicings$cds_start)) {
+    if (!hasCol(splicings, "cds_start")) {
         splicings$cds_start <- rep.int(NA_integer_, nrow(splicings))
         splicings$cds_end <- splicings$cds_start
     }
-    if (!is.null(splicings$cds_id)) {
+    if (hasCol(splicings, "cds_id")) {
         splicings_internal_cds_id <- splicings$cds_id
-    } else if (!is.null(splicings$cds_name)) {
+    } else if (hasCol(splicings, "cds_name")) {
         splicings_internal_cds_id <-
             .makeInternalIdsFromExternalIds(splicings$cds_name)
         #splicings$cds_id <- splicings_internal_cds_id
@@ -577,5 +576,34 @@ makeTranscriptDb <- function(transcripts, splicings,
     .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
     .writeMetadataTable(conn, metadata)  # must come last!
     TranscriptDb(conn)
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### makeToyTranscriptDb().
+###
+### A simple wrapper around makeTranscriptDb() typically used to make toy
+### TranscriptDb objects.
+###
+### 'splicings' must have the same format as for makeTranscriptDb().
+### If the "exon_chrom" col is missing, then it's added and filled with
+### "chr1". If the "exon_strand" col is missing, then it's added and filled
+### with "+". Within each transcript the "exon_chrom" and "exon_strand" values
+### of the first and last exons must be the same (otherwise, there would be
+### no easy way to infer the 'transcripts' table (see next).
+###
+### 'transcripts' is "inferred" from 'splicings' as follow:
+###   - the "tx_chrom" and "tx_strand" cols are inferred from
+###     'splicings$exon_chrom' and 'splicings$exon_strand' using the values
+###     of the first exon (exon_rank=1) in the transcript;
+###   - the transcripts starts/ends are inferred from the starts/ends of
+###     their first and last exons.
+###
+
+makeToyTranscriptDb <- function(splicings, genes=NULL)
+{
+    if (!is.data.frame(splicings))
+        stop("'splicings' must be a data frame")
+    stop("not ready yet, sorry!")
 }
 
