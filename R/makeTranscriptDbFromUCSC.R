@@ -277,6 +277,7 @@
   "sibGene",                   "SIB Genes",      NA, 
   "nscanPasaGene",             "N-SCAN",         "N-SCAN PASA-EST",
   "nscanGene",                 "N-SCAN",         "N-SCAN", 
+  "sgdGene",                   "SGD Genes",      NA, 
   "sgpGene",                   "SGP Genes",      NA,
   "geneid",                    "Geneid Genes",   NA, 
   "genscan",                   "Genscan Genes",  NA, 
@@ -340,7 +341,12 @@ supportedUCSCtables <- function()
         "ensGtp",
         "transcript",
         "gene",
-        "Ensembl gene ID")
+        "Ensembl gene ID"),
+    sgdGene=c(
+        "sgdCanonical",
+        "transcript",
+        "transcript",
+        "Corresponds to knownGene name field")
 )
 
 ### The 2 main tasks that makeTranscriptDbFromUCSC() performs are:
