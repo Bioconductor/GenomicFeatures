@@ -1,8 +1,8 @@
-\name{transcriptsByRanges}
+\name{transcriptsByOverlaps}
 
-\alias{transcriptsByRanges}
-\alias{exonsByRanges}
-\alias{cdsByRanges}
+\alias{transcriptsByOverlaps}
+\alias{exonsByOverlaps}
+\alias{cdsByOverlaps}
 
 \title{
   Retrieving genomic features from a TranscriptDb object using a restriction
@@ -12,21 +12,24 @@
   Functions to retrieve genomic features for specified genomic locations.
 }
 \usage{
-  transcriptsByRanges(txdb, ranges,
-                      restrict = c("any", "start", "end", "within", "equal"),
-                      columns = c("tx_id","tx_name"))
-  exonsByRanges(txdb, ranges,
-                restrict = c("any", "start", "end", "within", "equal"))
-  cdsByRanges(txdb, ranges,
-              restrict = c("any", "start", "end", "within", "equal"))
+  transcriptsByOverlaps(txdb, ranges, maxgap = 0L, minoverlap = 1L,
+                        type = c("any", "start", "end"),
+                        columns = c("tx_id", "tx_name"))
+  exonsByOverlaps(txdb, ranges, maxgap = 0L, minoverlap = 1L,
+                  type = c("any", "start", "end"))
+  cdsByOverlaps(txdb, ranges, maxgap = 0L, minoverlap = 1L,
+                type = c("any", "start", "end"))
 }
 \arguments{  
   \item{txdb}{A \link{TranscriptDb} object.}
   \item{ranges}{A \link[GenomicRanges]{GRanges} object to restrict the output.}
-  \item{restrict}{How to perform the interval overlap operations of the
+  \item{type}{How to perform the interval overlap operations of the
     \code{ranges}. See the
-    \code{\link[IRanges:IntervalTree-class]{findOverlaps}} manual page
-    in the IRanges package for more information.}
+    \code{\link[GenomicRanges:GRanges-findOverlaps]{findOverlaps}} manual page
+    in the GRanges package for more information.}
+  \item{maxgap}{A non-negative integer representing the maximum distance
+    between a query interval and a subject interval.}
+  \item{minoverlap}{Ignored.}
   \item{columns}{columns to include in the output. Can be NULL or
     a combination of "tx_id", "tx_name", "gene_id", "exon_id", and
     "cds_id".}
@@ -39,7 +42,7 @@
 }
 \value{ a GRanges object }
 \author{
-  P. Aboyoun and M. Carlson
+  P. Aboyoun
 }
 \seealso{
   \link{TranscriptDb}, \code{\link{transcripts}}, \code{\link{bindTranscripts}}
@@ -50,5 +53,5 @@
   gr <- GRanges(seqnames = rep("chr1",2),
                 ranges = IRanges(start=c(500,10500), end=c(10000,30000)),
                 strand = strand(rep("-",2)))
-  transcriptsByRanges(txdb, gr)
+  transcriptsByOverlaps(txdb, gr)
 }

@@ -137,7 +137,7 @@ So as an example, you can use \Rfunction{transcripts} to simply
 retrieve all the transcripts present in a \Rclass{TranscriptDb} object and
 return them as a single \Rclass{GRanges} object like this:
 
-<<transcriptsBy>>=
+<<transcripts1>>=
 txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                  package="GenomicFeatures"))
 GR <- transcripts(txdb)
@@ -148,7 +148,7 @@ Now suppose that you wanted to further refine things and retrieve only the
 things that are present on the plus strand of chromosome 1.  Well the
 \Rfunction{transcripts} function will allow you to do things like that too.
 
-<<transcriptsBy>>=
+<<transcripts2>>=
 GR <- transcripts(txdb, vals <- list(tx_chrom = "chr1", tx_strand = "+"))
 GR
 @
@@ -224,13 +224,13 @@ chromosome.
 
 \subsection{Convenience functions}
 
-The \Rfunction{transcriptsByRanges}, \Rfunction{exonsByRanges} and
-\Rfunction{cdsByRanges} functions return a \Rclass{GRangesList} object
+The \Rfunction{transcriptsByOverlaps}, \Rfunction{exonsByOverlaps} and
+\Rfunction{cdsByOverlaps} functions return a \Rclass{GRangesList} object
 containing data about transcripts, exons, or coding sequences that
 overlap genomic coordinates specified by a \Rclass{GRanges}
 object.
 %% 
-<<transcriptsByRanges>>=
+<<transcriptsByOverlaps>>=
 library(org.Mm.eg.db)
 set.seed(0L)
 idx <- sample(length(org.Mm.egCHRLOC), 50)
@@ -244,7 +244,7 @@ gr <- with(tbl, {
             strand=ifelse(start_location >= 0, "+", "-"),
             egid=gene_id)
 })
-transcriptsByRanges(txdb, gr)
+transcriptsByOverlaps(txdb, gr)
 @
 
 The \Rfunction{bindTranscripts}, \Rfunction{bindExons} and

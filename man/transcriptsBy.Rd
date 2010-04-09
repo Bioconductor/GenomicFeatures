@@ -43,7 +43,7 @@
 }
 \seealso{
   \link{TranscriptDb}, \code{\link{transcripts}},
-  \code{\link{transcriptsByRanges}}, \code{\link{bindTranscripts}}
+  \code{\link{transcriptsByOverlaps}}, \code{\link{bindTranscripts}}
 }
 \examples{
   txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",

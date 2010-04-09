@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Support package for genomic annotations
-Version: 0.5.2
+Version: 0.5.3
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -21,7 +21,7 @@ Collate: AllClasses.R
     makeTranscriptDbFromUCSC.R
     makeTranscriptDbFromBiomart.R
     transcripts.R
-    transcriptsByRanges.R
+    transcriptsByOverlaps.R
     bindTranscripts.R
     transcriptsBy.R
     regions.R

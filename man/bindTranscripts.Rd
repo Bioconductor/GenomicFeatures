@@ -65,7 +65,7 @@
 }
 \seealso{
   \code{\linkS4class{TranscriptDb}}, \code{\link{transcripts}},
-  \code{\link{transcriptsByRanges}}
+  \code{\link{transcriptsByOverlaps}}
 }
 \examples{
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",

@@ -56,7 +56,7 @@
     }
   }
 
-  See \code{?\link{transcripts}}, \code{?\link{transcriptsByRanges}}
+  See \code{?\link{transcripts}}, \code{?\link{transcriptsByOverlaps}}
   and \code{?\link{bindTranscripts}} for other useful operations on
   TranscriptDb objects.
 }
@@ -68,7 +68,7 @@
   \code{\link{makeTranscriptDbFromBiomart}},
   \code{\link{loadFeatures}},
   \code{\link{transcripts}},
-  \code{\link{transcriptsByRanges}},
+  \code{\link{transcriptsByOverlaps}},
   \code{\link{bindTranscripts}}
 }
 

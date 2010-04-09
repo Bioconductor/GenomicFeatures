@@ -34,8 +34,8 @@
   These are the main functions for retrieving transcript information from
   a \link{TranscriptDb} object. They can restrict the output based on
   categorical information. To restrict the output based on interval
-  information, use the \code{\link{transcriptsByRanges}},
-  \code{\link{exonsByRanges}}, and \code{\link{cdsByRanges}}
+  information, use the \code{\link{transcriptsByOverlaps}},
+  \code{\link{exonsByOverlaps}}, and \code{\link{cdsByOverlaps}}
   functions.
 }
 \value{ a GRanges object }
@@ -43,7 +43,7 @@
   M. Carlson and P. Aboyoun
 }
 \seealso{
-  \link{TranscriptDb}, \code{\link{transcriptsByRanges}},
+  \link{TranscriptDb}, \code{\link{transcriptsByOverlaps}},
   \code{\link{bindTranscripts}}
 }
 \examples{

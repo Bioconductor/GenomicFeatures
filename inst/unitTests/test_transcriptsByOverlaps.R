@@ -1,13 +1,13 @@
-test_transcriptsByRanges <- function()
+test_transcriptsByOverlaps <- function()
 {
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                      package="GenomicFeatures"))
     seqlengths <- seqlengths(txdb)
     seqlevels <- names(seqlengths)
 
-    checkException(transcriptsByRanges(txdb), silent = TRUE)
-    checkException(transcriptsByRanges(txdb, IRanges()), silent = TRUE)
-    checkException(transcriptsByRanges(txdb, GRanges(), columns = "bad"),
+    checkException(transcriptsByOverlaps(txdb), silent = TRUE)
+    checkException(transcriptsByOverlaps(txdb, IRanges()), silent = TRUE)
+    checkException(transcriptsByOverlaps(txdb, GRanges(), columns = "bad"),
                    silent = TRUE)
 
     gr <- GRanges(seqnames = "chr5",
@@ -20,7 +20,7 @@ test_transcriptsByRanges <- function()
               tx_id = 15L,
               tx_name = "uc003jam.1",
               seqlengths = seqlengths)
-    checkIdentical(transcriptsByRanges(txdb, gr), want)
+    checkIdentical(transcriptsByOverlaps(txdb, gr), want)
 
     ranges <- IRanges(start = c(1000, 1000, 20000, 30000),
                       end   = c(4000, 4000, 30000, 40000))
@@ -34,19 +34,19 @@ test_transcriptsByRanges <- function()
                     strand = strand(c("+", "+", "-")),
                     tx_id = c(1L,2L,4L),
                     seqlengths = seqlengths)
-    checkIdentical(want, transcriptsByRanges(txdb, gr, columns="tx_id"))
+    checkIdentical(want, transcriptsByOverlaps(txdb, gr, columns="tx_id"))
 }
 
-test_exonsByRanges <- function()
+test_exonsByOverlaps <- function()
 {
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                      package="GenomicFeatures"))
     seqlengths <- seqlengths(txdb)
     seqlevels <- names(seqlengths)
 
-    checkException(exonsByRanges(txdb), silent = TRUE)
-    checkException(exonsByRanges(txdb, IRanges()), silent = TRUE)
-    checkException(exonsByRanges(txdb, GRanges(), columns = "bad"),
+    checkException(exonsByOverlaps(txdb), silent = TRUE)
+    checkException(exonsByOverlaps(txdb, IRanges()), silent = TRUE)
+    checkException(exonsByOverlaps(txdb, GRanges(), columns = "bad"),
                    silent = TRUE)
 
     gr <- GRanges(seqnames = "chr5",
@@ -59,19 +59,19 @@ test_exonsByRanges <- function()
               strand = strand(rep("-",3)),
               exon_id = 77:79,
               seqlengths = seqlengths)
-    checkIdentical(exonsByRanges(txdb, gr), want)
+    checkIdentical(exonsByOverlaps(txdb, gr), want)
 }
 
-test_cdsByRanges <- function()
+test_cdsByOverlaps <- function()
 {
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                      package="GenomicFeatures"))
     seqlengths <- seqlengths(txdb)
     seqlevels <- names(seqlengths)
 
-    checkException(cdsByRanges(txdb), silent = TRUE)
-    checkException(cdsByRanges(txdb, IRanges()), silent = TRUE)
-    checkException(cdsByRanges(txdb, GRanges(), columns = "bad"),
+    checkException(cdsByOverlaps(txdb), silent = TRUE)
+    checkException(cdsByOverlaps(txdb, IRanges()), silent = TRUE)
+    checkException(cdsByOverlaps(txdb, GRanges(), columns = "bad"),
                    silent = TRUE)
 
     gr <- GRanges(seqnames  = "chr5",
@@ -84,5 +84,5 @@ test_cdsByRanges <- function()
               strand = strand(rep("-",2)),
               cds_id = 53:54,
               seqlengths = seqlengths)
-    checkIdentical(cdsByRanges(txdb, gr), want)
+    checkIdentical(cdsByOverlaps(txdb, gr), want)
 }
