@@ -257,9 +257,9 @@
 ### group that are compatible with makeTranscriptDbFromUCSC(). A table is
 ### compatible if it has the following cols: name, chrom, strand, txStart,
 ### txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds.
-### Note that from a strictly technical point of view the name and exonCount
-### cols are not required (i.e. .makeTranscriptDbFromUCSCTxTable() could
-### easily be modified to work even when they are missing).
+### Note that, from a strictly technical point of view, the name and
+### exonCount cols are not required (i.e. .makeTranscriptDbFromUCSCTxTable()
+### could easily be modified to work even when they are missing).
 .SUPPORTED_UCSC_TABLES <- c(
   ## tablename (unique key)    track             subtrack
   "knownGene",                 "UCSC Genes",     NA,
@@ -367,7 +367,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
         stop("'tablename' must be a single string")
     track <- supportedUCSCtables()[tablename, "track"]
     if (is.na(track))
-        stop("track \"", track, "\" is not supported")
+        stop("table \"", tablename, "\" is not supported")
     if (!is.null(transcript_ids)) {
         if (!is.character(transcript_ids) || any(is.na(transcript_ids)))
             stop("'transcript_ids' must be a character vector with no NAs")
