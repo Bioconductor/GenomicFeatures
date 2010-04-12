@@ -38,9 +38,6 @@ export(
   exonsByOverlaps,
   cdsByOverlaps,
   fiveUTRsByTranscript, threeUTRsByTranscript,
-  bindTranscripts,
-  bindExons,
-  bindCDS,
   transcriptsBy,
   exonsBy,
   cdsBy

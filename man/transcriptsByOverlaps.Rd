@@ -45,7 +45,7 @@
   P. Aboyoun
 }
 \seealso{
-  \link{TranscriptDb}, \code{\link{transcripts}}, \code{\link{bindTranscripts}}
+  \link{TranscriptDb}, \code{\link{transcripts}}
 }
 \examples{
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",

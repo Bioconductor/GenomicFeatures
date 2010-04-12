@@ -56,9 +56,8 @@
     }
   }
 
-  See \code{?\link{transcripts}}, \code{?\link{transcriptsByOverlaps}}
-  and \code{?\link{bindTranscripts}} for other useful operations on
-  TranscriptDb objects.
+  See \code{?\link{transcripts}}, and \code{?\link{transcriptsByOverlaps}}
+  for other useful operations on TranscriptDb objects.
 }
 
 \author{H. Pages}
@@ -69,7 +68,6 @@
   \code{\link{loadFeatures}},
   \code{\link{transcripts}},
   \code{\link{transcriptsByOverlaps}},
-  \code{\link{bindTranscripts}}
 }
 
 \examples{

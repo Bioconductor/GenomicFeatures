@@ -247,14 +247,6 @@ gr <- with(tbl, {
 transcriptsByOverlaps(txdb, gr)
 @
 
-The \Rfunction{bindTranscripts}, \Rfunction{bindExons} and
-\Rfunction{bindCDS} add transcript, exon, or coding sequence data to
-rows of a \Rclass{GRanges} object.
-%% 
-<<bindTranscripts>>=
-bindTranscripts(txdb, gr)
-@
-
 The convenience functions can be a great shortcut, but because they
 have to make assumptions about how the results are compared and
 represented, they are ultimately not as flexible as just using the

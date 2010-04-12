@@ -43,8 +43,7 @@
   M. Carlson and P. Aboyoun
 }
 \seealso{
-  \link{TranscriptDb}, \code{\link{transcriptsByOverlaps}},
-  \code{\link{bindTranscripts}}
+  \link{TranscriptDb}, \code{\link{transcriptsByOverlaps}}
 }
 \examples{
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
