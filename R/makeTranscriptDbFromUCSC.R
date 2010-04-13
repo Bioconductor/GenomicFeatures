@@ -3,6 +3,165 @@
 ### -------------------------------------------------------------------------
 
 
+### Lookup between UCSC tables and tracks in the "Genes and Gene Prediction"
+### group that are compatible with makeTranscriptDbFromUCSC(). A table is
+### compatible if it has the following cols: name, chrom, strand, txStart,
+### txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds.
+### Note that, from a strictly technical point of view, the name and
+### exonCount cols are not required (i.e. .makeTranscriptDbFromUCSCTxTable()
+### could easily be modified to work even when they are missing).
+.SUPPORTED_UCSC_TABLES <- c(
+  ## tablename (unique key)    track             subtrack
+  "knownGene",                 "UCSC Genes",     NA,
+  "knownGeneOld3",             "Old UCSC Genes", NA,
+  "wgEncodeGencodeManualRel2", "Gencode Genes",  "Genecode Manual",
+  "wgEncodeGencodeAutoRel2",   "Gencode Genes",  "Genecode Auto",
+  "wgEncodeGencodePolyaRel2",  "Gencode Genes",  "Genecode PolyA",
+  "ccdsGene",                  "Consensus CDS",  NA, 
+  "refGene",                   "RefSeq Genes",   NA, 
+  "xenoRefGene",               "Other RefSeq",   NA, 
+  "vegaGene",                  "Vega Genes",     "Vega Protein Genes", 
+  "vegaPseudoGene",            "Vega Genes",     "Vega Pseudogenes", 
+  "ensGene",                   "Ensembl Genes",  NA, 
+  "acembly",                   "AceView Genes",  NA, 
+  "sibGene",                   "SIB Genes",      NA, 
+  "nscanPasaGene",             "N-SCAN",         "N-SCAN PASA-EST",
+  "nscanGene",                 "N-SCAN",         "N-SCAN", 
+  "sgdGene",                   "SGD Genes",      NA, 
+  "sgpGene",                   "SGP Genes",      NA,
+  "geneid",                    "Geneid Genes",   NA, 
+  "genscan",                   "Genscan Genes",  NA, 
+  "exoniphy",                  "Exoniphy",       NA, 
+  "augustusHints",             "Augustus",       "Augustus Hints", 
+  "augustusXRA",               "Augustus",       "Augustus De Novo", 
+  "augustusAbinitio",          "Augustus",       "Augustus Ab Initio",
+  "acescan",                   "ACEScan",        NA
+)
+
+supportedUCSCtables <- function()
+{
+    mat <- matrix(.SUPPORTED_UCSC_TABLES, ncol=3, byrow=TRUE)
+    colnames(mat) <- c("tablename", "track", "subtrack")
+    data.frame(track=mat[ , "track"], subtrack=mat[ , "subtrack"],
+               row.names=mat[ , "tablename"],
+               stringsAsFactors=FALSE)
+}
+
+### The table names above (unique key) must be used to name the top-level
+### elements of the list below. If no suitable tx_name-to-gene_id mapping is
+### available in the UCSC database for a supported table, then there is no
+### entry in the list below for this table and makeTranscriptDbFromUCSC()
+### will leave the gene table empty.
+.UCSC_TXNAME2GENEID_MAPPINGS <- list(
+    knownGene=list(
+        L2Rchain=list(
+            c(tablename="knownToLocusLink",
+              Lcolname="name",
+              Rcolname="value")
+        ),
+        gene_id_type="Entrez Gene ID"
+    ),
+    wgEncodeGencodeManualRel2=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeClassesRel2",
+              Lcolname="name",
+              Rcolname="geneId")
+        ),
+        gene_id_type="HAVANA Pseudogene ID"
+    ),
+    wgEncodeGencodeAutoRel2=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeClassesRel2",
+              Lcolname="name",
+              Rcolname="geneId")
+        ),
+        gene_id_type="HAVANA Pseudogene ID"
+    ),
+    wgEncodeGencodePolyaRel2=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeClassesRel2",
+              Lcolname="name",
+              Rcolname="geneId")
+        ),
+        gene_id_type="HAVANA Pseudogene ID"
+    ),
+    refGene=list(
+        L2Rchain=list(
+            c(tablename="refLink",
+              Lcolname="mrnaAcc",
+              Rcolname="locusLinkId")
+        ),
+        gene_id_type="Entrez Gene ID"
+    ),
+    vegaGene=list(
+        L2Rchain=list(
+            c(tablename="vegaGtp",
+              Lcolname="transcript",
+              Rcolname="gene")
+        ),
+        gene_id_type="HAVANA Pseudogene ID"
+    ),
+    vegaPseudoGene=list(
+        L2Rchain=list(
+            c(tablename="vegaGtp",
+              Lcolname="transcript",
+              Rcolname="gene")
+        ),
+        gene_id_type="HAVANA Pseudogene ID"
+    ),
+    ensGene=list(
+        L2Rchain=list(
+            c(tablename="ensGtp",
+              Lcolname="transcript",
+              Rcolname="gene")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    sgdGene=list(
+        L2Rchain=list(
+            c(tablename="sgdIsoforms",
+              Lcolname="transcript",
+              Rcolname="clusterId"),
+            c(tablename="sgdCanonical",
+              Lcolname="clusterId",
+              Rcolname="transcript")
+        ),
+        gene_id_type="ID of canonical transcript in cluster"
+    )
+)
+
+### Returns a named list with 2 elements:
+###   $genes: data.frame with tx_name and gene_id cols;
+###   $gene_id_type: single string.
+.fetchTxName2GeneIdMappingFromUCSC <- function(session, track, Ltablename)
+{
+    txname2gene_mapinfo <- .UCSC_TXNAME2GENEID_MAPPINGS[[Ltablename]]
+    if (is.null(txname2gene_mapinfo))
+        return(list(genes=NULL, gene_id_type="no gene ids"))
+    if (length(txname2gene_mapinfo$L2Rchain) != 1L)
+        stop("cannot extract the tx_name-to-gene_id mapping from UCSC ",
+             "database yet, sorry! (this will work *very* soon)")
+    L2Rlink1 <- txname2gene_mapinfo$L2Rchain[[1L]]
+    tablename <- L2Rlink1[["tablename"]]
+    Lcolname <- L2Rlink1[["Lcolname"]]
+    Rcolname <- L2Rlink1[["Rcolname"]]
+    query <- ucscTableQuery(session, track, table=tablename)
+    ucsc_genetable <- getTable(query)
+    tx_name <- ucsc_genetable[[Lcolname]]
+    gene_id <- ucsc_genetable[[Rcolname]]
+    if (is.null(tx_name) || is.null(gene_id))
+        stop("expected cols \"", Lcolname, "\" or/and \"",
+             Rcolname, "\" not found in table ", tablename)
+    if (!is.character(tx_name))
+        tx_name <- as.character(tx_name)
+    if (!is.character(gene_id))
+        gene_id <- as.character(gene_id)
+    genes <- data.frame(tx_name=tx_name, gene_id=gene_id)
+    gene_id_type <- txname2gene_mapinfo$gene_id_type
+    list(genes=genes, gene_id_type=gene_id_type)
+}
+
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extract the 'transcripts' data frame from UCSC table.
 ###
@@ -253,102 +412,6 @@
                      genes=genes, chrominfo=chrominfo, metadata=metadata)
 }
 
-### Lookup between UCSC tables and tracks in the "Genes and Gene Prediction"
-### group that are compatible with makeTranscriptDbFromUCSC(). A table is
-### compatible if it has the following cols: name, chrom, strand, txStart,
-### txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds.
-### Note that, from a strictly technical point of view, the name and
-### exonCount cols are not required (i.e. .makeTranscriptDbFromUCSCTxTable()
-### could easily be modified to work even when they are missing).
-.SUPPORTED_UCSC_TABLES <- c(
-  ## tablename (unique key)    track             subtrack
-  "knownGene",                 "UCSC Genes",     NA,
-  "knownGeneOld3",             "Old UCSC Genes", NA,
-  "wgEncodeGencodeManualRel2", "Gencode Genes",  "Genecode Manual",
-  "wgEncodeGencodeAutoRel2",   "Gencode Genes",  "Genecode Auto",
-  "wgEncodeGencodePolyaRel2",  "Gencode Genes",  "Genecode PolyA",
-  "ccdsGene",                  "Consensus CDS",  NA, 
-  "refGene",                   "RefSeq Genes",   NA, 
-  "xenoRefGene",               "Other RefSeq",   NA, 
-  "vegaGene",                  "Vega Genes",     "Vega Protein Genes", 
-  "vegaPseudoGene",            "Vega Genes",     "Vega Pseudogenes", 
-  "ensGene",                   "Ensembl Genes",  NA, 
-  "acembly",                   "AceView Genes",  NA, 
-  "sibGene",                   "SIB Genes",      NA, 
-  "nscanPasaGene",             "N-SCAN",         "N-SCAN PASA-EST",
-  "nscanGene",                 "N-SCAN",         "N-SCAN", 
-  "sgdGene",                   "SGD Genes",      NA, 
-  "sgpGene",                   "SGP Genes",      NA,
-  "geneid",                    "Geneid Genes",   NA, 
-  "genscan",                   "Genscan Genes",  NA, 
-  "exoniphy",                  "Exoniphy",       NA, 
-  "augustusHints",             "Augustus",       "Augustus Hints", 
-  "augustusXRA",               "Augustus",       "Augustus De Novo", 
-  "augustusAbinitio",          "Augustus",       "Augustus Ab Initio",
-  "acescan",                   "ACEScan",        NA
-)
-
-supportedUCSCtables <- function()
-{
-    mat <- matrix(.SUPPORTED_UCSC_TABLES, ncol=3, byrow=TRUE)
-    colnames(mat) <- c("tablename", "track", "subtrack")
-    data.frame(track=mat[ , "track"], subtrack=mat[ , "subtrack"],
-               row.names=mat[ , "tablename"],
-               stringsAsFactors=FALSE)
-}
-
-### The table names above (unique key) must be used to name the elements of
-### the list below. When a table name is missing, it means that the
-### tx_name-to-gene_id mapping is not available so makeTranscriptDbFromUCSC()
-### will leave the gene table empty.
-.UCSC_TXNAME2GENEID_MAPINFO <- list(
-    knownGene=c(             # left table (i.e. on the left side of the join)
-        "knownToLocusLink",  # right table (i.e. on the right side of the join)
-        "name",              # joining col in the right table
-        "value",             # col in the right table that contains the gene id
-        "Entrez Gene ID"),   # type of gene id
-    wgEncodeGencodeManualRel2=c(
-        "wgEncodeGencodeClassesRel2",
-        "name",
-        "geneId",
-        "HAVANA Pseudogene ID"),
-    wgEncodeGencodeAutoRel2=c(
-        "wgEncodeGencodeClassesRel2",
-        "name",
-        "geneId",
-        "HAVANA Pseudogene ID"),
-    wgEncodeGencodePolyaRel2=c(
-        "wgEncodeGencodeClassesRel2",
-        "name",
-        "geneId",
-        "HAVANA Pseudogene ID"),
-    refGene=c(
-        "refLink",
-        "mrnaAcc",
-        "locusLinkId",
-        "Entrez Gene ID"),
-    vegaGene=c(
-        "vegaGtp",
-        "transcript",
-        "gene",
-        "HAVANA Pseudogene ID"),
-    vegaPseudoGene=c(
-        "vegaGtp",
-        "transcript",
-        "gene",
-        "HAVANA Pseudogene ID"),
-    ensGene=c(
-        "ensGtp",
-        "transcript",
-        "gene",
-        "Ensembl gene ID"),
-    sgdGene=c(
-        "sgdCanonical",
-        "transcript",
-        "transcript",
-        "Corresponds to knownGene name field")
-)
-
 ### The 2 main tasks that makeTranscriptDbFromUCSC() performs are:
 ###   (1) download the data from UCSC into a data.frame (the getTable() call);
 ###   (2) store that data.frame in an SQLite db (the
@@ -376,34 +439,17 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
     genome(session) <- genome
 
     ## Download the transcript table.
-    query1 <- ucscTableQuery(session, track, table=tablename,
-                             names=transcript_ids)
-    ucsc_txtable <- getTable(query1)
+    query <- ucscTableQuery(session, track, table=tablename,
+                            names=transcript_ids)
+    ucsc_txtable <- getTable(query)
 
     ## Download the tx_name-to-gene_id mapping.
-    txname2gene_mapinfo <- .UCSC_TXNAME2GENEID_MAPINFO[[tablename]]
-    if (is.null(txname2gene_mapinfo)) {
-        genes <- NULL
-        gene_id_type <- "no gene ids"
-    } else {
-        tablename2 <- txname2gene_mapinfo[1L]
-        query2 <- ucscTableQuery(session, track, table=tablename2)
-        ucsc_genetable <- getTable(query2)
-        tx_name <- ucsc_genetable[[txname2gene_mapinfo[2L]]]
-        gene_id <- ucsc_genetable[[txname2gene_mapinfo[3L]]]
-        if (is.null(tx_name) || is.null(gene_id))
-            stop("expected cols \"", txname2gene_mapinfo[2L], "\" or/and \"",
-                 txname2gene_mapinfo[3L], "\" not found in table ", tablename2)
-        if (!is.character(tx_name))
-            tx_name <- as.character(tx_name)
-        if (!is.character(gene_id))
-            gene_id <- as.character(gene_id)
-        genes <- data.frame(tx_name=tx_name, gene_id=gene_id)
-        gene_id_type <- txname2gene_mapinfo[4L]
-    }
+    txname2geneid <- .fetchTxName2GeneIdMappingFromUCSC(session,
+                                                        track, tablename)
 
-    .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, genes,
-                                     genome, tablename, gene_id_type,
+    .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, txname2geneid$genes,
+                                     genome, tablename,
+                                     txname2geneid$gene_id_type,
                                      full_dataset=is.null(transcript_ids))
 }
 
