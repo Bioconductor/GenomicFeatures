@@ -52,7 +52,7 @@ supportedUCSCtables <- function()
 ### available in the UCSC database for a supported table, then there is no
 ### entry in the list below for this table and makeTranscriptDbFromUCSC()
 ### will leave the gene table empty.
-.UCSC_TXNAME2GENEID_MAPPINGS <- list(
+.UCSC_TXNAME2GENEID_MAPDEFS <- list(
     knownGene=list(
         L2Rchain=list(
             c(tablename="knownToLocusLink",
@@ -135,29 +135,36 @@ supportedUCSCtables <- function()
 ###   $gene_id_type: single string.
 .fetchTxName2GeneIdMappingFromUCSC <- function(session, track, Ltablename)
 {
-    txname2gene_mapinfo <- .UCSC_TXNAME2GENEID_MAPPINGS[[Ltablename]]
-    if (is.null(txname2gene_mapinfo))
+    mapdef <- .UCSC_TXNAME2GENEID_MAPDEFS[[Ltablename]]
+    if (is.null(mapdef))
         return(list(genes=NULL, gene_id_type="no gene ids"))
-    if (length(txname2gene_mapinfo$L2Rchain) != 1L)
-        stop("cannot extract the tx_name-to-gene_id mapping from UCSC ",
-             "database yet, sorry! (this will work *very* soon)")
-    L2Rlink1 <- txname2gene_mapinfo$L2Rchain[[1L]]
-    tablename <- L2Rlink1[["tablename"]]
-    Lcolname <- L2Rlink1[["Lcolname"]]
-    Rcolname <- L2Rlink1[["Rcolname"]]
-    query <- ucscTableQuery(session, track, table=tablename)
-    ucsc_genetable <- getTable(query)
-    tx_name <- ucsc_genetable[[Lcolname]]
-    gene_id <- ucsc_genetable[[Rcolname]]
-    if (is.null(tx_name) || is.null(gene_id))
-        stop("expected cols \"", Lcolname, "\" or/and \"",
-             Rcolname, "\" not found in table ", tablename)
-    if (!is.character(tx_name))
-        tx_name <- as.character(tx_name)
-    if (!is.character(gene_id))
-        gene_id <- as.character(gene_id)
-    genes <- data.frame(tx_name=tx_name, gene_id=gene_id)
-    gene_id_type <- txname2gene_mapinfo$gene_id_type
+    nlink <- length(mapdef$L2Rchain)
+    for (i in seq_len(nlink)) {
+        L2Rlink <- mapdef$L2Rchain[[i]]
+        tablename <- L2Rlink[["tablename"]]
+        Lcolname <- L2Rlink[["Lcolname"]]
+        Rcolname <- L2Rlink[["Rcolname"]]
+        query <- ucscTableQuery(session, track, table=tablename)
+        ucsc_table <- getTable(query)
+        if (!all(hasCol(ucsc_table, c(Lcolname, Rcolname))))
+            stop("expected cols \"", Lcolname, "\" or/and \"",
+                 Rcolname, "\" not found in table ", tablename)
+        Lcol <- ucsc_table[[Lcolname]]
+        Rcol <- ucsc_table[[Rcolname]]
+        if (!is.character(Lcol))
+            Lcol <- as.character(Lcol)
+        if (!is.character(Rcol))
+            Rcol <- as.character(Rcol)
+        if (i == 1L) {
+            tmp <- data.frame(Lcol=Lcol, Rcol=Rcol)
+        } else {
+            name2val <- Rcol
+            names(name2val) <- Lcol
+            tmp <- joinDataFrameWithName2Val(tmp, "Rcol", name2val, "Rcol")
+        }
+    }
+    genes <- data.frame(tx_name=tmp$Lcol, gene_id=tmp$Rcol)
+    gene_id_type <- mapdef$gene_id_type
     list(genes=genes, gene_id_type=gene_id_type)
 }
 
