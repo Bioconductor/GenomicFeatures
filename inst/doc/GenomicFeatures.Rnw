@@ -220,6 +220,18 @@ itself.  This is important because alternative splicing can mean that
 the order along the transcript can be different from that along the
 chromosome.
 
+\subsection{Prespecfied grouping functions}
+
+An important kind of grouping functions are the ones that group in a
+prespecified manner. The \Rfunction{fiveUTRsByTranscript} and
+\Rfunction{threeUTRsByTranscript} functions are like this. These
+functions retrieve the \Rclass{GRanges} objects for the relevant 5' or
+3' UTR's grouped by transcript.
+
+<<UTRs>>=
+fiveUTRsByTranscript(txdb)
+threeUTRsByTranscript(txdb)
+@ 
 
 
 \subsection{Convenience functions}
