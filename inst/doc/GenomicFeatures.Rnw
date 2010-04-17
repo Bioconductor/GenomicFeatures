@@ -223,12 +223,14 @@ chromosome.
 \subsection{Prespecfied grouping functions}
 
 An important kind of grouping functions are the ones that group in a
-prespecified manner. The \Rfunction{fiveUTRsByTranscript} and
-\Rfunction{threeUTRsByTranscript} functions are like this. These
-functions retrieve the \Rclass{GRanges} objects for the relevant 5' or
-3' UTR's grouped by transcript.
+prespecified manner. The \Rfunction{intronsByTranscript},
+\Rfunction{fiveUTRsByTranscript} and \Rfunction{threeUTRsByTranscript}
+functions are like this. These functions retrieve the \Rclass{GRangesList}
+objects for the introns, 5' UTR's, and 3' UTR's grouped by transcript
+respectively.
 
-<<UTRs>>=
+<<introns-UTRs>>=
+intronsByTranscript(txdb)
 fiveUTRsByTranscript(txdb)
 threeUTRsByTranscript(txdb)
 @ 

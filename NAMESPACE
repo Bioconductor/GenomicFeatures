@@ -44,10 +44,12 @@ export(
   transcriptsByOverlaps,
   exonsByOverlaps,
   cdsByOverlaps,
-  fiveUTRsByTranscript, threeUTRsByTranscript,
   transcriptsBy,
   exonsBy,
-  cdsBy
+  cdsBy,
+  intronsByTranscript,
+  fiveUTRsByTranscript,
+  threeUTRsByTranscript
 )
 
 exportMethods(

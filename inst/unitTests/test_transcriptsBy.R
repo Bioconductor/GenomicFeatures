@@ -172,3 +172,19 @@ test_cdsBy <- function()
                            cds_name = as.character(c(NA,NA)),
                            seqlengths = seqlengths))
 }
+
+test_intronsByTranscript <- function()
+{
+    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                                     package="GenomicFeatures"))
+    seqlengths <- seqlengths(txdb)
+    seqlevels <- names(seqlengths)
+
+    intronByTx <- intronsByTranscript(txdb)
+    checkTrue(validObject(intronByTx))
+    checkIdentical(intronByTx[[2]],
+                   GRanges(seqnames = factor("chr1", levels = seqlevels),
+                           ranges = IRanges(start = 2091, end = 2475),
+                           strand = strand("+"),
+                           seqlengths = seqlengths))
+}

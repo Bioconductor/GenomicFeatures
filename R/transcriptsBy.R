@@ -132,6 +132,19 @@ cdsBy <- function(txdb, by = c("tx", "gene"))
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### intronsByTranscript().
+###
+
+intronsByTranscript <- function(txdb)
+{
+    tx <- transcripts(txdb)
+    exn <- exonsBy(txdb)
+    tx <- tx[match(names(exn), elementMetadata(tx)[,"tx_id"])]
+    psetdiff(tx, exn)
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### fiveUTRsByTranscript() and threeUTRsByTranscript().
 ###
 

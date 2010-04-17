@@ -3,6 +3,7 @@
 \alias{transcriptsBy}
 \alias{exonsBy}
 \alias{cdsBy}
+\alias{intronsByTranscript}
 \alias{fiveUTRsByTranscript}
 \alias{threeUTRsByTranscript}
 
@@ -18,6 +19,7 @@
   transcriptsBy(txdb, by = c("gene", "exon", "cds"))
   exonsBy(txdb, by = c("tx", "gene"))
   cdsBy(txdb, by = c("tx", "gene"))
+  intronsByTranscript(txdb)
   fiveUTRsByTranscript(txdb)
   threeUTRsByTranscript(txdb)
 }
@@ -58,6 +60,9 @@
 
   ## Get the cds ranges grouped by transcript
   cdsBy(txdb, "tx")
+
+  ## Get the introns grouped by transcript
+  intronsByTranscript(txdb)
 
   ## Get the 5' UTRs grouped by transcript
   fiveUTRsByTranscript(txdb)
