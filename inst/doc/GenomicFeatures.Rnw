@@ -146,11 +146,11 @@ txdb
 
 \subsection{Working with Basic Features}
 
-The most basic operations on a \Rclass{TranscriptDb} object are
-retrieval of the genomic coordinates or \textit{ranges} for exons,
-transcripts or coding sequences.  The functions
-\Rfunction{transcripts}, \Rfunction{exons}, and \Rfunction{cds} return
-the coordinate information as a \Rclass{GRanges} object.
+The most basic operations on a \Rclass{TranscriptDb} object retrieve
+the genomic coordinates or \textit{ranges} for exons, transcripts or
+coding sequences.  The functions \Rfunction{transcripts},
+\Rfunction{exons}, and \Rfunction{cds} return the coordinate
+information as a \Rclass{GRanges} object.
 
 For example, all transcripts present in a \Rclass{TranscriptDb} object
 can be obtained as follows:
@@ -177,27 +177,17 @@ similar fashion to retrive genomic coordinates for exons and coding
 sequences.
 
 \subsection{Working with Grouped Features}
-%% FIXME: reword this to be more concise
 
-Often it will not be enough to just get exons, cds or transcripts
-only.  Sometimes you will want to give greater consideration to the
-context of the data.  In these cases, you will want to think of the
-ranged annotation data as being grouped in a specific way, for
-example, you might want to consider that the transcripts are each
-associated with a specific gene or the exon composition of specific
-transcripts. These relationships are maintained with
-\Rclass{TranscriptDb} objects and can be accessed through the
-\Rfunction{transcriptsBy}, \Rfunction{exonsBy}, and \Rfunction{cdsBy}
-functions.
+Often one is interested in how particular genomic features relate to
+each other, not just their location.  For example, it might be of
+interest to group transcripts by gene or to group exons by transcript.
+Such groupings are supported by the \Rfunction{transcriptsBy},
+\Rfunction{exonsBy}, and \Rfunction{cdsBy} functions.
 
-So for example, to extract all the transcripts grouped by their exons
-you can call:
-
-%% FIXME: it would help to provide a list of the available ``by''
-%% arguments: gene, tx, ..., ???
+The following call can be used to group transcripts by genes:
 
 <<transcriptsBy>>=
-GRList <- transcriptsBy(txdb, "gene")
+GRList <- transcriptsBy(txdb, by = "gene")
 length(GRList)
 names(GRList)[10:13]
 GRList[[12]]
@@ -205,10 +195,16 @@ GRList[[12]]
 
 %% FIXME: consider some explanation of the GRangesList output
 
+%% FIXME: list the other parameter options.  Then add similar sentence
+%% for the exonsBy example.
+%% The \Rfunction{transcriptsBy} function allows grouping by gene, ...
+
+
+
 Similarly, to extract all the exons for each transcript you can call:
 
 <<exonsBy>>=
-GRList <- exonsBy(txdb, "tx")
+GRList <- exonsBy(txdb, by = "tx")
 length(GRList)
 names(GRList)[10:13]
 GRList[[12]]
@@ -216,34 +212,30 @@ GRList[[12]]
 
 These functions return \Rclass{GRangesList} objects that contain
 locations and identifiers grouped according to the type of feature
-specified. These objects can be used in downstream analyses such as
-using \Rfunction{findOverlaps} contextualize the alignments from
-high-throughput sequencing.
+specified by the \Robject{by} argument. These objects can be used by
+functions like \Rfunction{findOverlaps} to contextualize alignments
+from high-throughput sequencing.
 
-It is important to consider the context created when grouping by a
-particular feature.  For example, in the first example, where we grouped
-by genes, the name of the features is an Entrez Gene ID.  If the
-database had been based instead on Ensembl sources, it would be an
-Ensembl Gene ID.  However, in the second example where we group by
-transcript, we see that the groups are labeled by an ID that is not a
-traditional transcript ID.  In this second case, we have been given an
-internally assigned database ID. This is because some sources may
-choose to overload their use of traditional transcript IDs in ways
-that would make the existence of our database schema impossible.  So
-in the second case we have to use an internal id to guarantee
-uniqueness.  This will happen whenever you group by anything that is
-not a gene.  So when you want to use traditional transcript IDs you
-can look them up using the appropriate basic accessors described in
-the preceding section.
+%% 1. gene IDs depend on initial data source
+%% 2. unique IDs not always available, use synthetic IDs instead
 
-Another case where context can matter is when considering the order of
-the elements returned.  In most cases the grouped elements will be
-listed in the order that they occur along the chromosome.  But in the
-context where you have grouped exons or CDS by transcripts, they will
-instead be grouped according to their position along the transcript
-itself.  This is important because alternative splicing can mean that
-the order along the transcript can be different from that along the
-chromosome.
+The identifiers used to label the groups depend upon the data source
+used to create the \Rclass{TranscriptDb} object.  So the gene
+identifiers will not always be Entrez Gene IDs, as shown in the
+example above.  Furthermore, some data sources do not provide a unique
+identifier for all features.  In this situation, the group label will
+be a synthetic ID created by \Rpackage{GenomicFeatures} to keep the
+relations between features consistent in the database.
+
+%% FIXME: add example on how to map from internal ID to common ID
+%% using the exons grouped by tx created above.
+
+In most cases the grouped elements will be listed in the order that
+they occur along the chromosome.  However, when exons or CDS are
+grouped by transcript, they will instead be grouped according to their
+position along the transcript itself.  This is important because
+alternative splicing can mean that the order along the transcript can
+be different from that along the chromosome.
 
 \subsection{Prespecfied grouping functions}
 
@@ -296,6 +288,7 @@ basic and grouping accessors in combination with
 
 
 \section{Example using RNA-seq data}
+
 Let's suppose that you have run an experiment. After mapping all your
 reads to a genome and collapsing them into a set of ranges, you want
 to find out which genomic features a particular range overlaps with.
