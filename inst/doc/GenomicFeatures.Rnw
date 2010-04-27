@@ -13,7 +13,11 @@
 
 
 \title{Making and Utilizing TranscriptDb Objects}
-\author{Marc Carlson, Patrick Aboyoun, Herve Pages, Seth Falcon and Martin Morgaan}
+\author{Marc Carlson \and
+  Patrick Aboyoun \and
+  Herv\'{e} Pag\`{e}s \and
+  Seth Falcon \and
+  Martin Morgan}
 
 \SweaveOpts{keep.source=TRUE}
 
