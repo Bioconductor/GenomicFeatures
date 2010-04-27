@@ -3,6 +3,8 @@
 %\VignettePackage{GenomicFeatures}
 \documentclass[11pt]{article}
 
+\usepackage{url}
+
 \newcommand{\Rfunction}[1]{{\texttt{#1}}}
 \newcommand{\Robject}[1]{{\texttt{#1}}}
 \newcommand{\Rpackage}[1]{{\textit{#1}}}
@@ -10,6 +12,8 @@
 \newcommand{\Rfunarg}[1]{{\texttt{#1}}}
 \newcommand{\Rclass}[1]{{\textit{#1}}}
 \newcommand{\Rcode}[1]{{\texttt{#1}}}
+\newcommand{\software}[1]{\textsf{#1}}
+\newcommand{\R}{\software{R}}
 
 
 \title{Making and Utilizing TranscriptDb Objects}
@@ -29,12 +33,13 @@
 \section{Introduction}
 
 The \Rpackage{GenomicFeatures} package retrieves and manages
-transcript-related features from UCSC Genome Bioinformatics and
-BioMart data resources. The package is useful for ChIP-chip, ChIP-seq,
-and RNA-seq analyses.
+transcript-related features from the UCSC Genome
+Bioinformatics\footnote{\url{http://genome.ucsc.edu/}} and
+BioMart\footnote{\url{http://www.biomart.org/}} data resources. The
+package is useful for ChIP-chip, ChIP-seq, and RNA-seq analyses.
 
 <<loadGenomicFeatures>>=
-library(GenomicFeatures)
+library("GenomicFeatures")
 @
 
 
@@ -43,30 +48,31 @@ library(GenomicFeatures)
 \subsection{\Rclass{TranscriptDb} Objects}
 
 The \Rpackage{GenomicFeatures} package uses \Rclass{TranscriptDb}
-objects to store transcript metadata. This class is designed to map
-the 5' untranslated regions (UTRs), protein coding sequence (CDSs),
-and 3' UTRs for a set mRNA transcripts to their associated genome,
-where the combined 5' UTR, CDS, and 3' UTR region for an mRNA
-transcript either originated from a single exon or from multiple
-exons that were post-transcriptionally spliced.
+objects to store transcript metadata. This class maps the 5' and 3'
+untranslated regions (UTRs) and protein coding sequences (CDSs) for a
+set of mRNA transcripts to their associated genome, where the combined
+5' UTR, CDS, and 3' UTR region for an mRNA transcript either
+originated from a single exon or from multiple exons that were
+post-transcriptionally spliced.
+%% FIXME
 
-As the suffix of the class name suggests, \Rclass{TranscriptDb}
-objects are backed by a SQLite database. This database manages genomic
-locations and the relationships between pre-processed mRNA
-transcripts, exons, protein coding sequences, and their related gene
-IDs.
+\Rclass{TranscriptDb} objects are backed by a SQLite database that
+manages genomic locations and the relationships between pre-processed
+mRNA transcripts, exons, protein coding sequences, and their related
+gene identifiers.
 
 \subsection{Creating New \Rclass{TranscriptDb} Objects}
 
-There are three methods for creating new \Rclass{TranscriptDb} objects
-in the \Rpackage{GenomicFeatures} package:
-\begin{enumerate}
-\item Use \Rfunction{makeTranscriptDbFromUCSC} to download from UCSC Genome
-  Bioinformatics.
-\item Use \Rfunction{makeTranscriptDbFromBiomart} to download from BioMart.
-\item Use a \Rclass{data.frame} containing transcript metadata with
-  \Rfunction{makeTranscriptDb} to make a custom database. 
-\end{enumerate}
+The \Rpackage{GenomicFeatures} package provides function to create
+\Rclass{TranscriptDb} objects based on data downloaded from UCSC
+Genome Bioinformatics or BioMart. The following subsections
+demonstrate the use of these functions.  There is also support for
+creating \Rclass{TranscriptDb} objects from custom data sources using
+\Rfunction{makeTranscriptDb}; see the help page for this function for
+details.
+
+\subsubsection{Using \Rfunction{makeTranscriptDbFromUCSC}}
+
 
 The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC
 Genome Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
@@ -74,94 +80,104 @@ Genome Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
 \Rcode{"mm9"}, \Rcode{"hg19"}).  Use the
 \Rfunction{supportedUCSCtables} utility function to get the list of
 supported tables.
-%% 
+%%
 <<supportedUCSCtables>>=
-supportedUCSCtables()
-@ 
+supportedUCSCtables()[1:4, ]
+@
 <<makeTranscriptDbFromUCSC, eval=FALSE>>=
 mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", tablename = "knownGene")
 @
 
-Retrieve data from BioMart by specifying the `mart' and data set (not
+\subsubsection{Using \Rfunction{makeTranscriptDbFromBiomart}}
+
+Retrieve data from BioMart by specifying the mart and the data set (not
 all BioMart data sets are currently supported):
-%% 
+%%
 <<makeTranscriptDbFromBiomart, eval=FALSE>>=
-mmusculusEnsembl <- 
+mmusculusEnsembl <-
   makeTranscriptDbFromBiomart(biomart = "ensembl",
                               dataset = "mmusculus_gene_ensembl")
 @
 
-The function \Rfunction{makeTranscriptDb} creates \Rclass{TransctriptDb}
-objects from \Rclass{data.frame} objects.
-
+%% FIXME: comment on expected size of data required for download, and
+%% processing time.  This provides a natural lead-in to the save/load
+%% section since creating the txdb objects requires time and
+%% bandwidth.
 
 \subsection{Saving and Loading a \Rclass{TranscriptDb} Object}
 
-\Rclass{TranscriptDb} objects can be saved as SQLite files for future
-access (e.g., to easily reproduce results with identical genomic
-feature data at a later date, or for access from programs other than
-R).  
-%% 
+Once a \Rclass{TranscriptDb} object has been created, it can be saved
+to avoid the time and bandwidth costs of recreating it and to make it
+possible to reproduce results with identical genomic feature data at a
+later date.  Since \Rclass{TranscriptDb} objects are backed by a
+SQLite database, the save format is a SQLite database file (which
+could be accessed from programs other than \R if desired).  Note that
+it is not possible to serialize a \Rclass{TranscriptDb} object using
+\R's \Rfunction{save} function.
+
+%%
 <<saveFeatures 1, eval=FALSE>>=
 saveFeatures(mm9KG, file="fileName.sqlite")
 @
-%% 
-Load a saved \Rclass{TranscriptDb} object with
-\Rfunction{loadFeatures}:
+
+A \Rclass{TranscriptDb} object can be initialized from a file using
+\Rfunction{loadFeatures}.
+
 <<loadFeatures-1, eval=FALSE>>=
 mm9KG <- loadFeatures("fileName.sqlite")
 @
-%% 
-For instance, a sample of UCSC known genes is included in
-\Rpackage{GenomicFeatures}.
-<<load_UCSC_KG>>=
-exampleFile <-
-    system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                package="GenomicFeatures")
-txdb <- loadFeatures(exampleFile)
-txdb
-@ 
-%% 
-In addition to transcript data, the object contains information about
-how it was created (e.g., the number of transcripts, exons, and coding
-sequence rows) and about software versions and creation dates.
 
 \section{Retrieving Transcript, Exon, and Coding Sequence Ranges}
 
+\subsection{Loading the sample genomic feature data}
+
+A subset of a previously created \Rclass{TranscriptDb} object based on
+UCSC known gene data is included to make it easier to demonstrate
+functionality in the \Rpackage{GenomicFeatures} package.  Below, we
+load the sample data and display the metadata that is part of any
+\Rclass{TranscriptDb} object.
+
+<<transcripts0>>=
+samplefile <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                          package="GenomicFeatures")
+txdb <- loadFeatures(samplefile)
+txdb
+@
 
 \subsection{Working with Basic Features}
 
-The most basic operation for getting data out of a transcriptDb object
-is to simple retrieve the ranges of exons, transcripts or coding
-sequences into a GRanges object.  For this purpose, the functions
-\Rfunction{transcripts}, \Rfunction{exons}, and \Rfunction{cds} have
-been provided.
+The most basic operations on a \Rclass{TranscriptDb} object are
+retrieval of the genomic coordinates or \textit{ranges} for exons,
+transcripts or coding sequences.  The functions
+\Rfunction{transcripts}, \Rfunction{exons}, and \Rfunction{cds} return
+the coordinate information as a \Rclass{GRanges} object.
 
-So as an example, you can use \Rfunction{transcripts} to simply
-retrieve all the transcripts present in a \Rclass{TranscriptDb} object and
-return them as a single \Rclass{GRanges} object like this:
+For example, all transcripts present in a \Rclass{TranscriptDb} object
+can be obtained as follows:
 
 <<transcripts1>>=
-txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                                 package="GenomicFeatures"))
 GR <- transcripts(txdb)
-GR
+GR[1:3]
 @
 
-Now suppose that you wanted to further refine things and retrieve only the
-things that are present on the plus strand of chromosome 1.  Well the
-\Rfunction{transcripts} function will allow you to do things like that too.
+%% FIXME: some discussion of the output GR[1:3] displays would be helpful.
+
+The \Rfunction{transcripts} function can also be used to retrieve a
+subset of the transcripts such as those on the $+$-strand of
+chromosome 1.
 
 <<transcripts2>>=
 GR <- transcripts(txdb, vals <- list(tx_chrom = "chr1", tx_strand = "+"))
-GR
+length(GR)
+unique(strand(GR))
 @
 
-The \Rfunction{exons}, and \Rfunction{cds} functions have a similar
-role to play and are used to retrieve just the exons or just the
-coding sequences.
+The \Rfunction{exons} and \Rfunction{cds} functions can be used in a
+similar fashion to retrive genomic coordinates for exons and coding
+sequences.
 
 \subsection{Working with Grouped Features}
+%% FIXME: reword this to be more concise
 
 Often it will not be enough to just get exons, cds or transcripts
 only.  Sometimes you will want to give greater consideration to the
@@ -177,30 +193,35 @@ functions.
 So for example, to extract all the transcripts grouped by their exons
 you can call:
 
+%% FIXME: it would help to provide a list of the available ``by''
+%% arguments: gene, tx, ..., ???
+
 <<transcriptsBy>>=
-txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                                 package="GenomicFeatures"))
 GRList <- transcriptsBy(txdb, "gene")
-GRList
+length(GRList)
+names(GRList)[10:13]
+GRList[[12]]
 @
+
+%% FIXME: consider some explanation of the GRangesList output
 
 Similarly, to extract all the exons for each transcript you can call:
 
 <<exonsBy>>=
-txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                                 package="GenomicFeatures"))
 GRList <- exonsBy(txdb, "tx")
-GRList
+length(GRList)
+names(GRList)[10:13]
+GRList[[12]]
 @
 
 These functions return \Rclass{GRangesList} objects that contain
-locations and identifiers all grouped according to the type of feature
+locations and identifiers grouped according to the type of feature
 specified. These objects can be used in downstream analyses such as
 using \Rfunction{findOverlaps} contextualize the alignments from
 high-throughput sequencing.
 
 It is important to consider the context created when grouping by a
-particular feature.  For example, in the 1st example, where we grouped
+particular feature.  For example, in the first example, where we grouped
 by genes, the name of the features is an Entrez Gene ID.  If the
 database had been based instead on Ensembl sources, it would be an
 Ensembl Gene ID.  However, in the second example where we group by
@@ -226,39 +247,41 @@ chromosome.
 
 \subsection{Prespecfied grouping functions}
 
-An important kind of grouping functions are the ones that group in a
-prespecified manner. The \Rfunction{intronsByTranscript},
-\Rfunction{fiveUTRsByTranscript} and \Rfunction{threeUTRsByTranscript}
-functions are like this. These functions retrieve the \Rclass{GRangesList}
-objects for the introns, 5' UTR's, and 3' UTR's grouped by transcript
+The \Rfunction{intronsByTranscript}, \Rfunction{fiveUTRsByTranscript}
+and \Rfunction{threeUTRsByTranscript} are convenience functions the
+provide behavior equivalent to the grouping functions, but in
+prespecified form. These functions return a \Rclass{GRangesList}
+object grouped by transcript for introns, 5' UTR's, and 3' UTR's,
 respectively.
 
 <<introns-UTRs>>=
-intronsByTranscript(txdb)
-fiveUTRsByTranscript(txdb)
-threeUTRsByTranscript(txdb)
-@ 
+length(intronsByTranscript(txdb))
+length(fiveUTRsByTranscript(txdb))
+length(threeUTRsByTranscript(txdb))
+@
 
-
-\subsection{Convenience functions}
+\subsection{Convenience functions for computing overlap}
 
 The \Rfunction{transcriptsByOverlaps}, \Rfunction{exonsByOverlaps} and
 \Rfunction{cdsByOverlaps} functions return a \Rclass{GRangesList} object
 containing data about transcripts, exons, or coding sequences that
 overlap genomic coordinates specified by a \Rclass{GRanges}
 object.
-%% 
+%%
+
+%% FIXME: this ends up with zero ranges, is that really what we want?
+%% Seems like it makes for a bad example.
 <<transcriptsByOverlaps>>=
-library(org.Mm.eg.db)
-set.seed(0L)
+library("org.Mm.eg.db")
+set.seed(430L)
 idx <- sample(length(org.Mm.egCHRLOC), 50)
-tbl <- unique(merge(toTable(org.Mm.egCHRLOC[idx]), 
+tbl <- unique(merge(toTable(org.Mm.egCHRLOC[idx]),
                     toTable(org.Mm.egCHRLOCEND[idx])))
 gr <- with(tbl, {
     lvls <- paste("chr", c(1:19, "X", "Y", "MT", "Un"), sep="")
-    GRanges(seqnames=factor(paste("chr", Chromosome, sep=""), 
+    GRanges(seqnames=factor(paste("chr", Chromosome, sep=""),
                             levels=lvls),
-            ranges=IRanges(abs(start_location), abs(end_location)), 
+            ranges=IRanges(abs(start_location), abs(end_location)),
             strand=ifelse(start_location >= 0, "+", "-"),
             egid=gene_id)
 })
@@ -272,15 +295,12 @@ basic and grouping accessors in combination with
 \Rfunction{findOverlaps}.
 
 
-
-\section{Examples}
+\section{Example using RNA-seq data}
 Let's suppose that you have run an experiment. After mapping all your
 reads to a genome and collapsing them into a set of ranges, you want
-to find out what genomic Features a particular range overlaps with.
+to find out which genomic features a particular range overlaps with.
 How would be the usual way to proceed?  Here is an example:
 
-
-\subsection{Retrieving data from an RNA-seq experiment}
 Let's consider the case where you have some RNA-seq data and you want
 to convert your ranges into counts representing how hits per
 transcript.  For this example, let's also assume that you are only
@@ -288,11 +308,12 @@ interested in counting ranges that overlap with exons (not introns).
 
 First lets say that this is your data:
 <<RNASEQ1, eval=FALSE>>=
-gr <- GRanges(seqnames = rep("chr5",4),
-              ranges = IRanges(start = c(244620,244670,245804,247502),
-                               end = c(244652,244702,245836,247534)),
-              strand = rep("+",4))
-@ 
+gr <- GRanges(
+    seqnames = rep("chr5",4),
+    ranges = IRanges(start = c(244620, 244670, 245804, 247502),
+                     end = c(244652, 244702, 245836, 247534)),
+    strand = rep("+", 4))
+@
 
 From our \Rclass{TranscriptDb} object, we want to recover the annotations for
 all of the relevant exons, but grouped according to their transcripts.
@@ -321,7 +342,7 @@ overlap with our data.
 
 <<getAnswers>>=
 tdata <- annotGr[subjectHits(OL),]
-tdata 
+tdata
 
 length(tdata)
 @
@@ -340,12 +361,7 @@ control over which parts of a transcript or gene are included in the
 overlap.
 
 
-
-
-
 \section{Session Information}
-
-The version number of R and packages loaded for generating the vignette were:
 
 <<SessionInfo, echo=FALSE>>=
 sessionInfo()
