@@ -49,21 +49,20 @@ library("GenomicFeatures")
 
 The \Rpackage{GenomicFeatures} package uses \Rclass{TranscriptDb}
 objects to store transcript metadata. This class maps the 5' and 3'
-untranslated regions (UTRs) and protein coding sequences (CDSs) for a
-set of mRNA transcripts to their associated genome, where the combined
-5' UTR, CDS, and 3' UTR region for an mRNA transcript either
-originated from a single exon or from multiple exons that were
-post-transcriptionally spliced.
-%% FIXME
+untranslated regions (UTRs), protein coding sequences (CDSs) and exons
+for a set of mRNA transcripts to their associated
+genome. \Rclass{TranscriptDb} objects also have accessors functions to
+allow such features to be retrieved individually or grouped together
+in a way that reflects the underlying biology.
 
-\Rclass{TranscriptDb} objects are backed by a SQLite database that
+All \Rclass{TranscriptDb} objects are backed by a SQLite database that
 manages genomic locations and the relationships between pre-processed
 mRNA transcripts, exons, protein coding sequences, and their related
 gene identifiers.
 
 \subsection{Creating New \Rclass{TranscriptDb} Objects}
 
-The \Rpackage{GenomicFeatures} package provides function to create
+The \Rpackage{GenomicFeatures} package provides functions to create
 \Rclass{TranscriptDb} objects based on data downloaded from UCSC
 Genome Bioinformatics or BioMart. The following subsections
 demonstrate the use of these functions.  There is also support for
@@ -72,7 +71,6 @@ creating \Rclass{TranscriptDb} objects from custom data sources using
 details.
 
 \subsubsection{Using \Rfunction{makeTranscriptDbFromUCSC}}
-
 
 The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC
 Genome Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
@@ -90,19 +88,25 @@ mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", tablename = "knownGene")
 
 \subsubsection{Using \Rfunction{makeTranscriptDbFromBiomart}}
 
-Retrieve data from BioMart by specifying the mart and the data set (not
-all BioMart data sets are currently supported):
+Retrieve data from BioMart by specifying the mart and the data set to
+the \Rfunction{makeTranscriptDbFromBiomart} function (not all BioMart
+data sets are currently supported):
 %%
 <<makeTranscriptDbFromBiomart, eval=FALSE>>=
 mmusculusEnsembl <-
-  makeTranscriptDbFromBiomart(biomart = "ensembl",
+   makeTranscriptDbFromBiomart(biomart = "ensembl",
                               dataset = "mmusculus_gene_ensembl")
 @
 
-%% FIXME: comment on expected size of data required for download, and
-%% processing time.  This provides a natural lead-in to the save/load
-%% section since creating the txdb objects requires time and
-%% bandwidth.
+Using the \Rfunction{makeTranscriptDbFromBiomart}
+\Rfunction{makeTranscriptDbFromUCSC} functions can take a while and
+may also require some bandwidth as these methods have to download and
+then assemble a database from their respective sources.  It is not
+expected that most users will want to do this step every time.
+Instead, we suggest that you save your annotation objects and label
+them with an appropriate time stamp so as to facilitate reproducible
+research.
+
 
 \subsection{Saving and Loading a \Rclass{TranscriptDb} Object}
 
@@ -115,7 +119,6 @@ could be accessed from programs other than \R if desired).  Note that
 it is not possible to serialize a \Rclass{TranscriptDb} object using
 \R's \Rfunction{save} function.
 
-%%
 <<saveFeatures 1, eval=FALSE>>=
 saveFeatures(mm9KG, file="fileName.sqlite")
 @
@@ -129,13 +132,13 @@ mm9KG <- loadFeatures("fileName.sqlite")
 
 \section{Retrieving Transcript, Exon, and Coding Sequence Ranges}
 
-\subsection{Loading the sample genomic feature data}
+\subsection{Loading some sample genomic feature data}
 
-A subset of a previously created \Rclass{TranscriptDb} object based on
-UCSC known gene data is included to make it easier to demonstrate
-functionality in the \Rpackage{GenomicFeatures} package.  Below, we
-load the sample data and display the metadata that is part of any
-\Rclass{TranscriptDb} object.
+Here was are loading a previously created \Rclass{TranscriptDb} object
+based on UCSC known gene data.  This database only contains a small
+subset of the possible annotations for human and is only included to
+demonstrate and test the functionality of the
+\Rpackage{GenomicFeatures} package.
 
 <<transcripts0>>=
 samplefile <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
@@ -143,6 +146,8 @@ samplefile <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
 txdb <- loadFeatures(samplefile)
 txdb
 @
+
+%%FIXME. Lets do better with the examples
 
 \subsection{Working with Basic Features}
 
@@ -160,11 +165,19 @@ GR <- transcripts(txdb)
 GR[1:3]
 @
 
-%% FIXME: some discussion of the output GR[1:3] displays would be helpful.
+The \Rfunction{transcripts} function returns a \Rclass{GRanges} class
+object.  You can learn a lot more about the manipulation of these
+objects by reading the \Rpackage{GenomicRanges} introductory
+vignette.  The \Rmethod{show} method for a \Rclass{GRanges} object
+will display the ranges, seqnames (a chromosome or a contig), and
+strand on the left side and then present related metadata on the right
+side.  At the bottom, the seqlengths display all the possible seqnames
+along with the length of each sequence.
 
-The \Rfunction{transcripts} function can also be used to retrieve a
-subset of the transcripts such as those on the $+$-strand of
-chromosome 1.
+
+In addition, the \Rfunction{transcripts} function can also be used to
+retrieve a subset of the transcripts available such as those on the
+$+$-strand of chromosome 1.
 
 <<transcripts2>>=
 GR <- transcripts(txdb, vals <- list(tx_chrom = "chr1", tx_strand = "+"))
@@ -172,14 +185,14 @@ length(GR)
 unique(strand(GR))
 @
 
-The \Rfunction{exons} and \Rfunction{cds} functions can be used in a
-similar fashion to retrive genomic coordinates for exons and coding
-sequences.
+The \Rfunction{exons} and \Rfunction{cds} functions can also be used
+in a similar fashion to retrive genomic coordinates for exons and
+coding sequences.
 
 \subsection{Working with Grouped Features}
 
 Often one is interested in how particular genomic features relate to
-each other, not just their location.  For example, it might be of
+each other, and not just their location.  For example, it might be of
 interest to group transcripts by gene or to group exons by transcript.
 Such groupings are supported by the \Rfunction{transcriptsBy},
 \Rfunction{exonsBy}, and \Rfunction{cdsBy} functions.
@@ -190,18 +203,26 @@ The following call can be used to group transcripts by genes:
 GRList <- transcriptsBy(txdb, by = "gene")
 length(GRList)
 names(GRList)[10:13]
-GRList[[12]]
+GRList[11:12]
 @
 
-%% FIXME: consider some explanation of the GRangesList output
+The \Rfunction{transcriptsBy} function returns a \Rclass{GRangesList}
+class object.  As with \Rclass{GRanges} objects, you can learn more
+about these objects by reading the \Rpackage{GenomicRanges}
+introductory vignette.  The \Rmethod{show} method for a
+\Rclass{GRangesList} object will display as a list of \Rclass{GRanges}
+objects.  And, at the bottom the seqlengths will be displayed once for
+the entire list.
 
-%% FIXME: list the other parameter options.  Then add similar sentence
-%% for the exonsBy example.
-%% The \Rfunction{transcriptsBy} function allows grouping by gene, ...
+For each of these three functions, there is a limited set of options
+that can be passed into the \Rfunarg{by} argument to allow grouping.
+For the \Rfunction{transcriptsBy} function, you can group by gene,
+exon or cds, whereas for the \Rfunction{exonsBy} and \Rfunction{cdsBy}
+functions can only be grouped by transcript (tx) or gene.
 
 
-
-Similarly, to extract all the exons for each transcript you can call:
+So as a further example, to extract all the exons for each transcript
+you can call:
 
 <<exonsBy>>=
 GRList <- exonsBy(txdb, by = "tx")
@@ -210,37 +231,51 @@ names(GRList)[10:13]
 GRList[[12]]
 @
 
-These functions return \Rclass{GRangesList} objects that contain
-locations and identifiers grouped according to the type of feature
-specified by the \Robject{by} argument. These objects can be used by
-functions like \Rfunction{findOverlaps} to contextualize alignments
-from high-throughput sequencing.
+As you can see, the \Rclass{GRangesList} objects returned from each
+function contain locations and identifiers grouped into a list like
+object according to the type of feature specified in the \Rfunarg{by}
+argument. The object returned can then be used by functions like
+\Rfunction{findOverlaps} to contextualize alignments from
+high-throughput sequencing.
 
-%% 1. gene IDs depend on initial data source
-%% 2. unique IDs not always available, use synthetic IDs instead
+The identifiers used to label the \Rclass{GRanges} objects depend upon
+the data source used to create the \Rclass{TranscriptDb} object.  So
+the list identifiers will not always be Entrez Gene IDs, as they were
+in the first example.  Furthermore, some data sources do not provide a
+unique identifier for all features.  In this situation, the group
+label will be a synthetic ID created by \Rpackage{GenomicFeatures} to
+keep the relations between features consistent in the database this
+was the case in the 2nd example.  Even though the results will
+sometimes have to come back to you as synthetic IDs, you can still
+always retrieve the original IDs.  In the following example, we will
+find the original transcript names stored in the database for each ID
+by calling the \Rfunction{transcripts} function.
 
-The identifiers used to label the groups depend upon the data source
-used to create the \Rclass{TranscriptDb} object.  So the gene
-identifiers will not always be Entrez Gene IDs, as shown in the
-example above.  Furthermore, some data sources do not provide a unique
-identifier for all features.  In this situation, the group label will
-be a synthetic ID created by \Rpackage{GenomicFeatures} to keep the
-relations between features consistent in the database.
 
 %% FIXME: add example on how to map from internal ID to common ID
 %% using the exons grouped by tx created above.
 
-In most cases the grouped elements will be listed in the order that
-they occur along the chromosome.  However, when exons or CDS are
-grouped by transcript, they will instead be grouped according to their
-position along the transcript itself.  This is important because
-alternative splicing can mean that the order along the transcript can
-be different from that along the chromosome.
+<<internalID>>=
+tx_ids <- names(GRList)
+vals <- list(tx_id=tx_ids)
+txs <- transcripts(txdb, vals, columns = c("tx_id", "tx_name"))
+head(values(txs))
+@ 
+
+Finally, the order of the results in a \Rclass{GRangesList} object can
+vary with the way in which things were grouped. In most cases the
+grouped elements of the \Rclass{GRangesList} object will be listed in
+the order that they occurred along the chromosome.  However, when
+exons or CDS are grouped by transcript, they will instead be grouped
+according to their position along the transcript itself.  This is
+important because alternative splicing can mean that the order along
+the transcript can be different from that along the chromosome.
+
 
 \subsection{Prespecfied grouping functions}
 
 The \Rfunction{intronsByTranscript}, \Rfunction{fiveUTRsByTranscript}
-and \Rfunction{threeUTRsByTranscript} are convenience functions the
+and \Rfunction{threeUTRsByTranscript} are convenience functions that
 provide behavior equivalent to the grouping functions, but in
 prespecified form. These functions return a \Rclass{GRangesList}
 object grouped by transcript for introns, 5' UTR's, and 3' UTR's,
@@ -258,25 +293,20 @@ The \Rfunction{transcriptsByOverlaps}, \Rfunction{exonsByOverlaps} and
 \Rfunction{cdsByOverlaps} functions return a \Rclass{GRangesList} object
 containing data about transcripts, exons, or coding sequences that
 overlap genomic coordinates specified by a \Rclass{GRanges}
-object.
-%%
+object.  So for example, lets just mock up some fake data:
 
-%% FIXME: this ends up with zero ranges, is that really what we want?
-%% Seems like it makes for a bad example.
+<<RNASEQData>>=
+gr <- GRanges(
+    seqnames = rep("chr5",4),
+    ranges = IRanges(start = c(244620, 244670, 245804, 247502),
+                     end = c(244652, 244702, 245836, 247534)),
+    strand = rep("+", 4))
+@
+
+Then we can call the convenience function to see what transcripts
+overlap with our ranges.
+
 <<transcriptsByOverlaps>>=
-library("org.Mm.eg.db")
-set.seed(430L)
-idx <- sample(length(org.Mm.egCHRLOC), 50)
-tbl <- unique(merge(toTable(org.Mm.egCHRLOC[idx]),
-                    toTable(org.Mm.egCHRLOCEND[idx])))
-gr <- with(tbl, {
-    lvls <- paste("chr", c(1:19, "X", "Y", "MT", "Un"), sep="")
-    GRanges(seqnames=factor(paste("chr", Chromosome, sep=""),
-                            levels=lvls),
-            ranges=IRanges(abs(start_location), abs(end_location)),
-            strand=ifelse(start_location >= 0, "+", "-"),
-            egid=gene_id)
-})
 transcriptsByOverlaps(txdb, gr)
 @
 
@@ -287,71 +317,61 @@ basic and grouping accessors in combination with
 \Rfunction{findOverlaps}.
 
 
-\section{Example using RNA-seq data}
+\section{A typical example treating \Robject{gr} as RNA-seq data}
 
 Let's suppose that you have run an experiment. After mapping all your
 reads to a genome and collapsing them into a set of ranges, you want
 to find out which genomic features a particular range overlaps with.
-How would be the usual way to proceed?  Here is an example:
+What would be the usual way to proceed?
 
-Let's consider the case where you have some RNA-seq data and you want
-to convert your ranges into counts representing how hits per
-transcript.  For this example, let's also assume that you are only
-interested in counting ranges that overlap with exons (not introns).
-
-First lets say that this is your data:
-<<RNASEQ1, eval=FALSE>>=
-gr <- GRanges(
-    seqnames = rep("chr5",4),
-    ranges = IRanges(start = c(244620, 244670, 245804, 247502),
-                     end = c(244652, 244702, 245836, 247534)),
-    strand = rep("+", 4))
-@
-
-From our \Rclass{TranscriptDb} object, we want to recover the annotations for
+For this example, let's also assume that you are only interested in
+mapping the ranges that overlap with exons (not introns).  From our
+\Rclass{TranscriptDb} object, we want to recover the annotations for
 all of the relevant exons, but grouped according to their transcripts.
-Therefore, we want to use \Rfunction{exonsby} and group them by transcripts.
+Therefore, we want to use \Rfunction{exonsby} and group them by
+transcripts.
 
 <<exonsGroupedByTx>>=
 annotGr <- exonsBy(txdb, "tx")
 @
 
-Then we need to used \Rfunction{findOverlaps} to learn which of our
-data ranges, \Robject{gr}, will overlap with the in exons that we have
-grouped by transcripts.
+Then we need to use the \Rfunction{findOverlaps} method to learn which
+of our data ranges, \Robject{gr}, will overlap with the in exons that
+we have grouped by transcripts.
 
 <<findOverlaps>>=
-OL <- findOverlaps(annotGr, gr)
+OL <- findOverlaps(query = annotGr, subject = gr)
 @
 
 Finally, once we have called \Rfunction{findOverlaps} we can subset
-out the annotations that meet our criteria.  The
-\Rfunction{subjectHits} method will allow us to retrieve only the
-things that overlapped with the subject in our original
-\Rfunction{findOverlaps} call. And once we have subsetted out
-annotations in this way, the length of the resulting
-\Rclass{GRangesList} object is also the number of transcripts that
-overlap with our data.
+out the annotations that meet our criteria.  The \Rfunction{queryHits}
+method will allow us to retrieve only the parts of the query that
+overlapped from our original \Rfunction{findOverlaps} call. Once we
+have subsetted out annotations in this way, the length of the
+resulting \Rclass{GRangesList} object is also the number of
+transcripts that overlap with our data.
 
 <<getAnswers>>=
-tdata <- annotGr[subjectHits(OL),]
+tdata <- annotGr[unique(queryHits(OL)),]
 tdata
-
 length(tdata)
 @
 
 By using \Rfunction{findOverlaps} along with the different accessors
 in this way, it is possible to connect any data that has been
-represented as a \Rclass{GRanges} object with the annotations stored in
-a \Rclass{TranscriptDb} object.  Calling \Rfunction{findOverlaps} along
-with the appropriate \Rclass{GRanges} object not only allows users to
-quickly determine what has overlapped, but also controls what
+represented as a \Rclass{GRanges} object with the annotations stored
+in a \Rclass{TranscriptDb} object.  Calling \Rfunction{findOverlaps}
+along with the appropriate \Rclass{GRanges} object not only allows
+users to quickly determine what has overlapped, but also controls what
 criteria are used for determining whether an overlap has occurred.
-This can be done by passing in an alternate \Rfunarg{type} parameter to
-\Rfunction{findOverlaps}.  In addition, because the basic accesors allow
-for the users to retrieve data grouped in different ways, the user has
-control over which parts of a transcript or gene are included in the
-overlap.
+This can be done by passing in an alternate \Rfunarg{type} parameter
+to \Rfunction{findOverlaps}.  In addition, because the basic accessors
+allow for the users to retrieve data grouped in different ways, the
+user has control over which parts of a transcript or gene are included
+in the overlap.  For a more complete example of how you could approach
+RNA-seq analysis, including explanation on methods that will help to
+tally up the counts etc. please see the \Rpackage{GenomicRanges} Use
+Cases vignette.
 
 
 \section{Session Information}
