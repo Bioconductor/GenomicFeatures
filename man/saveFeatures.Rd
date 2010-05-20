@@ -27,11 +27,8 @@
   \link{TranscriptDb}
 }
 \examples{
-\dontrun{
-  ##Have a TranscriptDb object called txdb?
-  ##You can save it:
-  saveFeatures(txdb, file="HG18.sqlite")
-  ##Then later you can quickly re-constitute it like this:
-  txdb <- loadFeatures("HG18.sqlite")
-}
+  txdb <- 
+    loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                             package = "GenomicFeatures"))
+  txdb
 }
