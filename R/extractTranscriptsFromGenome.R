@@ -22,7 +22,8 @@
 
 ### 'x' must be a GRangesList object containing exons grouped by transcripts.
 ### Unlike the "as.data.frame" method for GRangesList, this function produces
-### a data frame with 1 row per list element (a GRanges) and the following
+### a transcript table in the UCSC format i.e. a data frame with 1 row per
+### element in 'x' (elements in 'x' are GRanges objects) and the following
 ### columns:
 ###   name       -- the outer name of the list element;
 ###   chrom      -- the single seqnames value of x[[i]] (raise an error
@@ -33,7 +34,8 @@
 ###                 comma-separated string;
 ###   exonsEnds  -- the ends of x[[i]] packed together in a single
 ###                 comma-separated string.
-.exonsByTxAsCompactDataFrame <- function(x, reorder.exons.on.minus.strand=TRUE)
+### TODO: Improve implementation (very slow right-now).
+.exonsByTxAsUCSCTxTable <- function(x, reorder.exons.on.minus.strand=TRUE)
 {
     splitter <- rep.int(seq_len(length(x)), elementLengths(x))
     chrom <- split(as.character(seqnames(x@unlistData)), splitter)
@@ -78,20 +80,48 @@
     )   
 }
 
+.extractTranscriptsFromGenomeAndUCSCTxTable <- function(genome, ucsc_txtable,
+                                                    reorder.exons.on.minus.strand)
+{
+    ## The 3 lists below have identical shapes and names (names are the
+    ## REFSEQnames).
+    strand_list <- split(ucsc_txtable$strand, ucsc_txtable$chrom, drop=TRUE)
+    exonStarts_list <- split(ucsc_txtable$exonStarts, ucsc_txtable$chrom, drop=TRUE)
+    exonEnds_list <- split(ucsc_txtable$exonEnds, ucsc_txtable$chrom, drop=TRUE)
+    REFSEQnames <- names(strand_list)  # REFSEQnames has no duplicates
+    extractTranscriptsFromREFSEQ <- function(REFSEQname)
+    {
+        subject <- genome[[REFSEQname]]
+        masks(subject) <- NULL
+        exonStarts <- exonStarts_list[[REFSEQname]]
+        exonEnds <- exonEnds_list[[REFSEQname]]
+        strand <- strand_list[[REFSEQname]]
+        extractTranscripts(subject,
+            exonStarts, exonEnds, strand,
+            reorder.exons.on.minus.strand=reorder.exons.on.minus.strand)
+    }
+    ## Loop over the names of the reference sequences and extract the
+    ## transcripts.
+    dnaset_list <- lapply(REFSEQnames, extractTranscriptsFromREFSEQ)
+    ans <- unsplit.list.of.XStringSet("DNAStringSet", dnaset_list,
+                                      ucsc_txtable$chrom)
+    names(ans) <- ucsc_txtable$name
+    ans
+}
+
 ### Typical use:
 ###   library(BSgenome.Hsapiens.UCSC.hg18)  # load the genome
 ###   library(GenomicFeatures.Hsapiens.UCSC.hg18)  # load the gene table
 ###   ## Takes about 30 sec.
 ###   transcripts <- extractTranscriptsFromGenome(Hsapiens, geneHuman())
-### TODO: Improve implementation: ideally, we shouldn't need to use
-###       intermediate representation as character vector.
 extractTranscriptsFromGenome <- function(genome, txdb, use.tx_id=FALSE)
 {
     if (!is(genome, "BSgenome"))
         stop("'genome' must be a BSgenome object")
-    if (is(txdb, "TranscriptDb")) {
-        exbytx <- .exonsByTx(txdb, use.tx_id=use.tx_id)
-        txtable <- .exonsByTxAsCompactDataFrame(exbytx,
+    if (is(txdb, "TranscriptDb"))
+        txdb <- .exonsByTx(txdb, use.tx_id=use.tx_id)
+    if (is(txdb, "GRangesList")) {
+        ucsc_txtable <- .exonsByTxAsUCSCTxTable(txdb,
                        reorder.exons.on.minus.strand=FALSE)
         reorder.exons <- FALSE
     } else if (is.data.frame(txdb)) {
@@ -99,32 +129,11 @@ extractTranscriptsFromGenome <- function(genome, txdb, use.tx_id=FALSE)
         if (!all(REQUIRED_COLS %in% names(txdb)))
             stop("'txdb' data frame must have columns: ",
                  paste(REQUIRED_COLS, collapse=", "))
-        txtable <- txdb
+        ucsc_txtable <- txdb
         reorder.exons <- TRUE
     } else {
         stop("'txdb' must be a TranscriptDb object or a data frame")
     }
-    ## The 3 lists below have identical names (the REFSEQnames)
-    REFSEQnames2strand <- split(txtable$strand, txtable$chrom, drop=TRUE)
-    REFSEQnames2exonStarts <- split(txtable$exonStarts, txtable$chrom, drop=TRUE)
-    REFSEQnames2exonEnds <- split(txtable$exonEnds, txtable$chrom, drop=TRUE)
-    REFSEQnames <- names(REFSEQnames2strand)  # REFSEQnames has no duplicates
-    extractTranscriptSeqsFromREFSEQ <- function(REFSEQname)
-    {
-        subject <- genome[[REFSEQname]]
-        masks(subject) <- NULL
-        REFSEQ_exonStarts <- REFSEQnames2exonStarts[[REFSEQname]]
-        REFSEQ_exonEnds <- REFSEQnames2exonEnds[[REFSEQname]]
-        REFSEQ_strand <- REFSEQnames2strand[[REFSEQname]]
-        transcripts <- extractTranscripts(subject,
-                           REFSEQ_exonStarts, REFSEQ_exonEnds,
-                           REFSEQ_strand,
-                           reorder.exons.on.minus.strand=reorder.exons)
-        as.character(transcripts)
-    }
-    REFSEQnames2seqs <- lapply(REFSEQnames, extractTranscriptSeqsFromREFSEQ)
-    ans <- unsplit(REFSEQnames2seqs, txtable$chrom, drop=TRUE)
-    names(ans) <- txtable$name
-    DNAStringSet(ans)
+    .extractTranscriptsFromGenomeAndUCSCTxTable(genome, ucsc_txtable, reorder.exons)
 }
 

@@ -173,7 +173,7 @@ supportedUCSCtables <- function()
 ### Extract the 'transcripts' data frame from UCSC table.
 ###
 
-.extractTranscriptsFromUCSCTable <- function(ucsc_txtable)
+.extractTranscriptsFromUCSCTxTable <- function(ucsc_txtable)
 {
     transcripts <- data.frame(
         tx_id=seq_len(nrow(ucsc_txtable)),
@@ -294,7 +294,7 @@ supportedUCSCtables <- function()
                 cds_start=cds_start, cds_end=cds_end))
 }
 
-.extractSplicingsFromUCSCTable <- function(ucsc_txtable, transcripts_tx_id)
+.extractSplicingsFromUCSCTxTable <- function(ucsc_txtable, transcripts_tx_id)
 {
     exon_count <- ucsc_txtable$exonCount
     splicings_tx_id <- rep.int(transcripts_tx_id, exon_count)
@@ -407,9 +407,9 @@ supportedUCSCtables <- function()
     ucsc_txtable <- setDataFrameColClass(ucsc_txtable, COL2CLASS,
                                          drop.extra.cols=TRUE)
 
-    transcripts <- .extractTranscriptsFromUCSCTable(ucsc_txtable)
-    splicings <- .extractSplicingsFromUCSCTable(ucsc_txtable,
-                                                transcripts$tx_id)
+    transcripts <- .extractTranscriptsFromUCSCTxTable(ucsc_txtable)
+    splicings <- .extractSplicingsFromUCSCTxTable(ucsc_txtable,
+                                                  transcripts$tx_id)
     genes <- .makeUCSCGenes(genes, ucsc_txtable)
     chrominfo <- .makeUCSCChrominfo(genome)
     metadata <- .makeUCSCMetadata(genome, tablename, gene_id_type, full_dataset)
