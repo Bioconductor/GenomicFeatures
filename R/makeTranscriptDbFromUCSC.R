@@ -207,11 +207,27 @@ supportedUCSCtables <- function()
     unlist(ans)
 }
 
+### Returns a named list with 2 elements. Each element is itself a list of
+### integer vectors with no NAs. The 2 elements have the same "shape".
+.extractExonLocsFromUCSCTxTable <- function(ucsc_txtable)
+{
+    exon_count <- ucsc_txtable$exonCount
+    exon_start <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonStarts)
+    if (!identical(elementLengths(exon_start), exon_count))
+        stop("UCSC data anomaly: 'ucsc_txtable$exonStarts' ",
+             "inconsistent with 'ucsc_txtable$exonCount'")
+    exon_end <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonEnds)
+    if (!identical(elementLengths(exon_end), exon_count))
+        stop("UCSC data anomaly: 'ucsc_txtable$exonEnds' ",
+             "inconsistent with 'ucsc_txtable$exonCount'")
+    return(list(start=exon_start, end=exon_end))
+}
+
 ### 'cdsStart0', 'cdsEnd1': single integers (resp. 0-based and 1-based).
 ### 'exon_start0', 'exon_end1': integer vectors of equal lengths (resp.
-### 0-based and 1-based).
+### 0-based and 1-based) and with no NAs.
 ### Returns a list with 2 elements, each of them being an integer vector of
-### the same length as 'exon_start0', and may contain NAs.
+### the same length as 'exon_start0' (or 'exon_end1') that may contain NAs.
 ### Notes:
 ###   (1) In refGene table, transcript NM_001146685: cds cumulative length is
 ###       not a multiple of 3:
@@ -269,29 +285,26 @@ supportedUCSCtables <- function()
     list(cds_start0, cds_end1)
 }
 
-.extractExonsAndCdsFromUCSCTxTable <- function(ucsc_txtable)
+### 'exon_locs' must be the list of 2 lists returned by
+### .extractExonLocsFromUCSCTxTable().
+### Returns a named list with 2 elements. Each element is itself a list of
+### integer vectors with eventually NAs. The 2 elements have the same
+### "shape" as the elements in 'exon_locs' and the NAs occur at the same
+### places in the 2 elements.
+.extractCdsLocsFromUCSCTxTable <- function(ucsc_txtable, exon_locs)
 {
-    exon_count <- ucsc_txtable$exonCount
-    exon_start <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonStarts)
-    if (!identical(elementLengths(exon_start), exon_count))
-        stop("UCSC data anomaly: 'ucsc_txtable$exonStarts' ",
-             "inconsistent with 'ucsc_txtable$exonCount'")
-    exon_end <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonEnds)
-    if (!identical(elementLengths(exon_end), exon_count))
-        stop("UCSC data anomaly: 'ucsc_txtable$exonEnds' ",
-             "inconsistent with 'ucsc_txtable$exonCount'")
     cdsStart <- ucsc_txtable$cdsStart
     cdsEnd <- ucsc_txtable$cdsEnd
     cds_start <- cds_end <- vector(mode="list", length=nrow(ucsc_txtable))
     for (i in seq_len(nrow(ucsc_txtable))) {
         startend <- .extractUCSCCdsStartEnd(cdsStart[i], cdsEnd[i],
-                                            exon_start[[i]], exon_end[[i]],
+                                            exon_locs$start[[i]],
+                                            exon_locs$end[[i]],
                                             ucsc_txtable$name[i])
         cds_start[[i]] <- startend[[1L]]
         cds_end[[i]] <- startend[[2L]]
     }
-    return(list(exon_start=exon_start, exon_end=exon_end,
-                cds_start=cds_start, cds_end=cds_end))
+    return(list(start=cds_start, end=cds_end))
 }
 
 .extractSplicingsFromUCSCTxTable <- function(ucsc_txtable, transcripts_tx_id)
@@ -306,11 +319,12 @@ supportedUCSCtables <- function()
             stop("UCSC data anomaly: 'ucsc_txtable$exonCount' contains ",
                  "non-positive values")
         exon_rank <- .makeExonRank(exon_count, ucsc_txtable$strand)
-        exons_and_cds <- .extractExonsAndCdsFromUCSCTxTable(ucsc_txtable)
-        exon_start <- unlist(exons_and_cds$exon_start) + 1L
-        exon_end <- unlist(exons_and_cds$exon_end)
-        cds_start <- unlist(exons_and_cds$cds_start) + 1L
-        cds_end <- unlist(exons_and_cds$cds_end)
+        exon_locs <- .extractExonLocsFromUCSCTxTable(ucsc_txtable)
+        cds_locs <- .extractCdsLocsFromUCSCTxTable(ucsc_txtable, exon_locs)
+        exon_start <- unlist(exon_locs$start) + 1L
+        exon_end <- unlist(exon_locs$end)
+        cds_start <- unlist(cds_locs$start) + 1L
+        cds_end <- unlist(cds_locs$end)
     }
     splicings <- data.frame(
         tx_id=splicings_tx_id,
