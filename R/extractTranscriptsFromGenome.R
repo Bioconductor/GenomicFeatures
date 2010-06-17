@@ -20,25 +20,50 @@
     exbytx
 }
 
-### 'x' must be a GRangesList object containing exons grouped by transcripts.
-### Unlike the "as.data.frame" method for GRangesList, this function produces
-### a transcript table in the UCSC format i.e. a data frame with 1 row per
-### element in 'x' (elements in 'x' are GRanges objects) and the following
-### columns:
-###   name       -- the outer name of the list element;
-###   chrom      -- the single seqnames value of x[[i]] (raise an error
-###                 if it has more than 1 value);
-###   strand     -- the single strand value of x[[i]] (raise an error
-###                 if it has more than 1 value);
-###   exonStarts -- the starts of x[[i]] packed together in a single
-###                 comma-separated string;
-###   exonsEnds  -- the ends of x[[i]] packed together in a single
-###                 comma-separated string.
-### TODO: Improve implementation (very slow right-now).
-.exonsByTxAsUCSCTxTable <- function(x, reorder.exons.on.minus.strand=TRUE)
+### Turns data frame 'ucsc_txtable' into a list where the "exonStarts" and
+### "exonsEnds" columns (character vectors where each element is a
+### comma-separated list of integers) are expanded into lists of integer
+### vectors with no NAs.
+.makeUCSCTxListFromUCSCTxTable <- function(ucsc_txtable)
 {
-    splitter <- rep.int(seq_len(length(x)), elementLengths(x))
-    chrom <- split(as.character(seqnames(x@unlistData)), splitter)
+    REQUIRED_COLS <- c("name", "chrom", "strand", "exonStarts", "exonEnds")
+    if (!all(REQUIRED_COLS %in% names(ucsc_txtable)))
+        stop("data frame must have columns: ",
+             paste(REQUIRED_COLS, collapse=", "))
+    list(name=ucsc_txtable$name,
+         chrom=ucsc_txtable$chrom,
+         strand=ucsc_txtable$strand,
+         exonStarts=strsplitAsListOfIntegerVectors(ucsc_txtable$exonStarts),
+         exonEnds=strsplitAsListOfIntegerVectors(ucsc_txtable$exonEnds))
+}
+
+### 'x' must be a GRangesList object containing exons grouped by transcripts.
+### Returns a named list with 5 elements of the same length (like the
+### .makeUCSCTxListFromUCSCTxTable() function above). This common length is
+### the length of 'x'. The elements are:
+###   name       -- Character vector. 'names(x)'.
+###   chrom      -- Character vector. 'chrom[i]' is the unique seqnames value
+###                 found in 'x[[i]]' (an error is raised if 'x[[i]]' has more
+###                 then 1 distinct seqnames value).
+###   strand     -- Character vector with only possible values being "+" or
+###                 "-". 'strand[i]' is the unique strand value found
+###                 in 'x[[i]]' (an error is raised if 'x[[i]]' has more than
+###                 1 distinct strand value).
+###   exonStarts -- List of integer vectors with no NAs. Vector
+###                 'exonStarts[[i]]' is made of the starts of 'x[[i]]',
+###                 eventually ordered according to the exon rank information
+###                 found in 'x[[i]]'.
+###   exonsEnds  -- List of integer vectors with no NAs. Vector
+###                 'exonEnds[[i]]' is made of the ends of 'x[[i]]',
+###                 eventually ordered according to the exon rank information
+###                 found in 'x[[i]]'.
+.makeUCSCTxListFromGRangesList <- function(x, reorder.exons.on.minus.strand=TRUE)
+{
+    f <- rep.int(seq_len(length(x)), elementLengths(x))
+    ## Note that 'x@unlistData' is 50000x faster than
+    ## 'unlist(x, use.names=FALSE)' and 3 million times faster
+    ## than 'unname(unlist(x))'.
+    chrom <- unname(split(as.character(seqnames(x@unlistData)), f))
     chrom <- sapply(chrom,
         function(y) {
             if (!all(y == y[1L]))
@@ -46,7 +71,7 @@
                      "are not supported yet")
             y[1L]
         })
-    strand <- split(as.character(strand(x@unlistData)), splitter)
+    strand <- unname(split(as.character(strand(x@unlistData)), f))
     strand <- sapply(strand,
         function(y) {
             if (!all(y == y[1L]))
@@ -54,40 +79,56 @@
                      "are not supported yet")
             y[1L]
         })
-    exonStarts <- split(start(x@unlistData), splitter)
-    exonStarts <- sapply(seq_len(length(x)),
-        function(i) {
-            y <- exonStarts[[i]]
-            if (reorder.exons.on.minus.strand && strand[i] == "-")
-                y <- rev(y)
-            paste(y, collapse=",")
-        })
-    exonEnds <- split(end(x@unlistData), splitter)
-    exonEnds <- sapply(seq_len(length(x)),
-        function(i) {
-            y <- exonEnds[[i]]
-            if (reorder.exons.on.minus.strand && strand[i] == "-")
-                y <- rev(y)
-            paste(y, collapse=",")
-        })
-    data.frame(
-        name=names(x),
-        chrom=unname(chrom),
-        strand=unname(strand),
-        exonStarts=unname(exonStarts),
-        exonEnds=unname(exonEnds),
-        stringsAsFactors=FALSE
-    )   
+    exon_rank <- elementMetadata(x@unlistData)$exon_rank
+    if (is.null(exon_rank)) {
+        warning("GRangesList object has no \"exon_rank\" column --> ",
+                "inferring rank from exon position within GRanges")
+    } else {
+        if (!is.numeric(exon_rank))
+            stop("\"exon_rank\" column in GRangesList object is not numeric")
+        if (!is.integer(exon_rank)) {
+            warning("\"exon_rank\" column in GRangesList object is not integer")
+            exon_rank <- as.integer(exon_rank)
+        }
+        exon_rank <- unname(split(exon_rank, f))
+    }
+    exonStarts <- unname(split(start(x@unlistData), f))
+    exonEnds <- unname(split(end(x@unlistData), f))
+    if (!is.null(exon_rank) || reorder.exons.on.minus.strand) {
+        exonStarts <- sapply(seq_len(length(x)),
+            function(i) {
+                y <- exonStarts[[i]]
+                if (!is.null(exon_rank))
+                    y[exon_rank[[i]]] <- y
+                if (reorder.exons.on.minus.strand && strand[i] == "-")
+                    y <- rev(y)
+                y
+            })
+        exonEnds <- sapply(seq_len(length(x)),
+            function(i) {
+                y <- exonEnds[[i]]
+                if (!is.null(exon_rank))
+                    y[exon_rank[[i]]] <- y
+                if (reorder.exons.on.minus.strand && strand[i] == "-")
+                    y <- rev(y)
+                y
+            })
+    }
+    list(name=names(x),
+         chrom=chrom,
+         strand=strand,
+         exonStarts=exonStarts,
+         exonEnds=exonEnds)
 }
 
-.extractTranscriptsFromGenomeAndUCSCTxTable <- function(genome, ucsc_txtable,
-                                                    reorder.exons.on.minus.strand)
+.extractTranscriptsFromGenomeAndUCSCTxList <- function(genome, ucsc_txlist,
+                                                  reorder.exons.on.minus.strand)
 {
     ## The 3 lists below have identical shapes and names (names are the
     ## REFSEQnames).
-    strand_list <- split(ucsc_txtable$strand, ucsc_txtable$chrom, drop=TRUE)
-    exonStarts_list <- split(ucsc_txtable$exonStarts, ucsc_txtable$chrom, drop=TRUE)
-    exonEnds_list <- split(ucsc_txtable$exonEnds, ucsc_txtable$chrom, drop=TRUE)
+    strand_list <- split(ucsc_txlist$strand, ucsc_txlist$chrom, drop=TRUE)
+    exonStarts_list <- split(ucsc_txlist$exonStarts, ucsc_txlist$chrom, drop=TRUE)
+    exonEnds_list <- split(ucsc_txlist$exonEnds, ucsc_txlist$chrom, drop=TRUE)
     REFSEQnames <- names(strand_list)  # REFSEQnames has no duplicates
     extractTranscriptsFromREFSEQ <- function(REFSEQname)
     {
@@ -104,8 +145,8 @@
     ## transcripts.
     dnaset_list <- lapply(REFSEQnames, extractTranscriptsFromREFSEQ)
     ans <- unsplit.list.of.XStringSet("DNAStringSet", dnaset_list,
-                                      ucsc_txtable$chrom)
-    names(ans) <- ucsc_txtable$name
+                                      ucsc_txlist$chrom)
+    names(ans) <- ucsc_txlist$name
     ans
 }
 
@@ -118,22 +159,19 @@ extractTranscriptsFromGenome <- function(genome, txdb, use.tx_id=FALSE)
 {
     if (!is(genome, "BSgenome"))
         stop("'genome' must be a BSgenome object")
-    if (is(txdb, "TranscriptDb"))
-        txdb <- .exonsByTx(txdb, use.tx_id=use.tx_id)
-    if (is(txdb, "GRangesList")) {
-        ucsc_txtable <- .exonsByTxAsUCSCTxTable(txdb,
-                       reorder.exons.on.minus.strand=FALSE)
-        reorder.exons <- FALSE
-    } else if (is.data.frame(txdb)) {
-        REQUIRED_COLS <- c("name", "chrom", "strand", "exonStarts", "exonEnds")
-        if (!all(REQUIRED_COLS %in% names(txdb)))
-            stop("'txdb' data frame must have columns: ",
-                 paste(REQUIRED_COLS, collapse=", "))
-        ucsc_txtable <- txdb
+    if (is.data.frame(txdb)) {
+        ucsc_txlist <- .makeUCSCTxListFromUCSCTxTable(txdb)
         reorder.exons <- TRUE
     } else {
-        stop("'txdb' must be a TranscriptDb object or a data frame")
+        if (is(txdb, "TranscriptDb")) {
+            txdb <- .exonsByTx(txdb, use.tx_id=use.tx_id)
+        } else if (!is(txdb, "GRangesList"))
+            stop("'txdb' must be a TranscriptDb object, a GRangesList ",
+                 "object, or a data frame")
+        ucsc_txlist <- .makeUCSCTxListFromGRangesList(txdb,
+                           reorder.exons.on.minus.strand=FALSE)
+        reorder.exons <- FALSE
     }
-    .extractTranscriptsFromGenomeAndUCSCTxTable(genome, ucsc_txtable, reorder.exons)
+    .extractTranscriptsFromGenomeAndUCSCTxList(genome, ucsc_txlist, reorder.exons)
 }
 

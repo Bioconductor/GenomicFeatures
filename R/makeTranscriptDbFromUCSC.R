@@ -190,22 +190,6 @@ supportedUCSCtables <- function()
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extract the 'splicings' data frame from UCSC table.
 ###
-### Exon starts and ends are multi-valued fields (comma-separated) that
-### need to be expanded.
-
-.makeExonRank <- function(exonCount, exonStrand)
-{
-    ans <- lapply(seq_len(length(exonCount)),
-        function(i)
-        {
-            if (exonStrand[i] == "+")
-                seq_len(exonCount[i])
-            else
-                (exonCount[i]):1L
-        }
-    )
-    unlist(ans)
-}
 
 ### Returns a named list with 2 elements. Each element is itself a list of
 ### integer vectors with no NAs. The 2 elements have the same "shape".
@@ -327,7 +311,7 @@ supportedUCSCtables <- function()
         if (min(exon_count) <= 0L)
             stop("UCSC data anomaly: 'ucsc_txtable$exonCount' contains ",
                  "non-positive values")
-        exon_rank <- .makeExonRank(exon_count, ucsc_txtable$strand)
+        exon_rank <- makeExonRankCol(exon_count, ucsc_txtable$strand)
         exon_locs <- .extractExonLocsFromUCSCTxTable(ucsc_txtable,
                                                      check.exonCount=TRUE)
         cds_locs <- .extractCdsLocsFromUCSCTxTable(ucsc_txtable, exon_locs)

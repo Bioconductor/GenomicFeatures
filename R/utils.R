@@ -158,3 +158,25 @@ makeIdsForUniqueDataFrameRows <- function(x)
     as.integer(factor(prov_ids, levels=unique(prov_ids)))
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Miscellaneous (NOT exported).
+###
+
+### 'exon_count' must be a vector of positive integers and 'tx_strand' a
+### character vector with "+" or "-" values. Both vectors must have the
+### same length.
+makeExonRankCol <- function(exon_count, tx_strand)
+{
+    ans <- lapply(seq_len(length(exon_count)),
+        function(i)
+        {
+            if (tx_strand[i] == "+")
+                seq_len(exon_count[i])
+            else
+                (exon_count[i]):1L
+        }
+    )
+    unlist(ans)
+}
+
