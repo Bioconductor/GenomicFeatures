@@ -209,18 +209,27 @@ supportedUCSCtables <- function()
 
 ### Returns a named list with 2 elements. Each element is itself a list of
 ### integer vectors with no NAs. The 2 elements have the same "shape".
-.extractExonLocsFromUCSCTxTable <- function(ucsc_txtable)
-{
+.extractExonLocsFromUCSCTxTable <- function(ucsc_txtable, check.exonCount=FALSE)
+{ 
     exon_count <- ucsc_txtable$exonCount
+    if (is.null(exon_count) && check.exonCount)
+        stop("UCSC data anomaly: 'ucsc_txtable' has no \"exonCount\" column")
     exon_start <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonStarts)
-    if (!identical(elementLengths(exon_start), exon_count))
-        stop("UCSC data anomaly: 'ucsc_txtable$exonStarts' ",
-             "inconsistent with 'ucsc_txtable$exonCount'")
     exon_end <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonEnds)
-    if (!identical(elementLengths(exon_end), exon_count))
-        stop("UCSC data anomaly: 'ucsc_txtable$exonEnds' ",
-             "inconsistent with 'ucsc_txtable$exonCount'")
-    return(list(start=exon_start, end=exon_end))
+    if (is.null(exon_count)) {
+        if (!identical(elementLengths(exon_start),
+                       elementLengths(exon_end)))
+            stop("UCSC data anomaly: shape of 'ucsc_txtable$exonStarts' ",
+                 "and 'ucsc_txtable$exonEnds' differ")
+    } else {
+        if (!identical(elementLengths(exon_start), exon_count))
+            stop("UCSC data anomaly: 'ucsc_txtable$exonStarts' ",
+                 "inconsistent with 'ucsc_txtable$exonCount'")
+        if (!identical(elementLengths(exon_end), exon_count))
+            stop("UCSC data anomaly: 'ucsc_txtable$exonEnds' ",
+                 "inconsistent with 'ucsc_txtable$exonCount'")
+    }
+    list(start=exon_start, end=exon_end)
 }
 
 ### 'cdsStart0', 'cdsEnd1': single integers (resp. 0-based and 1-based).
@@ -304,7 +313,7 @@ supportedUCSCtables <- function()
         cds_start[[i]] <- startend[[1L]]
         cds_end[[i]] <- startend[[2L]]
     }
-    return(list(start=cds_start, end=cds_end))
+    list(start=cds_start, end=cds_end)
 }
 
 .extractSplicingsFromUCSCTxTable <- function(ucsc_txtable, transcripts_tx_id)
@@ -319,7 +328,8 @@ supportedUCSCtables <- function()
             stop("UCSC data anomaly: 'ucsc_txtable$exonCount' contains ",
                  "non-positive values")
         exon_rank <- .makeExonRank(exon_count, ucsc_txtable$strand)
-        exon_locs <- .extractExonLocsFromUCSCTxTable(ucsc_txtable)
+        exon_locs <- .extractExonLocsFromUCSCTxTable(ucsc_txtable,
+                                                     check.exonCount=TRUE)
         cds_locs <- .extractCdsLocsFromUCSCTxTable(ucsc_txtable, exon_locs)
         exon_start <- unlist(exon_locs$start) + 1L
         exon_end <- unlist(exon_locs$end)
