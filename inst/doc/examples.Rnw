@@ -30,7 +30,7 @@ document the capabilities with specific examples.
 
 In general, when you want to get some data from UCSC, you will want to 1st
 make a session.  The most common thing is that you will want a session with
-the UCSC genome browser, so this is the default behavior.
+the UCSC Genome Browser, so this is the default behavior.
 
 <<SetUp Session>>=
 library(rtracklayer)

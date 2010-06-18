@@ -347,10 +347,10 @@ supportedUCSCtables <- function()
 ### Download and preprocess the 'chrominfo' data frame.
 ###
 
-.downloadChromInfoFromUCSC <- function(genome)
+.downloadChromInfoFromUCSC <- function(genome,
+        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
-    url <- paste("http://hgdownload.cse.ucsc.edu/goldenPath/", genome,
-                 "/database/chromInfo.txt.gz", sep="")
+    url <- paste(goldenPath_url, genome, "database/chromInfo.txt.gz", sep="/")
     destfile <- tempfile()
     download.file(url, destfile, quiet=TRUE)
     colnames <- c("chrom", "size", "fileName")
@@ -359,9 +359,10 @@ supportedUCSCtables <- function()
     ans
 }
 
-.makeUCSCChrominfo <- function(genome)
+.makeUCSCChrominfo <- function(genome,
+        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
-    ucsc_chrominfotable <- .downloadChromInfoFromUCSC(genome)
+    ucsc_chrominfotable <- .downloadChromInfoFromUCSC(genome, goldenPath_url)
     COL2CLASS <- c(
         chrom="character",
         size="integer"
@@ -397,8 +398,9 @@ supportedUCSCtables <- function()
 ###
 
 .makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes,
-                                             genome, tablename, gene_id_type,
-                                             full_dataset)
+        genome, tablename, gene_id_type,
+        full_dataset,
+        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
     COL2CLASS <- c(
         name="character",
@@ -419,7 +421,7 @@ supportedUCSCtables <- function()
     splicings <- .extractSplicingsFromUCSCTxTable(ucsc_txtable,
                                                   transcripts$tx_id)
     genes <- .makeUCSCGenes(genes, ucsc_txtable)
-    chrominfo <- .makeUCSCChrominfo(genome)
+    chrominfo <- .makeUCSCChrominfo(genome, goldenPath_url)
     metadata <- .makeUCSCMetadata(genome, tablename, gene_id_type, full_dataset)
 
     ## Call makeTranscriptDb().
@@ -436,8 +438,10 @@ supportedUCSCtables <- function()
 ###       (1) download takes about 40-50 sec.
 ###       (2) db creation takes about 30-35 sec.
 makeTranscriptDbFromUCSC <- function(genome="hg18",
-                                     tablename="knownGene",
-                                     transcript_ids=NULL)
+        tablename="knownGene",
+        transcript_ids=NULL,
+        url="http://genome.ucsc.edu/cgi-bin/",
+        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
@@ -450,7 +454,11 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
         if (!is.character(transcript_ids) || any(is.na(transcript_ids)))
             stop("'transcript_ids' must be a character vector with no NAs")
     }
-    session <- browserSession()
+    if (!isSingleString(url))
+        stop("'url' must be a single string")
+    if (!isSingleString(goldenPath_url))
+        stop("'goldenPath_url' must be a single string")
+    session <- browserSession(url=url)
     genome(session) <- genome
 
     ## Download the transcript table.
@@ -465,6 +473,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
     .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, txname2geneid$genes,
                                      genome, tablename,
                                      txname2geneid$gene_id_type,
-                                     full_dataset=is.null(transcript_ids))
+                                     full_dataset=is.null(transcript_ids),
+                                     goldenPath_url=goldenPath_url)
 }
 

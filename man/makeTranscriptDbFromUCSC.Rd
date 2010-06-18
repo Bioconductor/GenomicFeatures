@@ -5,18 +5,22 @@
 
 \title{
   Making a TranscriptDb object from annotations available at the
-  UCSC genome browser
+  UCSC Genome Browser
 }
 \description{
   The \code{makeTranscriptDbFromUCSC} function allows the user
   to make a \link{TranscriptDb} object from transcript annotations
-  available at the UCSC genome browser.
+  available at the UCSC Genome Browser.
 }
 \usage{
-  supportedUCSCtables()
-  makeTranscriptDbFromUCSC(genome="hg18",
-                           tablename="knownGene",
-                           transcript_ids=NULL)
+supportedUCSCtables()
+
+makeTranscriptDbFromUCSC(
+        genome="hg18",
+        tablename="knownGene",
+        transcript_ids=NULL,
+        url="http://genome.ucsc.edu/cgi-bin/",
+        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 }
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
@@ -31,6 +35,8 @@
     If this is used, then the meta information displayed for the
     resulting \link{TranscriptDb} object will say 'Full dataset: no'.
     Otherwise it will say 'Full dataset: yes'.}
+  \item{url,goldenPath_url}{use to specify the location of an
+    alternate UCSC Genome Browser.}
 }
 \details{
   \code{makeTranscriptDbFromUCSC} is a convenience function that feeds
