@@ -510,10 +510,36 @@ getMartAttribList <- function(mart)
     for (i in seq_len(ans_length)) {
         dataset <- names(ans)[i]
         mart <- useDataset(dataset, mart=mart)
-        message("Getting attributes for dataset \"", dataset, "\":")
+        message("Getting attributes for dataset \"", dataset, "\"... ",
+                appendLF=FALSE)
         ans[[i]] <- listAttributes(mart)
+        message("OK")
     }
     ans
+}
+
+### 'biomart' and 'version' must be single character strings.
+scanMart <- function(biomart, version)
+{
+    cat("Scanning ", biomart, "... ", sep="")
+    suppressMessages(attrgroups <- getAllDatasetAttrGroups(biomart))
+    cat("OK\n")
+    cat("biomart: ", biomart, "\n", sep="")
+    cat("version: ", version, "\n", sep="")
+    tmp <- names(attrgroups)
+    if (length(tmp) > 3L)
+        tmp <- c(tmp[1:3], "...")
+    cat("nb of datasets: ", length(attrgroups),
+        " (", paste(tmp, collapse=", "), ")\n",
+        sep="")
+    if (length(attrgroups) != 0L) {
+        tbl <- table(attrgroups)
+        tbl2 <- as.integer(tbl)
+        names(tbl2) <- names(tbl)
+        tmp <- paste(names(tbl2), ":", tbl2, sep="", collapse=", ")
+        cat("table of attribute groups: ", tmp, "\n", sep="")
+    }
+    cat("\n")
 }
 
 scanMarts <- function(marts=NULL)
@@ -522,63 +548,46 @@ scanMarts <- function(marts=NULL)
         marts <- listMarts()
     biomarts <- as.character(marts$biomart)
     versions <- as.character(marts$version)
-    for (i in seq_len(nrow(marts))) {
-        biomart <- biomarts[i]
-        version <- versions[i]
-        cat("Scanning ", biomart, "...", sep="")
-        suppressMessages(attrgroups <- getAllDatasetAttrGroups(biomart))
-        cat("OK\n")
-        cat("biomart: ", biomart, "\n", sep="")
-        cat("version: ", version, "\n", sep="")
-        tmp <- names(attrgroups)
-        if (length(tmp) > 3L)
-            tmp <- c(tmp[1:3], "...")
-        cat("nb of datasets: ", length(attrgroups),
-            " (", paste(tmp, collapse=", "), ")\n",
-            sep="")
-        tbl <- table(attrgroups)
-        tbl2 <- as.integer(tbl)
-        names(tbl2) <- names(tbl)
-        tmp <- paste(names(tbl2), ":", tbl2, sep="", collapse=", ")
-        cat("table of attribute groups: ", tmp, "\n", sep="")
-    }
+    for (i in seq_len(nrow(marts)))
+        scanMart(biomarts[i], versions[i])
 }
 
-### scanMarts() output as of 3/22/2010 (biomarts with no compatible attribute
-### groups were removed):
+### scanMarts() output as of 6/28/2010 (only biomarts with at least groups
+### A and G are listed):
 ###
 ### biomart: ensembl
-### version: ENSEMBL GENES 57 (SANGER UK)
+### version: ENSEMBL GENES 58 (SANGER UK)
 ### nb of datasets: 51 (hsapiens_gene_ensembl, oanatinus_gene_ensembl,
 ###                     tguttata_gene_ensembl, cporcellus_gene_ensembl, ...)
-### table of attribute groups: ABCDG:51
+### NOTE: the mgallopavo_gene_ensembl dataset seems to be broken!
+### table of attribute groups: ABCDG:50
 ###
-### biomart: bacterial_mart_4
-### version: ENSEMBL BACTERIA 4 (EBI UK)
-### nb of datasets: 176 (str_57_gene, esc_20_gene, myc_25994_gene, ...)
-### table of attribute groups: ABG:176 
+### biomart: bacterial_mart_5
+### version: ENSEMBL BACTERIA 5 (EBI UK)
+### nb of datasets: 183 (str_57_gene, esc_20_gene, myc_25994_gene, ...)
+### table of attribute groups: ABG:183
 ###
-### biomart: fungal_mart_4
-### version: ENSEMBL FUNGAL 4 (EBI UK)
-### nb of datasets: 11 (aniger_eg_gene, aflavus_eg_gene, aterreus_eg_gene, ...)
-### table of attribute groups: ABG:11 
+### biomart: fungal_mart_5
+### version: ENSEMBL FUNGAL 5 (EBI UK)
+### nb of datasets: 12 (aniger_eg_gene, aflavus_eg_gene, aterreus_eg_gene, ...)
+### table of attribute groups: ABG:12 
 ###
-### biomart: metazoa_mart_4
-### version: ENSEMBL METAZOA 4 (EBI UK)
-### nb of datasets: 22 (dgrimshawi_eg_gene, dpseudoobscura_eg_gene,
-###                     dsechellia_eg_gene, ...)
-### table of attribute groups: ABG:22 
+### biomart: metazoa_mart_5
+### version: ENSEMBL METAZOA 5 (EBI UK)
+### nb of datasets: 23 (dgrimshawi_eg_gene, ppacificus_eg_gene,
+###                     dpseudoobscura_eg_gene, ...)
+### table of attribute groups: ABG:23
 ###
-### biomart: plant_mart_4
-### version: ENSEMBL PLANT 4 (EBI UK)
+### biomart: plant_mart_5
+### version: ENSEMBL PLANT 5 (EBI UK)
 ### nb of datasets: 8 (sbicolor_eg_gene, bdistachyon_eg_gene,
 ###                    alyrata_eg_gene, ...)
 ### table of attribute groups: ABG:8 
 ###
-### biomart: protist_mart_4
-### version: ENSEMBL PROTISTS 4 (EBI UK)
-### nb of datasets: 4 (pknowlesi_gene, pvivax_gene, pfalciparum_gene, ...)
-### table of attribute groups: ABG:4 
+### biomart: protist_mart_5
+### version: ENSEMBL PROTISTS 5 (EBI UK)
+### nb of datasets: 6 (tpseudonana_gene, ptricornutum_gene, pknowlesi_gene, ...)
+### table of attribute groups: ABG:6
 ###
 ### biomart: ensembl_expressionmart_48
 ### version: EURATMART (EBI UK)
@@ -587,6 +596,12 @@ scanMarts <- function(marts=NULL)
 ###
 ### biomart: Ensembl56
 ### version: PANCREATIC EXPRESSION DATABASE (INSTITUTE OF CANCER UK)
-### nb of datasets: 1 (hsapiens_gene_pancreas, NA, NA, ...)
+### nb of datasets: 1 (hsapiens_gene_pancreas)
 ### table of attribute groups: ABCDG:1
+###
+### biomart: ENSEMBL_MART_ENSEMBL
+### version: GRAMENE 30 ENSEMBL GENES (CSHL/CORNELL US)
+### nb of datasets: 8 (sbicolor_eg_gene, bdistachyon_eg_gene,
+###                    alyrata_eg_gene, ...)
+### table of attribute groups: ABG:8
 
