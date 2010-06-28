@@ -409,29 +409,37 @@ getAllDatasetAttrGroups <- function(attrlist)
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
     biomart <- biomaRt:::martBM(mart)
+    marts <- listMarts()
+    mart_rowidx <- which(as.character(marts$biomart) == biomart)
+    ## This should never happen.
+    if (length(mart_rowidx) != 1L)
+        stop("found 0 or more than 1 \"", biomart, "\" BioMart database")
+    db_version <- as.character(marts$version)[mart_rowidx]
     dataset <- biomaRt:::martDataset(mart)
     datasets <- listDatasets(mart)
-    dataset_row <- which(as.character(datasets$dataset) == dataset)
+    dataset_rowidx <- which(as.character(datasets$dataset) == dataset)
     ## This should never happen (the above call to useMart() would have failed
     ## in the first place).
-    if (length(dataset_row) != 1L)
-        stop("the BioMart database \"", biomart, "\" has 0 (or ",
-             "more than 1) \"", dataset, "\" datasets")
-    description <- as.character(datasets$description)[dataset_row]
-    version <- as.character(datasets$version)[dataset_row]
+    if (length(dataset_rowidx) != 1L)
+        stop("the BioMart database \"", biomart, "\" has no (or ",
+             "more than one) \"", dataset, "\" datasets")
+    description <- as.character(datasets$description)[dataset_rowidx]
+    dataset_version <- as.character(datasets$version)[dataset_rowidx]
     message("OK")
     data.frame(
         name=c("Data source",
                "BioMart database",
+               "BioMart database version",
                "BioMart dataset",
                "BioMart dataset description",
                "BioMart dataset version",
                "Full dataset"),
         value=c("BioMart",
                 biomart,
+                db_version,
                 dataset,
                 description,
-                version,
+                dataset_version,
                 ifelse(is_full_dataset, "yes", "no"))
     )
 }
