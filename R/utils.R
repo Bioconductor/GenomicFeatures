@@ -15,8 +15,8 @@
 {
     if (!file.exists(dbfile))
         stop("DB file '", dbfile, "' not found")
-    #library(RSQLite)
-    dbConnect(SQLite(), dbname=dbfile, cache_size=64000, synchronous=0)
+    dbConnect(SQLite(), dbname=dbfile, cache_size=64000, synchronous=0,
+              flags=SQLITE_RO)
 }
 
 get_dbfile <- function(libname, pkgname)
@@ -179,4 +179,3 @@ makeExonRankCol <- function(exon_count, tx_strand)
     )
     unlist(ans)
 }
-
