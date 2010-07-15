@@ -1,3 +1,5 @@
+###
+
 test_transcripts <- function()
 {
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
@@ -31,6 +33,27 @@ test_transcripts <- function()
       IntegerList("3"=c(8,7,6,5), "15"=c(79,78,77))
     checkIdentical(want,
                    transcripts(txdb, vals, columns = c("tx_id","tx_name","exon_id")))
+
+    got <- transcripts(txdb, vals=list(gene_id=c("3081", "9501")),
+                             columns=c("tx_id", "tx_name", "gene_id"))
+
+    tx_id_col <- c(58:60, 83:84)
+    gene_id_col <- CharacterList(as.list(c(rep.int("9501", 3),
+                                           rep.int("3081", 2))))
+    names(gene_id_col) <- tx_id_col
+    want <- GRanges(seqnames = factor(c(rep.int("chr17", 3),
+                                        rep.int("chr3_random", 2)),
+                                      levels = seqlevels),
+                    ranges = IRanges(
+                               start=c(rep.int(62294, 3), 18988, 49418),
+                               end=c(177378, 202576, 202576, 73308, 73308)),
+                    strand = strand(c("-", "-", "-", "+", "+")),
+                    tx_id = tx_id_col,
+                    tx_name = c("uc002frd.1", "uc002fre.1", "uc002frf.1",
+                                "uc003fzi.1", "uc003fzj.1"),
+                    gene_id = gene_id_col,
+                    seqlengths = seqlengths)
+    checkIdentical(got, want)
 }
 
 test_exons <- function()

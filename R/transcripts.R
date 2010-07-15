@@ -1,4 +1,4 @@
-## convert a named list into a SQL where condition
+## convert a named list into an SQL where condition
 .sqlWhereIn <- function(vals)
 {
   if (length(vals) == 0) {
@@ -34,7 +34,7 @@
   ans[["_tx_id"]] <-
     factor(as.character(ans[["_tx_id"]]), levels=as.character(tx_ids))
   ans <- ans[order(ans[["_tx_id"]]), ,drop=FALSE]
-  .newListBySplit("CompressedCharacterList", ans[["gene_id"]], ans[["_tx_id"]])
+  unname(.newListBySplit("CompressedCharacterList", ans[["gene_id"]], ans[["_tx_id"]]))
 }
 
 .exonORcdsIntegerList <- function(txdb, tx_ids, type=c("exon", "cds"))
@@ -84,14 +84,17 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
   }
 
   ## create SQL query
-  optionalColumns <- intersect("tx_name", columns)
   if ("tx_name" %in% columns)
     optionalColumn <- ", tx_name"
   else
     optionalColumn <- ""
+  if ("gene_id" %in% names(vals))
+    optionalLeftJoin <- "LEFT JOIN gene ON transcript._tx_id=gene._tx_id"
+  else
+    optionalLeftJoin <- ""
   sql <- paste("SELECT tx_chrom, tx_start, tx_end, tx_strand,",
                "transcript._tx_id AS tx_id", optionalColumn,
-               "FROM transcript",
+               "FROM transcript", optionalLeftJoin,
                .sqlWhereIn(vals),
                "ORDER BY tx_chrom, tx_strand, tx_start, tx_end")
 
