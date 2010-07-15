@@ -298,18 +298,10 @@
         "  chrom TEXT UNIQUE NOT NULL,\n",
         "  length INTEGER NULL\n",
         ")")
-    res <- dbSendQuery(conn, paste(sql, collapse=""))
-    dbClearResult(res)
+    dbEasyQuery(conn, paste(sql, collapse=""))
     ## Fill the 'chrominfo' table.
-    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
-    ## when the nb of rows to insert is 0, hence the following test.
-    if (nrow(table) != 0L) {
-        sql <- "INSERT INTO chrominfo VALUES (?,?,?)"
-        dbBeginTransaction(conn)
-        res <- dbSendPreparedQuery(conn, sql, table)
-        dbClearResult(res)
-        dbCommit(conn)
-    }
+    sql <- "INSERT INTO chrominfo VALUES (?,?,?)"
+    dbEasyPreparedQuery(conn, sql, table)
 }
 
 .writeFeatureTable <- function(conn,
@@ -348,20 +340,11 @@
         "  ", colnames[6L], " INTEGER NOT NULL,\n",
         "  FOREIGN KEY (", colnames[3L], ") REFERENCES chrominfo (chrom)\n",
         ")")
-    res <- dbSendQuery(conn, paste(sql, collapse=""))
-    dbClearResult(res)
+    dbEasyQuery(conn, paste(sql, collapse=""))
 
     ## Fill the '<tablename>' table.
-    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
-    ## when the nb of rows to insert is 0, hence the following test.
-    if (nrow(table) != 0L) {
-        sql <- c("INSERT INTO ", tablename, " VALUES (?,?,?,?,?,?)")
-        dbBeginTransaction(conn)
-        res <- dbSendPreparedQuery(conn, paste(sql, collapse=""),
-                                   table)
-        dbClearResult(res)
-        dbCommit(conn)
-    }
+    sql <- c("INSERT INTO ", tablename, " VALUES (?,?,?,?,?,?)")
+    dbEasyPreparedQuery(conn, paste(sql, collapse=""), table)
 }
 
 .writeSplicingTable <- function(conn,
@@ -390,27 +373,18 @@
         "  FOREIGN KEY (_exon_id) REFERENCES exon,\n",
         "  FOREIGN KEY (_cds_id) REFERENCES cds\n",
         ")")
-    res <- dbSendQuery(conn, paste(sql, collapse=""))
-    dbClearResult(res)
+    dbEasyQuery(conn, paste(sql, collapse=""))
     sql <- c(
         "CREATE INDEX F_tx_id ON splicing (_tx_id);\n",
         "CREATE INDEX F_exon_id ON splicing (_exon_id);\n",
         "CREATE INDEX F_cds_id ON splicing (_cds_id)"
     )
     #Temporarily droped the indices.
-    #res <- dbSendQuery(conn, paste(sql, collapse=""))
-    #dbClearResult(res)
+    #dbEasyQuery(conn, paste(sql, collapse=""))
 
     ## Fill the 'splicing' table.
-    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
-    ## when the nb of rows to insert is 0, hence the following test.
-    if (nrow(table) != 0L) {
-        sql <- "INSERT INTO splicing VALUES (?,?,?,?)"
-        dbBeginTransaction(conn)
-        res <- dbSendPreparedQuery(conn, sql, table)
-        dbClearResult(res)
-        dbCommit(conn)
-    }
+    sql <- "INSERT INTO splicing VALUES (?,?,?,?)"
+    dbEasyPreparedQuery(conn, sql, table)
 }
 
 .writeGeneTable <- function(conn, gene_id, internal_tx_id)
@@ -429,25 +403,18 @@
         "  UNIQUE (gene_id, _tx_id),\n",
         "  FOREIGN KEY (_tx_id) REFERENCES transcript\n",
         ")")
-    res <- dbSendQuery(conn, paste(sql, collapse=""))
-    dbClearResult(res)
+    dbEasyQuery(conn, paste(sql, collapse=""))
     ## Fill the 'gene' table.
-    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
-    ## when the nb of rows to insert is 0, hence the following test.
-    if (nrow(table) != 0L) {
-        sql <- "INSERT INTO gene VALUES (?,?)"
-        dbBeginTransaction(conn)
-        res <- dbSendPreparedQuery(conn, sql, table)
-        dbClearResult(res)
-        dbCommit(conn)
-    }
+    sql <- "INSERT INTO gene VALUES (?,?)"
+    dbEasyPreparedQuery(conn, sql, table)
 }
 
 .writeMetadataTable <- function(conn, metadata)
 {
-    transcript_nrow <- dbGetQuery(conn, "SELECT COUNT(*) FROM transcript")[[1L]]
-    exon_nrow <- dbGetQuery(conn, "SELECT COUNT(*) FROM exon")[[1L]]
-    cds_nrow <- dbGetQuery(conn, "SELECT COUNT(*) FROM cds")[[1L]]
+    transcript_nrow <- dbEasyQuery(conn,
+                           "SELECT COUNT(*) FROM transcript")[[1L]]
+    exon_nrow <- dbEasyQuery(conn, "SELECT COUNT(*) FROM exon")[[1L]]
+    cds_nrow <- dbEasyQuery(conn, "SELECT COUNT(*) FROM cds")[[1L]]
     thispkg_version <- installed.packages()['GenomicFeatures', 'Version']
     rsqlite_version <- installed.packages()['RSQLite', 'Version']
     mat1 <- matrix(c(

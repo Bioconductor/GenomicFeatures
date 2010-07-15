@@ -39,7 +39,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
     if (!tmp)
         return(paste("the DB has no ", tablename, " table", sep=""))
     sql0 <- paste("SELECT * FROM ", tablename, " LIMIT 0", sep="")
-    data0 <- dbGetQuery(conn, sql0)
+    data0 <- dbEasyQuery(conn, sql0)
     colnames0 <- colnames(data0)
     if (!all(colnames %in% colnames0)) {
         msg <- paste("the ", tablename, " table in the DB doesn't have ",
@@ -59,7 +59,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
         return(msg)
     sql <- paste("SELECT * FROM metadata",
                  " WHERE name = '", DB_TYPE_NAME, "'", sep="")
-    data <- dbGetQuery(conn, sql)
+    data <- dbEasyQuery(conn, sql)
     if (nrow(data) != 1L) {
         msg <- paste("the metadata table in the DB has 0 or more ",
                      "than 1 '", DB_TYPE_NAME, "' entries", sep="")
@@ -195,7 +195,7 @@ loadFeatures <- function(file)
 .getChromInfo <- function(x)
 {
     sql <- "SELECT chrom, length FROM chrominfo ORDER BY _chrom_id"
-    dbGetQuery(txdbConn(x), sql)
+    dbEasyQuery(txdbConn(x), sql)
 }
 
 setMethod("seqnames", "TranscriptDb",
@@ -251,7 +251,7 @@ setMethod("as.list", "TranscriptDb",
         sql <- paste("SELECT transcript._tx_id AS tx_id, tx_name,",
                      "tx_chrom, tx_strand, tx_start, tx_end FROM transcript",
                      ORDER_BY)
-        transcripts <- dbGetQuery(txdbConn(x), sql)
+        transcripts <- dbEasyQuery(txdbConn(x), sql)
         COL2CLASS <- c(
              tx_id="integer",
              tx_name="character",
@@ -278,7 +278,7 @@ setMethod("as.list", "TranscriptDb",
             "LEFT JOIN cds",
             "ON (splicing._cds_id=cds._cds_id)",
             ORDER_BY, ", exon_rank")
-        splicings <- dbGetQuery(txdbConn(x), sql)
+        splicings <- dbEasyQuery(txdbConn(x), sql)
         COL2CLASS <- c(
              tx_id="integer",
              exon_rank="integer",
@@ -302,7 +302,7 @@ setMethod("as.list", "TranscriptDb",
             "INNER JOIN gene",
             "ON (transcript._tx_id=gene._tx_id)",
             ORDER_BY, ", gene_id")
-        genes <- dbGetQuery(txdbConn(x), sql)
+        genes <- dbEasyQuery(txdbConn(x), sql)
         COL2CLASS <- c(
              tx_id="integer",
              gene_id="character"

@@ -30,7 +30,7 @@
   sqlIDs <- paste("(", paste(tx_ids, collapse=","), ")", sep="")
   sql <- paste("SELECT gene_id, _tx_id FROM gene WHERE _tx_id IN ", sqlIDs,
                sep="")
-  ans <- dbGetQuery(txdbConn(txdb), sql)
+  ans <- dbEasyQuery(txdbConn(txdb), sql)
   ans[["_tx_id"]] <-
     factor(as.character(ans[["_tx_id"]]), levels=as.character(tx_ids))
   ans <- ans[order(ans[["_tx_id"]]), ,drop=FALSE]
@@ -44,7 +44,7 @@
   sqlIDs <- paste("(", paste(tx_ids, collapse=","), ")", sep="")
   sql <- paste("SELECT _tx_id, exon_rank, ", type_id, " ",
                "FROM splicing WHERE _tx_id IN ", sqlIDs, sep="")
-  ans <- dbGetQuery(txdbConn(txdb), sql)
+  ans <- dbEasyQuery(txdbConn(txdb), sql)
   ans[["_tx_id"]] <-
     factor(as.character(ans[["_tx_id"]]), levels=as.character(tx_ids))
   ans <- ans[order(ans[["_tx_id"]], ans[["exon_rank"]]), ,drop=FALSE]
@@ -99,7 +99,7 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
     cat("SQL QUERY: ", sql, "\n\n", sep = "")
 
   ## get the data from the database
-  ans <- dbGetQuery(txdbConn(txdb), sql)
+  ans <- dbEasyQuery(txdbConn(txdb), sql)
   seqlengths <- seqlengths(txdb)
   ans <-
     GRanges(seqnames = factor(ans[["tx_chrom"]], levels = names(seqlengths)),
@@ -167,7 +167,7 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
     cat("SQL QUERY: ", sql, "\n\n", sep = "")
 
   ## get the data from the database
-  ans <- dbGetQuery(txdbConn(txdb), sql)
+  ans <- dbEasyQuery(txdbConn(txdb), sql)
   seqlengths <- seqlengths(txdb)
   ans <-
     GRanges(seqnames =

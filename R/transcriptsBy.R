@@ -62,7 +62,7 @@
         cat("SQL QUERY: ", sql, "\n\n", sep = "")
 
     ## get the data from the database
-    ans <- dbGetQuery(txdbConn(txdb), sql)
+    ans <- dbEasyQuery(txdbConn(txdb), sql)
 
     ## create the GRanges object
     cols <- gsub("TYPE", type, c("TYPE_id", "TYPE_name"))
@@ -165,7 +165,7 @@ intronsByTranscript <- function(txdb)
         " LEFT JOIN cds",
         "  ON (cds_id=cds._cds_id)",
         ORDER_BY, ", exon_rank")
-    ans <- dbGetQuery(txdbConn(txdb), sql)
+    ans <- dbEasyQuery(txdbConn(txdb), sql)
     if (translated.transcripts.only) {
         ids <- unique(ans$tx_id[!is.na(ans$cds_id)])
         ans <- ans[ans$tx_id %in% ids, ]

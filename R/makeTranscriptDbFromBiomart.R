@@ -404,7 +404,7 @@ getAllDatasetAttrGroups <- function(attrlist)
 ### Prepare the 'metadata' data frame.
 ###
 
-.makeBiomartMetadata <- function(mart, is_full_dataset)
+.prepareBiomartMetadata <- function(mart, is_full_dataset)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
@@ -485,7 +485,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     splicings <- .makeBiomartSplicings(filters, values, mart,
                                        transcripts$tx_name)
     genes <- .makeBiomartGenes(filters, values, mart, transcripts$tx_name)
-    metadata <- .makeBiomartMetadata(mart, is.null(transcript_ids))
+    metadata <- .prepareBiomartMetadata(mart, is.null(transcript_ids))
 
     message("Make the TranscriptDb object ... ", appendLF=FALSE)
     txdb <- makeTranscriptDb(transcripts, splicings,

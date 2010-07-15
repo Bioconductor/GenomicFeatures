@@ -6,11 +6,72 @@
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### DB related.
 ###
-### NOT exported (to avoid collisions with AnnotationDbi).
+### Most of this stuff was copy/pasted from AnnotationDbi (trying to avoid
+### depending on AnnotationDbi for now).
+### It is NOT exported (to avoid collisions with AnnotationDbi).
 ###
 
-### Taken from AnnotationDbi (trying to avoid depending on AnnotationDbi
-### for now).
+### Environment for storing run-time objects
+RTobjs <- new.env(hash=TRUE, parent=emptyenv())
+
+assign("debugSQL", FALSE, envir=RTobjs)
+
+debugSQL <- function()
+{
+    debugSQL <- !get("debugSQL", envir=RTobjs)
+    assign("debugSQL", debugSQL, envir=RTobjs)
+    debugSQL
+}
+
+### Use dbQuery(conn, SQL, 1) instead of dbQuery(conn, SQL)[[1]],
+### it's much safer!
+dbEasyQuery <- function(conn, SQL, j0=NA)
+{
+    if (get("debugSQL", envir=RTobjs)) {
+        if (!is.character(SQL) || length(SQL) != 1L || is.na(SQL))
+            stop("[debugSQL] 'SQL' must be a single string")
+        cat("[debugSQL] SQL query: ", SQL, "\n", sep="")
+        st <- system.time(data0 <- dbGetQuery(conn, SQL))
+        cat("[debugSQL]      time: ", st["user.self"], " seconds\n", sep="")
+    } else {
+        data0 <- dbGetQuery(conn, SQL)
+    }
+    if (is.na(j0))
+        return(data0)
+    ## Needed to deal properly with data frame with 0 column ("NULL data
+    ## frames with 0 rows") returned by RSQLite when the result of a SELECT
+    ## query has 0 row
+    if (nrow(data0) == 0L)
+        character(0)
+    else
+        data0[[j0]]
+}
+
+dbEasyPreparedQuery <- function(conn, SQL, bind.data)
+{
+    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
+    ## when the nb of rows to insert is 0, hence the early bail out.
+    if (nrow(bind.data) == 0L)
+        return()
+    if (get("debugSQL", envir=RTobjs)) {
+        if (!is.character(SQL) || length(SQL) != 1L || is.na(SQL))
+            stop("[debugSQL] 'SQL' must be a single string")
+        cat("[debugSQL] SQL prepared query: ", SQL, "\n", sep="")
+        cat("[debugSQL]     dim(bind.data): ",
+            paste(dim(bind.data), collapse=" x "), "\n", sep="")
+        st <- system.time({
+                  dbBeginTransaction(conn)
+                  dbGetPreparedQuery(conn, SQL, bind.data)
+                  dbCommit(conn)})
+        cat("[debugSQL]               time: ", st["user.self"],
+            " seconds\n", sep="")
+    } else {
+        dbBeginTransaction(conn)
+        dbGetPreparedQuery(conn, SQL, bind.data)
+        dbCommit(conn)
+    }
+}
+
 .dbFileConnect <- function(dbfile)
 {
     if (!file.exists(dbfile))
@@ -121,11 +182,15 @@ joinDataFrameWithName2Val <- function(x, join_colname, name2val, vals_colname)
         stop("'name2val' must be atomic and have names")
     if (!isSingleString(vals_colname))
         stop("invalid 'vals_colname'")
+    join_col <- as.character(x[[join_colname]])
+    common_names <- intersect(join_col, names(name2val))
+    name2val <- name2val[names(name2val) %in% common_names]
+    x <- x[join_col %in% common_names, ]
     tmp <- split(as.vector(name2val), names(name2val))
-    ## as.vector() is required below just because 'x[[join_colname]]' could
-    ## be a factor (subsetting by a factor is equivalent to subsetting by
-    ## an integer vector but this is not what we want here).
-    tmp <- tmp[as.vector(x[[join_colname]])]
+    ## as.character() is required below just because 'x[[join_colname]]'
+    ## could be a factor (subsetting by a factor is equivalent to subsetting
+    ## by an integer vector but this is not what we want here).
+    tmp <- tmp[as.character(x[[join_colname]])]
     x <- x[rep.int(seq_len(nrow(x)), elementLengths(tmp)), ]
     row.names(x) <- NULL
     if (nrow(x) == 0L)

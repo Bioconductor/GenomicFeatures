@@ -144,8 +144,10 @@ supportedUCSCtables <- function()
         tablename <- L2Rlink[["tablename"]]
         Lcolname <- L2Rlink[["Lcolname"]]
         Rcolname <- L2Rlink[["Rcolname"]]
+        message("Download the ", tablename, " table ... ", appendLF=FALSE)
         query <- ucscTableQuery(session, track, table=tablename)
         ucsc_table <- getTable(query)
+        message("OK")
         if (!all(hasCol(ucsc_table, c(Lcolname, Rcolname))))
             stop("expected cols \"", Lcolname, "\" or/and \"",
                  Rcolname, "\" not found in table ", tablename)
@@ -175,6 +177,8 @@ supportedUCSCtables <- function()
 
 .extractTranscriptsFromUCSCTxTable <- function(ucsc_txtable)
 {
+    message("Extract the 'transcripts' data frame ... ",
+            appendLF=FALSE)
     transcripts <- data.frame(
         tx_id=seq_len(nrow(ucsc_txtable)),
         tx_name=ucsc_txtable$name,
@@ -183,6 +187,7 @@ supportedUCSCtables <- function()
         tx_start=ucsc_txtable$txStart + 1L,
         tx_end=ucsc_txtable$txEnd
     )
+    message("OK")
     transcripts
 }
 
@@ -302,6 +307,8 @@ supportedUCSCtables <- function()
 
 .extractSplicingsFromUCSCTxTable <- function(ucsc_txtable, transcripts_tx_id)
 {
+    message("Extract the 'splicings' data frame ... ",
+            appendLF=FALSE)
     exon_count <- ucsc_txtable$exonCount
     splicings_tx_id <- rep.int(transcripts_tx_id, exon_count)
     if (length(exon_count) == 0L) {
@@ -328,6 +335,7 @@ supportedUCSCtables <- function()
         cds_start=cds_start,
         cds_end=cds_end
     )
+    message("OK")
     splicings
 }
 
@@ -362,6 +370,8 @@ supportedUCSCtables <- function()
 .makeUCSCChrominfo <- function(genome,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
+    message("Download and preprocess the 'chrominfo' data frame ... ",
+            appendLF=FALSE)
     ucsc_chrominfotable <- .downloadChromInfoFromUCSC(genome, goldenPath_url)
     COL2CLASS <- c(
         chrom="character",
@@ -373,6 +383,7 @@ supportedUCSCtables <- function()
         chrom=ucsc_chrominfotable$chrom,
         length=ucsc_chrominfotable$size
     )
+    message("OK")
     chrominfo
 }
 
@@ -381,14 +392,17 @@ supportedUCSCtables <- function()
 ### Prepare the 'metadata' data frame.
 ###
 
-.makeUCSCMetadata <- function(genome, tablename, gene_id_type, full_dataset)
+.prepareUCSCMetadata <- function(genome, tablename, gene_id_type, full_dataset)
 {
+    message("Prepare the 'metadata' data frame ... ",
+            appendLF=FALSE)
     metadata <- data.frame(
         name=c("Data source", "Genome", "UCSC Table",
                "Type of Gene ID", "Full dataset"),
         value=c("UCSC", genome, tablename,
                 gene_id_type, ifelse(full_dataset, "yes", "no"))
     )
+    message("OK")
     metadata
 }
 
@@ -422,11 +436,14 @@ supportedUCSCtables <- function()
                                                   transcripts$tx_id)
     genes <- .makeUCSCGenes(genes, ucsc_txtable)
     chrominfo <- .makeUCSCChrominfo(genome, goldenPath_url)
-    metadata <- .makeUCSCMetadata(genome, tablename, gene_id_type, full_dataset)
+    metadata <- .prepareUCSCMetadata(genome, tablename, gene_id_type,
+                                     full_dataset)
 
-    ## Call makeTranscriptDb().
-    makeTranscriptDb(transcripts, splicings,
-                     genes=genes, chrominfo=chrominfo, metadata=metadata)
+    message("Make the TranscriptDb object ... ", appendLF=FALSE)
+    txdb <- makeTranscriptDb(transcripts, splicings, genes=genes,
+                             chrominfo=chrominfo, metadata=metadata)
+    message("OK")
+    txdb
 }
 
 ### The 2 main tasks that makeTranscriptDbFromUCSC() performs are:
@@ -462,9 +479,11 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
     genome(session) <- genome
 
     ## Download the transcript table.
+    message("Download the ", tablename, " table ... ", appendLF=FALSE)
     query <- ucscTableQuery(session, track, table=tablename,
                             names=transcript_ids)
     ucsc_txtable <- getTable(query)
+    message("OK")
 
     ## Download the tx_name-to-gene_id mapping.
     txname2geneid <- .fetchTxName2GeneIdMappingFromUCSC(session,
