@@ -37,7 +37,8 @@
          exonEnds=strsplitAsListOfIntegerVectors(ucsc_txtable$exonEnds))
 }
 
-### 'x' must be a GRangesList object containing exons grouped by transcripts.
+### 'x' must be a GRangesList object containing exons (or CDSs) grouped by
+### transcripts.
 ### Returns a named list with 5 elements of the same length (like the
 ### .makeUCSCTxListFromUCSCTxTable() function above). This common length is
 ### the length of 'x'. The elements are:
@@ -98,8 +99,16 @@
         exonStarts <- sapply(seq_len(length(x)),
             function(i) {
                 y <- exonStarts[[i]]
-                if (!is.null(exon_rank))
-                    y[exon_rank[[i]]] <- y
+                if (!is.null(exon_rank)) {
+                    perm <- exon_rank[[i]]
+                    ## When 'x' contains CDSs grouped by transcripts, some of
+                    ## the lowest or/and highest exon ranks can be missing.
+                    ## In that case, 'shift' will be != 0.
+                    shift <- min(perm) - 1L
+                    if (shift != 0L)
+                        perm <- perm - shift
+                    y[perm] <- y
+                }
                 if (reorder.exons.on.minus.strand && strand[i] == "-")
                     y <- rev(y)
                 y
@@ -107,8 +116,13 @@
         exonEnds <- sapply(seq_len(length(x)),
             function(i) {
                 y <- exonEnds[[i]]
-                if (!is.null(exon_rank))
-                    y[exon_rank[[i]]] <- y
+                if (!is.null(exon_rank)) {
+                    perm <- exon_rank[[i]]
+                    shift <- min(perm) - 1L
+                    if (shift != 0L)
+                        perm <- perm - shift
+                    y[perm] <- y
+                }
                 if (reorder.exons.on.minus.strand && strand[i] == "-")
                     y <- rev(y)
                 y

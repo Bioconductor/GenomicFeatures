@@ -11,7 +11,7 @@
 }
 
 \usage{
-  extractTranscriptsFromGenome(genome, txdb, use.tx_id=FALSE)
+extractTranscriptsFromGenome(genome, txdb, use.tx_id=FALSE)
 }
 
 \arguments{
@@ -21,8 +21,9 @@
     in the BSgenome package for how to install a genome.
   }
   \item{txdb}{
-    A \link{TranscriptDb} object or a data frame like that returned
-    by \code{\link[GenomicFeatures.Hsapiens.UCSC.hg18]{geneHuman}}.
+    A \link{TranscriptDb} object, a GRangesList object, or a data frame
+    like that returned by
+    \code{\link[GenomicFeatures.Hsapiens.UCSC.hg18]{geneHuman}}.
   }
   \item{use.tx_id}{
     \code{TRUE} or \code{FALSE}. Whether the transcript ids
@@ -61,7 +62,7 @@
   library(BSgenome.Hsapiens.UCSC.hg18)  # load the genome
 
   ## ---------------------------------------------------------------------
-  ## USING A TranscriptDb OBJECT
+  ## A. USING A TranscriptDb OBJECT
   ## ---------------------------------------------------------------------
   txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
                            package="GenomicFeatures")
@@ -70,7 +71,18 @@
   transcripts
 
   ## ---------------------------------------------------------------------
-  ## USING A UCSC-LIKE DATA FRAME
+  ## B. USING A GRangesList OBJECT
+  ## ---------------------------------------------------------------------
+  ## Exons grouped by transcripts (gives the same result as above except
+  ## that now transcripts are named by their internal id i.e. by tx_id
+  ## instead of tx_name):
+  extractTranscriptsFromGenome(Hsapiens, exonsBy(txdb))
+  ## CDSs grouped by transcripts (this extracts only the translated parts
+  ## of the transcripts):
+  cds <- extractTranscriptsFromGenome(Hsapiens, cdsBy(txdb))
+
+  ## ---------------------------------------------------------------------
+  ## C. USING A UCSC-LIKE DATA FRAME
   ## ---------------------------------------------------------------------
   ## IMPORTANT NOTE: This is provided for compatibility with the old
   ## GenomicFeatures.*.UCSC.* packages and might be removed at any time.
