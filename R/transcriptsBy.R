@@ -58,9 +58,6 @@
     sql <- gsub("SHORT", short, sql)
     sql <- gsub("GROUPBY", by, sql)
 
-    if (getOption("verbose", FALSE))
-        cat("SQL QUERY: ", sql, "\n\n", sep = "")
-
     ## get the data from the database
     ans <- dbEasyQuery(txdbConn(txdb), sql)
 

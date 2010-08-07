@@ -98,9 +98,6 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
                .sqlWhereIn(vals),
                "ORDER BY tx_chrom, tx_strand, tx_start, tx_end")
 
-  if (getOption("verbose", FALSE))
-    cat("SQL QUERY: ", sql, "\n\n", sep = "")
-
   ## get the data from the database
   ans <- dbEasyQuery(txdbConn(txdb), sql)
   seqlengths <- seqlengths(txdb)
@@ -166,8 +163,6 @@ transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
                .sqlWhereIn(vals),
                "ORDER BY TYPE_chrom, TYPE_strand, TYPE_start, TYPE_end")
   sql <- gsub("TYPE", type, sql)
-  if (getOption("verbose", FALSE))
-    cat("SQL QUERY: ", sql, "\n\n", sep = "")
 
   ## get the data from the database
   ans <- dbEasyQuery(txdbConn(txdb), sql)
