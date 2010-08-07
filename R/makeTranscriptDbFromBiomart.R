@@ -13,6 +13,22 @@
 ###
 
 
+.getBiomartDbVersion <- function(mart)
+{
+    biomart <- biomaRt:::martBM(mart)
+    marts <- listMarts()
+    mart_rowidx <- which(as.character(marts$biomart) == biomart)
+    ## This should never happen.
+    if (length(mart_rowidx) != 1L)
+        stop("found 0 or more than 1 \"", biomart, "\" BioMart database")
+    as.character(marts$version)[mart_rowidx]
+}
+
+.extractEnsemblReleaseFromDbVersion <- function(db_version)
+{
+    sub("^ENSEMBL GENES ([^[:space:]]+) \\(SANGER UK\\)", "\\1", db_version)
+}
+
 ### Groups of BioMart attributes:
 ###   - A1, A2 and G are required attributes;
 ###   - B, C and D are optional attributes: C is required for inferring the
@@ -136,42 +152,57 @@ getAllDatasetAttrGroups <- function(attrlist)
 ### Download and preprocess the 'chrominfo' data frame.
 ###
 
-.ENSEMBL_CURRENT_MYSQL_URL <- "ftp://ftp.ensembl.org/pub/current_mysql/"
+.FTP_ENSEMBL_PUB_URL <- "ftp://ftp.ensembl.org/pub/"
 
-.fetchEnsemblCurrentMySQLsubdirs <- function()
+.getFtpEnsemblMySQLUrl <- function(release=NA)
 {
-    doc <- getURL(.ENSEMBL_CURRENT_MYSQL_URL)
-    tfile <- tempfile()
-    cat(doc, file=tfile)
-    subdirs <- read.table(tfile, quote="", comment.char="")
-    as.character(subdirs[[length(subdirs)]])
+    if (is.na(release))
+        pub_subdir <- "current_mysql"
+    else
+        pub_subdir <- paste("release-", release, "/mysql", sep="")
+    paste(.FTP_ENSEMBL_PUB_URL, pub_subdir, "/", sep="")
 }
 
-.ensemblDataset2CurrentMySQLcoresubdir <- function(dataset)
+.listFtpDir <- function(url)
+{
+    doc <- getURL(url)
+    listing <- strsplit(doc, "\n", fixed=TRUE)[[1L]]
+    ## Keep field no. 8 only
+    pattern <- paste(c("^", rep.int("[^[:space:]]+[[:space:]]+", 8L)),
+                     collapse="")
+    listing <- sub(pattern, "", listing)
+    sub("[[:space:]].*$", "", listing)
+}
+
+.getFtpEnsemblMySQLCoreUrl <- function(dataset, release=NA)
 {
     shortname0 <- strsplit(dataset, "_", fixed=TRUE)[[1L]][1L]
-    subdirs <- .fetchEnsemblCurrentMySQLsubdirs()
-    subdirs <- subdirs[grep("_core_", subdirs, fixed=TRUE)]
-    shortnames <- sapply(strsplit(subdirs, "_", fixed=TRUE),
+    url <- .getFtpEnsemblMySQLUrl(release)
+    listing <- .listFtpDir(url)
+    pattern <- "_core_"
+    if (!is.na(release))
+        pattern <- paste(pattern, release, "_", sep="")
+    listing <- listing[grep(pattern, listing, fixed=TRUE)]
+    shortnames <- sapply(strsplit(listing, "_", fixed=TRUE),
                          function(x)
                            paste(substr(x[1L], 1L, 1L), x[2L], sep=""))
-    ans <- subdirs[shortnames == shortname0]
-    if (length(ans) != 1L)
-        stop("found 0 or more than 1 subdir for \"", dataset, "\" dataset ",
-             "at ", .ENSEMBL_CURRENT_MYSQL_URL)
-    ans
+    coresubdir <- listing[shortnames == shortname0]
+    if (length(coresubdir) != 1L)
+        stop("found 0 or more than 1 subdir for \"", dataset,
+             "\" dataset at ", url)
+    paste(url, coresubdir, "/", sep="")
 }
 
 #extra_seqnames <- unique(as.character(transcripts$tx_chrom))
 #extra_seqnames <- c("GL000217.1", "NC_012920")
-#.fetchChromLengthsFromEnsembl("hsapiens_gene_ensembl",
+#.fetchChromLengthsFromEnsembl("hsapiens_gene_ensembl", "58",
 #                              extra_seqnames=extra_seqnames))
-.fetchChromLengthsFromEnsembl <- function(dataset, extra_seqnames=NULL)
+.fetchChromLengthsFromEnsembl <- function(dataset, release=NA,
+                                          extra_seqnames=NULL)
 {
-    coresubdir <- .ensemblDataset2CurrentMySQLcoresubdir(dataset)
-    ftpdir <- paste(.ENSEMBL_CURRENT_MYSQL_URL, coresubdir, "/", sep="")
+    core_url <- .getFtpEnsemblMySQLCoreUrl(dataset, release=release)
     ## Get seq_region table.
-    url <- paste(ftpdir, "seq_region.txt.gz", sep="")
+    url <- paste(core_url, "seq_region.txt.gz", sep="")
     destfile <- tempfile()
     download.file(url, destfile, quiet=TRUE)
     colnames <- c("seq_region_id", "name", "coord_system_id", "length")
@@ -179,7 +210,7 @@ getAllDatasetAttrGroups <- function(attrlist)
                              col.names=colnames, comment.char="",
                              stringsAsFactors=FALSE)
     ## Get coord_system table.
-    url <- paste(ftpdir, "coord_system.txt.gz", sep="")
+    url <- paste(core_url, "coord_system.txt.gz", sep="")
     destfile <- tempfile()
     download.file(url, destfile, quiet=TRUE)
     colnames <- c("coord_system_id", "species_id", "name",
@@ -215,12 +246,17 @@ getAllDatasetAttrGroups <- function(attrlist)
 
 ### Silently returns NULL if it fails to fetch the chromosome lengths
 ### from the remote resource.
-.makeBiomartChrominfo <- function(biomart, dataset, extra_seqnames=NULL)
+.makeBiomartChrominfo <- function(mart, extra_seqnames=NULL)
 {
+    biomart <- biomaRt:::martBM(mart)
+    dataset <- biomaRt:::martDataset(mart)
     if (biomart == "ensembl") {
         message("Download and preprocess the 'chrominfo' data frame ... ",
                 appendLF=FALSE)
+        db_version <- .getBiomartDbVersion(mart)
+        ensembl_release <- .extractEnsemblReleaseFromDbVersion(db_version)
         chromlengths <- try(.fetchChromLengthsFromEnsembl(dataset,
+                                release=ensembl_release,
                                 extra_seqnames=extra_seqnames),
                             silent=TRUE)
         if (is(chromlengths, "try-error")) {
@@ -408,21 +444,15 @@ getAllDatasetAttrGroups <- function(attrlist)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
-    biomart <- biomaRt:::martBM(mart)
-    marts <- listMarts()
-    mart_rowidx <- which(as.character(marts$biomart) == biomart)
-    ## This should never happen.
-    if (length(mart_rowidx) != 1L)
-        stop("found 0 or more than 1 \"", biomart, "\" BioMart database")
-    db_version <- as.character(marts$version)[mart_rowidx]
+    db_version <- .getBiomartDbVersion(mart)
     dataset <- biomaRt:::martDataset(mart)
     datasets <- listDatasets(mart)
     dataset_rowidx <- which(as.character(datasets$dataset) == dataset)
     ## This should never happen (the above call to useMart() would have failed
     ## in the first place).
     if (length(dataset_rowidx) != 1L)
-        stop("the BioMart database \"", biomart, "\" has no (or ",
-             "more than one) \"", dataset, "\" datasets")
+        stop("the BioMart database \"", biomaRt:::martBM(mart),
+             "\" has no (or more than one) \"", dataset, "\" datasets")
     description <- as.character(datasets$description)[dataset_rowidx]
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
     message("OK")
@@ -480,7 +510,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
 
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
                                            transcript_ids)
-    chrominfo <- .makeBiomartChrominfo(biomart, dataset,
+    chrominfo <- .makeBiomartChrominfo(mart,
                                        extra_seqnames=transcripts$tx_chrom)
     splicings <- .makeBiomartSplicings(filters, values, mart,
                                        transcripts$tx_name)
