@@ -13,9 +13,8 @@
 ###
 
 
-.getBiomartDbVersion <- function(mart)
+.getBiomartDbVersion <- function(biomart)
 {
-    biomart <- biomaRt:::martBM(mart)
     marts <- listMarts()
     mart_rowidx <- which(as.character(marts$biomart) == biomart)
     ## This should never happen.
@@ -253,7 +252,7 @@ getAllDatasetAttrGroups <- function(attrlist)
     if (biomart == "ensembl") {
         message("Download and preprocess the 'chrominfo' data frame ... ",
                 appendLF=FALSE)
-        db_version <- .getBiomartDbVersion(mart)
+        db_version <- .getBiomartDbVersion(biomart)
         ensembl_release <- .extractEnsemblReleaseFromDbVersion(db_version)
         chromlengths <- try(.fetchChromLengthsFromEnsembl(dataset,
                                 release=ensembl_release,
@@ -444,8 +443,9 @@ getAllDatasetAttrGroups <- function(attrlist)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
-    db_version <- .getBiomartDbVersion(mart)
+    biomart <- biomaRt:::martBM(mart)
     dataset <- biomaRt:::martDataset(mart)
+    db_version <- .getBiomartDbVersion(biomart)
     datasets <- listDatasets(mart)
     dataset_rowidx <- which(as.character(datasets$dataset) == dataset)
     ## This should never happen (the above call to useMart() would have failed
