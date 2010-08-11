@@ -11,13 +11,16 @@
   Functions to retrieve genomic features from a \link{TranscriptDb} object.
 }
 \usage{
-  transcripts(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
-  exons(txdb, vals=NULL)
-  cds(txdb, vals=NULL)
+transcripts(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
+exons(txdb, vals=NULL, columns="exon_id")
+cds(txdb, vals=NULL)
 }
 \arguments{  
-  \item{txdb}{A \link{TranscriptDb} object.}
-  \item{vals}{Either \code{NULL} or a named list of vectors to be used to
+  \item{txdb}{
+    A \link{TranscriptDb} object.
+  }
+  \item{vals}{
+    Either \code{NULL} or a named list of vectors to be used to
     restrict the output.
     For \code{transcripts} the element names can be \code{"gene_id"},
     \code{"tx_id"}, \code{"tx_name"}, \code{"tx_chrom"},
@@ -25,10 +28,22 @@
     For \code{exons} the element names can be \code{"exon_id"},
     \code{"exon_chrom"}, and \code{"exon_strand"}.
     For \code{cds} the element names can be \code{"cds_id"},
-    \code{"cds_chrom"}, and \code{"cds_strand"}.}
-  \item{columns}{columns to include in the output.
-    Can be \code{NULL} or a combination of \code{"tx_id"}, \code{"tx_name"},
-    \code{"gene_id"}, \code{"exon_id"}, and \code{"cds_id"}.}
+    \code{"cds_chrom"}, and \code{"cds_strand"}.
+  }
+  \item{columns}{
+    Columns to include in the output.
+    Must be \code{NULL} or a character vector with values in:
+    \itemize{
+    \item \code{"tx_id"}, \code{"tx_name"}, \code{"gene_id"},
+          \code{"exon_id"}, and \code{"cds_id"} for \code{transcripts}.
+    \item \code{"gene_id"},
+          \code{"tx_id"}, \code{"tx_name"},
+          \code{"tx_chrom"}, \code{"tx_strand"},
+          \code{"exon_id"}, \code{"exon_name"},
+          \code{"cds_id"}, \code{"cds_name"},
+          \code{"cds_chrom"} and \code{"cds_strand"} for \code{exons}.
+    }
+  }
 }
 \details{
   These are the main functions for retrieving transcript information from
@@ -40,7 +55,7 @@
 }
 \value{ a GRanges object }
 \author{
-  M. Carlson and P. Aboyoun
+  M. Carlson, P. Aboyoun and H. Pages
 }
 \seealso{
   \link{TranscriptDb}, \code{\link{transcriptsByOverlaps}}
