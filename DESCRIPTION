@@ -1,11 +1,17 @@
 Package: GenomicFeatures
-Title: Support package for genomic annotations
+Title: Tools for making and manipulating transcript centric annotations
 Version: 1.1.8
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
-Description: Infrastructure shared by the annotation packages
-             containing genomic features and tools for producing them.
+Description: A set of tools and methods for making and manipulating transcript
+        centric annotations. With these tools the user can easily download the
+        genomic locations of the transcripts, exons and cds of a given
+        organism, from either the UCSC Genome Browser or a BioMart database
+        (more sources will be supported in the future). This information is
+        then stored in a local database that keeps track of the relationship
+        between transcripts, exons, cds and genes. Flexible methods are
+        provided for extracting the desired features in a convenient format.
 Maintainer: Biocore Team c/o BioC user list <bioconductor@stat.math.ethz.ch>
 Depends: IRanges (>= 1.7.7), GenomicRanges (>= 0.0.9)
 Imports: methods, DBI (>= 0.2-5), RSQLite (>= 0.8-1), IRanges, GenomicRanges,
@@ -28,4 +34,4 @@ Collate: AllClasses.R
     GenomicFeaturesForge.R
     extractTranscriptsFromGenome.R
     test_GenomicFeatures_package.R
-biocViews: Genetics, Infrastructure, Annotation
+biocViews: Genetics, Infrastructure, Annotation, HighThroughputSequencing
