@@ -231,7 +231,7 @@ cds <- function(txdb, vals=NULL)
     cds="splicing._cds_id=cds._cds_id"
 )
 
-.exon.getClosestTableClosestTable <- function(colnames)
+.exon.getClosestTable <- function(colnames)
 {
     ans <- character(length(colnames))
     ans[] <- NA_character_
@@ -240,17 +240,47 @@ cds <- function(txdb, vals=NULL)
     ans
 }
 
+.exon.assignColToClosestTable <- function(colnames)
+{
+    lapply(.EXON.COLMAP, function(cols) intersect(cols, colnames))
+}
+
 .exon.asQualifiedColnames <- function(colnames)
 {
     colnames[colnames == "tx_id"] <- "_tx_id"
     colnames[colnames == "exon_id"] <- "_exon_id"
     colnames[colnames == "cds_id"] <- "_cds_id"
-    paste(.exon.getClosestTableClosestTable(colnames), colnames, sep=".")
+    paste(.exon.getClosestTable(colnames), colnames, sep=".")
 }
 
-.exon.assignColToClosestTable <- function(colnames)
+.exon.makeSQLfrom <- function(right_tables)
 {
-    lapply(.EXON.COLMAP, function(cols) intersect(cols, colnames))
+    all_tables <- names(.EXON.COLMAP)
+    ans <- all_tables[1L]
+    for (i in seq_len(length(all_tables))[-1L]) {
+        tablename <- all_tables[i]
+        children <- c(tablename, .EXON.CHILDTABLES[[tablename]])
+        if (length(intersect(right_tables, children)) != 0L)
+            ans <- paste(ans, "LEFT JOIN", tablename,
+                              "ON", .EXON.JOINS[[tablename]])
+    }
+    ans
+}
+
+.exon.makeSQL <- function(what_cols, right_tables, vals, orderby_cols=NULL)
+{
+    SQL_what <- paste(.exon.asQualifiedColnames(what_cols), collapse=", ")
+    SQL_from <- .exon.makeSQLfrom(right_tables)
+    SQL_where <- .sqlWhereIn(vals)
+    if (length(orderby_cols) == 0L)
+        SQL_orderby <- ""
+    else
+        SQL_orderby <- paste("ORDER BY", paste(orderby_cols, collapse=", "))
+    SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from,
+                 SQL_where, SQL_orderby)
+    ans <- dbEasyQuery(txdbConn(txdb), SQL)
+    names(ans) <- what_cols
+    ans
 }
 
 .exon.assignExtraColToClosestTable <- function(columns)
@@ -270,42 +300,29 @@ cds <- function(txdb, vals=NULL)
     .exon.assignColToClosestTable(columns)
 }
 
-.exon.assignFilterColToClosestTable <- function(columns)
+.exon.getWhereCols <- function(vals)
 {
-    if (is.null(columns))
-        return(.exon.assignColToClosestTable(character(0)))
+    if (is.null(vals))
+        return(character(0))
+    ans <- NULL
+    if (is.list(vals)) {
+        if (length(vals) == 0L)
+            return(character(0))
+        ans <- names(vals)
+    }
+    if (is.null(ans))
+        stop("'vals' must be NULL or a named list")
     VALID.COLUMNS <- c("gene_id",
                        "tx_id", "tx_name", "tx_chrom", "tx_strand",
                        "exon_id", "exon_name", "exon_chrom", "exon_strand",
                        "cds_id", "cds_name", "cds_chrom", "cds_strand")
-    if (!is.character(columns) || !all(columns %in% VALID.COLUMNS)) {
+    if (!all(ans %in% VALID.COLUMNS)) {
         validColumns <- paste("\"", VALID.COLUMNS, "\"",
                               sep="", collapse = ", ")
         stop("'vals' must be NULL or a list with names ",
              "in ", validColumns)
     }
-    .exon.assignColToClosestTable(columns)
-}
-
-.exon.getFilterTables <- function(filter_cols)
-{
-    filter_cols <- .exon.assignFilterColToClosestTable(filter_cols)
-    names(filter_cols)[sapply(filter_cols, length) != 0L]
-}
-
-.exon.makeSQLfrom <- function(target_tables)
-{
-    all_tables <- names(.EXON.COLMAP)
-    SQL_from <- all_tables[1L]
-    for (i in seq_len(length(all_tables))[-1L]) {
-        tablename <- all_tables[i]
-        children <- c(tablename, .EXON.CHILDTABLES[[tablename]])
-        if (length(intersect(target_tables, children)) != 0L)
-            SQL_from <- paste(SQL_from,
-                              "LEFT JOIN", tablename,
-                              "ON", .EXON.JOINS[[tablename]])
-    }
-    SQL_from
+    ans
 }
 
 .exon.extractPrimaryData <- function(txdb, vals, primary_cols)
@@ -313,28 +330,12 @@ cds <- function(txdb, vals=NULL)
     CORE.COLUMNS <- c("exon_id", "exon_chrom", "exon_strand",
                       "exon_start", "exon_end")
     what_cols <- unique(c(CORE.COLUMNS, primary_cols))
-    SQL_what <- paste(.exon.asQualifiedColnames(what_cols), collapse=", ")
-    filter_cols <- NULL
-    if (is.null(vals)) {
-        filter_cols <- character(0)
-    } else if (is.list(vals)) {
-        if (length(vals) == 0L)
-            filter_cols <- character(0)
-        else
-            filter_cols <- names(vals)
-    }
-    if (is.null(filter_cols))
-        stop("'vals' must be NULL or a named list")
+    where_cols <- .exon.getWhereCols(vals)
     if (is.list(vals))
-        names(vals) <- .exon.asQualifiedColnames(filter_cols)
-    filter_tables <- .exon.getFilterTables(filter_cols)
-    SQL_from <- .exon.makeSQLfrom(filter_tables)
-    SQL_where <- .sqlWhereIn(vals)
-    SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from, SQL_where,
-                 "ORDER BY exon_chrom, exon_strand, exon_start, exon_end")
-    data <- dbEasyQuery(txdbConn(txdb), SQL)
-    names(data) <- what_cols
-    data
+        names(vals) <- .exon.asQualifiedColnames(where_cols)
+    where_tables <- unique(.exon.getClosestTable(where_cols))
+    orderby_cols <- c("exon_chrom", "exon_strand", "exon_start", "exon_end")
+    .exon.makeSQL(what_cols, where_tables, vals, orderby_cols)
 }
 
 .exon.extractForeignData <- function(txdb, ids, extra_cols)
@@ -345,16 +346,11 @@ cds <- function(txdb, vals=NULL)
         foreign_cols <- extra_cols[[i]]
         if (length(foreign_cols) == 0L)
             next
-        tablename <- all_tables[i]
+        right_table <- all_tables[i]
         what_cols <- c("exon_id", foreign_cols)
-        SQL_what <- paste(.exon.asQualifiedColnames(what_cols), collapse=", ")
-        SQL_from <- .exon.makeSQLfrom(tablename)
         vals <- list(exon_id=ids)
         names(vals) <- .exon.asQualifiedColnames(names(vals))
-        SQL_where <- .sqlWhereIn(vals)
-        SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from, SQL_where)
-        data0 <- dbEasyQuery(txdbConn(txdb), SQL)
-        names(data0) <- what_cols
+        data0 <- .exon.makeSQL(what_cols, right_table, vals)
         data <- lapply(data0[ , -1L, drop=FALSE],
                        function(col0)
                        {
@@ -397,7 +393,7 @@ exons <- function(txdb, vals=NULL, columns="exon_id")
     primary_data <- .exon.extractPrimaryData(txdb, vals, extra_cols$exon)
     foreign_data <- .exon.extractForeignData(txdb,
                         primary_data[["exon_id"]], extra_cols)
-    ## Construct the GRanges object to return.
+    ## Construct the GRanges object and return it.
     ans_seqlengths <- seqlengths(txdb)
     ans_seqnames <- factor(primary_data[["exon_chrom"]],
                            levels=names(ans_seqlengths))
