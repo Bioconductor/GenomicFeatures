@@ -267,7 +267,8 @@ cds <- function(txdb, vals=NULL)
     ans
 }
 
-.exon.makeSQL <- function(what_cols, right_tables, vals, orderby_cols=NULL)
+.exon.extractData <- function(txdb, what_cols, right_tables, vals,
+                              orderby_cols=NULL)
 {
     SQL_what <- paste(.exon.asQualifiedColnames(what_cols), collapse=", ")
     SQL_from <- .exon.makeSQLfrom(right_tables)
@@ -333,7 +334,7 @@ cds <- function(txdb, vals=NULL)
         names(vals) <- .exon.asQualifiedColnames(where_cols)
     where_tables <- unique(.exon.getClosestTable(where_cols))
     orderby_cols <- c("exon_chrom", "exon_strand", "exon_start", "exon_end")
-    .exon.makeSQL(what_cols, where_tables, vals, orderby_cols)
+    .exon.extractData(txdb, what_cols, where_tables, vals, orderby_cols)
 }
 
 .exon.extractForeignData <- function(txdb, ids, assigned_cols)
@@ -348,7 +349,7 @@ cds <- function(txdb, vals=NULL)
         what_cols <- c("exon_id", foreign_cols)
         vals <- list(exon_id=ids)
         names(vals) <- .exon.asQualifiedColnames(names(vals))
-        data0 <- .exon.makeSQL(what_cols, right_table, vals)
+        data0 <- .exon.extractData(txdb, what_cols, right_table, vals)
         data <- lapply(data0[ , -1L, drop=FALSE],
                        function(col0)
                        {
