@@ -283,21 +283,19 @@ cds <- function(txdb, vals=NULL)
     ans
 }
 
-.exon.assignExtraColToClosestTable <- function(columns)
+.exon.checkargColumns <- function(columns)
 {
     if (is.null(columns))
-        return(.exon.assignColToClosestTable(character(0)))
+        return()
     VALID.COLUMNS <- c("gene_id",
                        "tx_id", "tx_name", "tx_chrom", "tx_strand",
                        "exon_id", "exon_name",
                        "cds_id", "cds_name", "cds_chrom", "cds_strand")
-    if (!is.character(columns) || !all(columns %in% VALID.COLUMNS)) {
-        validColumns <- paste("\"", VALID.COLUMNS, "\"",
-                              sep="", collapse = ", ")
-        stop("'columns' must be NULL or a character vector ",
-             "with values in ", validColumns)
-    }
-    .exon.assignColToClosestTable(columns)
+    if (is.character(columns) && all(columns %in% VALID.COLUMNS))
+        return()
+    validColumns <- paste("\"", VALID.COLUMNS, "\"", sep="", collapse = ", ")
+    stop("'columns' must be NULL or a character vector ",
+         "with values in ", validColumns)
 }
 
 .exon.getWhereCols <- function(vals)
@@ -338,12 +336,12 @@ cds <- function(txdb, vals=NULL)
     .exon.makeSQL(what_cols, where_tables, vals, orderby_cols)
 }
 
-.exon.extractForeignData <- function(txdb, ids, extra_cols)
+.exon.extractForeignData <- function(txdb, ids, assigned_cols)
 {
     ans <- NULL
-    all_tables <- names(extra_cols)
+    all_tables <- names(assigned_cols)
     for (i in seq_len(length(all_tables))[-1L]) {
-        foreign_cols <- extra_cols[[i]]
+        foreign_cols <- assigned_cols[[i]]
         if (length(foreign_cols) == 0L)
             next
         right_table <- all_tables[i]
@@ -388,11 +386,12 @@ exons <- function(txdb, vals=NULL, columns="exon_id")
              "transcript metadata.")
     if (!is(txdb, "TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
-    extra_cols <- .exon.assignExtraColToClosestTable(columns)
+    .exon.checkargColumns(columns)
+    assigned_cols <- .exon.assignColToClosestTable(columns)
     ## Extract the data from the db.
-    primary_data <- .exon.extractPrimaryData(txdb, vals, extra_cols$exon)
+    primary_data <- .exon.extractPrimaryData(txdb, vals, assigned_cols$exon)
     foreign_data <- .exon.extractForeignData(txdb,
-                        primary_data[["exon_id"]], extra_cols)
+                        primary_data[["exon_id"]], assigned_cols)
     ## Construct the GRanges object and return it.
     ans_seqlengths <- seqlengths(txdb)
     ans_seqnames <- factor(primary_data[["exon_chrom"]],
@@ -404,7 +403,7 @@ exons <- function(txdb, vals=NULL, columns="exon_id")
                    ranges=ans_ranges,
                    strand=ans_strand,
                    seqlengths=ans_seqlengths)
-    ans_values <- c(DataFrame(primary_data[extra_cols$exon]), foreign_data)
+    ans_values <- c(DataFrame(primary_data[assigned_cols$exon]), foreign_data)
     values(ans) <- ans_values[columns]
     ans
 }
