@@ -13,7 +13,7 @@
 \usage{
 transcripts(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
 exons(txdb, vals=NULL, columns="exon_id")
-cds(txdb, vals=NULL)
+cds(txdb, vals=NULL, columns="exon_id")
 }
 \arguments{  
   \item{txdb}{
@@ -42,6 +42,12 @@ cds(txdb, vals=NULL)
           \code{"exon_id"}, \code{"exon_name"},
           \code{"cds_id"}, \code{"cds_name"},
           \code{"cds_chrom"} and \code{"cds_strand"} for \code{exons}.
+    \item \code{"gene_id"},
+          \code{"tx_id"}, \code{"tx_name"},
+          \code{"tx_chrom"}, \code{"tx_strand"},
+          \code{"exon_id"}, \code{"exon_name"},
+          \code{"exon_chrom"}, \code{"exon_strand"}
+          \code{"cds_id"} and \code{"cds_name"} for \code{cds}.
     }
   }
 }

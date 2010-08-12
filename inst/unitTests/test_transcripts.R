@@ -27,10 +27,8 @@ test_transcripts <- function()
                     strand  = strand(rep("-", 2)),
                     tx_id   = c(3L, 15L),
                     tx_name = c("uc009vis.1", "uc003jam.1"),
-                    exon_id = IntegerList("3"=c(8,7,6,5), "15"=c(79,78,77)),
+                    exon_id = IntegerList(c(5,6,7,8), c(77,78,79)),
                     seqlengths = seqlengths)
-    elementMetadata(want)[["exon_id"]] <-
-      IntegerList("3"=c(8,7,6,5), "15"=c(79,78,77))
     checkIdentical(want,
                    transcripts(txdb, vals, columns = c("tx_id","tx_name","exon_id")))
 
@@ -40,7 +38,6 @@ test_transcripts <- function()
     tx_id_col <- c(58:60, 83:84)
     gene_id_col <- CharacterList(as.list(c(rep.int("9501", 3),
                                            rep.int("3081", 2))))
-    names(gene_id_col) <- tx_id_col
     want <- GRanges(seqnames = factor(c(rep.int("chr17", 3),
                                         rep.int("chr3_random", 2)),
                                       levels = seqlevels),
