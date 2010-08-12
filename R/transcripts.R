@@ -191,10 +191,15 @@ cds <- function(txdb, vals=NULL)
   .exonORcdsGRanges(txdb, vals=vals, type="cds")
 }
 
-
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### The "exons" function.
+### A high-level representation of the relational organization of the db.
 ###
+
+### THE TRANSCRIPT CENTRIC POINT OF VIEW:
+.TRANSCRIPT_CENTRIC_DBDESC <- list(
+)
+
+### THE EXON CENTRIC POINT OF VIEW:
 ### If we look at the db from an exon centric point of view, then the graph
 ### of relations between the tables becomes a tree where the 'exon' table is
 ### the root:
@@ -204,74 +209,89 @@ cds <- function(txdb, vals=NULL)
 ###                            /   |    \
 ###                   transcript  gene  cds
 ###
-
-### Each col defined in the db is assigned to the closest table (starting
-### from the 'exon' table) where it can be found. The 'exon' element must be
-### the 1st in the list:
-.EXON.COLMAP <- list(
-    exon=c("exon_id", makeFeatureColnames("exon")),
-    splicing=c("tx_id", "_tx_id", "exon_rank", "cds_id", "_cds_id"),
-    transcript=c("tx_name", "tx_chrom", "tx_strand", "tx_start", "tx_end"),
-    gene="gene_id",
-    cds=c("cds_name", "cds_chrom", "cds_strand", "cds_start", "cds_end")
+.EXON_CENTRIC_DBDESC <- list(
+    ### Each col defined in the db is assigned to the closest table (starting
+    ### from the 'exon' table) where it can be found. The 'exon' element must
+    ### be the 1st in the list:
+    COLMAP=list(
+        exon=c("exon_id", makeFeatureColnames("exon")),
+        splicing=c("tx_id", "_tx_id", "exon_rank", "cds_id", "_cds_id"),
+        transcript=c("tx_name", "tx_chrom", "tx_strand", "tx_start", "tx_end"),
+        gene="gene_id",
+        cds=c("cds_name", "cds_chrom", "cds_strand", "cds_start", "cds_end")
+    ),
+    ### For each table that is not the root or a leaf table in the above tree,
+    ### we list the tables that are below it:
+    CHILDTABLES=list(
+        splicing=c("transcript", "gene", "cds")
+    ),
+    ### For each table that is not the root table in the above tree, we specify
+    ### the join condition with the parent table:
+    JOINS=c(
+        splicing="exon._exon_id=splicing._exon_id",
+        transcript="splicing._tx_id=transcript._tx_id",
+        gene="splicing._tx_id=gene._tx_id",
+        cds="splicing._cds_id=cds._cds_id"
+    )
 )
 
-### For each table that is not the root or a leaf table in the above tree,
-### we list the tables that are below it:
-.EXON.CHILDTABLES <- list(
-    splicing=c("transcript", "gene", "cds")
+### THE CDS CENTRIC POINT OF VIEW:
+.CDS_CENTRIC_DBDESC <- list(
 )
 
-### For each table that is not the root table in the above tree, we specify
-### the join condition with the parent table:
-.EXON.JOINS <- c(
-    splicing="exon._exon_id=splicing._exon_id",
-    transcript="splicing._tx_id=transcript._tx_id",
-    gene="splicing._tx_id=gene._tx_id",
-    cds="splicing._cds_id=cds._cds_id"
+.DBDESC <- list(
+    transcript=.TRANSCRIPT_CENTRIC_DBDESC,
+    exon=.EXON_CENTRIC_DBDESC,
+    cds=.CDS_CENTRIC_DBDESC
 )
 
-.exon.getClosestTable <- function(colnames)
+.getClosestTable <- function(root_table, colnames)
 {
+    COLMAP <- .DBDESC[[root_table]]$COLMAP
     ans <- character(length(colnames))
     ans[] <- NA_character_
-    for (tablename in names(.EXON.COLMAP))
-        ans[colnames %in% .EXON.COLMAP[[tablename]]] <- tablename
+    for (tablename in names(COLMAP))
+        ans[colnames %in% COLMAP[[tablename]]] <- tablename
     ans
 }
 
-.exon.assignColToClosestTable <- function(colnames)
+.assignColToClosestTable <- function(root_table, colnames)
 {
-    lapply(.EXON.COLMAP, function(cols) intersect(cols, colnames))
+    COLMAP <- .DBDESC[[root_table]]$COLMAP
+    lapply(COLMAP, function(cols) intersect(cols, colnames))
 }
 
-.exon.asQualifiedColnames <- function(colnames)
+.asQualifiedColnames <- function(root_table, colnames)
 {
     colnames[colnames == "tx_id"] <- "_tx_id"
     colnames[colnames == "exon_id"] <- "_exon_id"
     colnames[colnames == "cds_id"] <- "_cds_id"
-    paste(.exon.getClosestTable(colnames), colnames, sep=".")
+    paste(.getClosestTable(root_table, colnames), colnames, sep=".")
 }
 
-.exon.makeSQLfrom <- function(right_tables)
+.makeSQLfrom <- function(root_table, right_tables)
 {
-    all_tables <- names(.EXON.COLMAP)
+    COLMAP <- .DBDESC[[root_table]]$COLMAP
+    CHILDTABLES <- .DBDESC[[root_table]]$CHILDTABLES
+    JOINS <- .DBDESC[[root_table]]$JOINS
+    all_tables <- names(COLMAP)
     ans <- all_tables[1L]
     for (i in seq_len(length(all_tables))[-1L]) {
         tablename <- all_tables[i]
-        children <- c(tablename, .EXON.CHILDTABLES[[tablename]])
+        children <- c(tablename, CHILDTABLES[[tablename]])
         if (length(intersect(right_tables, children)) != 0L)
             ans <- paste(ans, "LEFT JOIN", tablename,
-                              "ON", .EXON.JOINS[[tablename]])
+                              "ON", JOINS[[tablename]])
     }
     ans
 }
 
-.exon.extractData <- function(txdb, what_cols, right_tables, vals,
-                              orderby_cols=NULL)
+.extractData <- function(root_table, txdb, what_cols, right_tables, vals,
+                         orderby_cols=NULL)
 {
-    SQL_what <- paste(.exon.asQualifiedColnames(what_cols), collapse=", ")
-    SQL_from <- .exon.makeSQLfrom(right_tables)
+    SQL_what <- paste(.asQualifiedColnames(root_table, what_cols),
+                      collapse=", ")
+    SQL_from <- .makeSQLfrom(root_table, right_tables)
     SQL_where <- .sqlWhereIn(vals)
     if (length(orderby_cols) == 0L)
         SQL_orderby <- ""
@@ -283,6 +303,15 @@ cds <- function(txdb, vals=NULL)
     names(ans) <- what_cols
     ans
 }
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### The "transcript" function.
+###
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### The "exons" function.
+###
 
 .exon.checkargColumns <- function(columns)
 {
@@ -331,10 +360,10 @@ cds <- function(txdb, vals=NULL)
     what_cols <- unique(c(CORE.COLUMNS, primary_cols))
     where_cols <- .exon.getWhereCols(vals)
     if (is.list(vals))
-        names(vals) <- .exon.asQualifiedColnames(where_cols)
-    where_tables <- unique(.exon.getClosestTable(where_cols))
+        names(vals) <- .asQualifiedColnames("exon", where_cols)
+    where_tables <- unique(.getClosestTable("exon", where_cols))
     orderby_cols <- c("exon_chrom", "exon_strand", "exon_start", "exon_end")
-    .exon.extractData(txdb, what_cols, where_tables, vals, orderby_cols)
+    .extractData("exon", txdb, what_cols, where_tables, vals, orderby_cols)
 }
 
 .exon.extractForeignData <- function(txdb, ids, assigned_cols)
@@ -348,8 +377,8 @@ cds <- function(txdb, vals=NULL)
         right_table <- all_tables[i]
         what_cols <- c("exon_id", foreign_cols)
         vals <- list(exon_id=ids)
-        names(vals) <- .exon.asQualifiedColnames(names(vals))
-        data0 <- .exon.extractData(txdb, what_cols, right_table, vals)
+        names(vals) <- .asQualifiedColnames("exon", names(vals))
+        data0 <- .extractData("exon", txdb, what_cols, right_table, vals)
         data <- lapply(data0[ , -1L, drop=FALSE],
                        function(col0)
                        {
@@ -388,7 +417,7 @@ exons <- function(txdb, vals=NULL, columns="exon_id")
     if (!is(txdb, "TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
     .exon.checkargColumns(columns)
-    assigned_cols <- .exon.assignColToClosestTable(columns)
+    assigned_cols <- .assignColToClosestTable("exon", columns)
     ## Extract the data from the db.
     primary_data <- .exon.extractPrimaryData(txdb, vals, assigned_cols$exon)
     foreign_data <- .exon.extractForeignData(txdb,
