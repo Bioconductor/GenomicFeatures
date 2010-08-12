@@ -1,6 +1,20 @@
+### =========================================================================
+### The transcripts(), exons() and cds() extractors
+### -------------------------------------------------------------------------
+
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### A high-level representation of the relational organization of the db.
 ###
+
+### Note that we omit the *_start and *_end cols.
+.ALLCOLS <- c("gene_id",
+              "tx_id", "tx_name", "tx_chrom", "tx_strand",
+              "exon_id", "exon_name", "exon_chrom", "exon_strand",
+              "cds_id", "cds_name", "cds_chrom", "cds_strand",
+              "exon_rank")
+
+.CORETAGS <- c("id", "chrom", "strand", "start", "end")
 
 ### THE TRANSCRIPT CENTRIC POINT OF VIEW:
 ### If we look at the db from a transcript centric point of view, then the
@@ -13,11 +27,10 @@
 ###                                exon     cds
 ###
 .TRANSCRIPT_CENTRIC_DBDESC <- list(
-    CORECOLS=paste("tx", c("id", "chrom", "strand", "start", "end"),
-                   sep="_"),
+    CORECOLS=structure(paste("tx", .CORETAGS, sep="_"), names=.CORETAGS),
     ### Each col defined in the db is assigned to the closest table (starting
-    ### from the 'exon' table) where it can be found. The 'exon' element must
-    ### be the 1st in the list:
+    ### from the 'transcript' table) where it can be found. The 'transcript'
+    ### element must be the 1st in the list:
     COLMAP=list(
         transcript=c("tx_id", makeFeatureColnames("tx")),
         gene="gene_id",
@@ -52,8 +65,7 @@
 ###                   transcript  gene  cds
 ###
 .EXON_CENTRIC_DBDESC <- list(
-    CORECOLS=paste("exon", c("id", "chrom", "strand", "start", "end"),
-                   sep="_"),
+    CORECOLS=structure(paste("exon", .CORETAGS, sep="_"), names=.CORETAGS),
     ### Each col defined in the db is assigned to the closest table (starting
     ### from the 'exon' table) where it can be found. The 'exon' element must
     ### be the 1st in the list:
@@ -90,10 +102,9 @@
 ###                   transcript  gene  exon
 ###
 .CDS_CENTRIC_DBDESC <- list(
-    CORECOLS=paste("cds", c("id", "chrom", "strand", "start", "end"),
-                   sep="_"),
+    CORECOLS=structure(paste("cds", .CORETAGS, sep="_"), names=.CORETAGS),
     ### Each col defined in the db is assigned to the closest table (starting
-    ### from the 'exon' table) where it can be found. The 'exon' element must
+    ### from the 'cds' table) where it can be found. The 'cds`' element must
     ### be the 1st in the list:
     COLMAP=list(
         cds=c("cds_id", makeFeatureColnames("cds")),
@@ -126,9 +137,19 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Utility functions for accessing the high-level representation of the
-### relational organization of the db.
+### Some utility functions.
 ###
+
+.checkargColumns <- function(columns, valid_columns)
+{
+    if (is.null(columns))
+        return()
+    if (is.character(columns) && all(columns %in% valid_columns))
+        return()
+    valid_columns <- paste("\"", valid_columns, "\"", sep="", collapse = ", ")
+    stop("'columns' must be NULL or a character vector ",
+         "with values in ", valid_columns)
+}
 
 .getClosestTable <- function(root_table, colnames)
 {
@@ -218,24 +239,22 @@
     }
     if (is.null(ans))
         stop("'vals' must be NULL or a named list")
-    VALID.COLUMNS <- c("gene_id",
-                       "tx_id", "tx_name", "tx_chrom", "tx_strand",
-                       "exon_id", "exon_name", "exon_chrom", "exon_strand",
-                       "cds_id", "cds_name", "cds_chrom", "cds_strand")
-    if (!all(ans %in% VALID.COLUMNS)) {
-        validColumns <- paste("\"", VALID.COLUMNS, "\"",
-                              sep="", collapse = ", ")
+    #valid_columns <- setdiff(.ALLCOLS, "exon_rank")
+    valid_columns <- .ALLCOLS
+    if (!all(ans %in% valid_columns)) {
+        valid_columns <- paste("\"", valid_columns, "\"",
+                               sep="", collapse = ", ")
         stop("'vals' must be NULL or a list with names ",
-             "in ", validColumns)
+             "in ", valid_columns)
     }
     ans
 }
 
-.extractPrimaryData <- function(root_table, txdb, vals, primary_cols)
+.extractRootData <- function(root_table, txdb, vals, root_columns)
 {
     CORECOLS <- .DBDESC[[root_table]]$CORECOLS
-    orderby_cols <- CORECOLS[2:5]
-    what_cols <- unique(c(CORECOLS, primary_cols))
+    orderby_cols <- CORECOLS[c("chrom", "strand", "start", "end")]
+    what_cols <- unique(c(CORECOLS, root_columns))
     where_cols <- .getWhereCols(vals)
     if (is.list(vals))
         names(vals) <- .asQualifiedColnames(root_table, where_cols)
@@ -243,17 +262,17 @@
     .extractData(root_table, txdb, what_cols, where_tables, vals, orderby_cols)
 }
 
-.extractForeignData <- function(root_table, txdb, ids, assigned_cols)
+.extractForeignData <- function(root_table, txdb, ids, assigned_columns)
 {
-    primary_key <- .DBDESC[[root_table]]$CORECOLS[1L]
+    primary_key <- .DBDESC[[root_table]]$CORECOLS["id"]
     ans <- NULL
-    all_tables <- names(assigned_cols)
+    all_tables <- names(assigned_columns)
     for (i in seq_len(length(all_tables))[-1L]) {
-        foreign_cols <- assigned_cols[[i]]
-        if (length(foreign_cols) == 0L)
+        foreign_columns <- assigned_columns[[i]]
+        if (length(foreign_columns) == 0L)
             next
         right_table <- all_tables[i]
-        what_cols <- c(primary_key, foreign_cols)
+        what_cols <- c(primary_key, foreign_columns)
         vals <- list(ids)
         names(vals) <- .asQualifiedColnames(root_table, primary_key)
         data0 <- .extractData(root_table, txdb, what_cols, right_table, vals)
@@ -277,26 +296,40 @@
     ans
 }
 
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### The "transcripts" function.
-###
-
-.transcripts.checkargColumns <- function(columns)
+.extractFeatureRowsAsGRanges <- function(root_table, txdb, vals, columns)
 {
-    if (is.null(columns))
-        return()
-    VALID.COLUMNS <- c("gene_id",
-                       "tx_id", "tx_name",
-                       "exon_id", "exon_name", "exon_chrom", "exon_strand",
-                       "cds_id", "cds_name", "cds_chrom", "cds_strand")
-    if (is.character(columns) && all(columns %in% VALID.COLUMNS))
-        return()
-    validColumns <- paste("\"", VALID.COLUMNS, "\"", sep="", collapse = ", ")
-    stop("'columns' must be NULL or a character vector ",
-         "with values in ", validColumns)
+    if (!is(txdb, "TranscriptDb"))
+        stop("'txdb' must be a TranscriptDb object")
+    CORECOLS <- .DBDESC[[root_table]]$CORECOLS
+    forbidden_columns <- c(CORECOLS["chrom"], CORECOLS["strand"])
+    .checkargColumns(columns, setdiff(.ALLCOLS, forbidden_columns))
+    assigned_columns <- .assignColToClosestTable(root_table, columns)
+    root_columns <- assigned_columns[[root_table]]
+    ## Extract the data from the db.
+    root_data <- .extractRootData(root_table, txdb, vals, root_columns)
+    foreign_data <- .extractForeignData(root_table, txdb,
+                        root_data[[CORECOLS["id"]]], assigned_columns)
+    ## Construct the GRanges object and return it.
+    ans_seqlengths <- seqlengths(txdb)
+    ans_seqnames <- factor(root_data[[CORECOLS["chrom"]]],
+                           levels=names(ans_seqlengths))
+    ans_ranges <- IRanges(start=root_data[[CORECOLS["start"]]],
+                          end=root_data[[CORECOLS["end"]]])
+    ans_strand <- strand(root_data[[CORECOLS["strand"]]])
+    ans <- GRanges(seqnames=ans_seqnames,
+                   ranges=ans_ranges,
+                   strand=ans_strand,
+                   seqlengths=ans_seqlengths)
+    ans_values <- c(DataFrame(root_data[root_columns]),
+                    foreign_data)
+    values(ans) <- ans_values[columns]
+    ans
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### The top-level extractors.
+###
 ### Note that the current naming of the args is a little bit confusing
 ### because we have the 'vals' and 'columns' args and it is the latter that is
 ### related to the "values" slot of the returned GRanges object, not the
@@ -306,55 +339,14 @@
 ### TODO:
 ###   - Rename the 'vals' arg -> 'filter'.
 ###   - Rename the 'columns' arg -> 'colnames'.
+###
+
 transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
 {
     if (is.data.frame(txdb))
         stop("Please use 'transcripts_deprecated' for older ",
              "data.frame-based transcript metadata.")
-    if (!is(txdb, "TranscriptDb"))
-        stop("'txdb' must be a TranscriptDb object")
-    .transcripts.checkargColumns(columns)
-    assigned_cols <- .assignColToClosestTable("transcript", columns)
-    ## Extract the data from the db.
-    primary_data <- .extractPrimaryData("transcript", txdb,
-                        vals, assigned_cols$transcript)
-    foreign_data <- .extractForeignData("transcript", txdb,
-                        primary_data[["tx_id"]], assigned_cols)
-    ## Construct the GRanges object and return it.
-    ans_seqlengths <- seqlengths(txdb)
-    ans_seqnames <- factor(primary_data[["tx_chrom"]],
-                           levels=names(ans_seqlengths))
-    ans_ranges <- IRanges(start=primary_data[["tx_start"]],
-                          end=primary_data[["tx_end"]])
-    ans_strand <- strand(primary_data[["tx_strand"]])
-    ans <- GRanges(seqnames=ans_seqnames,
-                   ranges=ans_ranges,
-                   strand=ans_strand,
-                   seqlengths=ans_seqlengths)
-    ans_values <- c(DataFrame(primary_data[assigned_cols$transcript]),
-                    foreign_data)
-    values(ans) <- ans_values[columns]
-    ans
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### The "exons" function.
-###
-
-.exons.checkargColumns <- function(columns)
-{
-    if (is.null(columns))
-        return()
-    VALID.COLUMNS <- c("gene_id",
-                       "tx_id", "tx_name", "tx_chrom", "tx_strand",
-                       "exon_id", "exon_name",
-                       "cds_id", "cds_name", "cds_chrom", "cds_strand")
-    if (is.character(columns) && all(columns %in% VALID.COLUMNS))
-        return()
-    validColumns <- paste("\"", VALID.COLUMNS, "\"", sep="", collapse = ", ")
-    stop("'columns' must be NULL or a character vector ",
-         "with values in ", validColumns)
+    .extractFeatureRowsAsGRanges("transcript", txdb, vals, columns)
 }
 
 #exons <- function(txdb, vals=NULL, columns=c("exon_id", "exon_name"))
@@ -363,78 +355,12 @@ exons <- function(txdb, vals=NULL, columns="exon_id")
     if (is.data.frame(txdb))
         stop("Please use 'exons_deprecated' for older ",
              "data.frame-based transcript metadata.")
-    if (!is(txdb, "TranscriptDb"))
-        stop("'txdb' must be a TranscriptDb object")
-    .exons.checkargColumns(columns)
-    assigned_cols <- .assignColToClosestTable("exon", columns)
-    ## Extract the data from the db.
-    primary_data <- .extractPrimaryData("exon", txdb,
-                        vals, assigned_cols$exon)
-    foreign_data <- .extractForeignData("exon", txdb,
-                        primary_data[["exon_id"]], assigned_cols)
-    ## Construct the GRanges object and return it.
-    ans_seqlengths <- seqlengths(txdb)
-    ans_seqnames <- factor(primary_data[["exon_chrom"]],
-                           levels=names(ans_seqlengths))
-    ans_ranges <- IRanges(start=primary_data[["exon_start"]],
-                          end=primary_data[["exon_end"]])
-    ans_strand <- strand(primary_data[["exon_strand"]])
-    ans <- GRanges(seqnames=ans_seqnames,
-                   ranges=ans_ranges,
-                   strand=ans_strand,
-                   seqlengths=ans_seqlengths)
-    ans_values <- c(DataFrame(primary_data[assigned_cols$exon]),
-                    foreign_data)
-    values(ans) <- ans_values[columns]
-    ans
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### The "cds" function.
-###
-
-.cds.checkargColumns <- function(columns)
-{
-    if (is.null(columns))
-        return()
-    VALID.COLUMNS <- c("gene_id",
-                       "tx_id", "tx_name", "tx_chrom", "tx_strand",
-                       "exon_id", "exon_name", "exon_chrom", "exon_strand",
-                       "cds_id", "cds_name")
-    if (is.character(columns) && all(columns %in% VALID.COLUMNS))
-        return()
-    validColumns <- paste("\"", VALID.COLUMNS, "\"", sep="", collapse = ", ")
-    stop("'columns' must be NULL or a character vector ",
-         "with values in ", validColumns)
+    .extractFeatureRowsAsGRanges("exon", txdb, vals, columns)
 }
 
 #cds <- function(txdb, vals=NULL, columns=c("cds_id", "cds_name"))
 cds <- function(txdb, vals=NULL, columns="cds_id")
 {
-    if (!is(txdb, "TranscriptDb"))
-        stop("'txdb' must be a TranscriptDb object")
-    .cds.checkargColumns(columns)
-    assigned_cols <- .assignColToClosestTable("cds", columns)
-    ## Extract the data from the db.
-    primary_data <- .extractPrimaryData("cds", txdb,
-                        vals, assigned_cols$cds)
-    foreign_data <- .extractForeignData("cds", txdb,
-                        primary_data[["cds_id"]], assigned_cols)
-    ## Construct the GRanges object and return it.
-    ans_seqlengths <- seqlengths(txdb)
-    ans_seqnames <- factor(primary_data[["cds_chrom"]],
-                           levels=names(ans_seqlengths))
-    ans_ranges <- IRanges(start=primary_data[["cds_start"]],
-                          end=primary_data[["cds_end"]])
-    ans_strand <- strand(primary_data[["cds_strand"]])
-    ans <- GRanges(seqnames=ans_seqnames,
-                   ranges=ans_ranges,
-                   strand=ans_strand,
-                   seqlengths=ans_seqlengths)
-    ans_values <- c(DataFrame(primary_data[assigned_cols$cds]),
-                    foreign_data)
-    values(ans) <- ans_values[columns]
-    ans
+    .extractFeatureRowsAsGRanges("cds", txdb, vals, columns)
 }
 
