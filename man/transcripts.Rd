@@ -64,5 +64,6 @@ cds(txdb, vals=NULL, columns="cds_id")
                                    package="GenomicFeatures"))
   vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
   transcripts(txdb, vals)
-  exons(txdb, vals=list("exon_id" = 1), columns=c("exon_id", "tx_name"))
+  exons(txdb, vals=list(exon_id=1), columns=c("exon_id", "tx_name"))
+  exons(txdb, vals=list(tx_name="uc009vip.1"), columns=c("exon_id", "tx_name"))
 }
