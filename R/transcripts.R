@@ -245,6 +245,12 @@ cds <- function(txdb, vals=NULL)
     cds=.CDS_CENTRIC_DBDESC
 )
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Utility functions for accessing the high-level representation of the
+### relational organization of the db.
+###
+
 .getClosestTable <- function(root_table, colnames)
 {
     COLMAP <- .DBDESC[[root_table]]$COLMAP
@@ -304,31 +310,7 @@ cds <- function(txdb, vals=NULL)
     ans
 }
 
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### The "transcript" function.
-###
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### The "exons" function.
-###
-
-.exon.checkargColumns <- function(columns)
-{
-    if (is.null(columns))
-        return()
-    VALID.COLUMNS <- c("gene_id",
-                       "tx_id", "tx_name", "tx_chrom", "tx_strand",
-                       "exon_id", "exon_name",
-                       "cds_id", "cds_name", "cds_chrom", "cds_strand")
-    if (is.character(columns) && all(columns %in% VALID.COLUMNS))
-        return()
-    validColumns <- paste("\"", VALID.COLUMNS, "\"", sep="", collapse = ", ")
-    stop("'columns' must be NULL or a character vector ",
-         "with values in ", validColumns)
-}
-
-.exon.getWhereCols <- function(vals)
+.getWhereCols <- function(vals)
 {
     if (is.null(vals))
         return(character(0))
@@ -353,20 +335,21 @@ cds <- function(txdb, vals=NULL)
     ans
 }
 
-.exon.extractPrimaryData <- function(txdb, vals, primary_cols)
+.extractPrimaryData <- function(root_table, txdb, vals, primary_cols)
 {
-    CORE.COLUMNS <- c("exon_id", "exon_chrom", "exon_strand",
-                      "exon_start", "exon_end")
+    CORE.COLUMNS <- paste(root_table,
+                          c("id", "chrom", "strand", "start", "end"),
+                          sep="_")
+    orderby_cols <- CORE.COLUMNS[2:5]
     what_cols <- unique(c(CORE.COLUMNS, primary_cols))
-    where_cols <- .exon.getWhereCols(vals)
+    where_cols <- .getWhereCols(vals)
     if (is.list(vals))
-        names(vals) <- .asQualifiedColnames("exon", where_cols)
-    where_tables <- unique(.getClosestTable("exon", where_cols))
-    orderby_cols <- c("exon_chrom", "exon_strand", "exon_start", "exon_end")
-    .extractData("exon", txdb, what_cols, where_tables, vals, orderby_cols)
+        names(vals) <- .asQualifiedColnames(root_table, where_cols)
+    where_tables <- unique(.getClosestTable(root_table, where_cols))
+    .extractData(root_table, txdb, what_cols, where_tables, vals, orderby_cols)
 }
 
-.exon.extractForeignData <- function(txdb, ids, assigned_cols)
+.extractForeignData <- function(root_table, txdb, ids, assigned_cols)
 {
     ans <- NULL
     all_tables <- names(assigned_cols)
@@ -375,10 +358,10 @@ cds <- function(txdb, vals=NULL)
         if (length(foreign_cols) == 0L)
             next
         right_table <- all_tables[i]
-        what_cols <- c("exon_id", foreign_cols)
+        what_cols <- c(paste(root_table, "id", sep="_"), foreign_cols)
         vals <- list(exon_id=ids)
-        names(vals) <- .asQualifiedColnames("exon", names(vals))
-        data0 <- .extractData("exon", txdb, what_cols, right_table, vals)
+        names(vals) <- .asQualifiedColnames(root_table, names(vals))
+        data0 <- .extractData(root_table, txdb, what_cols, right_table, vals)
         data <- lapply(data0[ , -1L, drop=FALSE],
                        function(col0)
                        {
@@ -399,6 +382,31 @@ cds <- function(txdb, vals=NULL)
     ans
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### The "transcript" function.
+###
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### The "exons" function.
+###
+
+.exons.checkargColumns <- function(columns)
+{
+    if (is.null(columns))
+        return()
+    VALID.COLUMNS <- c("gene_id",
+                       "tx_id", "tx_name", "tx_chrom", "tx_strand",
+                       "exon_id", "exon_name",
+                       "cds_id", "cds_name", "cds_chrom", "cds_strand")
+    if (is.character(columns) && all(columns %in% VALID.COLUMNS))
+        return()
+    validColumns <- paste("\"", VALID.COLUMNS, "\"", sep="", collapse = ", ")
+    stop("'columns' must be NULL or a character vector ",
+         "with values in ", validColumns)
+}
+
 ### Note that the current naming of the args is a little bit confusing
 ### because we have the 'vals' and 'columns' args and it is the latter that is
 ### related to the "values" slot of the returned GRanges object, not the
@@ -416,11 +424,11 @@ exons <- function(txdb, vals=NULL, columns="exon_id")
              "transcript metadata.")
     if (!is(txdb, "TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
-    .exon.checkargColumns(columns)
+    .exons.checkargColumns(columns)
     assigned_cols <- .assignColToClosestTable("exon", columns)
     ## Extract the data from the db.
-    primary_data <- .exon.extractPrimaryData(txdb, vals, assigned_cols$exon)
-    foreign_data <- .exon.extractForeignData(txdb,
+    primary_data <- .extractPrimaryData("exon", txdb, vals, assigned_cols$exon)
+    foreign_data <- .extractForeignData("exon", txdb,
                         primary_data[["exon_id"]], assigned_cols)
     ## Construct the GRanges object and return it.
     ans_seqlengths <- seqlengths(txdb)
