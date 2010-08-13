@@ -19,8 +19,8 @@ importMethodsFrom(Biostrings, "masks<-")
 importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
            useDataset, useMart)
 
-importFrom(rtracklayer, browserSession, genome, "genome<-", getTable,
-           ucscTableQuery)
+importFrom(rtracklayer, browserSession, genome, "genome<-", ucscTableQuery,
+           tableNames, getTable)
 
 importFrom(RCurl, getURL)
 

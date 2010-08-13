@@ -3,37 +3,54 @@
 ### -------------------------------------------------------------------------
 
 
-### Lookup between UCSC tables and tracks in the "Genes and Gene Prediction"
-### group that are compatible with makeTranscriptDbFromUCSC(). A table is
-### compatible if it has the following cols: name, chrom, strand, txStart,
-### txEnd, cdsStart, cdsEnd, exonCount, exonStarts, exonEnds.
-### Note that, from a strictly technical point of view, the name and
-### exonCount cols are not required (i.e. .makeTranscriptDbFromUCSCTxTable()
-### could easily be modified to work even when they are missing).
+### makeTranscriptDbFromUCSC() expects a UCSC transcript table to have at
+### least the following columns:
+.UCSC_TXCOL2CLASS <- c(
+    name="character",
+    chrom="factor",
+    strand="factor",
+    txStart="integer",
+    txEnd="integer",
+    cdsStart="integer",
+    cdsEnd="integer",
+    exonCount="integer",
+    exonStarts="character",
+    exonEnds="character"
+)
+### Note that, from a strictly technical point of view, the 'name' and
+### 'exonCount' cols are not required and .makeTranscriptDbFromUCSCTxTable()
+### could easily be modified to accept tables where they are missing.
+
+### Lookup between UCSC transcript tables and their associated track.
+### All the tables/tracks listed here belong to the "Genes and Gene
+### Prediction" group of tracks. On Aug 13 2010, makeTranscriptDbFromUCSC()
+### was successfully tested by hand on all of them with genome="hg18" (except
+### for "sgdGene" that was tested with genome="sacCer2").
+### Note that the "acembly" table contains more than 250000 transcripts!
 .SUPPORTED_UCSC_TABLES <- c(
   ## tablename (unique key)    track             subtrack
   "knownGene",                 "UCSC Genes",     NA,
   "knownGeneOld3",             "Old UCSC Genes", NA,
-  "wgEncodeGencodeManualRel2", "Gencode Genes",  "Genecode Manual",
-  "wgEncodeGencodeAutoRel2",   "Gencode Genes",  "Genecode Auto",
-  "wgEncodeGencodePolyaRel2",  "Gencode Genes",  "Genecode PolyA",
-  "ccdsGene",                  "Consensus CDS",  NA, 
-  "refGene",                   "RefSeq Genes",   NA, 
-  "xenoRefGene",               "Other RefSeq",   NA, 
-  "vegaGene",                  "Vega Genes",     "Vega Protein Genes", 
-  "vegaPseudoGene",            "Vega Genes",     "Vega Pseudogenes", 
-  "ensGene",                   "Ensembl Genes",  NA, 
-  "acembly",                   "AceView Genes",  NA, 
-  "sibGene",                   "SIB Genes",      NA, 
+  "wgEncodeGencodeManualV3",   "Gencode Genes",  "Genecode Manual",
+  "wgEncodeGencodeAutoV3",     "Gencode Genes",  "Genecode Auto",
+  "wgEncodeGencodePolyaV3",    "Gencode Genes",  "Genecode PolyA",
+  "ccdsGene",                  "CCDS",           NA,
+  "refGene",                   "RefSeq Genes",   NA,
+  "xenoRefGene",               "Other RefSeq",   NA,
+  "vegaGene",                  "Vega Genes",     "Vega Protein Genes",
+  "vegaPseudoGene",            "Vega Genes",     "Vega Pseudogenes",
+  "ensGene",                   "Ensembl Genes",  NA,
+  "acembly",                   "AceView Genes",  NA,
+  "sibGene",                   "SIB Genes",      NA,
   "nscanPasaGene",             "N-SCAN",         "N-SCAN PASA-EST",
-  "nscanGene",                 "N-SCAN",         "N-SCAN", 
-  "sgdGene",                   "SGD Genes",      NA, 
+  "nscanGene",                 "N-SCAN",         "N-SCAN",
+  "sgdGene",                   "SGD Genes",      NA,
   "sgpGene",                   "SGP Genes",      NA,
-  "geneid",                    "Geneid Genes",   NA, 
-  "genscan",                   "Genscan Genes",  NA, 
-  "exoniphy",                  "Exoniphy",       NA, 
-  "augustusHints",             "Augustus",       "Augustus Hints", 
-  "augustusXRA",               "Augustus",       "Augustus De Novo", 
+  "geneid",                    "Geneid Genes",   NA,
+  "genscan",                   "Genscan Genes",  NA,
+  "exoniphy",                  "Exoniphy",       NA,
+  "augustusHints",             "Augustus",       "Augustus Hints",
+  "augustusXRA",               "Augustus",       "Augustus De Novo",
   "augustusAbinitio",          "Augustus",       "Augustus Ab Initio",
   "acescan",                   "ACEScan",        NA
 )
@@ -61,25 +78,25 @@ supportedUCSCtables <- function()
         ),
         gene_id_type="Entrez Gene ID"
     ),
-    wgEncodeGencodeManualRel2=list(
+    wgEncodeGencodeManualV3=list(
         L2Rchain=list(
-            c(tablename="wgEncodeGencodeClassesRel2",
+            c(tablename="wgEncodeGencodeClassesV3",
               Lcolname="name",
               Rcolname="geneId")
         ),
         gene_id_type="HAVANA Pseudogene ID"
     ),
-    wgEncodeGencodeAutoRel2=list(
+    wgEncodeGencodeAutoV3=list(
         L2Rchain=list(
-            c(tablename="wgEncodeGencodeClassesRel2",
+            c(tablename="wgEncodeGencodeClassesV3",
               Lcolname="name",
               Rcolname="geneId")
         ),
         gene_id_type="HAVANA Pseudogene ID"
     ),
-    wgEncodeGencodePolyaRel2=list(
+    wgEncodeGencodePolyaV3=list(
         L2Rchain=list(
-            c(tablename="wgEncodeGencodeClassesRel2",
+            c(tablename="wgEncodeGencodeClassesV3",
               Lcolname="name",
               Rcolname="geneId")
         ),
@@ -226,7 +243,7 @@ supportedUCSCtables <- function()
 ### 0-based and 1-based) and with no NAs.
 ### Returns a list with 2 elements, each of them being an integer vector of
 ### the same length as 'exon_start0' (or 'exon_end1') that may contain NAs.
-### Notes:
+### Notes (using genome="hg18"):
 ###   (1) In refGene table, transcript NM_001146685: cds cumulative length is
 ###       not a multiple of 3:
 ###                 name chrom strand txStart   txEnd cdsStart  cdsEnd
@@ -246,8 +263,10 @@ supportedUCSCtables <- function()
 ###       Note that the post is about the Gencode Genes. Is it reasonable to
 ###       assume that this applies to RefSeq Genes too?
 ###   (2) Same thing in ensGene table, transcript ENST00000371841.
-###   (3) All transcripts in knowGene table have a cds cumulative length that
-###       is a multiple of 3.
+###   (3) All transcripts in the knownGene and ccdsGene tables have a cds
+###       cumulative length that is a multiple of 3 (the former doesn't even
+###       have the cdsStartStat/cdsStartEnd columns). For hg19 ccdsGene, this
+###       is not true anymore :-/
 ### TODO: Investigate (1) and (2).
 .extractUCSCCdsStartEnd <- function(cdsStart0, cdsEnd1,
                                     exon_start0, exon_end1, tx_name)
@@ -416,19 +435,7 @@ supportedUCSCtables <- function()
         full_dataset,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
-    COL2CLASS <- c(
-        name="character",
-        chrom="factor",
-        strand="factor",
-        txStart="integer",
-        txEnd="integer",
-        cdsStart="integer",
-        cdsEnd="integer",
-        exonCount="integer",
-        exonStarts="character",
-        exonEnds="character"
-    )
-    ucsc_txtable <- setDataFrameColClass(ucsc_txtable, COL2CLASS,
+    ucsc_txtable <- setDataFrameColClass(ucsc_txtable, .UCSC_TXCOL2CLASS,
                                          drop.extra.cols=TRUE)
 
     transcripts <- .extractTranscriptsFromUCSCTxTable(ucsc_txtable)
@@ -475,14 +482,30 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
         stop("'url' must be a single string")
     if (!isSingleString(goldenPath_url))
         stop("'goldenPath_url' must be a single string")
+
+    ## Create an UCSC Genome Browser session.
     session <- browserSession(url=url)
     genome(session) <- genome
+    track_tables <- tableNames(ucscTableQuery(session, track=track))
+    if (!(tablename %in% track_tables))
+        stop("GenomicFeatures internal error: ", tablename, " table doesn't ",
+             "exist or is not associated with ", track, " track. ",
+             "Thank you for reporting this to the GenomicFeatures maintainer ",
+             "or to the Bioconductor mailing list, and sorry for the ",
+             "inconvenience.")
 
     ## Download the transcript table.
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
     query <- ucscTableQuery(session, track, table=tablename,
                             names=transcript_ids)
     ucsc_txtable <- getTable(query)
+    if (ncol(ucsc_txtable) < length(.UCSC_TXCOL2CLASS))
+        stop("GenomicFeatures internal error: ", tablename, " table doesn't ",
+             "exist, was corrupted during download, or doesn't contain ",
+             "transcript information. ",
+             "Thank you for reporting this to the GenomicFeatures maintainer ",
+             "or to the Bioconductor mailing list, and sorry for the ",
+             "inconvenience.")
     message("OK")
 
     ## Download the tx_name-to-gene_id mapping.
