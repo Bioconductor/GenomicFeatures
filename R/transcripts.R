@@ -175,7 +175,7 @@
     paste(.getClosestTable(root_table, colnames), colnames, sep=".")
 }
 
-.makeSQLfrom <- function(root_table, right_tables)
+.makeSQLfrom <- function(root_table, child_tables)
 {
     COLMAP <- .DBDESC[[root_table]]$COLMAP
     CHILDTABLES <- .DBDESC[[root_table]]$CHILDTABLES
@@ -183,11 +183,11 @@
     all_tables <- names(COLMAP)
     ans <- all_tables[1L]
     for (i in seq_len(length(all_tables))[-1L]) {
-        tablename <- all_tables[i]
-        children <- c(tablename, CHILDTABLES[[tablename]])
-        if (length(intersect(right_tables, children)) != 0L)
-            ans <- paste(ans, "LEFT JOIN", tablename,
-                              "ON", JOINS[[tablename]])
+        right_table <- all_tables[i]
+        right_children <- c(right_table, CHILDTABLES[[right_table]])
+        if (length(intersect(child_tables, right_children)) != 0L)
+            ans <- paste(ans, "LEFT JOIN", right_table,
+                              "ON", JOINS[[right_table]])
     }
     ans
 }
@@ -209,12 +209,12 @@
     paste("WHERE", paste(unlist(sql), collapse = " AND "))
 }
 
-.extractData <- function(root_table, txdb, what_cols, right_tables, vals,
+.extractData <- function(root_table, txdb, what_cols, child_tables, vals,
                          orderby_cols=NULL)
 {
     SQL_what <- paste(.asQualifiedColnames(root_table, what_cols),
                       collapse=", ")
-    SQL_from <- .makeSQLfrom(root_table, right_tables)
+    SQL_from <- .makeSQLfrom(root_table, child_tables)
     SQL_where <- .sqlWhereIn(vals)
     if (length(orderby_cols) == 0L)
         SQL_orderby <- ""
@@ -262,20 +262,20 @@
     .extractData(root_table, txdb, what_cols, where_tables, vals, orderby_cols)
 }
 
-.extractForeignData <- function(root_table, txdb, ids, assigned_columns)
+.extractChildData <- function(root_table, txdb, ids, assigned_columns)
 {
     primary_key <- .DBDESC[[root_table]]$CORECOLS["id"]
     ans <- NULL
     all_tables <- names(assigned_columns)
     for (i in seq_len(length(all_tables))[-1L]) {
-        foreign_columns <- assigned_columns[[i]]
-        if (length(foreign_columns) == 0L)
+        child_columns <- assigned_columns[[i]]
+        if (length(child_columns) == 0L)
             next
-        right_table <- all_tables[i]
-        what_cols <- c(primary_key, foreign_columns)
+        child_table <- all_tables[i]
+        what_cols <- c(primary_key, child_columns)
         vals <- list(ids)
         names(vals) <- .asQualifiedColnames(root_table, primary_key)
-        data0 <- .extractData(root_table, txdb, what_cols, right_table, vals)
+        data0 <- .extractData(root_table, txdb, what_cols, child_table, vals)
         data <- lapply(data0[ , -1L, drop=FALSE],
                        function(col0)
                        {
@@ -307,8 +307,8 @@
     root_columns <- assigned_columns[[root_table]]
     ## Extract the data from the db.
     root_data <- .extractRootData(root_table, txdb, vals, root_columns)
-    foreign_data <- .extractForeignData(root_table, txdb,
-                        root_data[[CORECOLS["id"]]], assigned_columns)
+    child_data <- .extractChildData(root_table, txdb,
+                          root_data[[CORECOLS["id"]]], assigned_columns)
     ## Construct the GRanges object and return it.
     ans_seqlengths <- seqlengths(txdb)
     ans_seqnames <- factor(root_data[[CORECOLS["chrom"]]],
@@ -320,8 +320,7 @@
                    ranges=ans_ranges,
                    strand=ans_strand,
                    seqlengths=ans_seqlengths)
-    ans_values <- c(DataFrame(root_data[root_columns]),
-                    foreign_data)
+    ans_values <- c(DataFrame(root_data[root_columns]), child_data)
     values(ans) <- ans_values[columns]
     ans
 }
