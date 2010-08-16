@@ -44,6 +44,7 @@ export(
   transcriptsByOverlaps,
   exonsByOverlaps,
   cdsByOverlaps,
+  id2name,
   transcriptsBy,
   exonsBy,
   cdsBy,

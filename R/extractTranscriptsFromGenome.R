@@ -3,23 +3,6 @@
 ### -------------------------------------------------------------------------
 
 
-.exonsByTx <- function(txdb, use.tx_id=FALSE)
-{
-    if (!isTRUEorFALSE(use.tx_id))
-        stop("'use.tx_id' must be TRUE or FALSE")
-    exbytx <- exonsBy(txdb, by="tx")
-    if (use.tx_id)
-        return(exbytx)
-    tx <- transcripts(txdb)
-    id2name <- elementMetadata(tx)[ , "tx_name"]
-    names(id2name) <- as.character(elementMetadata(tx)[ , "tx_id"])
-    names(exbytx) <- id2name[names(exbytx)]
-    if (any(is.na(names(exbytx))))
-        warning("some transcript names are NAs, use 'use.tx_id=TRUE' ",
-                "to use their internal ids instead")
-    exbytx
-}
-
 ### Turns data frame 'ucsc_txtable' into a list where the "exonStarts" and
 ### "exonsEnds" columns (character vectors where each element is a
 ### comma-separated list of integers) are expanded into lists of integer
@@ -169,7 +152,7 @@
 ###   library(GenomicFeatures.Hsapiens.UCSC.hg18)  # load the gene table
 ###   ## Takes about 30 sec.
 ###   transcripts <- extractTranscriptsFromGenome(Hsapiens, geneHuman())
-extractTranscriptsFromGenome <- function(genome, txdb, use.tx_id=FALSE)
+extractTranscriptsFromGenome <- function(genome, txdb, use.names=TRUE)
 {
     if (!is(genome, "BSgenome"))
         stop("'genome' must be a BSgenome object")
@@ -178,7 +161,7 @@ extractTranscriptsFromGenome <- function(genome, txdb, use.tx_id=FALSE)
         reorder.exons <- TRUE
     } else {
         if (is(txdb, "TranscriptDb")) {
-            txdb <- .exonsByTx(txdb, use.tx_id=use.tx_id)
+            txdb <- exonsBy(txdb, use.names=use.names)
         } else if (!is(txdb, "GRangesList"))
             stop("'txdb' must be a TranscriptDb object, a GRangesList ",
                  "object, or a data frame")

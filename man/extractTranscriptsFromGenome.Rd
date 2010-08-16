@@ -11,7 +11,7 @@
 }
 
 \usage{
-extractTranscriptsFromGenome(genome, txdb, use.tx_id=FALSE)
+extractTranscriptsFromGenome(genome, txdb, use.names=TRUE)
 }
 
 \arguments{
@@ -21,20 +21,24 @@ extractTranscriptsFromGenome(genome, txdb, use.tx_id=FALSE)
     in the BSgenome package for how to install a genome.
   }
   \item{txdb}{
-    A \link{TranscriptDb} object, a GRangesList object, or a data frame
-    like that returned by
+    A \link{TranscriptDb} object, a \link[GenomicRanges]{GRangesList}
+    object, or a data frame like that returned by
     \code{\link[GenomicFeatures.Hsapiens.UCSC.hg18]{geneHuman}}.
   }
-  \item{use.tx_id}{
-    \code{TRUE} or \code{FALSE}. Whether the transcript ids
-    (\code{"tx_id"}) should be used instead of the transcript names
-    (\code{"tx_name"}) to name the sequences.
-    Ignored when \code{txdb} is a data frame.
+  \item{use.names}{
+    \code{TRUE} or \code{FALSE}. Ignored if \code{txdb} is not
+    a \link{TranscriptDb} object.
+    If \code{TRUE} (the default), the returned sequences are named
+    with the transcript names.
+    If \code{FALSE}, they are named with the transcript internal ids.
+    Note that, unlike the transcript internal ids, the transcript names
+    are not guaranteed to be unique or even defined (they could be all
+    \code{NA}s). A warning is issued when this happens.
   }
 }
 
 \value{
-  A \code{\link[Biostrings]{DNAStringSet}} object.
+  A \link[Biostrings]{DNAStringSet} object.
 }
 
 \note{

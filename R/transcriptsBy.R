@@ -1,3 +1,43 @@
+### =========================================================================
+### The "features grouped by" extractors
+### -------------------------------------------------------------------------
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### id2name().
+###
+
+id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
+{
+    if(!is(txdb,"TranscriptDb"))
+        stop("'txdb' must be a TranscriptDb object")
+    feature.type <- match.arg(feature.type)
+    tablename <- switch(feature.type, tx="transcript", exon="exon", cds="cds")
+    what_cols <- paste(c("_", ""), feature.type, c("_id", "_name"), sep="")
+    SQL <- paste("SELECT",
+                 paste(what_cols, collapse=", "),
+                 "FROM", tablename)
+    data <- dbEasyQuery(txdbConn(txdb), SQL)
+    ans <- data[[what_cols[2L]]]
+    names(ans) <- as.character(data[[what_cols[1L]]])
+    ans
+}
+
+.set.group.names <- function(ans, use.names, txdb, by)
+{
+    if (!isTRUEorFALSE(use.names))
+        stop("'use.names' must be TRUE or FALSE")
+    if (!use.names)
+        return(ans)
+    if (by == "gene")
+        stop("'use.names=TRUE' cannot be used when grouping by gene")
+    names(ans) <- id2name(txdb, feature.type=by)[names(ans)]
+    if (any(is.na(names(ans))) || any(duplicated(names(ans))))
+        warning("some group names are NAs or duplicated")
+    ans
+}
+
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### transcriptsBy(), exonsBy() and cdsBy().
 ###
@@ -6,7 +46,8 @@
                         distinct=FALSE,
                         splicing_in_join=TRUE,
                         gene_in_join=FALSE,
-                        order_by_exon_rank=TRUE)
+                        order_by_exon_rank=TRUE,
+                        use.names=FALSE)
 {
     if(!is(txdb,"TranscriptDb"))
         stop("'txdb' must be a TranscriptDb object")
@@ -59,7 +100,7 @@
     sql <- gsub("GROUPBY", by, sql)
 
     ## get the data from the database
-    ans <- dbEasyQuery(txdbConn(txdb), sql)
+    data <- dbEasyQuery(txdbConn(txdb), sql)
 
     ## create the GRanges object
     cols <- gsub("TYPE", type, c("TYPE_id", "TYPE_name"))
@@ -68,16 +109,17 @@
     seqlengths <- seqlengths(txdb)
     grngs <-
       GRanges(seqnames =
-              factor(ans[[paste(type, "_chrom", sep="")]],
+              factor(data[[paste(type, "_chrom", sep="")]],
                      levels = names(seqlengths)),
-              ranges = IRanges(start = ans[[paste(type, "_start", sep="")]],
-                               end = ans[[paste(type, "_end", sep="")]]),
-              strand = strand(ans[[paste(type, "_strand", sep="")]]),
-              ans[cols],
+              ranges = IRanges(start = data[[paste(type, "_start", sep="")]],
+                               end = data[[paste(type, "_end", sep="")]]),
+              strand = strand(data[[paste(type, "_strand", sep="")]]),
+              data[cols],
               seqlengths = seqlengths)
 
     ## split by grouping variable
-    split(grngs, ans[[paste(by, "_id", sep="")]])
+    ans <- split(grngs, data[[paste(by, "_id", sep="")]])
+    .set.group.names(ans, use.names, txdb, by)
 }
 
 ###                    use  splicing      gene
@@ -91,7 +133,7 @@
 ###    cds    tx        no       yes        no  exon_rank
 ###    cds  gene       yes       yes       yes      locus
 
-transcriptsBy <- function(txdb, by = c("gene", "exon", "cds"))
+transcriptsBy <- function(txdb, by=c("gene", "exon", "cds"), use.names=FALSE)
 {
     by <- match.arg(by)
     distinct <- splicing_in_join <- by != "gene"
@@ -100,10 +142,11 @@ transcriptsBy <- function(txdb, by = c("gene", "exon", "cds"))
                 distinct=distinct,
                 splicing_in_join=splicing_in_join,
                 gene_in_join=gene_in_join,
-                order_by_exon_rank=FALSE)
+                order_by_exon_rank=FALSE,
+                use.names=use.names)
 }
 
-exonsBy <- function(txdb, by = c("tx", "gene"))
+exonsBy <- function(txdb, by=c("tx", "gene"), use.names=FALSE)
 {
     by <- match.arg(by)
     distinct <- gene_in_join <- by == "gene"
@@ -112,10 +155,11 @@ exonsBy <- function(txdb, by = c("tx", "gene"))
                 distinct=distinct,
                 splicing_in_join=TRUE,
                 gene_in_join=gene_in_join,
-                order_by_exon_rank=order_by_exon_rank)
+                order_by_exon_rank=order_by_exon_rank,
+                use.names=use.names)
 }
 
-cdsBy <- function(txdb, by = c("tx", "gene"))
+cdsBy <- function(txdb, by=c("tx", "gene"), use.names=FALSE)
 {
     by <- match.arg(by)
     distinct <- gene_in_join <- by == "gene"
@@ -124,7 +168,8 @@ cdsBy <- function(txdb, by = c("tx", "gene"))
                 distinct=distinct,
                 splicing_in_join=TRUE,
                 gene_in_join=gene_in_join,
-                order_by_exon_rank=order_by_exon_rank)
+                order_by_exon_rank=order_by_exon_rank,
+                use.names=use.names)
 }
 
 
@@ -132,12 +177,13 @@ cdsBy <- function(txdb, by = c("tx", "gene"))
 ### intronsByTranscript().
 ###
 
-intronsByTranscript <- function(txdb)
+intronsByTranscript <- function(txdb, use.names=FALSE)
 {
     tx <- transcripts(txdb)
     exn <- exonsBy(txdb)
     tx <- tx[match(names(exn), elementMetadata(tx)[,"tx_id"])]
-    psetdiff(tx, exn)
+    ans <- psetdiff(tx, exn)
+    .set.group.names(ans, use.names, txdb, "tx")
 }
 
 
@@ -184,7 +230,7 @@ intronsByTranscript <- function(txdb)
     split(grg[idx], splicings$tx_id[idx])
 }
 
-fiveUTRsByTranscript <- function(txdb)
+fiveUTRsByTranscript <- function(txdb, use.names=FALSE)
 {
     splicings <- .getFullSplicings(txdb, translated.transcripts.only=TRUE)
 
@@ -214,10 +260,11 @@ fiveUTRsByTranscript <- function(txdb)
 
     ## Make and return the GRangesList object.
     seqlengths <- seqlengths(txdb)
-    .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
+    ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
+    .set.group.names(ans, use.names, txdb, "tx")
 }
 
-threeUTRsByTranscript <- function(txdb)
+threeUTRsByTranscript <- function(txdb, use.names=FALSE)
 {
     splicings <- .getFullSplicings(txdb, translated.transcripts.only=TRUE)
 
@@ -247,6 +294,7 @@ threeUTRsByTranscript <- function(txdb)
 
     ## Make and return the GRangesList object.
     seqlengths <- seqlengths(txdb)
-    .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
+    ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
+    .set.group.names(ans, use.names, txdb, "tx")
 }
 
