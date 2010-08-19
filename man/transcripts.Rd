@@ -1,23 +1,40 @@
 \name{transcripts}
 
 \alias{transcripts}
+\alias{transcripts,data.frame-method}
+\alias{transcripts,TranscriptDb-method}
 \alias{exons}
+\alias{exons,data.frame-method}
+\alias{exons,TranscriptDb-method}
 \alias{cds}
+\alias{cds,TranscriptDb-method}
 
 \title{
   Retrieving genomic features from a TranscriptDb object.
 }
+
 \description{
-  Functions to retrieve genomic features from a \link{TranscriptDb} object.
+  Generic functions to retrieve genomic features from an object.
+  This page documents the methods for \link{TranscriptDb} objects only.
 }
+
 \usage{
-transcripts(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
-exons(txdb, vals=NULL, columns="exon_id")
-cds(txdb, vals=NULL, columns="cds_id")
+transcripts(x, ...)
+\S4method{transcripts}{TranscriptDb}(x, vals=NULL, columns=c("tx_id", "tx_name"))
+
+exons(x, ...)
+\S4method{exons}{TranscriptDb}(x, vals=NULL, columns="exon_id")
+
+cds(x, ...)
+\S4method{cds}{TranscriptDb}(x, vals=NULL, columns="cds_id")
 }
+
 \arguments{  
-  \item{txdb}{
+  \item{x}{
     A \link{TranscriptDb} object.
+  }
+  \item{...}{
+    Arguments to be passed to or from methods.
   }
   \item{vals}{
     Either \code{NULL} or a named list of vectors to be used to
@@ -44,6 +61,7 @@ cds(txdb, vals=NULL, columns="cds_id")
     }
   }
 }
+
 \details{
   These are the main functions for retrieving transcript information from
   a \link{TranscriptDb} object. They can restrict the output based on
@@ -52,13 +70,17 @@ cds(txdb, vals=NULL, columns="cds_id")
   \code{\link{exonsByOverlaps}}, and \code{\link{cdsByOverlaps}}
   functions.
 }
+
 \value{ a GRanges object }
+
 \author{
   M. Carlson, P. Aboyoun and H. Pages
 }
+
 \seealso{
   \link{TranscriptDb}, \code{\link{transcriptsByOverlaps}}
 }
+
 \examples{
   txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                    package="GenomicFeatures"))

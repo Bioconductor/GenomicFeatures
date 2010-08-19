@@ -298,8 +298,6 @@
 
 .extractFeatureRowsAsGRanges <- function(root_table, txdb, vals, columns)
 {
-    if (!is(txdb, "TranscriptDb"))
-        stop("'txdb' must be a TranscriptDb object")
     CORECOLS <- .DBDESC[[root_table]]$CORECOLS
     forbidden_columns <- c(CORECOLS["chrom"], CORECOLS["strand"])
     .checkargColumns(columns, setdiff(.ALLCOLS, forbidden_columns))
@@ -340,26 +338,36 @@
 ###   - Rename the 'columns' arg -> 'colnames'.
 ###
 
-transcripts <- function(txdb, vals=NULL, columns=c("tx_id", "tx_name"))
-{
-    if (is.data.frame(txdb))
+setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
+
+setMethod("transcripts", "data.frame",
+    function(x, vals=NULL, columns=c("tx_id", "tx_name"))
         stop("Please use 'transcripts_deprecated' for older ",
              "data.frame-based transcript metadata.")
-    .extractFeatureRowsAsGRanges("transcript", txdb, vals, columns)
-}
+)
 
-#exons <- function(txdb, vals=NULL, columns=c("exon_id", "exon_name"))
-exons <- function(txdb, vals=NULL, columns="exon_id")
-{
-    if (is.data.frame(txdb))
+setMethod("transcripts", "TranscriptDb",
+    function(x, vals=NULL, columns=c("tx_id", "tx_name"))
+        .extractFeatureRowsAsGRanges("transcript", x, vals, columns)
+)
+
+setGeneric("exons", function(x, ...) standardGeneric("exons"))
+
+setMethod("exons", "data.frame",
+    function(x, vals=NULL, columns="exon_id")
         stop("Please use 'exons_deprecated' for older ",
              "data.frame-based transcript metadata.")
-    .extractFeatureRowsAsGRanges("exon", txdb, vals, columns)
-}
+)
 
-#cds <- function(txdb, vals=NULL, columns=c("cds_id", "cds_name"))
-cds <- function(txdb, vals=NULL, columns="cds_id")
-{
-    .extractFeatureRowsAsGRanges("cds", txdb, vals, columns)
-}
+setMethod("exons", "TranscriptDb",
+    function(x, vals=NULL, columns="exon_id")
+        .extractFeatureRowsAsGRanges("exon", x, vals, columns)
+)
+
+setGeneric("cds", function(x, ...) standardGeneric("cds"))
+
+setMethod("cds", "TranscriptDb",
+    function(x, vals=NULL, columns="cds_id")
+        .extractFeatureRowsAsGRanges("cds", x, vals, columns)
+)
 

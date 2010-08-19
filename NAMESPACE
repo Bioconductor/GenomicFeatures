@@ -57,5 +57,8 @@ exportMethods(
   seqnames,
   seqlengths,
   show,
-  as.list
+  as.list,
+  transcripts,
+  exons,
+  cds
 )
