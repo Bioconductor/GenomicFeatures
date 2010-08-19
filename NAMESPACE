@@ -60,5 +60,8 @@ exportMethods(
   as.list,
   transcripts,
   exons,
-  cds
+  cds,
+  transcriptsByOverlaps,
+  exonsByOverlaps,
+  cdsByOverlaps
 )

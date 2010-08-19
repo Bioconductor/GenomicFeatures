@@ -10,7 +10,7 @@
 \alias{cds,TranscriptDb-method}
 
 \title{
-  Retrieving genomic features from a TranscriptDb object.
+  Retrieving genomic features from an object.
 }
 
 \description{

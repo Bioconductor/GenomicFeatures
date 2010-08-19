@@ -1,27 +1,49 @@
 \name{transcriptsByOverlaps}
 
 \alias{transcriptsByOverlaps}
+\alias{transcriptsByOverlaps,TranscriptDb-method}
 \alias{exonsByOverlaps}
+\alias{exonsByOverlaps,TranscriptDb-method}
 \alias{cdsByOverlaps}
+\alias{cdsByOverlaps,TranscriptDb-method}
 
 \title{
-  Retrieving genomic features from a TranscriptDb object using a restriction
+  Retrieving genomic features from an object using a restriction
   by genomic location.
 }
 \description{
-  Functions to retrieve genomic features for specified genomic locations.
+  Generic functions to retrieve genomic features for specified genomic
+  locations.
+  This page documents the methods for \link{TranscriptDb} objects only.
 }
 \usage{
-  transcriptsByOverlaps(txdb, ranges, maxgap = 0L, minoverlap = 1L,
-                        type = c("any", "start", "end"),
-                        columns = c("tx_id", "tx_name"))
-  exonsByOverlaps(txdb, ranges, maxgap = 0L, minoverlap = 1L,
-                  type = c("any", "start", "end"))
-  cdsByOverlaps(txdb, ranges, maxgap = 0L, minoverlap = 1L,
-                type = c("any", "start", "end"))
+transcriptsByOverlaps(x, ranges,
+                      maxgap = 0L, minoverlap = 1L,
+                      type = c("any", "start", "end"), ...)
+\S4method{transcriptsByOverlaps}{TranscriptDb}(x, ranges,
+                      maxgap = 0L, minoverlap = 1L,
+                      type = c("any", "start", "end"),
+                      columns = c("tx_id", "tx_name"))
+
+exonsByOverlaps(x, ranges,
+                maxgap = 0L, minoverlap = 1L,
+                type = c("any", "start", "end"), ...)
+\S4method{exonsByOverlaps}{TranscriptDb}(x, ranges,
+                maxgap = 0L, minoverlap = 1L,
+                type = c("any", "start", "end"),
+                columns = "exon_id")
+
+cdsByOverlaps(x, ranges,
+              maxgap = 0L, minoverlap = 1L,
+              type = c("any", "start", "end"), ...)
+\S4method{cdsByOverlaps}{TranscriptDb}(x, ranges,
+              maxgap = 0L, minoverlap = 1L,
+              type = c("any", "start", "end"),
+              columns = "cds_id")
 }
 \arguments{  
-  \item{txdb}{A \link{TranscriptDb} object.}
+  \item{x}{A \link{TranscriptDb} object.}
+  \item{...}{Arguments to be passed to or from methods.}
   \item{ranges}{A \link[GenomicRanges]{GRanges} object to restrict the output.}
   \item{type}{How to perform the interval overlap operations of the
     \code{ranges}. See the
@@ -30,9 +52,8 @@
   \item{maxgap}{A non-negative integer representing the maximum distance
     between a query interval and a subject interval.}
   \item{minoverlap}{Ignored.}
-  \item{columns}{columns to include in the output. Can be NULL or
-    a combination of "tx_id", "tx_name", "gene_id", "exon_id", and
-    "cds_id".}
+  \item{columns}{Columns to include in the output.
+    See \code{?\link{transcripts}} for the possible values.}
 }
 \details{
   These functions subset the results of \code{\link{transcripts}},
