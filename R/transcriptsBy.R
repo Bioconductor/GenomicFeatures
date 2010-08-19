@@ -133,58 +133,83 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
 ###    cds    tx        no       yes        no  exon_rank
 ###    cds  gene       yes       yes       yes      locus
 
-transcriptsBy <- function(txdb, by=c("gene", "exon", "cds"), use.names=FALSE)
-{
-    by <- match.arg(by)
-    distinct <- splicing_in_join <- by != "gene"
-    gene_in_join <- by == "gene"
-    .featuresBy(txdb, by, "tx",
-                distinct=distinct,
-                splicing_in_join=splicing_in_join,
-                gene_in_join=gene_in_join,
-                order_by_exon_rank=FALSE,
-                use.names=use.names)
-}
+setGeneric("transcriptsBy", signature="x",
+    function(x, by=c("gene", "exon", "cds"), ...)
+        standardGeneric("transcriptsBy")
+)
 
-exonsBy <- function(txdb, by=c("tx", "gene"), use.names=FALSE)
-{
-    by <- match.arg(by)
-    distinct <- gene_in_join <- by == "gene"
-    order_by_exon_rank <- by == "tx"
-    .featuresBy(txdb, by, "exon",
-                distinct=distinct,
-                splicing_in_join=TRUE,
-                gene_in_join=gene_in_join,
-                order_by_exon_rank=order_by_exon_rank,
-                use.names=use.names)
-}
+setMethod("transcriptsBy", "TranscriptDb",
+    function(x, by=c("gene", "exon", "cds"), use.names=FALSE)
+    {
+        by <- match.arg(by)
+        distinct <- splicing_in_join <- by != "gene"
+        gene_in_join <- by == "gene"
+        .featuresBy(x, by, "tx",
+                    distinct=distinct,
+                    splicing_in_join=splicing_in_join,
+                    gene_in_join=gene_in_join,
+                    order_by_exon_rank=FALSE,
+                    use.names=use.names)
+    }
+)
 
-cdsBy <- function(txdb, by=c("tx", "gene"), use.names=FALSE)
-{
-    by <- match.arg(by)
-    distinct <- gene_in_join <- by == "gene"
-    order_by_exon_rank <- by == "tx"
-    .featuresBy(txdb, by, "cds",
-                distinct=distinct,
-                splicing_in_join=TRUE,
-                gene_in_join=gene_in_join,
-                order_by_exon_rank=order_by_exon_rank,
-                use.names=use.names)
-}
+setGeneric("exonsBy", signature="x",
+    function(x, by=c("tx", "gene"), ...) standardGeneric("exonsBy")
+)
+
+setMethod("exonsBy", "TranscriptDb",
+    function(x, by=c("tx", "gene"), use.names=FALSE)
+    {
+        by <- match.arg(by)
+        distinct <- gene_in_join <- by == "gene"
+        order_by_exon_rank <- by == "tx"
+        .featuresBy(x, by, "exon",
+                    distinct=distinct,
+                    splicing_in_join=TRUE,
+                    gene_in_join=gene_in_join,
+                    order_by_exon_rank=order_by_exon_rank,
+                    use.names=use.names)
+    }
+)
+
+setGeneric("cdsBy", signature="x",
+    function(x, by=c("tx", "gene"), ...) standardGeneric("cdsBy")
+)
+
+setMethod("cdsBy", "TranscriptDb",
+    function(x, by=c("tx", "gene"), use.names=FALSE)
+    {
+        by <- match.arg(by)
+        distinct <- gene_in_join <- by == "gene"
+        order_by_exon_rank <- by == "tx"
+        .featuresBy(x, by, "cds",
+                    distinct=distinct,
+                    splicing_in_join=TRUE,
+                    gene_in_join=gene_in_join,
+                    order_by_exon_rank=order_by_exon_rank,
+                    use.names=use.names)
+    }
+)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### intronsByTranscript().
 ###
 
-intronsByTranscript <- function(txdb, use.names=FALSE)
-{
-    tx <- transcripts(txdb)
-    exn <- exonsBy(txdb)
-    tx <- tx[match(names(exn), elementMetadata(tx)[,"tx_id"])]
-    ans <- psetdiff(tx, exn)
-    .set.group.names(ans, use.names, txdb, "tx")
-}
+setGeneric("intronsByTranscript",
+    function(x, ...) standardGeneric("intronsByTranscript")
+)
+
+setMethod("intronsByTranscript", "TranscriptDb",
+    function(x, use.names=FALSE)
+    {
+        tx <- transcripts(x)
+        exn <- exonsBy(x)
+        tx <- tx[match(names(exn), elementMetadata(tx)[,"tx_id"])]
+        ans <- psetdiff(tx, exn)
+        .set.group.names(ans, use.names, x, "tx")
+    }
+)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -230,71 +255,83 @@ intronsByTranscript <- function(txdb, use.names=FALSE)
     split(grg[idx], splicings$tx_id[idx])
 }
 
-fiveUTRsByTranscript <- function(txdb, use.names=FALSE)
-{
-    splicings <- .getFullSplicings(txdb, translated.transcripts.only=TRUE)
+setGeneric("fiveUTRsByTranscript", 
+    function(x, ...) standardGeneric("fiveUTRsByTranscript")
+)
 
-    ## For each transcript, we keep only the first row with a CDS plus all
-    ## previous rows (if any).
-    if (nrow(splicings) != 0L) {
-        cdslist <- split(splicings$cds_id, splicings$tx_id)
-        tmp <- lapply(cdslist,
-                 function(cds_id)
-                 {
-                     W <- which(!is.na(cds_id))
-                     L <- W[1L]
-                     rep.int(c(TRUE, FALSE), c(L, length(cds_id)-L))
-                 })
-        idx <- unsplit(tmp, splicings$tx_id)
-        splicings <- splicings[idx, ]
+setMethod("fiveUTRsByTranscript", "TranscriptDb",
+    function(x, use.names=FALSE)
+    {
+        splicings <- .getFullSplicings(x, translated.transcripts.only=TRUE)
+
+        ## For each transcript, we keep only the first row with a CDS plus all
+        ## previous rows (if any).
+        if (nrow(splicings) != 0L) {
+            cdslist <- split(splicings$cds_id, splicings$tx_id)
+            tmp <- lapply(cdslist,
+                     function(cds_id)
+                     {
+                         W <- which(!is.na(cds_id))
+                         L <- W[1L]
+                         rep.int(c(TRUE, FALSE), c(L, length(cds_id)-L))
+                     })
+            idx <- unsplit(tmp, splicings$tx_id)
+            splicings <- splicings[idx, ]
+        }
+
+        ## Compute the UTR starts/ends.
+        utr_start <- splicings$exon_start
+        utr_end <- splicings$exon_end
+        idx1 <- !is.na(splicings$cds_id)
+        idx <- idx1 & (splicings$exon_strand == "+")
+        utr_end[idx] <- splicings$cds_start[idx] - 1L
+        idx <- idx1 & (splicings$exon_strand == "-")
+        utr_start[idx] <- splicings$cds_end[idx] + 1L
+
+        ## Make and return the GRangesList object.
+        seqlengths <- seqlengths(x)
+        ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
+        .set.group.names(ans, use.names, x, "tx")
     }
+)
 
-    ## Compute the UTR starts/ends.
-    utr_start <- splicings$exon_start
-    utr_end <- splicings$exon_end
-    idx1 <- !is.na(splicings$cds_id)
-    idx <- idx1 & (splicings$exon_strand == "+")
-    utr_end[idx] <- splicings$cds_start[idx] - 1L
-    idx <- idx1 & (splicings$exon_strand == "-")
-    utr_start[idx] <- splicings$cds_end[idx] + 1L
+setGeneric("threeUTRsByTranscript", 
+    function(x, ...) standardGeneric("threeUTRsByTranscript")
+)
 
-    ## Make and return the GRangesList object.
-    seqlengths <- seqlengths(txdb)
-    ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
-    .set.group.names(ans, use.names, txdb, "tx")
-}
+setMethod("threeUTRsByTranscript", "TranscriptDb",
+    function(x, use.names=FALSE)
+    {
+        splicings <- .getFullSplicings(x, translated.transcripts.only=TRUE)
 
-threeUTRsByTranscript <- function(txdb, use.names=FALSE)
-{
-    splicings <- .getFullSplicings(txdb, translated.transcripts.only=TRUE)
+        ## For each transcript, we keep only the last row with a CDS plus all
+        ## following rows (if any).
+        if (nrow(splicings) != 0L) {
+            cdslist <- split(splicings$cds_id, splicings$tx_id)
+            tmp <- lapply(cdslist,
+                     function(cds_id)
+                     {
+                         W <- which(!is.na(cds_id))
+                         L <- W[length(W)]
+                         rep.int(c(FALSE, TRUE), c(L-1L, length(cds_id)-L+1L))
+                     })
+            idx <- unsplit(tmp, splicings$tx_id)
+            splicings <- splicings[idx, ]
+        }
 
-    ## For each transcript, we keep only the last row with a CDS plus all
-    ## following rows (if any).
-    if (nrow(splicings) != 0L) {
-        cdslist <- split(splicings$cds_id, splicings$tx_id)
-        tmp <- lapply(cdslist,
-                 function(cds_id)
-                 {
-                     W <- which(!is.na(cds_id))
-                     L <- W[length(W)]
-                     rep.int(c(FALSE, TRUE), c(L-1L, length(cds_id)-L+1L))
-                 })
-        idx <- unsplit(tmp, splicings$tx_id)
-        splicings <- splicings[idx, ]
+        ## Compute the UTR starts/ends.
+        utr_start <- splicings$exon_start
+        utr_end <- splicings$exon_end
+        idx1 <- !is.na(splicings$cds_id)
+        idx <- idx1 & (splicings$exon_strand == "+")
+        utr_start[idx] <- splicings$cds_end[idx] + 1L
+        idx <- idx1 & (splicings$exon_strand == "-")
+        utr_end[idx] <- splicings$cds_start[idx] - 1L
+
+        ## Make and return the GRangesList object.
+        seqlengths <- seqlengths(x)
+        ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
+        .set.group.names(ans, use.names, x, "tx")
     }
-
-    ## Compute the UTR starts/ends.
-    utr_start <- splicings$exon_start
-    utr_end <- splicings$exon_end
-    idx1 <- !is.na(splicings$cds_id)
-    idx <- idx1 & (splicings$exon_strand == "+")
-    utr_start[idx] <- splicings$cds_end[idx] + 1L
-    idx <- idx1 & (splicings$exon_strand == "-")
-    utr_end[idx] <- splicings$cds_start[idx] - 1L
-
-    ## Make and return the GRangesList object.
-    seqlengths <- seqlengths(txdb)
-    ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
-    .set.group.names(ans, use.names, txdb, "tx")
-}
+)
 

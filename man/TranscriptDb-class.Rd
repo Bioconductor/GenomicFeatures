@@ -68,6 +68,7 @@
   \code{\link{loadFeatures}},
   \code{\link{transcripts}},
   \code{\link{transcriptsByOverlaps}},
+  \code{\link{id2name}}, \code{\link{transcriptsBy}}
 }
 
 \examples{

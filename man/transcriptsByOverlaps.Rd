@@ -8,11 +8,10 @@
 \alias{cdsByOverlaps,TranscriptDb-method}
 
 \title{
-  Retrieving genomic features from an object using a restriction
-  by genomic location.
+  Extract genomic features from an object based on their by genomic location
 }
 \description{
-  Generic functions to retrieve genomic features for specified genomic
+  Generic functions to extract genomic features for specified genomic
   locations.
   This page documents the methods for \link{TranscriptDb} objects only.
 }

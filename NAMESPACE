@@ -63,5 +63,11 @@ exportMethods(
   cds,
   transcriptsByOverlaps,
   exonsByOverlaps,
-  cdsByOverlaps
+  cdsByOverlaps,
+  transcriptsBy,
+  exonsBy,
+  cdsBy,
+  intronsByTranscript,
+  fiveUTRsByTranscript,
+  threeUTRsByTranscript
 )

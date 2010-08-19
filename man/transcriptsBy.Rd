@@ -1,31 +1,48 @@
 \name{transcriptsBy}
 
-\alias{id2name}
 \alias{transcriptsBy}
+\alias{transcriptsBy,TranscriptDb-method}
 \alias{exonsBy}
+\alias{exonsBy,TranscriptDb-method}
 \alias{cdsBy}
+\alias{cdsBy,TranscriptDb-method}
 \alias{intronsByTranscript}
+\alias{intronsByTranscript,TranscriptDb-method}
 \alias{fiveUTRsByTranscript}
+\alias{fiveUTRsByTranscript,TranscriptDb-method}
 \alias{threeUTRsByTranscript}
+\alias{threeUTRsByTranscript,TranscriptDb-method}
 
 \title{
   Extract and group genomic features of a given type
 }
 \description{
-  These functions extract genomic features of a given type
-  from a \link{TranscriptDb} object and group them according to
-  a user-specified criteria.
+  Generic functions to extract genomic features of a given type
+  grouped based on another type of genomic feature.
+  This page documents the methods for \link{TranscriptDb} objects only.
 }
 \usage{
-transcriptsBy(txdb, by=c("gene", "exon", "cds"), use.names=FALSE)
-exonsBy(txdb, by=c("tx", "gene"), use.names=FALSE)
-cdsBy(txdb, by=c("tx", "gene"), use.names=FALSE)
-intronsByTranscript(txdb, use.names=FALSE)
-fiveUTRsByTranscript(txdb, use.names=FALSE)
-threeUTRsByTranscript(txdb, use.names=FALSE)
+transcriptsBy(x, by=c("gene", "exon", "cds"), ...)
+\S4method{transcriptsBy}{TranscriptDb}(x, by=c("gene", "exon", "cds"), use.names=FALSE)
+
+exonsBy(x, by=c("tx", "gene"), ...)
+\S4method{exonsBy}{TranscriptDb}(x, by=c("tx", "gene"), use.names=FALSE)
+
+cdsBy(x, by=c("tx", "gene"), ...)
+\S4method{cdsBy}{TranscriptDb}(x, by=c("tx", "gene"), use.names=FALSE)
+
+intronsByTranscript(x, ...)
+\S4method{intronsByTranscript}{TranscriptDb}(x, use.names=FALSE)
+
+fiveUTRsByTranscript(x, ...)
+\S4method{fiveUTRsByTranscript}{TranscriptDb}(x, use.names=FALSE)
+
+threeUTRsByTranscript(x, ...)
+\S4method{threeUTRsByTranscript}{TranscriptDb}(x, use.names=FALSE)
 }
 \arguments{
-  \item{txdb}{A \link{TranscriptDb} object.}
+  \item{x}{A \link{TranscriptDb} object.}
+  \item{...}{Arguments to be passed to or from methods.}
   \item{by}{One of \code{"gene"}, \code{"exon"}, \code{"cds"} or \code{"tx"}.
     Determines the grouping.}
   \item{use.names}{Controls how to set the names of the returned
@@ -47,6 +64,9 @@ threeUTRsByTranscript(txdb, use.names=FALSE)
     Note that, unlike the feature ids, the feature names are not
     guaranteed to be unique or even defined (they could be all
     \code{NA}s). A warning is issued when this happens.
+    See \code{?\link{id2name}} for more information about
+    feature internal ids and feature external names and how
+    to map the formers to the latters.
 
     Finally, \code{use.names=TRUE} cannot be used when grouping
     by gene \code{by="gene"}. This is because, unlike for the
@@ -62,7 +82,7 @@ threeUTRsByTranscript(txdb, use.names=FALSE)
 
   When using \code{exonsBy} and \code{cdsBy} with \code{by = "tx"},
   the ranges are returned in the order they appear in the transcript,
-  i.e. order by the splicing.exon_rank field in \code{txdb}'s internal
+  i.e. order by the splicing.exon_rank field in \code{x}'s internal
   database. In all other cases, the ranges will be ordered by chromosome,
   strand, start, and end values.
 }
@@ -71,7 +91,7 @@ threeUTRsByTranscript(txdb, use.names=FALSE)
   M. Carlson, P. Aboyoun and H. Pages
 }
 \seealso{
-  \link{TranscriptDb}, \code{\link{transcripts}},
+  \link{TranscriptDb}, \code{\link{transcripts}}, \code{\link{id2name}},
   \code{\link{transcriptsByOverlaps}}
 }
 \examples{
@@ -79,20 +99,24 @@ threeUTRsByTranscript(txdb, use.names=FALSE)
                            package="GenomicFeatures")
   txdb <- loadFeatures(txdb_file)
 
-  ## Get the transcripts grouped by gene
+  ## Get the transcripts grouped by gene:
   transcriptsBy(txdb, "gene")
 
-  ## Get the exons grouped by gene
+  ## Get the exons grouped by gene:
   exonsBy(txdb, "gene")
 
-  ## Get the cds grouped by transcript
-  cdsBy(txdb, "tx")
-  cdsBy(txdb, "tx", use.names=TRUE)  # more informative group names
+  ## Get the cds grouped by transcript:
+  cds_by_tx0 <- cdsBy(txdb, "tx")
+  ## With more informative group names:
+  cds_by_tx1 <- cdsBy(txdb, "tx", use.names=TRUE)
+  ## Note that 'cds_by_tx1' can also be obtained with:
+  names(cds_by_tx0) <- id2name(txdb, feature.type="tx")[names(cds_by_tx0)]
+  stopifnot(identical(cds_by_tx0, cds_by_tx1))
 
-  ## Get the introns grouped by transcript
+  ## Get the introns grouped by transcript:
   intronsByTranscript(txdb)
 
-  ## Get the 5' UTRs grouped by transcript
+  ## Get the 5' UTRs grouped by transcript:
   fiveUTRsByTranscript(txdb)
   fiveUTRsByTranscript(txdb, use.names=TRUE)  # more informative group names
 }

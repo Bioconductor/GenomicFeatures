@@ -10,11 +10,11 @@
 \alias{cds,TranscriptDb-method}
 
 \title{
-  Retrieving genomic features from an object.
+  Extract genomic features from an object
 }
 
 \description{
-  Generic functions to retrieve genomic features from an object.
+  Generic functions to extract genomic features from an object.
   This page documents the methods for \link{TranscriptDb} objects only.
 }
 
@@ -63,7 +63,7 @@ cds(x, ...)
 }
 
 \details{
-  These are the main functions for retrieving transcript information from
+  These are the main functions for extracting transcript information from
   a \link{TranscriptDb} object. They can restrict the output based on
   categorical information. To restrict the output based on interval
   information, use the \code{\link{transcriptsByOverlaps}},
@@ -78,7 +78,9 @@ cds(x, ...)
 }
 
 \seealso{
-  \link{TranscriptDb}, \code{\link{transcriptsByOverlaps}}
+  \link{TranscriptDb},
+  \code{\link{id2name}}, \code{\link{transcriptsBy}},
+  \code{\link{transcriptsByOverlaps}}
 }
 
 \examples{
