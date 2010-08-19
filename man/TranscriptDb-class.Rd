@@ -8,9 +8,10 @@
 \alias{class:TranscriptDb}
 \alias{TranscriptDb}
 
-\alias{show,TranscriptDb-method}
+\alias{metadata,TranscriptDb-method}
 \alias{seqnames,TranscriptDb-method}
 \alias{seqlengths,TranscriptDb-method}
+\alias{show,TranscriptDb-method}
 \alias{as.list,TranscriptDb-method}
 
 \title{TranscriptDb objects}
@@ -30,6 +31,10 @@
   In the code snippets below, \code{x} is a TranscriptDb object.
 
   \describe{
+    \item{}{
+      \code{metadata(x)}:
+      Returns \code{x}'s metadata in a data frame.
+    }
     \item{}{
       \code{seqnames(x)}:
       Returns the names of all chromosomes in a character vector.
@@ -56,8 +61,9 @@
     }
   }
 
-  See \code{?\link{transcripts}}, and \code{?\link{transcriptsByOverlaps}}
-  for other useful operations on TranscriptDb objects.
+  See \code{?\link{transcripts}}, \code{?\link{transcriptsByOverlaps}},
+  \code{?\link{id2name}} and \code{?\link{transcriptsBy}} for other useful
+  operations on TranscriptDb objects.
 }
 
 \author{H. Pages}

@@ -54,6 +54,7 @@ export(
 )
 
 exportMethods(
+  metadata,
   seqnames,
   seqlengths,
   show,

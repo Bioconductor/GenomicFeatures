@@ -192,6 +192,10 @@ loadFeatures <- function(file)
 ### Accessors.
 ###
 
+setMethod("metadata", "TranscriptDb",
+    function(x) dbReadTable(txdbConn(x), "metadata")
+)
+
 .getChromInfo <- function(x)
 {
     sql <- "SELECT chrom, length FROM chrominfo ORDER BY _chrom_id"
@@ -218,14 +222,14 @@ setMethod("seqlengths", "TranscriptDb",
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### "show" method for TranscriptDb objects.
+### The "show" method for TranscriptDb objects.
 ###
 
 setMethod("show", "TranscriptDb",
     function(object)
     {
         cat("TranscriptDb object:\n")
-        metadata <- dbReadTable(txdbConn(object), "metadata")
+        metadata <- metadata(object)
         for (i in seq_len(nrow(metadata))) {
             cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
                 "\n", sep="")
