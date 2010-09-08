@@ -42,18 +42,17 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
   See \code{?\link{makeTranscriptDbFromUCSC}} for a similar function
   that feeds data from the UCSC source.
 
-  As of June 28, 2010, the BioMart databases with compatible transcript
+  As of September 7, 2010, the BioMart databases with compatible transcript
   annotations are:
   \itemize{
-    \item ensembl: ENSEMBL GENES 58 (SANGER UK)
-    \item bacterial_mart_5: ENSEMBL BACTERIA 5 (EBI UK)
-    \item fungal_mart_5: ENSEMBL FUNGAL 5 (EBI UK)
-    \item metazoa_mart_5: ENSEMBL METAZOA 5 (EBI UK)
-    \item plant_mart_5: ENSEMBL PLANT 5 (EBI UK)
-    \item protist_mart_5: ENSEMBL PROTISTS 5 (EBI UK)
+    \item ensembl: ENSEMBL GENES 59 (SANGER UK)
+    \item bacterial_mart_6: ENSEMBL BACTERIA 6 (EBI UK)
+    \item fungal_mart_6: ENSEMBL FUNGAL 6 (EBI UK)
+    \item metazoa_mart_6: ENSEMBL METAZOA 6 (EBI UK)
+    \item plant_mart_6: ENSEMBL PLANT 6 (EBI UK)
+    \item protist_mart_6: ENSEMBL PROTISTS 6 (EBI UK)
     \item ensembl_expressionmart_48: EURATMART (EBI UK)
     \item Ensembl56: PANCREATIC EXPRESSION DATABASE (INSTITUTE OF CANCER UK)
-    \item ENSEMBL_MART_ENSEMBL: GRAMENE 30 ENSEMBL GENES (CSHL/CORNELL US)
   }
   Only ensembl and Ensembl56 have CDS information.
 }
@@ -74,10 +73,10 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
 
 \examples{
 ## Discover which datasets are available in the "ensembl" and
-## "plant_mart_5" BioMart databases:
+## "plant_mart_6" BioMart databases:
 library(biomaRt)
 listDatasets(useMart("ensembl"))
-listDatasets(useMart("plant_mart_5"))
+listDatasets(useMart("plant_mart_6"))
 
 ## Retrieving an incomplete transcript dataset for Human from the
 ## "ensembl" BioMart database:
