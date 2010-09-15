@@ -16,9 +16,10 @@ Maintainer: Biocore Team c/o BioC user list <bioconductor@stat.math.ethz.ch>
 Depends: IRanges (>= 1.7.7), GenomicRanges (>= 0.0.9)
 Imports: methods, DBI (>= 0.2-5), RSQLite (>= 0.8-1), IRanges, GenomicRanges,
          Biostrings (>= 2.17.6), rtracklayer (>= 1.7.11), biomaRt, RCurl, utils
-Suggests: org.Mm.eg.db,
+Suggests: rtracklayer, biomaRt,
+          org.Mm.eg.db,
           GenomicFeatures.Hsapiens.UCSC.hg18,
-          BSgenome,
+          Biostrings, BSgenome,
           BSgenome.Hsapiens.UCSC.hg18 (>= 1.3.14),
           RUnit
 Collate: AllClasses.R

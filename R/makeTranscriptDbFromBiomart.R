@@ -192,50 +192,55 @@ getAllDatasetAttrGroups <- function(attrlist)
     paste(url, coresubdir, "/", sep="")
 }
 
-#extra_seqnames <- unique(as.character(transcripts$tx_chrom))
-#extra_seqnames <- c("GL000217.1", "NC_012920")
-#.fetchChromLengthsFromEnsembl("hsapiens_gene_ensembl", "58",
-#                              extra_seqnames=extra_seqnames))
+.fetchEnsemblTableDump <- function(base_url, tablename, colnames)
+{
+    url <- paste(base_url, tablename, ".txt.gz", sep="")
+    destfile <- tempfile()
+    download.file(url, destfile, quiet=TRUE)
+    data <- read.table(destfile, sep="\t", quote="",
+                       col.names=colnames, comment.char="",
+                       stringsAsFactors=FALSE)
+    unlink(destfile)
+    data
+}
+
+### Fetch chromosome names and lengths from the 'seq_region' and
+### 'coord_system' tables of the specified dataset/release.
+### Ensembl Core Schema Documentation:
+###   http://www.ensembl.org/info/docs/api/core/core_schema.html
+### The full schema:
+###   ftp://ftp.ensembl.org/pub/ensembl/sql/table.sql
+### Typical use:
+###   extra_seqnames <- unique(as.character(transcripts$tx_chrom))
+###   extra_seqnames <- c("GL000217.1", "NC_012920")
+###   .fetchChromLengthsFromEnsembl("hsapiens_gene_ensembl", "58",
+###                                 extra_seqnames=extra_seqnames))
 .fetchChromLengthsFromEnsembl <- function(dataset, release=NA,
                                           extra_seqnames=NULL)
 {
     core_url <- .getFtpEnsemblMySQLCoreUrl(dataset, release=release)
-    ## Get seq_region table.
-    url <- paste(core_url, "seq_region.txt.gz", sep="")
-    destfile <- tempfile()
-    download.file(url, destfile, quiet=TRUE)
+    ## Get 'seq_region' table.
     colnames <- c("seq_region_id", "name", "coord_system_id", "length")
-    seq_region <- read.table(destfile, sep="\t", quote="",
-                             col.names=colnames, comment.char="",
-                             stringsAsFactors=FALSE)
-    ## Get coord_system table.
-    url <- paste(core_url, "coord_system.txt.gz", sep="")
-    destfile <- tempfile()
-    download.file(url, destfile, quiet=TRUE)
+    seq_region <- .fetchEnsemblTableDump(core_url, "seq_region", colnames)
+    ## Get 'coord_system' table.
     colnames <- c("coord_system_id", "species_id", "name",
                   "version", "rank", "attrib")
-    coord_system <- read.table(destfile, sep="\t", quote="",
-                               col.names=colnames, comment.char="",
-                               stringsAsFactors=FALSE)
-
-    ## First filtering: keep only "default_version" sequences.
+    coord_system <- .fetchEnsemblTableDump(core_url, "coord_system", colnames)
+    ## 1st filtering: keep only "default_version" sequences.
     idx1 <- grep("default_version", coord_system$attrib, fixed=TRUE)
     ids1 <- coord_system$coord_system_id[idx1]
     seq_region <- seq_region[seq_region$coord_system_id %in% ids1, , drop=FALSE]
-
-    ## Get index of chromosome sequences.
+    ## Preparing index of chromosome sequences for 2nd filtering.
     idx2 <- intersect(idx1, which(coord_system$name == "chromosome"))
     ids2 <- coord_system$coord_system_id[idx2]
     chrom_idx <- seq_region$coord_system_id %in% ids2
-
     if (!is.null(extra_seqnames)) {
         if (!all(extra_seqnames %in% seq_region$name))
             stop("failed to fetch all chromosome lengths")
         ## Add extra sequences to the index.
         chrom_idx <- chrom_idx | (seq_region$name %in% extra_seqnames)
     }
-
-    ## Second filtering. 
+    ## 2nd filtering.
     ans <- seq_region[chrom_idx, c("name", "length"), drop=FALSE]
     row.names(ans) <- NULL
     if (any(duplicated(ans$name)))

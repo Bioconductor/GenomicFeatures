@@ -46,7 +46,7 @@ cdsByOverlaps(x, ranges,
   \item{ranges}{A \link[GenomicRanges]{GRanges} object to restrict the output.}
   \item{type}{How to perform the interval overlap operations of the
     \code{ranges}. See the
-    \code{\link[GenomicRanges:GRanges-findOverlaps]{findOverlaps}} manual page
+    \code{\link[GenomicRanges:findOverlaps-methods]{findOverlaps}} manual page
     in the GRanges package for more information.}
   \item{maxgap}{A non-negative integer representing the maximum distance
     between a query interval and a subject interval.}
