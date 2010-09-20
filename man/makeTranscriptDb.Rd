@@ -24,8 +24,8 @@
     of a set of transcripts}
   \item{genes}{data frame containing the genes associated to a set
     of transcripts}
-  \item{chrominfo}{data frame containing the chromosome information
-    of a set of transcripts}
+  \item{chrominfo}{data frame containing information about the chromosomes
+    hosting the set of transcripts}
   \item{metadata}{2-column data frame containing meta information about
     this set of transcripts like species, organism, genome, UCSC table, etc...
     The names of the columns must be \code{"name"} and \code{"value"}
@@ -122,6 +122,8 @@
         Character vector (or factor) with no NAs.
   \item \code{length}: Chromosome length.
         Either all NAs or an integer vector with no NAs.
+  \item \code{is_circular}: [optional] Chromosome circularity flag.
+        Either all NAs or a logical vector with no  NAs.
   }
   Other columns, if any, are ignored (with a warning).
 }

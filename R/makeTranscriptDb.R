@@ -226,17 +226,19 @@
                               splicings_exon_chrom)
 {
     if (is.null(chrominfo)) {
-        warning("chromosome lengths not available for this TranscriptDb object")
+        warning("chromosome lengths and circularity flags ",
+                "are not available for this TranscriptDb object")
         feature_chrom <- unique(c(as.character(transcripts_tx_chrom),
                                   as.character(splicings_exon_chrom)))
         chrominfo <- data.frame(
             chrom=feature_chrom,
-            length=rep.int(NA_integer_, length(feature_chrom))
+            length=rep.int(NA_integer_, length(feature_chrom)),
+            is_circular=rep.int(NA, length(feature_chrom))
         )
         return(chrominfo)
     }
     .REQUIRED_COLS <- c("chrom", "length")
-    .OPTIONAL_COLS <- character(0)
+    .OPTIONAL_COLS <- "is_circular"
     .checkargColnames(chrominfo, .REQUIRED_COLS, .OPTIONAL_COLS, "chrominfo")
     ## Check 'chrom'.
     if (!.isCharacterVectorOrFactor(chrominfo$chrom)
@@ -262,6 +264,28 @@
     }
     if (!is.integer(chrominfo$length))
         chrominfo$length <- as.integer(chrominfo$length)
+    ## Check 'is_circular'.
+    if (hasCol(chrominfo, "is_circular")) {
+        if (!is.vector(chrominfo$is_circular))
+            stop("'chrominfo$is_circular' must be either all NAs ",
+                 "or a logical vector with no NAs")
+        na_idx <- is.na(chrominfo$is_circular)
+        if (all(na_idx)) {
+            ## We want logical NAs.
+            if (!is.logical(chrominfo$is_circular))
+                chrominfo$is_circular <- as.logical(chrominfo$is_circular)
+        } else {
+            if (any(na_idx))
+                stop("'chrominfo$is_circular' cannot mix NAs and non-NAs")
+            if (!is.logical(chrominfo$is_circular))
+                stop("'chrominfo$is_circular' must be either all NAs ",
+                     "or a logical vector with no NAs")
+        }
+    } else {
+        warning("chromosome circularity flags ",
+                "are not available for this TranscriptDb object")
+        chrominfo$is_circular <- rep.int(NA, nrow(chrominfo))
+    }
     chrominfo
 }
 
@@ -290,17 +314,19 @@
         internal_chrom_id=seq_len(nrow(chrominfo)),
         chrom=as.character(chrominfo$chrom),
         length=chrominfo$length,
+        is_circular=chrominfo$is_circular,
         stringsAsFactors=FALSE)
     ## Create the 'chrominfo' table.
     sql <- c(
         "CREATE TABLE chrominfo (\n",
         "  _chrom_id INTEGER PRIMARY KEY,\n",
         "  chrom TEXT UNIQUE NOT NULL,\n",
-        "  length INTEGER NULL\n",
+        "  length INTEGER NULL,\n",
+        "  is_circular INTEGER NULL\n",
         ")")
     dbEasyQuery(conn, paste(sql, collapse=""))
     ## Fill the 'chrominfo' table.
-    sql <- "INSERT INTO chrominfo VALUES (?,?,?)"
+    sql <- "INSERT INTO chrominfo VALUES (?,?,?,?)"
     dbEasyPreparedQuery(conn, sql, table)
 }
 

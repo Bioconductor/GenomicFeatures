@@ -127,7 +127,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 ### TODO: Add more checks!
 .valid.chrominfo.table <- function(conn)
 {
-    colnames <- c("_chrom_id", "chrom", "length")
+    colnames <- c("_chrom_id", "chrom", "length", "is_circular")
     msg <- .valid.table.colnames(conn, "chrominfo", colnames)
     if (!is.null(msg))
         return(msg)
@@ -198,7 +198,7 @@ setMethod("metadata", "TranscriptDb",
 
 .getChromInfo <- function(x)
 {
-    sql <- "SELECT chrom, length FROM chrominfo ORDER BY _chrom_id"
+    sql <- "SELECT chrom, length, is_circular FROM chrominfo ORDER BY _chrom_id"
     dbEasyQuery(txdbConn(x), sql)
 }
 
