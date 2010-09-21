@@ -165,7 +165,7 @@ TranscriptDb <- function(conn)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Saving/loading.
+### Saving/loading. 
 ###
 
 saveFeatures <- function(x, file)
@@ -183,10 +183,43 @@ loadFeatures <- function(file)
         stop("'file' must be a single string")
     if(!file.exists(file))
         stop("file '", file, "' does not exist")
+
     conn <- dbConnect(SQLite(), file)
+    if(dbExistsTable(conn, "metadata")) {
+        version <- .getMetaValue(conn,"DBSCHEMAVERSION")
+        if(length(version) == 0) { 
+            type <- .getMetaValue(conn, "Db type")
+            if(type == "TranscriptDb") {
+                conn <- .fixOldDbSchema(conn)
+            }
+        }
+    }
     TranscriptDb(conn)
 }
 
+.fixOldDbSchema <- function(conn) {
+    db <- dbConnect(SQLite(), dbname = ":memory:")
+    sqliteCopyDatabase(conn, db)
+    sql <- "SELECT  * from chrominfo"
+    chromInfo <- dbEasyQuery(db, sql)
+    nr <- nrow(chromInfo)
+    if( !"is_circular" %in% colnames(chromInfo)){
+        is_circular <- rep(NA, nr)
+        sql <- paste("ALTER TABLE chrominfo ADD is_circular", is_circular, "INTEGER", sep = " ")
+        dbSendQuery(db, sql)
+        dbSendQuery(db, "INSERT INTO metadata VALUES('DBSCHEMAVERSION', '1.0')")
+        message("The TranscriptDb object has been updated to the latest schema version 1.0.")
+        message("The updated object can be saved using saveFeatures method")
+    } 
+    db
+}
+
+
+.getMetaValue <- function(conn, name) {
+    sql <-   "SELECT * from metadata"
+    res <- dbEasyQuery(conn, sql)
+    res$value[res$name == name]
+}
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Accessors.
