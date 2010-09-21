@@ -151,7 +151,7 @@
 ###
 
 ### Uses RCurl to access and list the content of an FTP dir.
-.listFtpDir <- function(url)
+.lsFtpUrl <- function(url)
 {
     doc <- getURL(url)
     listing <- strsplit(doc, "\n", fixed=TRUE)[[1L]]
@@ -177,35 +177,35 @@
 {
     if (is.na(url))
         url <- .Ensembl.getFtpUrlToMySQL(release)
-    coredirs <- .listFtpDir(url)
+    core_dirs <- .lsFtpUrl(url)
     pattern <- "_core_"
     if (!is.na(release))
         pattern <- paste(pattern, release, "_", sep="")
-    coredirs[grep(pattern, coredirs, fixed=TRUE)]
+    core_dirs[grep(pattern, core_dirs, fixed=TRUE)]
 }
 
 .Ensembl.getMySQLCoreDir <- function(dataset, release=NA, url=NA)
 {
     if (is.na(url))
         url <- .Ensembl.getFtpUrlToMySQL(release)
-    coredirs <- .Ensembl.listMySQLCoreDirs(release=release, url=url)
-    shortnames <- sapply(strsplit(coredirs, "_", fixed=TRUE),
+    core_dirs <- .Ensembl.listMySQLCoreDirs(release=release, url=url)
+    shortnames <- sapply(strsplit(core_dirs, "_", fixed=TRUE),
                          function(x)
                            paste(substr(x[1L], 1L, 1L), x[2L], sep=""))
     shortname0 <- strsplit(dataset, "_", fixed=TRUE)[[1L]][1L]
-    coredir <- coredirs[shortnames == shortname0]
-    if (length(coredir) != 1L)
+    core_dir <- core_dirs[shortnames == shortname0]
+    if (length(core_dir) != 1L)
         stop("found 0 or more than 1 subdir for \"", dataset,
              "\" dataset at ", url)
-    coredir
+    core_dir
 }
 
 .Ensembl.getMySQLCoreUrl <- function(dataset, release=NA, url=NA)
 {
     if (is.na(url))
         url <- .Ensembl.getFtpUrlToMySQL(release)
-    coredir <- .Ensembl.getMySQLCoreDir(dataset, release=release, url=url)
-    paste(url, coredir, "/", sep="")
+    core_dir <- .Ensembl.getMySQLCoreDir(dataset, release=release, url=url)
+    paste(url, core_dir, "/", sep="")
 }
 
 .Ensembl.fetchTableDump <- function(base_url, tablename, colnames)
