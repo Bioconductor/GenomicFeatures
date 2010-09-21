@@ -24,9 +24,7 @@
 }
 
 .extractEnsemblReleaseFromDbVersion <- function(db_version)
-{
     sub("^ENSEMBL GENES ([^[:space:]]+) \\(SANGER UK\\)", "\\1", db_version)
-}
 
 ### Groups of BioMart attributes:
 ###   - A1, A2 and G are required attributes;
@@ -92,8 +90,9 @@
 ### 'attrlist' can be a list (as returned by getMartAttribList()), a Mart
 ### object, or the name of a Mart service (single string).
 ### Typical use:
-###   ensembl_attrgroups <- GenomicFeatures:::getAllDatasetAttrGroups("ensembl")
-getAllDatasetAttrGroups <- function(attrlist)
+###   ensembl_attrgroups <-
+###       GenomicFeatures:::.getAllDatasetAttrGroups("ensembl")
+.getAllDatasetAttrGroups <- function(attrlist)
 {
     if (!is.list(attrlist))
         attrlist <- getMartAttribList(attrlist)
@@ -151,17 +150,7 @@ getAllDatasetAttrGroups <- function(attrlist)
 ### Download and preprocess the 'chrominfo' data frame.
 ###
 
-.FTP_ENSEMBL_PUB_URL <- "ftp://ftp.ensembl.org/pub/"
-
-.getFtpEnsemblMySQLUrl <- function(release=NA)
-{
-    if (is.na(release))
-        pub_subdir <- "current_mysql"
-    else
-        pub_subdir <- paste("release-", release, "/mysql", sep="")
-    paste(.FTP_ENSEMBL_PUB_URL, pub_subdir, "/", sep="")
-}
-
+### Uses RCurl to access and list the content of an FTP dir.
 .listFtpDir <- function(url)
 {
     doc <- getURL(url)
@@ -173,26 +162,53 @@ getAllDatasetAttrGroups <- function(attrlist)
     sub("[[:space:]].*$", "", listing)
 }
 
-.getFtpEnsemblMySQLCoreUrl <- function(dataset, release=NA)
+.ENSEMBL.PUB_FTP_URL <- "ftp://ftp.ensembl.org/pub/"
+
+.Ensembl.getFtpUrlToMySQL <- function(release=NA)
 {
-    shortname0 <- strsplit(dataset, "_", fixed=TRUE)[[1L]][1L]
-    url <- .getFtpEnsemblMySQLUrl(release)
-    listing <- .listFtpDir(url)
+    if (is.na(release))
+        pub_subdir <- "current_mysql"
+    else
+        pub_subdir <- paste("release-", release, "/mysql", sep="")
+    paste(.ENSEMBL.PUB_FTP_URL, pub_subdir, "/", sep="")
+}
+
+.Ensembl.listMySQLCoreDirs <- function(release=NA, url=NA)
+{
+    if (is.na(url))
+        url <- .Ensembl.getFtpUrlToMySQL(release)
+    coredirs <- .listFtpDir(url)
     pattern <- "_core_"
     if (!is.na(release))
         pattern <- paste(pattern, release, "_", sep="")
-    listing <- listing[grep(pattern, listing, fixed=TRUE)]
-    shortnames <- sapply(strsplit(listing, "_", fixed=TRUE),
-                         function(x)
-                           paste(substr(x[1L], 1L, 1L), x[2L], sep=""))
-    coresubdir <- listing[shortnames == shortname0]
-    if (length(coresubdir) != 1L)
-        stop("found 0 or more than 1 subdir for \"", dataset,
-             "\" dataset at ", url)
-    paste(url, coresubdir, "/", sep="")
+    coredirs[grep(pattern, coredirs, fixed=TRUE)]
 }
 
-.fetchEnsemblTableDump <- function(base_url, tablename, colnames)
+.Ensembl.getMySQLCoreDir <- function(dataset, release=NA, url=NA)
+{
+    if (is.na(url))
+        url <- .Ensembl.getFtpUrlToMySQL(release)
+    coredirs <- .Ensembl.listMySQLCoreDirs(release=release, url=url)
+    shortnames <- sapply(strsplit(coredirs, "_", fixed=TRUE),
+                         function(x)
+                           paste(substr(x[1L], 1L, 1L), x[2L], sep=""))
+    shortname0 <- strsplit(dataset, "_", fixed=TRUE)[[1L]][1L]
+    coredir <- coredirs[shortnames == shortname0]
+    if (length(coredir) != 1L)
+        stop("found 0 or more than 1 subdir for \"", dataset,
+             "\" dataset at ", url)
+    coredir
+}
+
+.Ensembl.getMySQLCoreUrl <- function(dataset, release=NA, url=NA)
+{
+    if (is.na(url))
+        url <- .Ensembl.getFtpUrlToMySQL(release)
+    coredir <- .Ensembl.getMySQLCoreDir(dataset, release=release, url=url)
+    paste(url, coredir, "/", sep="")
+}
+
+.Ensembl.fetchTableDump <- function(base_url, tablename, colnames)
 {
     url <- paste(base_url, tablename, ".txt.gz", sep="")
     destfile <- tempfile()
@@ -204,8 +220,30 @@ getAllDatasetAttrGroups <- function(attrlist)
     data
 }
 
-### Fetch chromosome names and lengths from the 'seq_region' and
-### 'coord_system' tables of the specified dataset/release.
+.Ensembl.fetchAttribTypeIdForTopLevelSequence <- function(core_url)
+{
+    ## Get 'attrib_type' table.
+    colnames <- c("attrib_type_id", "code", "name", "description")
+    attrib_type <- .Ensembl.fetchTableDump(core_url, "attrib_type", colnames)
+    i <- which(attrib_type$code == "toplevel")
+    if (length(i) != 1L)
+        stop("Ensembl data anomaly: \"toplevel\" attrib found 0 or more ",
+             "than once in attrib_type table at ", core_url)
+    attrib_type$attrib_type_id[i]
+}
+
+.Ensembl.fetchTopLevelSequenceIds <- function(core_url)
+{
+    id0 <- .Ensembl.fetchAttribTypeIdForTopLevelSequence(core_url)
+    ## Get 'seq_region_attrib' table.
+    colnames <- c("seq_region_id", "attrib_type_id", "value")
+    seq_region_attrib <- .Ensembl.fetchTableDump(core_url,
+                             "seq_region_attrib", colnames)
+    seq_region_attrib$seq_region_id[seq_region_attrib$attrib_type_id == id0]
+}
+
+### Fetch names and lengths for the "toplevel" sequences in the
+### 'seq_region' table of the specified dataset/release.
 ### Ensembl Core Schema Documentation:
 ###   http://www.ensembl.org/info/docs/api/core/core_schema.html
 ### The full schema:
@@ -218,30 +256,28 @@ getAllDatasetAttrGroups <- function(attrlist)
 .fetchChromLengthsFromEnsembl <- function(dataset, release=NA,
                                           extra_seqnames=NULL)
 {
-    core_url <- .getFtpEnsemblMySQLCoreUrl(dataset, release=release)
+    core_url <- .Ensembl.getMySQLCoreUrl(dataset, release=release)
     ## Get 'seq_region' table.
     colnames <- c("seq_region_id", "name", "coord_system_id", "length")
-    seq_region <- .fetchEnsemblTableDump(core_url, "seq_region", colnames)
+    seq_region <- .Ensembl.fetchTableDump(core_url, "seq_region", colnames)
     ## Get 'coord_system' table.
     colnames <- c("coord_system_id", "species_id", "name",
                   "version", "rank", "attrib")
-    coord_system <- .fetchEnsemblTableDump(core_url, "coord_system", colnames)
+    coord_system <- .Ensembl.fetchTableDump(core_url, "coord_system", colnames)
     ## 1st filtering: keep only "default_version" sequences.
     idx1 <- grep("default_version", coord_system$attrib, fixed=TRUE)
     ids1 <- coord_system$coord_system_id[idx1]
     seq_region <- seq_region[seq_region$coord_system_id %in% ids1, , drop=FALSE]
-    ## Preparing index of chromosome sequences for 2nd filtering.
-    idx2 <- intersect(idx1, which(coord_system$name == "chromosome"))
-    ids2 <- coord_system$coord_system_id[idx2]
-    chrom_idx <- seq_region$coord_system_id %in% ids2
+    ## 2nd filtering: keep "toplevel" sequences + extra sequences.
+    seq_region_ids <- .Ensembl.fetchTopLevelSequenceIds(core_url)
+    ans_idx <- seq_region$seq_region_id %in% seq_region_ids
     if (!is.null(extra_seqnames)) {
         if (!all(extra_seqnames %in% seq_region$name))
             stop("failed to fetch all chromosome lengths")
         ## Add extra sequences to the index.
-        chrom_idx <- chrom_idx | (seq_region$name %in% extra_seqnames)
+        ans_idx <- ans_idx | (seq_region$name %in% extra_seqnames)
     }
-    ## 2nd filtering.
-    ans <- seq_region[chrom_idx, c("name", "length"), drop=FALSE]
+    ans <- seq_region[ans_idx, c("name", "length"), drop=FALSE]
     row.names(ans) <- NULL
     if (any(duplicated(ans$name)))
         stop("failed to fetch all chromosome lengths unambiguously")
@@ -565,7 +601,7 @@ getMartAttribList <- function(mart)
 scanMart <- function(biomart, version)
 {
     cat("Scanning ", biomart, "... ", sep="")
-    suppressMessages(attrgroups <- getAllDatasetAttrGroups(biomart))
+    suppressMessages(attrgroups <- .getAllDatasetAttrGroups(biomart))
     cat("OK\n")
     cat("biomart: ", biomart, "\n", sep="")
     cat("version: ", version, "\n", sep="")
