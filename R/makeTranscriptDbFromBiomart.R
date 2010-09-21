@@ -243,20 +243,18 @@
 }
 
 ### Fetch names and lengths for the "toplevel" sequences in the
-### 'seq_region' table of the specified dataset/release.
+### 'seq_region' table of the Ensemble Core DB specified by 'core_url'.
 ### Ensembl Core Schema Documentation:
 ###   http://www.ensembl.org/info/docs/api/core/core_schema.html
 ### The full schema:
 ###   ftp://ftp.ensembl.org/pub/ensembl/sql/table.sql
 ### Typical use:
+###   core_url <- .Ensembl.getMySQLCoreUrl("hsapiens_gene_ensembl")
 ###   extra_seqnames <- unique(as.character(transcripts$tx_chrom))
 ###   extra_seqnames <- c("GL000217.1", "NC_012920")
-###   .fetchChromLengthsFromEnsembl("hsapiens_gene_ensembl", "58",
-###                                 extra_seqnames=extra_seqnames))
-.fetchChromLengthsFromEnsembl <- function(dataset, release=NA,
-                                          extra_seqnames=NULL)
+###   .fetchChromLengthsFromCoreUrl(core_url, extra_seqnames=extra_seqnames)
+.fetchChromLengthsFromCoreUrl <- function(core_url, extra_seqnames=NULL)
 {
-    core_url <- .Ensembl.getMySQLCoreUrl(dataset, release=release)
     ## Get 'seq_region' table.
     colnames <- c("seq_region_id", "name", "coord_system_id", "length")
     seq_region <- .Ensembl.fetchTableDump(core_url, "seq_region", colnames)
@@ -284,8 +282,34 @@
     ans
 }
 
-### Silently returns NULL if it fails to fetch the chromosome lengths
-### from the remote resource.
+.fetchChromLengthsFromEnsembl <- function(dataset, release=NA,
+                                          extra_seqnames=NULL)
+{
+    core_url <- .Ensembl.getMySQLCoreUrl(dataset, release=release)
+    .fetchChromLengthsFromCoreUrl(core_url, extra_seqnames=extra_seqnames)
+}
+
+### As of Sep 21, 2010 (Ensembl release 59), Ensembl was still not flagging
+### circular sequences in their db (see this thread for the details
+### http://lists.ensembl.org/pipermail/dev/2010-September/000139.html),
+### so, in the meantime, we try to guess from the sequence names.
+### TODO: We definitely need something better!
+.guessCircularity <- function(seqnames)
+{
+    is_circular <- rep.int(FALSE, length(seqnames))
+    ## Mitochondrial DNA:
+    idx <- grep("mt", seqnames, ignore.case=TRUE)
+    is_circular[idx] <- TRUE
+    idx <- grep("mit", seqnames, ignore.case=TRUE)
+    is_circular[idx] <- TRUE
+    ## 2-micron plasmid in Yeast:
+    idx <- grep("2-micron", seqnames, ignore.case=TRUE)
+    is_circular[idx] <- TRUE
+    is_circular
+}
+
+### Returns NULL if it fails to fetch the chromosome lengths from the
+### remote resource.
 .makeBiomartChrominfo <- function(mart, extra_seqnames=NULL)
 {
     biomart <- biomaRt:::martBM(mart)
@@ -305,7 +329,8 @@
         }
         chrominfo <- data.frame(
             chrom=chromlengths$name,
-            length=chromlengths$length
+            length=chromlengths$length,
+            is_circular=.guessCircularity(chromlengths$name)
         )
         message("OK")
         return(chrominfo)
