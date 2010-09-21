@@ -199,7 +199,13 @@ setMethod("metadata", "TranscriptDb",
 .getChromInfo <- function(x)
 {
     sql <- "SELECT chrom, length, is_circular FROM chrominfo ORDER BY _chrom_id"
-    dbEasyQuery(txdbConn(x), sql)
+    chrominfo <- dbEasyQuery(txdbConn(x), sql)
+    COL2CLASS <- c(
+         chrom="character",
+         length="integer",
+         is_circular="logical"
+    )
+    setDataFrameColClass(chrominfo, COL2CLASS)
 }
 
 setMethod("seqnames", "TranscriptDb",
