@@ -228,6 +228,30 @@ makeIdsForUniqueDataFrameRows <- function(x)
 ### Miscellaneous (NOT exported).
 ###
 
+### AFAIK UCSC doesn't flag circular sequences.
+### As of Sep 21, 2010 (Ensembl release 59), Ensembl was still not flagging
+### circular sequences in their db (see this thread for the details
+### http://lists.ensembl.org/pipermail/dev/2010-September/000139.html),
+### so, in the meantime, we try to guess from the sequence names.
+### TODO: We definitely need something better!
+guessCircularity <- function(seqnames)
+{
+    is_circular <- rep.int(FALSE, length(seqnames))
+    ## Mitochondrial DNA:
+    idx <- grep("chrM", seqnames, ignore.case=TRUE)  # UCSC (consistently)
+    is_circular[idx] <- TRUE
+    idx <- grep("MT", seqnames, ignore.case=TRUE)  # Ensembl
+    is_circular[idx] <- TRUE
+    idx <- grep("mit", seqnames, ignore.case=TRUE)  # Ensembl
+    is_circular[idx] <- TRUE
+    ## 2-micron plasmid in Yeast:
+    idx <- grep("2micron", seqnames, ignore.case=TRUE)  # UCSC
+    is_circular[idx] <- TRUE
+    idx <- grep("2-micron", seqnames, ignore.case=TRUE)  # Ensembl
+    is_circular[idx] <- TRUE
+    is_circular
+}
+
 ### 'exon_count' must be a vector of positive integers and 'tx_strand' a
 ### character vector with "+" or "-" values. Both vectors must have the
 ### same length.

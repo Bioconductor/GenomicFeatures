@@ -382,7 +382,8 @@ supportedUCSCtables <- function()
     download.file(url, destfile, quiet=TRUE)
     colnames <- c("chrom", "size", "fileName")
     ans <- read.table(destfile, sep="\t", quote="",
-                      col.names=colnames, comment.char="")
+                      col.names=colnames, comment.char="",
+                      stringsAsFactors=FALSE)
     ans
 }
 
@@ -400,7 +401,8 @@ supportedUCSCtables <- function()
                                                 drop.extra.cols=TRUE)
     chrominfo <- data.frame(
         chrom=ucsc_chrominfotable$chrom,
-        length=ucsc_chrominfotable$size
+        length=ucsc_chrominfotable$size,
+        is_circular=guessCircularity(ucsc_chrominfotable$chrom)
     )
     message("OK")
     chrominfo

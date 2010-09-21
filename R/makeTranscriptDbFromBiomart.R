@@ -289,25 +289,6 @@
     .fetchChromLengthsFromCoreUrl(core_url, extra_seqnames=extra_seqnames)
 }
 
-### As of Sep 21, 2010 (Ensembl release 59), Ensembl was still not flagging
-### circular sequences in their db (see this thread for the details
-### http://lists.ensembl.org/pipermail/dev/2010-September/000139.html),
-### so, in the meantime, we try to guess from the sequence names.
-### TODO: We definitely need something better!
-.guessCircularity <- function(seqnames)
-{
-    is_circular <- rep.int(FALSE, length(seqnames))
-    ## Mitochondrial DNA:
-    idx <- grep("mt", seqnames, ignore.case=TRUE)
-    is_circular[idx] <- TRUE
-    idx <- grep("mit", seqnames, ignore.case=TRUE)
-    is_circular[idx] <- TRUE
-    ## 2-micron plasmid in Yeast:
-    idx <- grep("2-micron", seqnames, ignore.case=TRUE)
-    is_circular[idx] <- TRUE
-    is_circular
-}
-
 ### Returns NULL if it fails to fetch the chromosome lengths from the
 ### remote resource.
 .makeBiomartChrominfo <- function(mart, extra_seqnames=NULL)
@@ -330,7 +311,7 @@
         chrominfo <- data.frame(
             chrom=chromlengths$name,
             length=chromlengths$length,
-            is_circular=.guessCircularity(chromlengths$name)
+            is_circular=guessCircularity(chromlengths$name)
         )
         message("OK")
         return(chrominfo)
