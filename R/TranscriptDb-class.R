@@ -6,7 +6,7 @@
 ### Not exported.
 DB_TYPE_NAME <- "Db type"
 DB_TYPE_VALUE <- "TranscriptDb"  # same as the name of the class
-
+DB_SCHEMA_VERSION <- "1.0"
 ### Not exported.
 makeFeatureColnames <- function(feature_shortname)
 {
@@ -31,6 +31,23 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 
 ### The specified table must have *at least* the cols specified in 'colnames'.
 ### It's OK if it has more cols or if it has them in a different order.
+
+.getMetaValue <- function(conn, name) {
+    colnames <- c("name", "value")
+    msg <- .valid.table.colnames(conn, "metadata", colnames)
+    if (!is.null(msg))
+        stop(msg)
+    sql <-  paste("SELECT * FROM metadata",
+                 " WHERE name = '", name, "'", sep="")
+    data <- dbEasyQuery(conn, sql)
+    if (nrow(data) != 1L) {
+        msg <- paste("The metadata table in the DB has 0 or more ",
+                     "than 1 '", name, "' entries", sep="")
+        stop(msg)
+    }
+    data$value
+}
+
 .valid.table.colnames <- function(conn, tablename, colnames)
 {
     tmp <- try(dbExistsTable(conn, tablename), silent=TRUE)
@@ -57,15 +74,9 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
     msg <- .valid.table.colnames(conn, "metadata", colnames)
     if (!is.null(msg))
         return(msg)
-    sql <- paste("SELECT * FROM metadata",
-                 " WHERE name = '", DB_TYPE_NAME, "'", sep="")
-    data <- dbEasyQuery(conn, sql)
-    if (nrow(data) != 1L) {
-        msg <- paste("the metadata table in the DB has 0 or more ",
-                     "than 1 '", DB_TYPE_NAME, "' entries", sep="")
-        return(msg)
-    }
-    db_type <- data[["value"]]
+    db_type <- try(.getMetaValue(conn, DB_TYPE_NAME), silent = TRUE)
+    if(is(db_type, "try-error"))
+        return(db_type[1])
     if (is.na(db_type) || db_type != DB_TYPE_VALUE) {
         msg <- paste("'", DB_TYPE_NAME, "' is not \"", DB_TYPE_VALUE,
                      "\"", sep="")
@@ -186,13 +197,12 @@ loadFeatures <- function(file)
 
     conn <- dbConnect(SQLite(), file)
     if(dbExistsTable(conn, "metadata")) {
-        version <- .getMetaValue(conn,"DBSCHEMAVERSION")
-        if(length(version) == 0) { 
-            type <- .getMetaValue(conn, "Db type")
+        type <- .getMetaValue(conn, "Db type")
             if(type == "TranscriptDb") {
-                conn <- .fixOldDbSchema(conn)
+              version <- try(.getMetaValue(conn,"DBSCHEMAVERSION"), silent = TRUE)
+              if(is(version, "try-error"))
+                  conn <- .fixOldDbSchema(conn)
             }
-        }
     }
     TranscriptDb(conn)
 }
@@ -200,26 +210,23 @@ loadFeatures <- function(file)
 .fixOldDbSchema <- function(conn) {
     db <- dbConnect(SQLite(), dbname = ":memory:")
     sqliteCopyDatabase(conn, db)
+    dbDisconnect(conn)
     sql <- "SELECT  * from chrominfo"
     chromInfo <- dbEasyQuery(db, sql)
     nr <- nrow(chromInfo)
     if( !"is_circular" %in% colnames(chromInfo)){
         is_circular <- rep(NA, nr)
         sql <- paste("ALTER TABLE chrominfo ADD is_circular", is_circular, "INTEGER", sep = " ")
-        dbSendQuery(db, sql)
-        dbSendQuery(db, "INSERT INTO metadata VALUES('DBSCHEMAVERSION', '1.0')")
+        dbEasyQuery(db, sql)
+        sql <- paste("INSERT INTO metadata VALUES('DBSCHEMAVERSION', '",
+                DB_SCHEMA_VERSION,"')", sep = "")
+        dbEasyQuery(db, sql)
         message("The TranscriptDb object has been updated to the latest schema version 1.0.")
-        message("The updated object can be saved using saveFeatures method")
+        message("The updated object can be saved using saveFeatures()")
     } 
     db
 }
 
-
-.getMetaValue <- function(conn, name) {
-    sql <-   "SELECT * from metadata"
-    res <- dbEasyQuery(conn, sql)
-    res$value[res$name == name]
-}
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Accessors.
