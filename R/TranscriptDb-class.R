@@ -252,7 +252,7 @@ setMethod("seqnames", "TranscriptDb",
     function(x)
     {
         data <- .getChromInfo(x)
-        as.character(data[["chrom"]])
+        data[["chrom"]]
     }
 )
 
@@ -260,8 +260,18 @@ setMethod("seqlengths", "TranscriptDb",
     function(x)
     {
         data <- .getChromInfo(x)
-        ans <- as.integer(data[["length"]])
-        names(ans) <- as.character(data[["chrom"]])
+        ans <- data[["length"]]
+        names(ans) <- data[["chrom"]]
+        ans
+    }
+)
+
+setMethod("isCircular", "TranscriptDb",
+    function(x)
+    {
+        data <- .getChromInfo(x)
+        ans <- data[["is_circular"]]
+        names(ans) <- data[["chrom"]]
         ans
     }
 )

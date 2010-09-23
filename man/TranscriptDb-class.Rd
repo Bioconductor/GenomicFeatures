@@ -11,6 +11,7 @@
 \alias{metadata,TranscriptDb-method}
 \alias{seqnames,TranscriptDb-method}
 \alias{seqlengths,TranscriptDb-method}
+\alias{isCircular,TranscriptDb-method}
 \alias{show,TranscriptDb-method}
 \alias{as.list,TranscriptDb-method}
 
@@ -46,10 +47,16 @@
     \item{}{
       \code{seqlengths(x)}:
       Returns the lengths of the chromosomes \emph{or NAs}
-      in an integer vector which names are \code{seqnames(x)}.
-      It's important to note that either \emph{all} elements are NAs
-      or \emph{none} is, depending on the avaibality of this
-      information at creation time.
+      in an integer vector named with \code{seqnames(x)}.
+      Either \emph{all} elements are NAs or \emph{none} is,
+      depending on the avaibality of this information at creation time.
+    }
+    \item{}{
+      \code{isCircular(x)}:
+      Returns the circularity flag of the chromosomes \emph{or NAs}
+      in a logical vector named with \code{seqnames(x)}.
+      Either \emph{all} elements are NAs or \emph{none} is,
+      depending on the avaibality of this information at creation time.
     }
     \item{}{
       \code{as.list(x)}:
@@ -85,6 +92,7 @@ txdb
 
 seqnames(txdb)
 seqlengths(txdb)
+names(which(isCircular(txdb)))
 
 txdump <- as.list(txdb)
 txdump
