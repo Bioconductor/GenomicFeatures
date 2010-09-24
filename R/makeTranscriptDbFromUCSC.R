@@ -387,7 +387,7 @@ supportedUCSCtables <- function()
     ans
 }
 
-.makeUCSCChrominfo <- function(genome,
+.makeUCSCChrominfo <- function(genome, circ_seqs,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
     message("Download and preprocess the 'chrominfo' data frame ... ",
@@ -402,11 +402,24 @@ supportedUCSCtables <- function()
     chrominfo <- data.frame(
         chrom=ucsc_chrominfotable$chrom,
         length=ucsc_chrominfotable$size,
-        is_circular=guessCircularity(ucsc_chrominfotable$chrom)
+        is_circular=matchCircularity(ucsc_chrominfotable$chrom, circ_seqs)
     )
     message("OK")
     chrominfo
 }
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Allow users to discover 'chrominfo' data frame.
+###
+
+discoverUCSCChrominfo <- function(genome,
+          goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
+{
+  chromInfo <-.makeUCSCChrominfo(genome, circ_seqs=character(),
+                                 goldenPath_url=goldenPath_url)
+  chromInfo[,1:2]
+}
+
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -435,6 +448,7 @@ supportedUCSCtables <- function()
 .makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes,
         genome, tablename, gene_id_type,
         full_dataset,
+        circ_seqs,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
     ucsc_txtable <- setDataFrameColClass(ucsc_txtable, .UCSC_TXCOL2CLASS,
@@ -444,7 +458,7 @@ supportedUCSCtables <- function()
     splicings <- .extractSplicingsFromUCSCTxTable(ucsc_txtable,
                                                   transcripts$tx_id)
     genes <- .makeUCSCGenes(genes, ucsc_txtable)
-    chrominfo <- .makeUCSCChrominfo(genome, goldenPath_url)
+    chrominfo <- .makeUCSCChrominfo(genome, circ_seqs, goldenPath_url)
     metadata <- .prepareUCSCMetadata(genome, tablename, gene_id_type,
                                      full_dataset)
 
@@ -467,6 +481,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
         tablename="knownGene",
         transcript_ids=NULL,
         url="http://genome.ucsc.edu/cgi-bin/",
+        circ_seqs=DEFAULTCIRCSTRS,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
     if (!isSingleString(genome))
@@ -518,6 +533,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
                                      genome, tablename,
                                      txname2geneid$gene_id_type,
                                      full_dataset=is.null(transcript_ids),
+                                     circ_seqs=circ_seqs,
                                      goldenPath_url=goldenPath_url)
 }
 

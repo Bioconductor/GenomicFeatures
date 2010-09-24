@@ -291,7 +291,7 @@
 
 ### Returns NULL if it fails to fetch the chromosome lengths from the
 ### remote resource.
-.makeBiomartChrominfo <- function(mart, extra_seqnames=NULL)
+.makeBiomartChrominfo <- function(mart, circ_seqs, extra_seqnames=NULL)
 {
     biomart <- biomaRt:::martBM(mart)
     dataset <- biomaRt:::martDataset(mart)
@@ -311,13 +311,32 @@
         chrominfo <- data.frame(
             chrom=chromlengths$name,
             length=chromlengths$length,
-            is_circular=guessCircularity(chromlengths$name)
+            is_circular=matchCircularity(chromlengths$name, circ_seqs)
         )
         message("OK")
         return(chrominfo)
     }
     NULL
 }
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Allow users to discover 'chrominfo' data frame.
+###
+
+discoverBiomartChrominfo <- function(biomart="ensembl",
+                                     dataset="hsapiens_gene_ensembl")
+{
+    mart <- .parseBMMartParams(biomart=biomart,
+                              dataset=dataset)
+    filters <- .parseBMFiltersParams(transcript_ids=NULL)
+    values <- .parseBMValuesParams(transcript_ids=NULL)        
+    transcripts <- .makeBiomartTranscripts(filters, values, mart,
+                                           transcript_ids=NULL)
+    chrominfo <- .makeBiomartChrominfo(mart, circ_seqs=character(),
+                                       extra_seqnames=transcripts$tx_chrom)
+    chrominfo[,1:2]
+}
+
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -526,27 +545,35 @@
 ### makeTranscriptDbFromBiomart()
 ###
 
-### Note that listMarts() and listDatasets() are returning data frames where
-### the columns are character factors for the former and "AsIs" character
-### vectors for the latter.
-makeTranscriptDbFromBiomart <- function(biomart="ensembl",
-                                        dataset="hsapiens_gene_ensembl",
-                                        transcript_ids=NULL)
+.parseBMMartParams <- function(biomart="ensembl",
+                                      dataset="hsapiens_gene_ensembl")
 {
-    ## Could be that the user got the 'biomart' and/or 'dataset' values
-    ## programmatically via calls to listMarts() and/or listDatasets().
     if (is.factor(biomart))
         biomart <- as.character(biomart)
     if (is(dataset, "AsIs"))
         dataset <- as.character(dataset)
     if (!isSingleString(biomart))
         stop("'biomart' must be a single string")
-    mart <- useMart(biomart=biomart, dataset=dataset)
+    useMart(biomart=biomart, dataset=dataset)
+}
+
+.parseBMFiltersParams <- function(transcript_ids)
+{
     if (is.null(transcript_ids)) {
-        filters <- values <- ""
+        filters <- ""
     } else if (is.character(transcript_ids)
             && !any(is.na(transcript_ids))) {
         filters <- "ensembl_transcript_id"
+    }
+    filters
+}
+
+.parseBMValuesParams <- function(transcript_ids)
+{
+    if (is.null(transcript_ids)) {
+        values <- ""
+    }else if (is.character(transcript_ids)
+            && !any(is.na(transcript_ids))) {
         if (length(transcript_ids) == 0L)
             values <- "____a_very_unlikely_valid_transcript_id____"
         else
@@ -554,10 +581,56 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     } else {
         stop("'transcript_ids' must be a character vector with no NAs")
     }
+    values
+}
 
+
+## .testMakeTxDbFromBMParams <- function(biomart="ensembl",
+##                                       dataset="hsapiens_gene_ensembl",
+##                                       circ_seqs=DEFAULTCIRCSTRS,
+##                                       transcript_ids=NULL)
+## {
+    ## if (is.factor(biomart))
+    ##     biomart <- as.character(biomart)
+    ## if (is(dataset, "AsIs"))
+    ##     dataset <- as.character(dataset)
+    ## if (!isSingleString(biomart))
+    ##     stop("'biomart' must be a single string")
+    ## mart <- useMart(biomart=biomart, dataset=dataset)
+  
+    ## if (is.null(transcript_ids)) {
+    ##     filters <- values <- ""
+    ## } else if (is.character(transcript_ids)
+    ##         && !any(is.na(transcript_ids))) {
+    ##     filters <- "ensembl_transcript_id" 
+    ##     if (length(transcript_ids) == 0L)
+    ##         values <- "____a_very_unlikely_valid_transcript_id____"
+    ##     else
+    ##         values <- transcript_ids
+    ## } else {
+    ##     stop("'transcript_ids' must be a character vector with no NAs")
+    ## }
+## }
+
+
+### Note that listMarts() and listDatasets() are returning data frames where
+### the columns are character factors for the former and "AsIs" character
+### vectors for the latter.
+makeTranscriptDbFromBiomart <- function(biomart="ensembl",
+                                        dataset="hsapiens_gene_ensembl",
+                                        circ_seqs=DEFAULTCIRCSTRS,
+                                        transcript_ids=NULL)
+{
+    ## Could be that the user got the 'biomart' and/or 'dataset' values
+    ## programmatically via calls to listMarts() and/or listDatasets().
+    mart <- .parseBMMartParams(biomart=biomart,
+                              dataset=dataset)
+    filters <- .parseBMFiltersParams(transcript_ids)
+    values <- .parseBMValuesParams(transcript_ids)
+    
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
                                            transcript_ids)
-    chrominfo <- .makeBiomartChrominfo(mart,
+    chrominfo <- .makeBiomartChrominfo(mart, circ_seqs=circ_seqs,
                                        extra_seqnames=transcripts$tx_chrom)
     splicings <- .makeBiomartSplicings(filters, values, mart,
                                        transcripts$tx_name)

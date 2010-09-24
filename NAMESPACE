@@ -50,7 +50,10 @@ export(
   cdsBy,
   intronsByTranscript,
   fiveUTRsByTranscript,
-  threeUTRsByTranscript
+  threeUTRsByTranscript,
+  DEFAULTCIRCSTRS,
+  discoverUCSCChrominfo,
+  discoverBiomartChrominfo
 )
 
 exportMethods(

@@ -2,6 +2,9 @@
 ### Miscellaneous low-level utils
 ### -------------------------------------------------------------------------
 
+## global character vector to hold default values for mitochondrial strings.
+DEFAULTCIRCSTRS = c("chrM","MT","mit","2micron","2-micron");
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### DB related.
@@ -22,6 +25,7 @@ debugSQL <- function()
     assign("debugSQL", debugSQL, envir=RTobjs)
     debugSQL
 }
+
 
 ### Use dbQuery(conn, SQL, 1) instead of dbQuery(conn, SQL)[[1]],
 ### it's much safer!
@@ -232,23 +236,28 @@ makeIdsForUniqueDataFrameRows <- function(x)
 ### As of Sep 21, 2010 (Ensembl release 59), Ensembl was still not flagging
 ### circular sequences in their db (see this thread for the details
 ### http://lists.ensembl.org/pipermail/dev/2010-September/000139.html),
-### so, in the meantime, we try to guess from the sequence names.
-### TODO: We definitely need something better!
-guessCircularity <- function(seqnames)
+### This just takes the list of things that users are calling circular in the
+### circ_seqs argument and then marks those things as being circular and
+### returns the vector all marked up
+
+### TODO: still need to get the new parameter passed along to where this is called...  :P
+matchCircularity <- function(seqnames, circ_seqs)
 {
-    is_circular <- rep.int(FALSE, length(seqnames))
-    ## Mitochondrial DNA:
-    idx <- grep("chrM", seqnames, ignore.case=TRUE)  # UCSC (consistently)
-    is_circular[idx] <- TRUE
-    idx <- grep("MT", seqnames, ignore.case=TRUE)  # Ensembl
-    is_circular[idx] <- TRUE
-    idx <- grep("mit", seqnames, ignore.case=TRUE)  # Ensembl
-    is_circular[idx] <- TRUE
-    ## 2-micron plasmid in Yeast:
-    idx <- grep("2micron", seqnames, ignore.case=TRUE)  # UCSC
-    is_circular[idx] <- TRUE
-    idx <- grep("2-micron", seqnames, ignore.case=TRUE)  # Ensembl
-    is_circular[idx] <- TRUE
+    ## shorten and put to lowercase (for simplicity in subsequent comparisons)
+    seqs <- tolower(seqnames)
+    circs <- tolower(circ_seqs)
+    ## checks
+    if(length(intersect(seqs,circs))<1 && length(circs)>0){
+      warning("None of the strings in your circ_seqs argument match your seqnames.")  
+    }
+    int <- intersect(seqs,circs)
+    is_circular <- rep.int(FALSE, length(seqs))
+    if(length(int)>0){
+      for(i in seq_len(length(int))){
+        idx <- grep(int[i], seqs)
+        is_circular[idx] <- TRUE
+      }
+    }
     is_circular
 }
 
