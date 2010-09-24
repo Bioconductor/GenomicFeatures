@@ -248,32 +248,28 @@ setMethod("metadata", "TranscriptDb",
     setDataFrameColClass(chrominfo, COL2CLASS)
 }
 
+### TODO: Make this the "seqinfo" method for TranscriptDb objects (and export
+### it) when the seqinfo() generic becomes available (will be added to
+### GenomicRanges soon).
+getTranscriptDbSeqinfo <- function(x)
+{
+    data <- .getChromInfo(x)
+    Seqinfo(seqnames = data[["chrom"]],
+            seqlengths = data[["length"]],
+            isCircular = data[["is_circular"]])
+}
+
+### TODO: It won't be necessary to define the 3 methods below once the
+### seqinfo() generic and the default "seqnames", "seqlengths" and
+### "isCircular" methods are in place.
 setMethod("seqnames", "TranscriptDb",
-    function(x)
-    {
-        data <- .getChromInfo(x)
-        data[["chrom"]]
-    }
+    function(x) seqnames(getTranscriptDbSeqinfo(x))
 )
-
 setMethod("seqlengths", "TranscriptDb",
-    function(x)
-    {
-        data <- .getChromInfo(x)
-        ans <- data[["length"]]
-        names(ans) <- data[["chrom"]]
-        ans
-    }
+    function(x) seqlengths(getTranscriptDbSeqinfo(x))
 )
-
 setMethod("isCircular", "TranscriptDb",
-    function(x)
-    {
-        data <- .getChromInfo(x)
-        ans <- data[["is_circular"]]
-        names(ans) <- data[["chrom"]]
-        ans
-    }
+    function(x) isCircular(getTranscriptDbSeqinfo(x))
 )
 
 

@@ -106,16 +106,18 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
     cols <- gsub("TYPE", type, c("TYPE_id", "TYPE_name"))
     if (order_by_exon_rank)
         cols <- c(cols, "exon_rank")
-    seqlengths <- seqlengths(txdb)
+    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
+    seqinfo <- getTranscriptDbSeqinfo(txdb)
     grngs <-
       GRanges(seqnames =
               factor(data[[paste(type, "_chrom", sep="")]],
-                     levels = names(seqlengths)),
+                     levels = seqnames(seqinfo)),
               ranges = IRanges(start = data[[paste(type, "_start", sep="")]],
                                end = data[[paste(type, "_end", sep="")]]),
               strand = strand(data[[paste(type, "_strand", sep="")]]),
-              data[cols],
-              seqlengths = seqlengths)
+              data[cols])
+    ## TODO: Use seqinfo(grngs) <- seqinfo this becomes available.
+    grngs@seqinfo <- getTranscriptDbSeqinfo(txdb)
 
     ## split by grouping variable
     ans <- split(grngs, data[[paste(by, "_id", sep="")]])
@@ -241,16 +243,17 @@ setMethod("intronsByTranscript", "TranscriptDb",
     ans
 }
 
-.makeUTRsByTranscript <- function(splicings, utr_start, utr_end, seqlengths)
+.makeUTRsByTranscript <- function(splicings, utr_start, utr_end, seqinfo)
 {
-    seqlevels <- names(seqlengths)
+    seqlevels <- seqnames(seqinfo)
     grg <- GRanges(seqnames=factor(splicings$exon_chrom, levels=seqlevels),
                    ranges=IRanges(start=utr_start, end=utr_end),
                    strand=strand(splicings$exon_strand),
                    exon_id=splicings$exon_id,
                    exon_name=splicings$exon_name,
-                   exon_rank=splicings$exon_rank,
-                   seqlengths=seqlengths)
+                   exon_rank=splicings$exon_rank)
+    ## TODO: Use seqinfo(grg) <- seqinfo this becomes available.
+    grg@seqinfo <- seqinfo
     idx <- width(grg) != 0L  # drop 0-width UTRs
     split(grg[idx], splicings$tx_id[idx])
 }
@@ -289,8 +292,9 @@ setMethod("fiveUTRsByTranscript", "TranscriptDb",
         utr_start[idx] <- splicings$cds_end[idx] + 1L
 
         ## Make and return the GRangesList object.
-        seqlengths <- seqlengths(x)
-        ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
+        ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
+        seqinfo <- getTranscriptDbSeqinfo(txdb)
+        ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqinfo)
         .set.group.names(ans, use.names, x, "tx")
     }
 )
@@ -329,8 +333,9 @@ setMethod("threeUTRsByTranscript", "TranscriptDb",
         utr_end[idx] <- splicings$cds_start[idx] - 1L
 
         ## Make and return the GRangesList object.
-        seqlengths <- seqlengths(x)
-        ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqlengths)
+        ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
+        seqinfo <- getTranscriptDbSeqinfo(txdb)
+        ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqinfo)
         .set.group.names(ans, use.names, x, "tx")
     }
 )
