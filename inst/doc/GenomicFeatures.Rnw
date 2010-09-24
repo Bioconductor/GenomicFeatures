@@ -86,6 +86,27 @@ supportedUCSCtables()[1:4, ]
 mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", tablename = "knownGene")
 @
 
+The function \Rfunction{makeTranscriptDbFromUCSC} also takes an
+important argument called \Robject{circ\_seqs} to label which
+chromosomes are circular.  The argument is a character vector of
+strings that correspond to the circular chromosomes (as labeled by the
+source).  To discover what the source calls their chromosomes, use the
+\Rfunction{discoverUCSCChrominfo} function to list them.  By default,
+there is a supplied character vector that will attempt to label all
+the mitochondrial chromosomes as circular by matching to them.  This
+is the \Robject{DEFAULTCIRCSTRS} vector.  It contains strings that
+usually correspond to mitochondrial chromosomes.  Once the database
+has been generated with the circular chromosomes tagged in this way,
+all subsequent analysis of these chromosomes will be able to consider
+their circularity for analysis.  So it is important for the user to
+make sure that they pass in the correct strings to the
+\Robject{circ\_seqs} argument to ensure that the correct sequences are
+tagged as circular by the database.
+
+<<discoverChromNames>>=
+head(discoverUCSCChrominfo("hg19"))
+@ 
+
 \subsubsection{Using \Rfunction{makeTranscriptDbFromBiomart}}
 
 Retrieve data from BioMart by specifying the mart and the data set to
@@ -97,6 +118,14 @@ mmusculusEnsembl <-
    makeTranscriptDbFromBiomart(biomart = "ensembl",
                               dataset = "mmusculus_gene_ensembl")
 @
+
+As with the \Rfunction{makeTranscriptDbFromUCSC} function, the
+\Rfunction{makeTranscriptDbFromBiomart} function also has a
+\Robject{circ\_seqs} argument that will default to using the contents
+of the \Robject{DEFAULTCIRCSTRS} vector.  And just like those UCSC
+sources, there is also a helper function called
+\Rfunction{discoverBiomartChrominfo} that can show what the different
+chromosomes are called for a given source.
 
 Using the \Rfunction{makeTranscriptDbFromBiomart}
 \Rfunction{makeTranscriptDbFromUCSC} functions can take a while and
