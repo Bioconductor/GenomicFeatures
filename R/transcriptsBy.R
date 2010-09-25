@@ -116,8 +116,8 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
                                end = data[[paste(type, "_end", sep="")]]),
               strand = strand(data[[paste(type, "_strand", sep="")]]),
               data[cols])
-    ## TODO: Use seqinfo(grngs) <- seqinfo this becomes available.
-    grngs@seqinfo <- getTranscriptDbSeqinfo(txdb)
+    ## TODO: Use seqinfo(grngs) <- seqinfo when this becomes available.
+    grngs@seqinfo <- seqinfo
 
     ## split by grouping variable
     ans <- split(grngs, data[[paste(by, "_id", sep="")]])
@@ -252,7 +252,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
                    exon_id=splicings$exon_id,
                    exon_name=splicings$exon_name,
                    exon_rank=splicings$exon_rank)
-    ## TODO: Use seqinfo(grg) <- seqinfo this becomes available.
+    ## TODO: Use seqinfo(grg) <- seqinfo when this becomes available.
     grg@seqinfo <- seqinfo
     idx <- width(grg) != 0L  # drop 0-width UTRs
     split(grg[idx], splicings$tx_id[idx])

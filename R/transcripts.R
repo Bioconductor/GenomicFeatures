@@ -318,7 +318,7 @@
     ans <- GRanges(seqnames=ans_seqnames,
                    ranges=ans_ranges,
                    strand=ans_strand)
-    ## TODO: Use seqinfo(ans) <- ans_seqinfo this becomes available.
+    ## TODO: Use seqinfo(ans) <- ans_seqinfo when this becomes available.
     ans@seqinfo <- ans_seqinfo
     ans_values <- c(DataFrame(root_data[root_columns]), child_data)
     values(ans) <- ans_values[columns]

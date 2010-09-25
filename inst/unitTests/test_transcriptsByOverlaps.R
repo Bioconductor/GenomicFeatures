@@ -1,14 +1,18 @@
+###
+
 test_transcriptsByOverlaps <- function()
 {
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                      package="GenomicFeatures"))
-    seqlengths <- seqlengths(txdb)
-    seqlevels <- names(seqlengths)
 
     checkException(transcriptsByOverlaps(txdb), silent = TRUE)
     checkException(transcriptsByOverlaps(txdb, IRanges()), silent = TRUE)
     checkException(transcriptsByOverlaps(txdb, GRanges(), columns = "bad"),
                    silent = TRUE)
+
+    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
+    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb)
+    seqlevels <- seqnames(seqinfo)
 
     gr <- GRanges(seqnames = "chr5",
                   ranges = IRanges(start=190000, end=280000),
@@ -18,8 +22,9 @@ test_transcriptsByOverlaps <- function()
               ranges = IRanges(start=257875, end=271297),
               strand = strand("-"),
               tx_id = 15L,
-              tx_name = "uc003jam.1",
-              seqlengths = seqlengths)
+              tx_name = "uc003jam.1")
+    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
+    want@seqinfo <- seqinfo
     checkIdentical(transcriptsByOverlaps(txdb, gr), want)
 
     ranges <- IRanges(start = c(1000, 1000, 20000, 30000),
@@ -32,22 +37,25 @@ test_transcriptsByOverlaps <- function()
                     ranges = IRanges(start = c(1116, 1116, 31608),
                                      end   = c(4121, 4272, 36385)),
                     strand = strand(c("+", "+", "-")),
-                    tx_id = c(1L,2L,4L),
-                    seqlengths = seqlengths)
-    checkIdentical(want, transcriptsByOverlaps(txdb, gr, columns="tx_id"))
+                    tx_id = c(1L,2L,4L))
+    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
+    want@seqinfo <- seqinfo
+    checkIdentical(transcriptsByOverlaps(txdb, gr, columns="tx_id"), want)
 }
 
 test_exonsByOverlaps <- function()
 {
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                      package="GenomicFeatures"))
-    seqlengths <- seqlengths(txdb)
-    seqlevels <- names(seqlengths)
 
     checkException(exonsByOverlaps(txdb), silent = TRUE)
     checkException(exonsByOverlaps(txdb, IRanges()), silent = TRUE)
     checkException(exonsByOverlaps(txdb, GRanges(), columns = "bad"),
                    silent = TRUE)
+
+    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
+    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb)
+    seqlevels <- seqnames(seqinfo)
 
     gr <- GRanges(seqnames = "chr5",
                   ranges = IRanges(start=190000, end=280000),
@@ -57,8 +65,9 @@ test_exonsByOverlaps <- function()
               ranges = IRanges(start=c(257875,269844,271208),
                                end  =c(259073,269974,271297)),
               strand = strand(rep("-",3)),
-              exon_id = 77:79,
-              seqlengths = seqlengths)
+              exon_id = 77:79)
+    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
+    want@seqinfo <- seqinfo
     checkIdentical(exonsByOverlaps(txdb, gr), want)
 }
 
@@ -66,13 +75,15 @@ test_cdsByOverlaps <- function()
 {
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                      package="GenomicFeatures"))
-    seqlengths <- seqlengths(txdb)
-    seqlevels <- names(seqlengths)
 
     checkException(cdsByOverlaps(txdb), silent = TRUE)
     checkException(cdsByOverlaps(txdb, IRanges()), silent = TRUE)
     checkException(cdsByOverlaps(txdb, GRanges(), columns = "bad"),
                    silent = TRUE)
+
+    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
+    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb)
+    seqlevels <- seqnames(seqinfo)
 
     gr <- GRanges(seqnames  = "chr5",
                   ranges = IRanges(start=258412, end=269964),
@@ -82,7 +93,8 @@ test_cdsByOverlaps <- function()
               ranges = IRanges(start=c(258412,269844),
                                end  =c(259073,269964)),
               strand = strand(rep("-",2)),
-              cds_id = 53:54,
-              seqlengths = seqlengths)
+              cds_id = 53:54)
+    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
+    want@seqinfo <- seqinfo
     checkIdentical(cdsByOverlaps(txdb, gr), want)
 }
