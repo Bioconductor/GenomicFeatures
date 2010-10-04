@@ -91,7 +91,7 @@ important argument called \Robject{circ\_seqs} to label which
 chromosomes are circular.  The argument is a character vector of
 strings that correspond to the circular chromosomes (as labeled by the
 source).  To discover what the source calls their chromosomes, use the
-\Rfunction{discoverUCSCChrominfo} function to list them.  By default,
+\Rfunction{getChromInfoFromUCSC} function to list them.  By default,
 there is a supplied character vector that will attempt to label all
 the mitochondrial chromosomes as circular by matching to them.  This
 is the \Robject{DEFAULT_CIRC_SEQS} vector.  It contains strings that
@@ -104,7 +104,7 @@ make sure that they pass in the correct strings to the
 tagged as circular by the database.
 
 <<discoverChromNames>>=
-head(discoverUCSCChrominfo("hg19"))
+head(getChromInfoFromUCSC("hg19"))
 @ 
 
 \subsubsection{Using \Rfunction{makeTranscriptDbFromBiomart}}

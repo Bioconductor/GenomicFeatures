@@ -52,7 +52,7 @@ export(
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
   DEFAULT_CIRC_SEQS,
-  discoverUCSCChrominfo,
+  getChromInfoFromUCSC,
   discoverBiomartChrominfo
 )
 

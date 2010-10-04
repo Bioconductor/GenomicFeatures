@@ -1,7 +1,7 @@
 \name{makeTranscriptDbFromUCSC}
 
 \alias{supportedUCSCtables}
-\alias{discoverUCSCChrominfo}
+\alias{getChromInfoFromUCSC}
 \alias{makeTranscriptDbFromUCSC}
 
 \title{
@@ -15,9 +15,11 @@
 }
 \usage{
 supportedUCSCtables()
-discoverUCSCChrominfo(
+
+getChromInfoFromUCSC(
         genome,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
+
 makeTranscriptDbFromUCSC(
         genome="hg18",
         tablename="knownGene",
