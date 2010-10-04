@@ -1,7 +1,7 @@
 \name{makeTranscriptDbFromBiomart}
 
 \alias{makeTranscriptDbFromBiomart}
-\alias{discoverBiomartChrominfo}
+\alias{getChromInfoFromBiomart}
 
 \title{
   Making a TranscriptDb object from annotations available on a
@@ -13,8 +13,8 @@
   available on a BioMart database.
 }
 \usage{
-discoverBiomartChrominfo(biomart="ensembl",
-                         dataset="hsapiens_gene_ensembl")
+getChromInfoFromBiomart(biomart="ensembl",
+                        dataset="hsapiens_gene_ensembl")
 makeTranscriptDbFromBiomart(biomart="ensembl",
                             dataset="hsapiens_gene_ensembl",
                             transcript_ids=NULL,

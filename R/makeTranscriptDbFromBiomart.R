@@ -324,13 +324,13 @@
 ### Allow users to discover 'chrominfo' data frame.
 ###
 
-discoverBiomartChrominfo <- function(biomart="ensembl",
-                                     dataset="hsapiens_gene_ensembl")
+getChromInfoFromBiomart <- function(biomart="ensembl",
+                                    dataset="hsapiens_gene_ensembl")
 {
     mart <- .parseBMMartParams(biomart=biomart,
-                              dataset=dataset)
+                               dataset=dataset)
     filters <- .parseBMFiltersParams(transcript_ids=NULL)
-    values <- .parseBMValuesParams(transcript_ids=NULL)        
+    values <- .parseBMValuesParams(transcript_ids=NULL)
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
                                            transcript_ids=NULL)
     chrominfo <- .makeBiomartChrominfo(mart,

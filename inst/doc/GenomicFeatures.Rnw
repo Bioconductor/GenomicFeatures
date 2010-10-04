@@ -124,7 +124,7 @@ As with the \Rfunction{makeTranscriptDbFromUCSC} function, the
 \Robject{circ\_seqs} argument that will default to using the contents
 of the \Robject{DEFAULT_CIRC_SEQS} vector.  And just like those UCSC
 sources, there is also a helper function called
-\Rfunction{discoverBiomartChrominfo} that can show what the different
+\Rfunction{getChromInfoFromBiomart} that can show what the different
 chromosomes are called for a given source.
 
 Using the \Rfunction{makeTranscriptDbFromBiomart}

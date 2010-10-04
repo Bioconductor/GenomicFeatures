@@ -30,10 +30,12 @@ export(
   transcripts_deprecated,
   exons_deprecated,
   introns_deprecated,
-  extractTranscriptsFromGenome,
+  DEFAULT_CIRC_SEQS,
   makeTranscriptDb,
   supportedUCSCtables,
+  getChromInfoFromUCSC,
   makeTranscriptDbFromUCSC,
+  getChromInfoFromBiomart,
   makeTranscriptDbFromBiomart,
   saveFeatures,
   loadFeatures,
@@ -51,9 +53,7 @@ export(
   intronsByTranscript,
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
-  DEFAULT_CIRC_SEQS,
-  getChromInfoFromUCSC,
-  discoverBiomartChrominfo
+  extractTranscriptsFromGenome
 )
 
 exportMethods(
