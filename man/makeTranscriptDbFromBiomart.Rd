@@ -15,6 +15,7 @@
 \usage{
 getChromInfoFromBiomart(biomart="ensembl",
                         dataset="hsapiens_gene_ensembl")
+
 makeTranscriptDbFromBiomart(biomart="ensembl",
                             dataset="hsapiens_gene_ensembl",
                             transcript_ids=NULL,

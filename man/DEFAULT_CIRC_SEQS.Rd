@@ -10,6 +10,11 @@ are typically circular, it is available as a convenience so that users
 can us it as a default value for \code{circ_seqs} arguments, and
 append to it as needed.
 }
+\seealso{
+  \code{\link{makeTranscriptDbFromUCSC}},
+  \code{\link{makeTranscriptDbFromBiomart}}
+}
+
 \examples{
 DEFAULT_CIRC_SEQS
 }
