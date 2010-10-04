@@ -291,7 +291,8 @@
 
 ### Returns NULL if it fails to fetch the chromosome lengths from the
 ### remote resource.
-.makeBiomartChrominfo <- function(mart, circ_seqs, extra_seqnames=NULL)
+.makeBiomartChrominfo <- function(mart, extra_seqnames=NULL,
+                                  circ_seqs=character(0))
 {
     biomart <- biomaRt:::martBM(mart)
     dataset <- biomaRt:::martDataset(mart)
@@ -332,7 +333,7 @@ discoverBiomartChrominfo <- function(biomart="ensembl",
     values <- .parseBMValuesParams(transcript_ids=NULL)        
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
                                            transcript_ids=NULL)
-    chrominfo <- .makeBiomartChrominfo(mart, circ_seqs=character(),
+    chrominfo <- .makeBiomartChrominfo(mart,
                                        extra_seqnames=transcripts$tx_chrom)
     chrominfo[,1:2]
 }
@@ -587,7 +588,7 @@ discoverBiomartChrominfo <- function(biomart="ensembl",
 
 ## .testMakeTxDbFromBMParams <- function(biomart="ensembl",
 ##                                       dataset="hsapiens_gene_ensembl",
-##                                       circ_seqs=DEFAULTCIRCSTRS,
+##                                       circ_seqs=DEFAULT_CIRC_SEQS,
 ##                                       transcript_ids=NULL)
 ## {
     ## if (is.factor(biomart))
@@ -618,8 +619,8 @@ discoverBiomartChrominfo <- function(biomart="ensembl",
 ### vectors for the latter.
 makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                         dataset="hsapiens_gene_ensembl",
-                                        circ_seqs=DEFAULTCIRCSTRS,
-                                        transcript_ids=NULL)
+                                        transcript_ids=NULL,
+                                        circ_seqs=DEFAULT_CIRC_SEQS)
 {
     ## Could be that the user got the 'biomart' and/or 'dataset' values
     ## programmatically via calls to listMarts() and/or listDatasets().
@@ -630,8 +631,9 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
                                            transcript_ids)
-    chrominfo <- .makeBiomartChrominfo(mart, circ_seqs=circ_seqs,
-                                       extra_seqnames=transcripts$tx_chrom)
+    chrominfo <- .makeBiomartChrominfo(mart,
+                                       extra_seqnames=transcripts$tx_chrom,
+                                       circ_seqs=circ_seqs)
     splicings <- .makeBiomartSplicings(filters, values, mart,
                                        transcripts$tx_name)
     genes <- .makeBiomartGenes(filters, values, mart, transcripts$tx_name)

@@ -480,8 +480,8 @@ discoverUCSCChrominfo <- function(genome,
 makeTranscriptDbFromUCSC <- function(genome="hg18",
         tablename="knownGene",
         transcript_ids=NULL,
+        circ_seqs=DEFAULT_CIRC_SEQS,
         url="http://genome.ucsc.edu/cgi-bin/",
-        circ_seqs=DEFAULTCIRCSTRS,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
     if (!isSingleString(genome))

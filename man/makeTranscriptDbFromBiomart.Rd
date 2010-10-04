@@ -14,11 +14,11 @@
 }
 \usage{
 discoverBiomartChrominfo(biomart="ensembl",
-                            dataset="hsapiens_gene_ensembl")
+                         dataset="hsapiens_gene_ensembl")
 makeTranscriptDbFromBiomart(biomart="ensembl",
                             dataset="hsapiens_gene_ensembl",
-                            circ_seqs=DEFAULTCIRCSTRS,
-                            transcript_ids=NULL)
+                            transcript_ids=NULL,
+                            circ_seqs=DEFAULT_CIRC_SEQS)
 }
 \arguments{
   \item{biomart}{which BioMart database to use.
@@ -32,13 +32,13 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
     \code{"scerevisiae_gene_ensembl"}, etc in the ensembl database.
     See the examples section below for how to discover which datasets
     are available in a given BioMart database.}
-  \item{circ_seqs}{a character vector to list out which chromosomal
-    features should be marked as circular.}
   \item{transcript_ids}{optionally, only retrieve transcript
     annotation data for the specified set of transcript ids.
     If this is used, then the meta information displayed for the
     resulting \link{TranscriptDb} object will say 'Full dataset: no'.
     Otherwise it will say 'Full dataset: yes'.}
+  \item{circ_seqs}{a character vector to list out which chromosomes
+    should be marked as circular.}
 }
 
 \details{
@@ -73,6 +73,7 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
   \code{\link[biomaRt]{listMarts}},
   \code{\link[biomaRt]{useMart}},
   \code{\link[biomaRt]{listDatasets}},
+  \code{\link{DEFAULT_CIRC_SEQS}},
   \code{\link{makeTranscriptDbFromUCSC}},
   \code{\link{makeTranscriptDb}}
 }

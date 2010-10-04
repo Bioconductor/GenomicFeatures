@@ -51,7 +51,7 @@ export(
   intronsByTranscript,
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
-  DEFAULTCIRCSTRS,
+  DEFAULT_CIRC_SEQS,
   discoverUCSCChrominfo,
   discoverBiomartChrominfo
 )

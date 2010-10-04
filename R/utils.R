@@ -2,8 +2,8 @@
 ### Miscellaneous low-level utils
 ### -------------------------------------------------------------------------
 
-## global character vector to hold default values for mitochondrial strings.
-DEFAULTCIRCSTRS = c("chrM","MT","mit","2micron","2-micron");
+## Global character vector to hold default names for circular sequences.
+DEFAULT_CIRC_SEQS = c("chrM","MT","mit","2micron","2-micron");
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -22,8 +22,8 @@ makeTranscriptDbFromUCSC(
         genome="hg18",
         tablename="knownGene",
         transcript_ids=NULL,
+        circ_seqs=DEFAULT_CIRC_SEQS,
         url="http://genome.ucsc.edu/cgi-bin/",
-        circ_seqs=DEFAULTCIRCSTRS,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 }
 \arguments{
@@ -39,8 +39,8 @@ makeTranscriptDbFromUCSC(
     If this is used, then the meta information displayed for the
     resulting \link{TranscriptDb} object will say 'Full dataset: no'.
     Otherwise it will say 'Full dataset: yes'.}
-  \item{circ_seqs}{a character vector to list out which chromosomal
-    features should be marked as circular.}
+  \item{circ_seqs}{a character vector to list out which chromosomes
+    should be marked as circular.}
   \item{url,goldenPath_url}{use to specify the location of an
     alternate UCSC Genome Browser.}
 }
@@ -60,6 +60,7 @@ makeTranscriptDbFromUCSC(
 
 \seealso{
   \code{\link[rtracklayer]{ucscGenomes}},
+  \code{\link{DEFAULT_CIRC_SEQS}},
   \code{\link{makeTranscriptDbFromBiomart}},
   \code{\link{makeTranscriptDb}}
 }
