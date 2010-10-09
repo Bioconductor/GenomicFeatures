@@ -94,7 +94,7 @@ source).  To discover what the source calls their chromosomes, use the
 \Rfunction{getChromInfoFromUCSC} function to list them.  By default,
 there is a supplied character vector that will attempt to label all
 the mitochondrial chromosomes as circular by matching to them.  This
-is the \Robject{DEFAULT_CIRC_SEQS} vector.  It contains strings that
+is the \Robject{DEFAULT\_CIRC\_SEQS} vector.  It contains strings that
 usually correspond to mitochondrial chromosomes.  Once the database
 has been generated with the circular chromosomes tagged in this way,
 all subsequent analysis of these chromosomes will be able to consider
@@ -122,7 +122,7 @@ mmusculusEnsembl <-
 As with the \Rfunction{makeTranscriptDbFromUCSC} function, the
 \Rfunction{makeTranscriptDbFromBiomart} function also has a
 \Robject{circ\_seqs} argument that will default to using the contents
-of the \Robject{DEFAULT_CIRC_SEQS} vector.  And just like those UCSC
+of the \Robject{DEFAULT\_CIRC\_SEQS} vector.  And just like those UCSC
 sources, there is also a helper function called
 \Rfunction{getChromInfoFromBiomart} that can show what the different
 chromosomes are called for a given source.
