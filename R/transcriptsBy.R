@@ -293,7 +293,7 @@ setMethod("fiveUTRsByTranscript", "TranscriptDb",
 
         ## Make and return the GRangesList object.
         ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
-        seqinfo <- getTranscriptDbSeqinfo(txdb)
+        seqinfo <- getTranscriptDbSeqinfo(x)
         ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqinfo)
         .set.group.names(ans, use.names, x, "tx")
     }
@@ -334,9 +334,8 @@ setMethod("threeUTRsByTranscript", "TranscriptDb",
 
         ## Make and return the GRangesList object.
         ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
-        seqinfo <- getTranscriptDbSeqinfo(txdb)
+        seqinfo <- getTranscriptDbSeqinfo(x)
         ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqinfo)
         .set.group.names(ans, use.names, x, "tx")
     }
 )
-

@@ -56,15 +56,15 @@ test_transcriptsBy <- function()
                     
     ## WITH REAL DATA
     ## --------------
-    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+    txdb1 <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
     checkException(transcriptsBy(data.frame()), silent = TRUE)
-    checkException(transcriptsBy(txdb, "bad"), silent = TRUE)
-    checkException(transcriptsBy(txdb, "tx"), silent = TRUE)
+    checkException(transcriptsBy(txdb1, "bad"), silent = TRUE)
+    checkException(transcriptsBy(txdb1, "tx"), silent = TRUE)
 
-    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
-    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb)
+    ## TODO: Use seqinfo <- seqinfo(txdb1) when this becomes available.
+    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb1)
     seqlevels <- seqnames(seqinfo)
 
     dupCount <- function(x) {
@@ -72,7 +72,7 @@ test_transcriptsBy <- function()
     }
 
     ## transcripts by gene
-    txByGene <- transcriptsBy(txdb, "gene")
+    txByGene <- transcriptsBy(txdb1, "gene")
     checkTrue(validObject(txByGene))
     checkIdentical(dupCount(txByGene), 0L)
     want <- GRanges(seqnames = factor("chr21_random", levels=seqlevels),
@@ -85,7 +85,7 @@ test_transcriptsBy <- function()
     checkIdentical(txByGene[[1]], want)
 
     ## transcripts by exon
-    txByExon <- transcriptsBy(txdb, "exon")
+    txByExon <- transcriptsBy(txdb1, "exon")
     checkTrue(validObject(txByExon))
     checkIdentical(dupCount(txByExon), 0L)
     want <- GRanges(seqnames = factor(c("chr1", "chr1"), levels=seqlevels),
@@ -98,7 +98,7 @@ test_transcriptsBy <- function()
     checkIdentical(txByExon[[1]], want)
 
     ## transcripts by cds
-    txByCds <- transcriptsBy(txdb, "cds")
+    txByCds <- transcriptsBy(txdb1, "cds")
     checkTrue(validObject(txByCds))
     checkIdentical(dupCount(txByCds), 0L)
     want <- GRanges(seqnames = factor("chr2", levels=seqlevels),
@@ -109,6 +109,12 @@ test_transcriptsBy <- function()
     ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
     want@seqinfo <- seqinfo
     checkIdentical(txByCds[[1]], want)
+
+    ## threeUTRsByTranscript, fiveUTRsByTranscript
+    threeUTRs <- threeUTRsByTranscript(txdb1)
+    checkTrue(validObject(threeUTRs))
+    fiveUTRs <- fiveUTRsByTranscript(txdb1)
+    checkTrue(validObject(fiveUTRs))
 }
 
 test_exonsBy <- function()
