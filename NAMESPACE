@@ -3,7 +3,7 @@ importFrom(utils, download.file, installed.packages, read.table)
 
 importMethodsFrom(DBI, dbCommit, dbConnect,
                   dbDisconnect, dbExistsTable, dbGetQuery,
-                  dbReadTable, dbWriteTable)
+                  dbReadTable, dbWriteTable, dbListTables)
 
 importFrom(RSQLite, SQLite, sqliteCopyDatabase, SQLITE_RO)
 importMethodsFrom(RSQLite, dbBeginTransaction, dbGetPreparedQuery)
@@ -27,6 +27,7 @@ importFrom(RCurl, getURL)
 exportClasses(GenomicFeatures, TranscriptDb)
 
 export(
+  loadFeatures,
   transcripts_deprecated,
   exons_deprecated,
   introns_deprecated,
@@ -37,8 +38,6 @@ export(
   makeTranscriptDbFromUCSC,
   getChromInfoFromBiomart,
   makeTranscriptDbFromBiomart,
-  saveFeatures,
-  loadFeatures,
   as.list,
   transcripts,
   exons,
@@ -53,10 +52,13 @@ export(
   intronsByTranscript,
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
-  extractTranscriptsFromGenome
+  extractTranscriptsFromGenome,
+  makeAnnotDb,
+  makeAnnotDbFromUCSC
 )
 
 exportMethods(
+  saveFeatures,
   metadata,
   seqnames,
   seqlengths,

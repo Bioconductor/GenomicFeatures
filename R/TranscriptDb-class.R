@@ -48,13 +48,9 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
     data$value
 }
 
-.valid.table.colnames <- function(conn, tablename, colnames)
+
+.valid.colnames <- function(conn, tablename, colnames)
 {
-    tmp <- try(dbExistsTable(conn, tablename), silent=TRUE)
-    if (is(tmp, "try-error"))
-        return("invalid DB file")
-    if (!tmp)
-        return(paste("the DB has no ", tablename, " table", sep=""))
     sql0 <- paste("SELECT * FROM ", tablename, " LIMIT 0", sep="")
     data0 <- dbEasyQuery(conn, sql0)
     colnames0 <- colnames(data0)
@@ -67,6 +63,18 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
     }
     NULL
 }
+
+.valid.table.colnames <- function(conn, tablename, colnames)
+{
+    tmp <- try(dbExistsTable(conn, tablename), silent=TRUE)
+    if (is(tmp, "try-error"))
+        return("invalid DB file")
+    if (!tmp)
+        return(paste("the DB has no ", tablename, " table", sep=""))
+    .valid.colnames(conn, tablename, colnames)
+}
+
+
 
 .valid.metadata.table <- function(conn)
 {
@@ -179,14 +187,16 @@ TranscriptDb <- function(conn)
 ### Saving/loading. 
 ###
 
-saveFeatures <- function(x, file)
-{
-    if (!is(x, "TranscriptDb"))
-        stop("'x' must be a TranscriptDb object")
-    if (!isSingleString(file))
-        stop("'file' must be a single string")
-    sqliteCopyDatabase(txdbConn(x), file)
-}
+setMethod("saveFeatures", "TranscriptDb",
+          function(x, file)
+          {
+            if (!is(x, "TranscriptDb"))
+              stop("'x' must be a TranscriptDb object")
+            if (!isSingleString(file))
+              stop("'file' must be a single string")
+            sqliteCopyDatabase(txdbConn(x), file)
+          }
+)
 
 loadFeatures <- function(file)
 {
@@ -205,7 +215,10 @@ loadFeatures <- function(file)
             }
     }
     TranscriptDb(conn)
+    ## TODO: extend this to support other types (once there is metadata)
 }
+
+
 
 .fixOldDbSchema <- function(conn) {
     db <- dbConnect(SQLite(), dbname = ":memory:")
