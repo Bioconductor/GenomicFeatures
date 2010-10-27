@@ -34,6 +34,7 @@ export(
   DEFAULT_CIRC_SEQS,
   makeTranscriptDb,
   supportedUCSCtables,
+  supportedUCSCSimpleGFTracks,
   getChromInfoFromUCSC,
   makeTranscriptDbFromUCSC,
   getChromInfoFromBiomart,

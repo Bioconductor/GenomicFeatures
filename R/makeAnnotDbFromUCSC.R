@@ -7,8 +7,49 @@
     chromEnd="integer"
 )
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Prepare the 'metadata' 
+###
 
-## The following writes the contents of a generic table
+.prepareUCSCAnnotMetadata <- function(genome, tablename)
+{
+    message("Prepare the 'metadata' data frame ... ",
+            appendLF=FALSE)
+    metadata <- data.frame(
+        name=c("Data source", "Genome", "UCSC Table"),
+        value=c("UCSC", genome, tablename)
+    )
+    message("OK")
+    metadata
+}
+
+### Some of the metadata is added later.
+.writeMetadataAnnotTable <- function(conn, metadata, tableName)
+{
+    data_nrow <- dbEasyQuery(conn, paste("SELECT COUNT(*) FROM ",tableName,
+                                         collapse=""))[[1L]]    
+    thispkg_version <- installed.packages()['GenomicFeatures', 'Version']
+    rsqlite_version <- installed.packages()['RSQLite', 'Version']
+    mat <- matrix(c(
+        DB_TYPE_NAME, "AnnotDb",
+        "data_nrow", data_nrow,
+        "Db created by", "GenomicFeatures package from Bioconductor",
+        "Creation time", svn.time(),
+        "GenomicFeatures version at creation time", thispkg_version,
+        "RSQLite version at creation time", rsqlite_version,
+        "DBSCHEMAVERSION", DB_SCHEMA_VERSION),
+        ncol=2, byrow=TRUE
+    )
+    colnames(mat) <- c("name", "value")
+    metadata <- rbind(data.frame(name=mat[ , "name"], value=mat[ , "value"],
+                                 stringsAsFactors=FALSE),
+                      metadata)
+    dbWriteTable(conn, "metadata", metadata, row.names=FALSE)
+}
+
+
+
+## The following writes the data contents of our generic table
 .writeGenericAnnotTable <- function(conn, table, tableName, otherCols)
 {
     table <- unique(table)
@@ -28,7 +69,6 @@
     sql[length(sql)-1] <- sub(",","",sql[length(sql)-1])
     dbEasyQuery(conn, paste(sql, collapse=""))
     ## Fill the  table.
-    ## TODO: switch this to the one where we use named inserts
     sqlVals <- paste("$", names(otherCols), ",", sep="")
     sqlVals[length(sqlVals)] <- sub(",","",sqlVals[length(sqlVals)])
     sql <- paste(c("INSERT INTO ",tableName,
@@ -37,15 +77,35 @@
     dbEasyPreparedQuery(conn, sql, table)
 }
 
+## TODO: explore using rtracklayer to discover these? 
+## TODO: add code to put in * when there is no strand information.
+.SUPPORTED_ANNOTDB_UCSC_TABLES <- c(
+  ## tablename (unique key)    track             subtrack
+  ## "",                 "",     NA,
+  ## "",                 "",     NA,
+  "stsMap",                 "STS Markers",     NA,
+  "cytoBand",                 "Chromosome Band",     NA,
+  "oreganno",                 "ORegAnno",     NA
+)
+
+supportedUCSCSimpleGFTracks <- function()
+{
+    mat <- matrix(.SUPPORTED_ANNOTDB_UCSC_TABLES, ncol=3, byrow=TRUE)
+    colnames(mat) <- c("tablename", "track", "subtrack")
+    data.frame(track=mat[ , "track"], subtrack=mat[ , "subtrack"],
+               row.names=mat[ , "tablename"],
+               stringsAsFactors=FALSE)
+}
+
+
+
 ## I will need a function to actually make the DB
-makeAnnotDb <- function(table, tableName, otherCols)
-                             ##metadata=NULL, ...)
+makeAnnotDb <- function(table, tableName, otherCols, metadata=NULL, ...)
 {
     ## Create the db in a temp file.
     conn <- dbConnect(SQLite(), dbname="")
     .writeGenericAnnotTable(conn, table, tableName, otherCols)
-##    .writeMetadataTable(conn, metadata)  # must come last!
-    ## TODO: have to make a new object!
+    .writeMetadataAnnotTable(conn, metadata, tableName)  # must come last!
     AnnotDb(conn) 
 }
 
@@ -53,23 +113,23 @@ makeAnnotDb <- function(table, tableName, otherCols)
 ## standard columns are chrom, chromStart, chromEnd and strand
 ## all others need to be specified 
 
-
 makeAnnotDbFromUCSC <- function(genome="hg18",
          tablename="oreganno",
          url="http://genome.ucsc.edu/cgi-bin/",
          goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
          otherCols = c(id="character",name="character"))
 {
-    ## TODO: A lot of checking code below must be shared with
-    ## makeTranscriptDbFromUCSC - Make sure we do all necessary checking!
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
     if (!isSingleString(tablename))
         stop("'tablename' must be a single string")
-    ## TODO: Modify this as we don't have our new tracks in this list (we have
+    ## TODO: implement supportedUCSCTables for these kinds of simple tracks
+    ## Modify this as we don't have our new tracks in this list (we have
     ## to make a new list)
-    ## track <- supportedUCSCAnnotables()[tablename, "track"]
-    track <- tablename ## temporarily just use oreganno to test
+    
+    track <- supportedUCSCSimpleGFTracks()[tablename, "track"]    
+    ## track <- tablename ## temporarily just use oreganno to test
+    
     if (is.na(track))
         stop("table \"", tablename, "\" is not supported")
     if (!isSingleString(url))
@@ -78,7 +138,6 @@ makeAnnotDbFromUCSC <- function(genome="hg18",
         stop("'goldenPath_url' must be a single string")
   
     ## Create an UCSC Genome Browser session.
-    ## TODO: implement supportedUCSCTables for these kinds of simple tracks
     session <- browserSession(url=url)
     genome(session) <- genome
     track_tables <- tableNames(ucscTableQuery(session, track=track))
@@ -89,7 +148,7 @@ makeAnnotDbFromUCSC <- function(genome="hg18",
              "or to the Bioconductor mailing list, and sorry for the ",
              "inconvenience.")
 
-    ## Download the transcript table.
+    ## Download the data table.
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
     query <- ucscTableQuery(session, track, table=tablename,
                             names=NULL)
@@ -110,10 +169,13 @@ makeAnnotDbFromUCSC <- function(genome="hg18",
     .UCSC_GENERICCOL2CLASS = c(.UCSC_GENERICCOL2CLASS,otherCols)
     ucsc_table <- setDataFrameColClass(ucsc_table ,.UCSC_GENERICCOL2CLASS,
                                      drop.extra.cols=TRUE)    
+
+    ## Compile some of the metadata
+    metadata <- .prepareUCSCAnnotMetadata(genome, tablename)
     
     message("Make the AnnoDb object ... ", appendLF=FALSE)
     makeAnnotDb(table=ucsc_table, tableName=tablename,
-                ## metadata=metadata,
+                metadata=metadata,
                 otherCols)
 
 
@@ -124,6 +186,10 @@ makeAnnotDbFromUCSC <- function(genome="hg18",
 ## Test Code:
 ## library(GenomicFeatures)
 ## foo = makeAnnotDbFromUCSC()
-## saveFeatures(foo, "annoDb.sqlite")
+## saveFeatures(foo, "annotDb.sqlite")
+
+## library(GenomicFeatures)
+## foo = loadFeatures("annotDb.sqlite")
 
 
+## Code to just discover the tracks (and columns in ea.)

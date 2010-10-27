@@ -34,12 +34,14 @@ anndbConn <- function(anndb) .getConn(anndb@envir)
     NULL
 }
 
+
 .valid.AnnotDb <- function(x)
 {
     conn <- txdbConn(x)
-    c(##.valid.metadata.table(conn), ##TODO add back in when we add metadata
+    c(.valid.metadata.table(conn,"AnnotDb"), 
       .valid.annot.table(conn))
 }
+
 
 setValidity2("AnnotDb", .valid.AnnotDb)
 
@@ -62,7 +64,7 @@ AnnotDb <- function(conn)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Saving/loading. ### TODO: methodize these.
+### Saving/loading. 
 ###
 
 setMethod("saveFeatures", "AnnotDb",
@@ -76,43 +78,31 @@ setMethod("saveFeatures", "AnnotDb",
           }
 )
 
-## setMethod("loadFeatures", "AnnotDb",
-##           function(file)
-##           {
-##             if (!isSingleString(file))
-##               stop("'file' must be a single string")
-##             if(!file.exists(file))
-##               stop("file '", file, "' does not exist")
-##             conn <- dbConnect(SQLite(), file)
-##             AnnotDb(conn)
-##           }
-## )
-
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Accessors.  TODO: implement metadata so these can work too.
+### Accessors.  
 ###
 
-## setMethod("metadata", "AnnotDb",
-##     function(x) dbReadTable(anndbConn(x), "metadata")
-## )
+setMethod("metadata", "AnnotDb",
+    function(x) dbReadable(anndbConn(x), "metadata")
+)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### The "show" method for AnnotDb objects.
 ###
 
-## setMethod("show", "AnnotDb",
-##     function(object)
-##     {
-##         cat("AnnotDb object:\n")
-##         metadata <- metadata(object)
-##         for (i in seq_len(nrow(metadata))) {
-##             cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
-##                 "\n", sep="")
-##         }
-##     }
-## )
+setMethod("show", "AnnotDb",
+    function(object)
+    {
+        cat("AnnotDb object:\n")
+        metadata <- metadata(object)
+        for (i in seq_len(nrow(metadata))) {
+            cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
+                "\n", sep="")
+        }
+    }
+)
 
 
 

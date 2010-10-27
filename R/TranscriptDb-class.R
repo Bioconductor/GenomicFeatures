@@ -76,7 +76,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 
 
 
-.valid.metadata.table <- function(conn)
+.valid.metadata.table <- function(conn, type)
 {
     colnames <- c("name", "value")
     msg <- .valid.table.colnames(conn, "metadata", colnames)
@@ -85,8 +85,8 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
     db_type <- try(.getMetaValue(conn, DB_TYPE_NAME), silent = TRUE)
     if(is(db_type, "try-error"))
         return(db_type[1])
-    if (is.na(db_type) || db_type != DB_TYPE_VALUE) {
-        msg <- paste("'", DB_TYPE_NAME, "' is not \"", DB_TYPE_VALUE,
+    if (is.na(db_type) || db_type != type) {
+        msg <- paste("'", DB_TYPE_NAME, "' is not \"", type,
                      "\"", sep="")
         return(msg)
     }
@@ -156,7 +156,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 .valid.TranscriptDb <- function(x)
 {
     conn <- txdbConn(x)
-    c(.valid.metadata.table(conn),
+    c(.valid.metadata.table(conn, DB_TYPE_VALUE),
       .valid.transcript.table(conn),
       .valid.exon.table(conn),
       .valid.cds.table(conn),
@@ -209,13 +209,19 @@ loadFeatures <- function(file)
     if(dbExistsTable(conn, "metadata")) {
         type <- .getMetaValue(conn, "Db type")
             if(type == "TranscriptDb") {
-              version <- try(.getMetaValue(conn,"DBSCHEMAVERSION"), silent = TRUE)
-              if(is(version, "try-error"))
+              version <- try(.getMetaValue(conn,"DBSCHEMAVERSION"),
+                             silent = TRUE)
+              if(is(version, "try-error")){
                   conn <- .fixOldDbSchema(conn)
+              }
+              return(TranscriptDb(conn))
+            }else if(type == "AnnotDb") {
+              return(AnnotDb(conn))
+            }else{
+              stop("The file you are trying to load is of unknown Db type")
             }
     }
-    TranscriptDb(conn)
-    ## TODO: extend this to support other types (once there is metadata)
+    ##TranscriptDb(conn)
 }
 
 
