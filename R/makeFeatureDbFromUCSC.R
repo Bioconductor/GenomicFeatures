@@ -1,4 +1,4 @@
-### makeAnnotDbFromUCSC() expects a UCSC table to have at
+### makeFeatureDbFromUCSC() expects a UCSC table to have at
 ### least the following columns:
 .UCSC_GENERICCOL2CLASS <- c(
     chrom="factor",
@@ -11,7 +11,7 @@
 ### Prepare the 'metadata' 
 ###
 
-.prepareUCSCAnnotMetadata <- function(genome, tablename)
+.prepareUCSCFeatureMetadata <- function(genome, tablename)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
@@ -24,14 +24,14 @@
 }
 
 ### Some of the metadata is added later.
-.writeMetadataAnnotTable <- function(conn, metadata, tableName)
+.writeMetadataFeatureTable <- function(conn, metadata, tableName)
 {
     data_nrow <- dbEasyQuery(conn, paste("SELECT COUNT(*) FROM ",tableName,
                                          collapse=""))[[1L]]    
     thispkg_version <- installed.packages()['GenomicFeatures', 'Version']
     rsqlite_version <- installed.packages()['RSQLite', 'Version']
     mat <- matrix(c(
-        DB_TYPE_NAME, "AnnotDb",
+        DB_TYPE_NAME, "FeatureDb",
         "data_nrow", data_nrow,
         "Db created by", "GenomicFeatures package from Bioconductor",
         "Creation time", svn.time(),
@@ -50,7 +50,7 @@
 
 
 ## The following writes the data contents of our generic table
-.writeGenericAnnotTable <- function(conn, table, tableName, otherCols)
+.writeGenericFeatureTable <- function(conn, table, tableName, otherCols)
 {
     table <- unique(table)
     ## for now just drop lines that don't have values for chromStart
@@ -79,7 +79,7 @@
 
 ## TODO: explore using rtracklayer to discover these? 
 ## TODO: add code to put in * when there is no strand information.
-.SUPPORTED_ANNOTDB_UCSC_TABLES <- c(
+.SUPPORTED_FEATUREDB_UCSC_TABLES <- c(
   ## tablename (unique key)    track             subtrack
   ## "",                 "",     NA,
   ## "",                 "",     NA,
@@ -90,7 +90,7 @@
 
 supportedUCSCSimpleGFTracks <- function()
 {
-    mat <- matrix(.SUPPORTED_ANNOTDB_UCSC_TABLES, ncol=3, byrow=TRUE)
+    mat <- matrix(.SUPPORTED_FEATUREDB_UCSC_TABLES, ncol=3, byrow=TRUE)
     colnames(mat) <- c("tablename", "track", "subtrack")
     data.frame(track=mat[ , "track"], subtrack=mat[ , "subtrack"],
                row.names=mat[ , "tablename"],
@@ -100,20 +100,20 @@ supportedUCSCSimpleGFTracks <- function()
 
 
 ## I will need a function to actually make the DB
-makeAnnotDb <- function(table, tableName, otherCols, metadata=NULL, ...)
+makeFeatureDb <- function(table, tableName, otherCols, metadata=NULL, ...)
 {
     ## Create the db in a temp file.
     conn <- dbConnect(SQLite(), dbname="")
-    .writeGenericAnnotTable(conn, table, tableName, otherCols)
-    .writeMetadataAnnotTable(conn, metadata, tableName)  # must come last!
-    AnnotDb(conn) 
+    .writeGenericFeatureTable(conn, table, tableName, otherCols)
+    .writeMetadataFeatureTable(conn, metadata, tableName)  # must come last!
+    FeatureDb(conn) 
 }
 
 
 ## standard columns are chrom, chromStart, chromEnd and strand
 ## all others need to be specified 
 
-makeAnnotDbFromUCSC <- function(genome="hg18",
+makeFeatureDbFromUCSC <- function(genome="hg18",
          tablename="oreganno",
          url="http://genome.ucsc.edu/cgi-bin/",
          goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
@@ -171,10 +171,10 @@ makeAnnotDbFromUCSC <- function(genome="hg18",
                                      drop.extra.cols=TRUE)    
 
     ## Compile some of the metadata
-    metadata <- .prepareUCSCAnnotMetadata(genome, tablename)
+    metadata <- .prepareUCSCFeatureMetadata(genome, tablename)
     
     message("Make the AnnoDb object ... ", appendLF=FALSE)
-    makeAnnotDb(table=ucsc_table, tableName=tablename,
+    makeFeatureDb(table=ucsc_table, tableName=tablename,
                 metadata=metadata,
                 otherCols)
 
@@ -185,11 +185,12 @@ makeAnnotDbFromUCSC <- function(genome="hg18",
 
 ## Test Code:
 ## library(GenomicFeatures)
-## foo = makeAnnotDbFromUCSC()
-## saveFeatures(foo, "annotDb.sqlite")
+## foo = makeFeatureDbFromUCSC()
+## saveFeatures(foo, "FeatureDb.sqlite")
 
 ## library(GenomicFeatures)
-## foo = loadFeatures("annotDb.sqlite")
+## foo = loadFeatures("FeatureDb.sqlite")
 
 
 ## Code to just discover the tracks (and columns in ea.)
+

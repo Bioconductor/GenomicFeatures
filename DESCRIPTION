@@ -26,11 +26,11 @@ Collate: AllClasses.R
 	 AllGenerics.R
          utils.R
          TranscriptDb-class.R
-         AnnotDb-class.R
+         FeatureDb-class.R
          makeTranscriptDb.R
          makeTranscriptDbFromUCSC.R
          makeTranscriptDbFromBiomart.R
-         makeAnnotDbFromUCSC.R
+         makeFeatureDbFromUCSC.R
          transcripts.R
          transcriptsByOverlaps.R
          transcriptsBy.R

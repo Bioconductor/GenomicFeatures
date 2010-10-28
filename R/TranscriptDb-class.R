@@ -215,8 +215,8 @@ loadFeatures <- function(file)
                   conn <- .fixOldDbSchema(conn)
               }
               return(TranscriptDb(conn))
-            }else if(type == "AnnotDb") {
-              return(AnnotDb(conn))
+            }else if(type == "FeatureDb") {
+              return(FeatureDb(conn))
             }else{
               stop("The file you are trying to load is of unknown Db type")
             }

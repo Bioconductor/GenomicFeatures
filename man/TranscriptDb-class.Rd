@@ -7,29 +7,43 @@
 \alias{TranscriptDb-class}
 \alias{class:TranscriptDb}
 \alias{TranscriptDb}
+\alias{FeatureDb-class}
+\alias{class:FeatureDb}
+\alias{FeatureDb}
+
 
 \alias{metadata,TranscriptDb-method}
+\alias{metadata,FeatureDb-method}
 \alias{seqnames,TranscriptDb-method}
 \alias{seqlengths,TranscriptDb-method}
 \alias{isCircular,TranscriptDb-method}
 \alias{show,TranscriptDb-method}
+\alias{show,FeatureDb-method}
 \alias{as.list,TranscriptDb-method}
 
 \title{TranscriptDb objects}
 
 \description{
-  The TranscriptDb class is a container for storing transcript annotations.
+  The  TranscriptDb class is a container for storing transcript
+  annotations.
+  The FeatureDb class is a container for storing more generic
+  GenomicFeature annotations.
 
   See \code{?\link{makeTranscriptDbFromUCSC}} and
   \code{?\link{makeTranscriptDbFromBiomart}} for making a
   TranscriptDb object from the UCSC or BioMart sources.
 
+  See \code{?\link{makeFeatureDbFromUCSC}} for making a
+  FeatureDb object from the UCSC or BioMart sources.
+  
   See \code{?\link{saveFeatures}} and \code{?\link{loadFeatures}} for
-  saving and loading the database contents of a TranscriptDb object.
+  saving and loading the database contents of a TranscriptDb or FeatureDb
+  object.
 }
 
 \section{Methods}{
-  In the code snippets below, \code{x} is a TranscriptDb object.
+  In the code snippets below, \code{x} is a TranscriptDb object. For the
+  metadata and show methods, there is also support for FeatureDb objects.
 
   \describe{
     \item{}{

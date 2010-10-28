@@ -7,7 +7,7 @@ setClass("TranscriptDb",
     representation(envir="environment")
 )
 
-setClass("AnnotDb",
+setClass("FeatureDb",
     contains="GenomicFeatures",
     representation(envir="environment")
 )

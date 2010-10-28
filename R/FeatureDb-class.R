@@ -1,5 +1,5 @@
 ### =========================================================================
-### AnnotDb objects
+### FeatureDb objects
 ### -------------------------------------------------------------------------
 
 
@@ -7,11 +7,11 @@
 ### A low-level accessor (not exported).
 ###
 
-anndbConn <- function(anndb) .getConn(anndb@envir)
+featuredbConn <- function(featuredb) .getConn(featuredb@envir)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Validity of a AnnotDb object.
+### Validity of a FeatureDb object.
 ###
 
 .validate.colnames <- function(conn, colnames)
@@ -24,7 +24,7 @@ anndbConn <- function(anndb) .getConn(anndb@envir)
     .valid.colnames(conn, tablename, colnames)
 }
 
-.valid.annot.table <- function(conn)
+.valid.feature.table <- function(conn)
 {
   ## Restrict column name checking to just columns that we are demanding
     colnames <- c("chrom", "strand","chromStart","chromEnd")
@@ -35,15 +35,15 @@ anndbConn <- function(anndb) .getConn(anndb@envir)
 }
 
 
-.valid.AnnotDb <- function(x)
+.valid.FeatureDb <- function(x)
 {
     conn <- txdbConn(x)
-    c(.valid.metadata.table(conn,"AnnotDb"), 
-      .valid.annot.table(conn))
+    c(.valid.metadata.table(conn,"FeatureDb"), 
+      .valid.feature.table(conn))
 }
 
 
-setValidity2("AnnotDb", .valid.AnnotDb)
+setValidity2("FeatureDb", .valid.FeatureDb)
 
 
 
@@ -52,14 +52,14 @@ setValidity2("AnnotDb", .valid.AnnotDb)
 ### Low-level constructor (not exported).
 ###
 
-AnnotDb <- function(conn)
+FeatureDb <- function(conn)
 {
     if (!is(conn, "SQLiteConnection"))
         stop("'conn' must be an SQLiteConnection object")
     envir <- new.env(parent=emptyenv())
     assign("conn", conn, envir=envir)
     reg.finalizer(envir, function(e) dbDisconnect(.getConn(e)))
-    new("AnnotDb", envir=envir)
+    new("FeatureDb", envir=envir)
 }
 
 
@@ -67,11 +67,11 @@ AnnotDb <- function(conn)
 ### Saving/loading. 
 ###
 
-setMethod("saveFeatures", "AnnotDb",
+setMethod("saveFeatures", "FeatureDb",
           function(x, file)
           {
-            if (!is(x, "AnnotDb"))
-              stop("'x' must be a AnnotDb object")
+            if (!is(x, "FeatureDb"))
+              stop("'x' must be a FeatureDb object")
             if (!isSingleString(file))
               stop("'file' must be a single string")
             sqliteCopyDatabase(txdbConn(x), file)
@@ -83,19 +83,19 @@ setMethod("saveFeatures", "AnnotDb",
 ### Accessors.  
 ###
 
-setMethod("metadata", "AnnotDb",
-    function(x) dbReadable(anndbConn(x), "metadata")
+setMethod("metadata", "FeatureDb",
+    function(x) dbReadTable(featuredbConn(x), "metadata")
 )
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### The "show" method for AnnotDb objects.
+### The "show" method for FeatureDb objects.
 ###
 
-setMethod("show", "AnnotDb",
+setMethod("show", "FeatureDb",
     function(object)
     {
-        cat("AnnotDb object:\n")
+        cat("FeatureDb object:\n")
         metadata <- metadata(object)
         for (i in seq_len(nrow(metadata))) {
             cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],

@@ -1,5 +1,7 @@
 \name{saveFeatures}
 \alias{saveFeatures}
+\alias{saveFeatures,TranscriptDb-method}
+\alias{saveFeatures,FeatureDb-method}
 \alias{loadFeatures}
 \title{
   Methods to save and load the database contents for a Transcript Object.
