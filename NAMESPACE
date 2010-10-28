@@ -34,7 +34,7 @@ export(
   DEFAULT_CIRC_SEQS,
   makeTranscriptDb,
   supportedUCSCtables,
-##  supportedUCSCFeatureDbTracks,
+  supportedUCSCFeatureDbTracks,
   getChromInfoFromUCSC,
   makeTranscriptDbFromUCSC,
   getChromInfoFromBiomart,
@@ -54,7 +54,6 @@ export(
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
   extractTranscriptsFromGenome,
-##  makeFeatureDb,
   makeFeatureDbFromUCSC
 )
 

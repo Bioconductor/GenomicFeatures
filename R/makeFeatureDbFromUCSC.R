@@ -7,8 +7,19 @@
     chromEnd="integer"
 )
 
+## helper function to add missing strand information to table (if missing)
+.addMissingStrandCols <- function(table){
+  if(!"strand" %in% colnames(table)){
+    strand <- rep("*", dim(table)[1])
+    return(cbind(table,strand))
+  }else{
+    return(table)
+  }
+}
+
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Prepare the 'metadata' 
+### prepare and write out the DB table contents 
 ###
 
 .prepareUCSCFeatureMetadata <- function(genome, tablename)
@@ -46,8 +57,6 @@
                       metadata)
     dbWriteTable(conn, "metadata", metadata, row.names=FALSE)
 }
-
-
 
 ## The following writes the data contents of our generic table
 .writeGenericFeatureTable <- function(conn, table, tableName, otherCols)
@@ -88,7 +97,7 @@
   "oreganno",                 "ORegAnno",     NA
 )
 
-supportedUCSCSimpleGFTracks <- function()
+supportedUCSCFeatureDbTracks <- function()
 {
     mat <- matrix(.SUPPORTED_FEATUREDB_UCSC_TABLES, ncol=3, byrow=TRUE)
     colnames(mat) <- c("tablename", "track", "subtrack")
@@ -127,7 +136,7 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
     ## Modify this as we don't have our new tracks in this list (we have
     ## to make a new list)
     
-    track <- supportedUCSCSimpleGFTracks()[tablename, "track"]    
+    track <- supportedUCSCFeatureDbTracks()[tablename, "track"]    
     ## track <- tablename ## temporarily just use oreganno to test
     
     if (is.na(track))
@@ -153,6 +162,9 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
     query <- ucscTableQuery(session, track, table=tablename,
                             names=NULL)
     ucsc_table <- getTable(query)
+
+    ## check that we have strand info, and if not, add some in
+    ucsc_table <- .addMissingStrandCols(ucsc_table)
     
     ## check that we have at least the 5 columns
     if (ncol(ucsc_table) < length(.UCSC_GENERICCOL2CLASS)+1)
