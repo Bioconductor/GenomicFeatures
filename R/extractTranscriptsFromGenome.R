@@ -147,11 +147,6 @@
     ans
 }
 
-### Typical use:
-###   library(BSgenome.Hsapiens.UCSC.hg18)  # load the genome
-###   library(GenomicFeatures.Hsapiens.UCSC.hg18)  # load the gene table
-###   ## Takes about 30 sec.
-###   transcripts <- extractTranscriptsFromGenome(Hsapiens, geneHuman())
 extractTranscriptsFromGenome <- function(genome, txdb, use.names=TRUE)
 {
     if (!is(genome, "BSgenome"))
