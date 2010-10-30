@@ -1,5 +1,59 @@
-##TODO: move the accessor generics into here!
+## transcripts.R
+setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
 
+setGeneric("exons", function(x, ...) standardGeneric("exons"))
+
+setGeneric("cds", function(x, ...) standardGeneric("cds"))
+
+setGeneric("transcriptsBy", signature="x",
+    function(x, by=c("gene", "exon", "cds"), ...)
+        standardGeneric("transcriptsBy")
+)
+
+## transcriptsBy.R
+setGeneric("exonsBy", signature="x",
+    function(x, by=c("tx", "gene"), ...) standardGeneric("exonsBy")
+)
+
+setGeneric("cdsBy", signature="x",
+    function(x, by=c("tx", "gene"), ...) standardGeneric("cdsBy")
+)
+
+setGeneric("intronsByTranscript",
+    function(x, ...) standardGeneric("intronsByTranscript")
+)
+
+setGeneric("fiveUTRsByTranscript", 
+    function(x, ...) standardGeneric("fiveUTRsByTranscript")
+)
+
+setGeneric("threeUTRsByTranscript", 
+    function(x, ...) standardGeneric("threeUTRsByTranscript")
+)
+
+setGeneric("transcriptsByOverlaps", signature="x",
+    function(x, ranges, maxgap = 0L, minoverlap = 1L,
+             type = c("any", "start", "end"), ...)
+        standardGeneric("transcriptsByOverlaps")
+)
+
+## transciptsByOverlaps.R
+setGeneric("exonsByOverlaps", signature="x",
+    function(x, ranges, maxgap = 0L, minoverlap = 1L,
+             type = c("any", "start", "end"), ...)
+        standardGeneric("exonsByOverlaps")
+)
+
+setGeneric("cdsByOverlaps", signature="x",
+    function(x, ranges, maxgap = 0L, minoverlap = 1L,
+             type = c("any", "start", "end"), ...)
+        standardGeneric("cdsByOverlaps")
+)
+
+## TranscriptDb-class.R
 setGeneric("saveFeatures", signature="x",
            function(x, file) standardGeneric("saveFeatures"))
 
+## features.R
+setGeneric("features", signature="x",
+           function(x) standardGeneric("features"))

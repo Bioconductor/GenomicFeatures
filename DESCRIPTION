@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.3.4
+Version: 1.3.5
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -34,6 +34,7 @@ Collate: AllClasses.R
          transcriptsByOverlaps.R
          transcriptsBy.R
          regions.R
+	 features.R
          GenomicFeaturesForge.R
          extractTranscriptsFromGenome.R
          test_GenomicFeatures_package.R

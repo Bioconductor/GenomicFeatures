@@ -135,11 +135,6 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
 ###    cds    tx        no       yes        no  exon_rank
 ###    cds  gene       yes       yes       yes      locus
 
-setGeneric("transcriptsBy", signature="x",
-    function(x, by=c("gene", "exon", "cds"), ...)
-        standardGeneric("transcriptsBy")
-)
-
 setMethod("transcriptsBy", "TranscriptDb",
     function(x, by=c("gene", "exon", "cds"), use.names=FALSE)
     {
@@ -155,10 +150,6 @@ setMethod("transcriptsBy", "TranscriptDb",
     }
 )
 
-setGeneric("exonsBy", signature="x",
-    function(x, by=c("tx", "gene"), ...) standardGeneric("exonsBy")
-)
-
 setMethod("exonsBy", "TranscriptDb",
     function(x, by=c("tx", "gene"), use.names=FALSE)
     {
@@ -172,10 +163,6 @@ setMethod("exonsBy", "TranscriptDb",
                     order_by_exon_rank=order_by_exon_rank,
                     use.names=use.names)
     }
-)
-
-setGeneric("cdsBy", signature="x",
-    function(x, by=c("tx", "gene"), ...) standardGeneric("cdsBy")
 )
 
 setMethod("cdsBy", "TranscriptDb",
@@ -197,10 +184,6 @@ setMethod("cdsBy", "TranscriptDb",
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### intronsByTranscript().
 ###
-
-setGeneric("intronsByTranscript",
-    function(x, ...) standardGeneric("intronsByTranscript")
-)
 
 setMethod("intronsByTranscript", "TranscriptDb",
     function(x, use.names=FALSE)
@@ -258,10 +241,6 @@ setMethod("intronsByTranscript", "TranscriptDb",
     split(grg[idx], splicings$tx_id[idx])
 }
 
-setGeneric("fiveUTRsByTranscript", 
-    function(x, ...) standardGeneric("fiveUTRsByTranscript")
-)
-
 setMethod("fiveUTRsByTranscript", "TranscriptDb",
     function(x, use.names=FALSE)
     {
@@ -297,10 +276,6 @@ setMethod("fiveUTRsByTranscript", "TranscriptDb",
         ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqinfo)
         .set.group.names(ans, use.names, x, "tx")
     }
-)
-
-setGeneric("threeUTRsByTranscript", 
-    function(x, ...) standardGeneric("threeUTRsByTranscript")
 )
 
 setMethod("threeUTRsByTranscript", "TranscriptDb",

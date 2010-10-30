@@ -206,3 +206,8 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
 
 ## Code to just discover the tracks (and columns in ea.)
 
+
+
+## library(GenomicFeatures)
+## foo = makeFeatureDbFromUCSC("hg18","cytoBand",
+##                  otherCols=c(name="character",gieStain="character"))
