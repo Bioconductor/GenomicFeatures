@@ -4,7 +4,8 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### A high-level representation of the relational organization of the db.
+### A high-level representation of the db relational model used for
+### generating SQL queries.
 ###
 
 ### Note that we omit the *_start and *_end cols.
@@ -175,7 +176,7 @@
     paste(.getClosestTable(root_table, colnames), colnames, sep=".")
 }
 
-.makeSQLfrom <- function(root_table, child_tables)
+.joinRootToChildTables <- function(root_table, child_tables)
 {
     COLMAP <- .DBDESC[[root_table]]$COLMAP
     CHILDTABLES <- .DBDESC[[root_table]]$CHILDTABLES
@@ -188,6 +189,32 @@
         if (length(intersect(child_tables, right_children)) != 0L)
             ans <- paste(ans, "LEFT JOIN", right_table,
                               "ON", JOINS[[right_table]])
+    }
+    ans
+}
+
+### In the case of TranscriptDb objects, the distance between 'root_table'
+### and 'child_table' is always <= 2.
+### TODO: Revisit this. Not sure it would be guaranteed to work correctly if
+### the distance between 'root_table' and 'child_table' was >= 3.
+.joinPrimaryKeyToChildTable <- function(root_table, child_table)
+{
+    COLMAP <- .DBDESC[[root_table]]$COLMAP
+    CHILDTABLES <- .DBDESC[[root_table]]$CHILDTABLES
+    JOINS <- .DBDESC[[root_table]]$JOINS
+    all_tables <- names(COLMAP)
+    ans <- ""
+    for (i in seq_len(length(all_tables))[-1L]) {
+        right_table <- all_tables[i]
+        right_children <- c(right_table, CHILDTABLES[[right_table]])
+        if (length(intersect(child_table, right_children)) != 0L) {
+            if (ans == "") {
+                ans <- right_table
+                next
+            }
+            ans <- paste(ans, "LEFT JOIN", right_table,
+                              "ON", JOINS[[right_table]])
+        }
     }
     ans
 }
@@ -214,7 +241,7 @@
 {
     SQL_what <- paste(.asQualifiedColnames(root_table, what_cols),
                       collapse=", ")
-    SQL_from <- .makeSQLfrom(root_table, child_tables)
+    SQL_from <- .joinRootToChildTables(root_table, child_tables)
     SQL_where <- .sqlWhereIn(vals)
     if (length(orderby_cols) == 0L)
         SQL_orderby <- ""
@@ -262,6 +289,25 @@
     .extractData(root_table, txdb, what_cols, where_tables, vals, orderby_cols)
 }
 
+.extractDataFromChildTable <- function(root_table, txdb,
+                                       primary_key, ids,
+                                       child_table, child_columns)
+{
+    ans_names <- c(primary_key, child_columns)
+    primary_key <- paste("_", primary_key, sep="")
+    what_cols <- c(primary_key,
+                   .asQualifiedColnames(root_table, child_columns))
+    SQL_what <- paste(what_cols, collapse=", ")
+    SQL_from <- .joinPrimaryKeyToChildTable(root_table, child_table)
+    vals <- list(ids)
+    names(vals) <- primary_key
+    SQL_where <- .sqlWhereIn(vals)
+    SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from, SQL_where)
+    ans <- dbEasyQuery(txdbConn(txdb), SQL)
+    names(ans) <- ans_names
+    ans
+}
+
 .extractChildData <- function(root_table, txdb, ids, assigned_columns)
 {
     primary_key <- .DBDESC[[root_table]]$CORECOLS["id"]
@@ -272,10 +318,9 @@
         if (length(child_columns) == 0L)
             next
         child_table <- all_tables[i]
-        what_cols <- c(primary_key, child_columns)
-        vals <- list(ids)
-        names(vals) <- .asQualifiedColnames(root_table, primary_key)
-        data0 <- .extractData(root_table, txdb, what_cols, child_table, vals)
+        data0 <- .extractDataFromChildTable(root_table, txdb,
+                                            primary_key, ids,
+                                            child_table, child_columns)
         data <- lapply(data0[ , -1L, drop=FALSE],
                        function(col0)
                        {
