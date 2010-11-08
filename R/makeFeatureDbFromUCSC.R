@@ -17,6 +17,14 @@
   }
 }
 
+## helper function to correct for UCSC data having off by one start info.
+.adjustchromStarts <- function(table){
+  chromStart <- as.integer(table[["chromStart"]])
+  table <- table[,!(colnames(table) %in% "chromStart")]
+  chromStart <- chromStart + 1L
+  return(cbind(table,chromStart))
+}
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### prepare and write out the DB table contents 
@@ -59,7 +67,7 @@
 }
 
 ## The following writes the data contents of our generic table
-.writeGenericFeatureTable <- function(conn, table, tableName, otherCols)
+.writeGenericFeatureTable <- function(conn, table, tableName, columns)
 {
     table <- unique(table)
     ## for now just drop lines that don't have values for chromStart
@@ -72,13 +80,13 @@
               "  chromStart INTEGER NOT NULL,\n",
               "  chromEnd INTEGER NOT NULL,\n") ## always a comma = never done
     ## Add remaining rows (b/c there will ALWAYS be at least one "other" field)
-    sql2 <- paste("  ", names(otherCols), " TEXT,\n")
+    sql2 <- paste("  ", names(columns), " TEXT,\n")
     sql <- c(sql1, sql2,")")
     ## remove final comma
     sql[length(sql)-1] <- sub(",","",sql[length(sql)-1])
     dbEasyQuery(conn, paste(sql, collapse=""))
     ## Fill the  table.
-    sqlVals <- paste("$", names(otherCols), ",", sep="")
+    sqlVals <- paste("$", names(columns), ",", sep="")
     sqlVals[length(sqlVals)] <- sub(",","",sqlVals[length(sqlVals)])
     sql <- paste(c("INSERT INTO ",tableName,
                  " VALUES ($chrom,$strand,$chromStart,$chromEnd,",
@@ -109,11 +117,11 @@ supportedUCSCFeatureDbTracks <- function()
 
 
 ## I will need a function to actually make the DB
-makeFeatureDb <- function(table, tableName, otherCols, metadata=NULL, ...)
+makeFeatureDb <- function(table, tableName, columns, metadata=NULL, ...)
 {
     ## Create the db in a temp file.
     conn <- dbConnect(SQLite(), dbname="")
-    .writeGenericFeatureTable(conn, table, tableName, otherCols)
+    .writeGenericFeatureTable(conn, table, tableName, columns)
     .writeMetadataFeatureTable(conn, metadata, tableName)  # must come last!
     FeatureDb(conn) 
 }
@@ -124,9 +132,9 @@ makeFeatureDb <- function(table, tableName, otherCols, metadata=NULL, ...)
 
 makeFeatureDbFromUCSC <- function(genome="hg18",
          tablename="oreganno",
+         columns = c(id="character",name="character"),
          url="http://genome.ucsc.edu/cgi-bin/",
-         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-         otherCols = c(id="character",name="character"))
+         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
@@ -165,6 +173,7 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
 
     ## check that we have strand info, and if not, add some in
     ucsc_table <- .addMissingStrandCols(ucsc_table)
+    ucsc_table <- .adjustchromStarts(ucsc_table)
     
     ## check that we have at least the 5 columns
     if (ncol(ucsc_table) < length(.UCSC_GENERICCOL2CLASS)+1)
@@ -178,7 +187,7 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
     
     ## then make our table, but remember, we have to add new columns to our
     ## base table type 1st:
-    .UCSC_GENERICCOL2CLASS = c(.UCSC_GENERICCOL2CLASS,otherCols)
+    .UCSC_GENERICCOL2CLASS = c(.UCSC_GENERICCOL2CLASS,columns)
     ucsc_table <- setDataFrameColClass(ucsc_table ,.UCSC_GENERICCOL2CLASS,
                                      drop.extra.cols=TRUE)    
 
@@ -188,7 +197,7 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
     message("Make the AnnoDb object ... ", appendLF=FALSE)
     makeFeatureDb(table=ucsc_table, tableName=tablename,
                 metadata=metadata,
-                otherCols)
+                columns)
 
 
 }
@@ -210,4 +219,4 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
 
 ## library(GenomicFeatures)
 ## foo = makeFeatureDbFromUCSC("hg18","cytoBand",
-##                  otherCols=c(name="character",gieStain="character"))
+##                  columns=c(name="character",gieStain="character"))

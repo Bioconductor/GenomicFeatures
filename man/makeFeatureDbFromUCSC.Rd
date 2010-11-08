@@ -19,9 +19,9 @@ supportedUCSCFeatureDbTracks()
 makeFeatureDbFromUCSC(
         genome="hg18",
         tablename="oreganno",
+        columns = c(id="character",name="character"),
         url="http://genome.ucsc.edu/cgi-bin/",
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-        otherCols = c(id="character",name="character"))
+        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 }
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
@@ -31,10 +31,10 @@ makeFeatureDbFromUCSC(
     annotations to retrieve. Use the \code{supportedUCSCtables} utility
     function to get the list of supported tables. Note that not all
     tables are available for all genomes.}
+  \item{columns}{a named character vector to list out the names and
+        types of the other columns that the downloaded track should have.}
   \item{url,goldenPath_url}{use to specify the location of an
     alternate UCSC Genome Browser.}
-  \item{otherCols}{a named character vector to list out the names and
-        types of the other columns that the downloaded track should have.}
 }
 \details{
   \code{makeFeatureDbFromUCSC} is a convenience function that feeds
