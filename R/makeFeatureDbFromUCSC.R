@@ -99,7 +99,7 @@
 
 
 ## Discovery for supported Tracks
-supportedUCSCFeatureDbTracks <- function(genome="hg18")
+supportedUCSCFeatureDbTracks <- function(genome)
 {
   ##TODO: fill out black list of tracks that we cannot support here.
   ##unsupported <- c("ruler")
@@ -111,7 +111,7 @@ supportedUCSCFeatureDbTracks <- function(genome="hg18")
 }
 
 ## Discover table names available in Tracks
-supportedUCSCFeatureDbTables <- function(genome="hg18", track="oreganno")
+supportedUCSCFeatureDbTables <- function(genome, track)
 {
   session <- browserSession()
   genome(session) <- genome
@@ -121,9 +121,9 @@ supportedUCSCFeatureDbTables <- function(genome="hg18", track="oreganno")
 
 ## Discover the schema information (field names and potentially someday the
 ## type information) for a track and table combo.
-UCSCFeatureDbTableSchema <- function(genome="hg18",
-                                     track="oreganno",
-                                     tablename="oreganno")
+UCSCFeatureDbTableSchema <- function(genome,
+                                     track,
+                                     tablename)
 {
   session <- browserSession()
   genome(session) <- genome
@@ -178,9 +178,9 @@ makeFeatureDb <- function(table, tableName, columns, metadata=NULL, ...)
 
 ## standard columns are chrom, chromStart, chromEnd and strand
 ## all others need to be specified 
-makeFeatureDbFromUCSC <- function(genome="hg18",
-         track="oreganno",
-         tablename="oreganno",
+makeFeatureDbFromUCSC <- function(genome,
+         track,
+         tablename,
          columns = UCSCFeatureDbTableSchema(genome, track, tablename),
          url="http://genome.ucsc.edu/cgi-bin/",
          goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")

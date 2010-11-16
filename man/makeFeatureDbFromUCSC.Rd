@@ -14,18 +14,24 @@
   to make a \link{FeatureDb} object from simple annotation tracks at
   UCSC.  The tracks in question must (at a minimum) have a start, end and
   a chromosome affiliation in order to be made into a \link{FeatureDb}.
+  This function requires a precise declaration of its first three
+  arguments to indicate which genome, track and table wish to be
+  imported.  There are discovery functions provided to make this process
+  go smoothly.
 }
 \usage{
-supportedUCSCFeatureDbTracks(genome="hg18")
+supportedUCSCFeatureDbTracks(genome)
 
-supportedUCSCFeatureDbTables(genome="hg18", track="oreganno")
+supportedUCSCFeatureDbTables(genome, track)
  
-UCSCFeatureDbTableSchema(genome="hg18",track="oreganno",tablename="oreganno")
+UCSCFeatureDbTableSchema(genome,
+                         track,
+                         tablename)
 
 makeFeatureDbFromUCSC(
-        genome="hg18",
-        track="oreganno",
-        tablename="oreganno",
+        genome,
+        track,
+        tablename,
         columns = UCSCFeatureDbTableSchema(genome,track,tablename),
         url="http://genome.ucsc.edu/cgi-bin/",
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
@@ -91,12 +97,17 @@ ucscGenomes()[ , "db"]
 supportedUCSCFeatureDbTracks("mm9")
 
 ## Display the list of tables supported by your track:
-supportedUCSCFeatureDbTables("mm9", "oreganno")
+supportedUCSCFeatureDbTables(genome="mm9",
+                             track="oreganno")
 
 ## Display fields that could be passed in to colnames:
-UCSCFeatureDbTableSchema("mm9", "oreganno")
+UCSCFeatureDbTableSchema(genome="mm9",
+                         track="oreganno",
+                         tablename="oreganno")
 
 ## Retrieving a full transcript dataset for Yeast from UCSC:
-txdb <- makeFeatureDbFromUCSC(genome="mm9", tablename="oreganno")
+txdb <- makeFeatureDbFromUCSC(genome="mm9",
+                              track="oreganno",
+                              tablename="oreganno")
 txdb
 }
