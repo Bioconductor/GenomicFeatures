@@ -20,7 +20,7 @@ importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
            useDataset, useMart)
 
 importFrom(rtracklayer, browserSession, genome, "genome<-", ucscTableQuery,
-           tableNames, getTable)
+           tableNames, getTable, trackNames, ucscSchema)
 
 importFrom(RCurl, getURL)
 

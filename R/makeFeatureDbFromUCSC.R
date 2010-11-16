@@ -66,6 +66,7 @@
     dbWriteTable(conn, "metadata", metadata, row.names=FALSE)
 }
 
+
 ## The following writes the data contents of our generic table
 .writeGenericFeatureTable <- function(conn, table, tableName, columns)
 {
@@ -94,25 +95,45 @@
     dbEasyPreparedQuery(conn, sql, table)
 }
 
-## TODO: explore using rtracklayer to discover these? 
-## TODO: add code to put in * when there is no strand information.
-.SUPPORTED_FEATUREDB_UCSC_TABLES <- c(
-  ## tablename (unique key)    track             subtrack
-  ## "",                 "",     NA,
-  ## "",                 "",     NA,
-  "stsMap",                 "STS Markers",     NA,
-  "cytoBand",                 "Chromosome Band",     NA,
-  "oreganno",                 "ORegAnno",     NA
-)
 
-supportedUCSCFeatureDbTracks <- function()
+
+
+## TODO: expose these and document them.  Do I want the arg name to be "track"
+## or tablename for UCSCFeatureDbTrackSchemas() ???
+supportedUCSCFeatureDbTracks <- function(genome="hg19")
 {
-    mat <- matrix(.SUPPORTED_FEATUREDB_UCSC_TABLES, ncol=3, byrow=TRUE)
-    colnames(mat) <- c("tablename", "track", "subtrack")
-    data.frame(track=mat[ , "track"], subtrack=mat[ , "subtrack"],
-               row.names=mat[ , "tablename"],
-               stringsAsFactors=FALSE)
+  ##TODO: fill out black list of tracks that we cannot support here.
+  ##unsupported <- c("ruler")
+  unsupported <- c("fakeTrackName")
+  session <- browserSession()
+  genome(session) <- genome
+  query <- ucscTableQuery(session)
+  trackNames(query)[!(trackNames(query) %in% unsupported)]
 }
+
+
+UCSCFeatureDbTrackSchemas <- function(genome="hg19", track="stsMap")
+{
+  session <- browserSession()
+  genome(session) <- genome  
+  query <- ucscTableQuery(session, track)  
+  res <- ucscSchema(query)
+  ## now for the tricky part: converting from MYSQL to R...  There is no good
+  ## way to extract the "R" type information from the data.frame since it
+  ## appears that they are all treated as "character" information.  And there
+  ## is no good way to convert from MySQL to R since that is handled elsewhere
+  ## at the C-level and baked into the code that extracts the data.  So here
+  ## we will just assume (as michael does for his $example slot) that he has
+  ## done something reasonable in making all these things to be "character"
+  ## (and realistically, this is probably fine for what we are doing here)
+  ## So for now, just fake up the fake track info. from rtracklayer...
+  types <- unlist(lapply(res@listData$example, class))
+  names <- res@listData$field  
+  result <- types
+  names(result) <- names
+  result
+}
+
 
 
 
@@ -127,12 +148,12 @@ makeFeatureDb <- function(table, tableName, columns, metadata=NULL, ...)
 }
 
 
+
 ## standard columns are chrom, chromStart, chromEnd and strand
 ## all others need to be specified 
-
 makeFeatureDbFromUCSC <- function(genome="hg18",
          tablename="oreganno",
-         columns = c(id="character",name="character"),
+         columns = UCSCFeatureDbTrackSchemas(genome, tablename),
          url="http://genome.ucsc.edu/cgi-bin/",
          goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
@@ -140,21 +161,26 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
         stop("'genome' must be a single string")
     if (!isSingleString(tablename))
         stop("'tablename' must be a single string")
-    ## TODO: implement supportedUCSCTables for these kinds of simple tracks
-    ## Modify this as we don't have our new tracks in this list (we have
-    ## to make a new list)
     
-    track <- supportedUCSCFeatureDbTracks()[tablename, "track"]    
-    ## track <- tablename ## temporarily just use oreganno to test
-    
-    if (is.na(track))
+    ## Extract the tablename provided from the list of viable tracks.   
+    trks <- supportedUCSCFeatureDbTracks(genome)
+    track <- trks[trks %in% tablename]      
+    if (length(track)==0)
         stop("table \"", tablename, "\" is not supported")
+
+    ## Check the column names
+    if(length(names(columns)) != length(unique(names(columns))))
+      stop("The default field names are not unique for this table.")
+    ## Once we know the columns names are unique, we remove the default ones.
+    columns <- columns[!(names(columns) %in% names(.UCSC_GENERICCOL2CLASS))] 
+
+    ## Check other arguments
     if (!isSingleString(url))
         stop("'url' must be a single string")
     if (!isSingleString(goldenPath_url))
         stop("'goldenPath_url' must be a single string")
-  
-    ## Create an UCSC Genome Browser session.
+
+    ## Create a UCSC Genome Browser session.
     session <- browserSession(url=url)
     genome(session) <- genome
     track_tables <- tableNames(ucscTableQuery(session, track=track))
@@ -164,18 +190,18 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
              "Thank you for reporting this to the GenomicFeatures maintainer ",
              "or to the Bioconductor mailing list, and sorry for the ",
              "inconvenience.")
-
+    
     ## Download the data table.
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
     query <- ucscTableQuery(session, track, table=tablename,
                             names=NULL)
     ucsc_table <- getTable(query)
-
+    
     ## check that we have strand info, and if not, add some in
     ucsc_table <- .addMissingStrandCols(ucsc_table)
     ucsc_table <- .adjustchromStarts(ucsc_table)
     
-    ## check that we have at least the 5 columns
+    ## check that we have at least the 5 columns of data
     if (ncol(ucsc_table) < length(.UCSC_GENERICCOL2CLASS)+1)
         stop("GenomicFeatures internal error: ", tablename, " table doesn't ",
              "exist, was corrupted during download, or doesn't contain ",
@@ -187,10 +213,10 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
     
     ## then make our table, but remember, we have to add new columns to our
     ## base table type 1st:
-    .UCSC_GENERICCOL2CLASS = c(.UCSC_GENERICCOL2CLASS,columns)
+    .UCSC_GENERICCOL2CLASS = c(.UCSC_GENERICCOL2CLASS, columns)
     ucsc_table <- setDataFrameColClass(ucsc_table ,.UCSC_GENERICCOL2CLASS,
                                      drop.extra.cols=TRUE)    
-
+    
     ## Compile some of the metadata
     metadata <- .prepareUCSCFeatureMetadata(genome, tablename)
     
@@ -198,8 +224,6 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
     makeFeatureDb(table=ucsc_table, tableName=tablename,
                 metadata=metadata,
                 columns)
-
-
 }
 
 
@@ -220,3 +244,16 @@ makeFeatureDbFromUCSC <- function(genome="hg18",
 ## library(GenomicFeatures)
 ## foo = makeFeatureDbFromUCSC("hg18","cytoBand",
 ##                  columns=c(name="character",gieStain="character"))
+
+
+
+
+## The following is a great example
+## library(GenomicFeatures)
+## foo = makeFeatureDbFromUCSC("hg18","cytoBand")
+
+
+## TODO: see if I can figure out why some of these tracks don't work...
+
+## like "vegaGeneComposite" and "encodeYaleAffyRNATars"
+

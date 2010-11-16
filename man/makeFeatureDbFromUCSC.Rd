@@ -14,12 +14,12 @@
   a chromosome affiliation in order to be made into a \link{FeatureDb}.
 }
 \usage{
-supportedUCSCFeatureDbTracks()
+supportedUCSCFeatureDbTracks(genome="hg19")
 
 makeFeatureDbFromUCSC(
         genome="hg18",
         tablename="oreganno",
-        columns = c(id="character",name="character"),
+        columns = UCSCFeatureDbTrackSchemas(genome, tablename),
         url="http://genome.ucsc.edu/cgi-bin/",
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 }
