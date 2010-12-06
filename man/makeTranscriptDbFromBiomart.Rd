@@ -53,11 +53,11 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
   annotations are:
   \itemize{
     \item ensembl: ENSEMBL GENES 60 (SANGER UK)
-    \item bacterial_mart_6: ENSEMBL BACTERIA 6 (EBI UK)
-    \item fungal_mart_6: ENSEMBL FUNGAL 6 (EBI UK)
-    \item metazoa_mart_6: ENSEMBL METAZOA 6 (EBI UK)
+    \item bacterial_mart_7: ENSEMBL BACTERIA 7 (EBI UK)
+    \item fungal_mart_7: ENSEMBL FUNGAL 7 (EBI UK)
+    \item metazoa_mart_7: ENSEMBL METAZOA 7 (EBI UK)
     \item plant_mart_7: ENSEMBL PLANT 7 (EBI UK)
-    \item protist_mart_6: ENSEMBL PROTISTS 6 (EBI UK)
+    \item protist_mart_7: ENSEMBL PROTISTS 7 (EBI UK)
     \item ensembl_expressionmart_48: EURATMART (EBI UK)
     \item Ensembl56: PANCREATIC EXPRESSION DATABASE (INSTITUTE OF CANCER  UK)
   }
