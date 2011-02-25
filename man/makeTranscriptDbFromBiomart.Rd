@@ -80,11 +80,9 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
 }
 
 \examples{
-## Discover which datasets are available in the "ensembl" and
-## "plant_mart_7" BioMart databases:
+## Discover which datasets are available in the "ensembl"
 library(biomaRt)
 listDatasets(useMart("ensembl"))
-listDatasets(useMart("plant_mart_7"))
 
 ## Retrieving an incomplete transcript dataset for Human from the
 ## "ensembl" BioMart database:
