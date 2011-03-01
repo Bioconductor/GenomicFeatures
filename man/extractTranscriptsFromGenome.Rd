@@ -89,10 +89,10 @@ extractTranscriptsFromGenome(genome, txdb, use.names=TRUE)
   ## ---------------------------------------------------------------------
   ## B. USING A GRangesList OBJECT
   ## ---------------------------------------------------------------------
-  ## Exons grouped by transcripts (gives the same result as above except
-  ## that now transcripts are named by their internal id i.e. by tx_id
-  ## instead of tx_name):
-  exbytx <- exonsBy(txdb)
+
+  ## A GRangesList object containing exons grouped by transcripts gives
+  ## the same result as above:
+  exbytx <- exonsBy(txdb, by="tx", use.names=TRUE)
   txseqs2 <- extractTranscriptsFromGenome(Hsapiens, exbytx)
   ## A sanity check:
   stopifnot(identical(unname(sapply(width(exbytx), sum)), width(txseqs2)))

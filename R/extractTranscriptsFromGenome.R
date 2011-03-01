@@ -129,8 +129,14 @@
     REFSEQnames <- names(strand_list)  # REFSEQnames has no duplicates
     extractTranscriptsFromREFSEQ <- function(REFSEQname)
     {
-        subject <- genome[[REFSEQname]]
-        masks(subject) <- NULL
+        ## Load the subject.
+        if (REFSEQname %in% seqnames(genome)) {
+            subject <- genome[[REFSEQname]]
+            masks(subject) <- NULL
+        } else {
+            regex <- paste("^", REFSEQname, "$", sep="")
+            subject <- getSeq(genome, regex, as.character=FALSE)
+        }
         exonStarts <- exonStarts_list[[REFSEQname]]
         exonEnds <- exonEnds_list[[REFSEQname]]
         strand <- strand_list[[REFSEQname]]
@@ -156,7 +162,7 @@ extractTranscriptsFromGenome <- function(genome, txdb, use.names=TRUE)
         reorder.exons <- TRUE
     } else {
         if (is(txdb, "TranscriptDb")) {
-            txdb <- exonsBy(txdb, use.names=use.names)
+            txdb <- exonsBy(txdb, by="tx", use.names=use.names)
         } else if (!is(txdb, "GRangesList"))
             stop("'txdb' must be a TranscriptDb object, a GRangesList ",
                  "object, or a data frame")
