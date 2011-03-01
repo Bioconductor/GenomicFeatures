@@ -80,7 +80,8 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
 }
 
 \examples{
-## Discover which datasets are available in the "ensembl"
+## Discover which datasets are available in the "ensembl" BioMart
+## database:
 library(biomaRt)
 listDatasets(useMart("ensembl"))
 
