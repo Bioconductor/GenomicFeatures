@@ -1,33 +1,57 @@
 \name{extractTranscriptsFromGenome}
 
+\alias{transcriptWidths}
+\alias{transcriptLocs2refLocs}
+\alias{extractTranscripts}
 \alias{extractTranscriptsFromGenome}
 
-\title{Extract transcripts from a genome}
+\title{Tools for extracting transcript sequences}
 
 \description{
   \code{extractTranscriptsFromGenome} extracts the transcript
-  sequences from a BSgenome data package using transcript
-  information (exon boundaries) stored in a "gene table".
+  sequences from a BSgenome data package using the transcript
+  information (exon boundaries) stored in a \link{TranscriptDb}
+  or \link[GenomicRanges]{GRangesList} object.
+
+  \code{extractTranscripts} extracts a set of transcripts
+  from a single DNA sequence.
+
+  Related utilities:
+
+  \code{transcriptWidths} to get the lengths of the transcripts
+  (called the "widths" in this context) based on the boundaries
+  of their exons.
+
+  \code{transcriptLocs2refLocs} converts transcript-based
+  locations into reference-based (aka chromosome-based or genomic)
+  locations.
 }
 
 \usage{
 extractTranscriptsFromGenome(genome, txdb, use.names=TRUE)
+
+extractTranscripts(x,
+        exonStarts=list(), exonEnds=list(), strand=character(0),
+        reorder.exons.on.minus.strand=FALSE)
+
+## Related utilities:
+
+transcriptWidths(exonStarts=list(), exonEnds=list())
+
+transcriptLocs2refLocs(tlocs,
+        exonStarts=list(), exonEnds=list(), strand=character(0),
+        reorder.exons.on.minus.strand=FALSE)
 }
 
 \arguments{
   \item{genome}{
-    A \code{\link[BSgenome]{BSgenome}} object.
+    A \link[BSgenome]{BSgenome} object.
     See the \code{\link[BSgenome]{available.genomes}} function
     in the BSgenome package for how to install a genome.
   }
   \item{txdb}{
-    A \link{TranscriptDb} object, a \link[GenomicRanges]{GRangesList}
-    object, or a UCSC-style data frame (i.e. 1 row per transcript and
-    it must have at least the \code{"name"}, \code{"chrom"}, \code{"strand"},
-    \code{"exonStarts"} and \code{"exonEnds"} columns where each value
-    in exonStarts or exonEnds is a comma-separated list of integers --
-    note that unlike what UCSC does the start values here must be 1-based,
-    not 0-based).
+    A \link{TranscriptDb} object or a \link[GenomicRanges]{GRangesList}
+    object.
   }
   \item{use.names}{
     \code{TRUE} or \code{FALSE}. Ignored if \code{txdb} is not
@@ -39,30 +63,53 @@ extractTranscriptsFromGenome(genome, txdb, use.names=TRUE)
     are not guaranteed to be unique or even defined (they could be all
     \code{NA}s). A warning is issued when this happens.
   }
+  \item{x}{
+    A \link{DNAString} or \link{MaskedDNAString} object.
+  }
+  \item{exonStarts, exonEnds}{
+    The starts and ends of the exons, respectively.
+
+    Each argument can be a list of integer vectors,
+    an \link[IRanges]{IntegerList} object,
+    or a character vector where each element is a
+    comma-separated list of integers.
+    In addition, the lists represented by \code{exonStarts}
+    and \code{exonEnds} must have the same shape i.e.
+    have the same lengths and have elements of the same lengths.
+    The length of \code{exonStarts} and \code{exonEnds}
+    is the number of transcripts.
+  }
+  \item{strand}{
+    A character vector of the same length as \code{exonStarts} and
+    \code{exonEnds} specifying the strand (\code{"+"} or \code{"-"})
+    from which the transcript is coming.
+  }
+  \item{reorder.exons.on.minus.strand}{
+    \code{TRUE} or \code{FALSE}. Should the order of exons
+    for transcripts coming from the minus strand be reversed?
+  }
+  \item{tlocs}{
+    A list of integer vectors of the same length as \code{exonStarts}
+    and \code{exonEnds}. Each element in \code{tlocs} must contain
+    transcript-based locations.
+  }
 }
 
 \value{
-  A named \link[Biostrings]{DNAStringSet} object.
+  For \code{extractTranscriptsFromGenome}: A named
+  \link[Biostrings]{DNAStringSet} object with one element per transcript.
+  When \code{txdb} is a \link[GenomicRanges]{GRangesList} object, elements
+  in the output align with elements in the input (\code{txdb}), and they
+  have the same names.
 
-  Element positions are preserved with respect to \code{txdb} when
-  \code{txdb} is not a \link{TranscriptDb} object.
-  More precisely, if \code{txdb} is a \link[GenomicRanges]{GRangesList}
-  then elements in the output correspond to elements in \code{txdb}
-  and the names are preserved.
-  If \code{txdb} is a UCSC-style data frame then elements in the output
-  correspond to rows in \code{txdb} and the names are taken from the
-  \code{"name"} column.
-}
+  For \code{extractTranscripts}: A \link{DNAStringSet} object with one
+  element per transcript.
 
-\note{
-  \code{extractTranscriptsFromGenome} is based on the
-  \code{\link[Biostrings]{extractTranscripts}}
-  function defined in the Biostrings package.
-  See \code{?`\link[Biostrings]{extractTranscripts}`}
-  for more information and related functions like
-  \code{\link[Biostrings]{transcriptLocs2refLocs}}
-  for converting transcript-based locations into chromosome-based
-  (aka reference-based) locations.
+  For \code{transcriptWidths}: An integer vector with one element per
+  transcript.
+
+  For \code{transcriptLocs2refLocs}: A list of integer vectors of the same
+  shape as \code{tlocs}.
 }
 
 \author{
@@ -71,14 +118,16 @@ extractTranscriptsFromGenome(genome, txdb, use.names=TRUE)
 
 \seealso{
   \code{\link[BSgenome]{available.genomes}},
-  \code{\link[Biostrings]{transcriptLocs2refLocs}}
+  \link{TranscriptDb-class},
+  \link[GenomicRanges]{GRangesList-class},
+  \link[Biostrings]{DNAStringSet-class}
 }
 
 \examples{
   library(BSgenome.Hsapiens.UCSC.hg18)  # load the genome
 
   ## ---------------------------------------------------------------------
-  ## A. USING A TranscriptDb OBJECT
+  ## A. USING extractTranscriptsFromGenome() WITH A TranscriptDb OBJECT
   ## ---------------------------------------------------------------------
   txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
                            package="GenomicFeatures")
@@ -87,7 +136,7 @@ extractTranscriptsFromGenome(genome, txdb, use.names=TRUE)
   txseqs
 
   ## ---------------------------------------------------------------------
-  ## B. USING A GRangesList OBJECT
+  ## B. USING extractTranscriptsFromGenome() WITH A GRangesList OBJECT
   ## ---------------------------------------------------------------------
 
   ## A GRangesList object containing exons grouped by transcripts gives
@@ -115,6 +164,54 @@ extractTranscriptsFromGenome(genome, txdb, use.names=TRUE)
   ## to be!
   rlocs <- transcriptLocs2refLocs(tlocs, start(exbytx), end(exbytx),
                tx_strand, reorder.exons.on.minus.strand=TRUE)
+
+  ## ---------------------------------------------------------------------
+  ## D. EXTRACTING WORM TRANSCRIPTS ZC101.3 AND F37B1.1
+  ## ---------------------------------------------------------------------
+
+  ## Transcript ZC101.3 (is on + strand):
+  ##   Exons starts/ends relative to transcript:
+  rstarts1 <- c(1, 488, 654, 996, 1365, 1712, 2163, 2453)
+  rends1 <- c(137, 578, 889, 1277, 1662, 1870, 2410, 2561)
+  ##   Exons starts/ends relative to chromosome:
+  starts1 <- 14678410 + rstarts1
+  ends1 <- 14678410 + rends1
+
+  ## Transcript F37B1.1 (is on - strand):
+  ##   Exons starts/ends relative to transcript:
+  rstarts2 <- c(1, 325)
+  rends2 <- c(139, 815)
+  ##   Exons starts/ends relative to chromosome:
+  starts2 <- 13611188 - rends2
+  ends2 <- 13611188 - rstarts2
+
+  exon_starts <- list(as.integer(starts1), as.integer(starts2))
+  exon_ends <- list(as.integer(ends1), as.integer(ends2))
+
+  library(BSgenome.Celegans.UCSC.ce2)
+  ## Both transcripts are on chrII:
+  chrII <- Celegans$chrII
+  transcripts <- extractTranscripts(chrII,
+                                    exonStarts=exon_starts,
+                                    exonEnds=exon_ends,
+                                    strand=c("+","-"))
+
+  ## Same as 'width(transcripts)':
+  transcriptWidths(exonStarts=exon_starts, exonEnds=exon_ends)
+
+  transcriptLocs2refLocs(list(c(1:6, 135:140, 1555:1560),
+                              c(1:6, 137:142, 625:630)),
+                         exonStarts=exon_starts,
+                         exonEnds=exon_ends,
+                         strand=c("+","-"))
+
+  ## A sanity check:
+  ref_locs <- transcriptLocs2refLocs(list(1:1560, 1:630),
+                                     exonStarts=exon_starts,
+                                     exonEnds=exon_ends,
+                                     strand=c("+","-"))
+  stopifnot(chrII[ref_locs[[1]]] == transcripts[[1]])
+  stopifnot(complement(chrII)[ref_locs[[2]]] == transcripts[[2]])
 }
 
 \keyword{manip}

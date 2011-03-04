@@ -13,8 +13,8 @@ import(IRanges)
 importFrom(GenomicRanges, GRanges, Seqinfo)
 importMethodsFrom(GenomicRanges, seqnames, seqlengths, isCircular, strand)
 
-importFrom(Biostrings, DNAStringSet, extractTranscripts)
-importMethodsFrom(Biostrings, "masks<-")
+importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
+importFrom(Biostrings, "masks<-")
 
 importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
            useDataset, useMart)
@@ -55,6 +55,9 @@ export(
   intronsByTranscript,
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
+  transcriptWidths,
+  transcriptLocs2refLocs,
+  extractTranscripts,
   extractTranscriptsFromGenome,
   makeFeatureDbFromUCSC,
   features
