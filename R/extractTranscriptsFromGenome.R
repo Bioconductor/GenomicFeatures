@@ -34,7 +34,7 @@ transcriptWidths <- function(exonStarts=list(), exonEnds=list())
     exonEnds <- .normargExonStartsOrEnds(exonEnds, "exonEnds")
     if (length(exonStarts) != length(exonEnds))
         stop("'exonStarts', 'exonEnds' must have the same length")
-    unsafe.transcriptWidths(exonStarts, exonEnds)
+    GenomicRanges:::unsafe.transcriptWidths(exonStarts, exonEnds)
 }
 
 
@@ -72,9 +72,9 @@ transcriptLocs2refLocs <- function(tlocs, exonStarts=list(), exonEnds=list(),
              "must have the same length")
     if (!isTRUEorFALSE(reorder.exons.on.minus.strand))
         stop("'reorder.exons.on.minus.strand' must be TRUE or FALSE")
-    unsafe.transcriptLocs2refLocs(tlocs,
-                                  exonStarts, exonEnds, strand,
-                                  reorder.exons.on.minus.strand)
+    GenomicRanges:::unsafe.transcriptLocs2refLocs(tlocs,
+                            exonStarts, exonEnds, strand,
+                            reorder.exons.on.minus.strand)
 }
 
 
@@ -110,9 +110,9 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
     if (!isTRUEorFALSE(reorder.exons.on.minus.strand))
         stop("'reorder.exons.on.minus.strand' must be TRUE or FALSE")
     lkup <- Biostrings:::getDNAComplementLookup()
-    unsafe.extractTranscripts("DNAStringSet", x,
-        exonStarts, exonEnds, strand,
-        reorder.exons.on.minus.strand, lkup)
+    GenomicRanges:::unsafe.extractTranscripts("DNAStringSet", x,
+                            exonStarts, exonEnds, strand,
+                            reorder.exons.on.minus.strand, lkup)
 }
 
 
