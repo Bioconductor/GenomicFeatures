@@ -196,7 +196,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
     exonStarts <- unname(split(start(x@unlistData), f))
     exonEnds <- unname(split(end(x@unlistData), f))
     if (!is.null(exon_rank) || reorder.exons.on.minus.strand) {
-        exonStarts <- sapply(seq_len(length(x)),
+        exonStarts <- lapply(seq_len(length(x)),
             function(i) {
                 y <- exonStarts[[i]]
                 if (!is.null(exon_rank)) {
@@ -213,7 +213,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
                     y <- rev(y)
                 y
             })
-        exonEnds <- sapply(seq_len(length(x)),
+        exonEnds <- lapply(seq_len(length(x)),
             function(i) {
                 y <- exonEnds[[i]]
                 if (!is.null(exon_rank)) {
