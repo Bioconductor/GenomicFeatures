@@ -2,6 +2,65 @@
 ### makeTranscriptDbFromUCSC()
 ### -------------------------------------------------------------------------
 
+## take any of the supported genomes at UCSC, remove the version number, 
+## and then lookup the supported species name.
+.matchUCSCGenomeToSpecies <- function(genome){
+  genome <- gsub("\\d+$","",genome)
+  orgToSpec <- c("hg"="Homo sapiens",
+                 "felCat"="Felis catus",
+                    "galGal"="Gallus gallus",
+                    "panTro"="Pan troglodytes",
+                    "bosTau"="Bos taurus",
+                    "canFam"="Canis familiaris",
+                    "loxAfr"="Loxodonta africana",
+                    "fr"="Fugu rubripes",
+                    "cavPor"="Cavia porcellus",
+                    "equCab"="Equus caballus",
+                    "petMar"="Petromyzon marinus",
+                    "anoCar"="Anolis carolinensis",
+                    "calJac"="Callithrix jacchus",
+                    "oryLat"="Oryzias latipes",
+                    "mm"="Mus musculus",
+                    "monDom"="Monodelphis domestica",
+                    "ponAbe"="Pongo abelii",
+                    "ailMel"="Ailuropoda melanoleuca",
+                    "susScr"="Sus scrofa",
+                    "ornAna"="Ornithorhynchus anatinus",
+                    "oryCun"="Oryctolagus cuniculus",
+                    "rn"="Rattus norvegicus",
+                    "rheMac"="Macaca mulatta",
+                    "oviAri"="Ovis aries",
+                    "gasAcu"="Gasterosteus aculeatus",
+                    "tetNig"="Tetraodon nigroviridis",
+                    "xenTro"="Xenopus tropicalis",
+                    "taeGut"="Taeniopygia guttata",
+                    "danRer"="Danio rerio",
+                    "ci"="Ciona intestinalis",
+                    "braFlo"="Branchiostoma floridae",
+                    "strPur"="Strongylocentrotus purpuratu",
+                    "apiMel"="Apis mellifera",
+                    "anoGam"="Anopheles gambiae",
+                    "droAna"="Drosophila ananassae",
+                    "droEre"="Drosophila erecta",
+                    "droGri"="Drosophila grimshawi",
+                    "dm"="Drosophila melanogaster",
+                    "droMoj"="Drosophila mojavensis",
+                    "droPer"="Drosophila persimilis",
+                    "dp"="Drosophila pseudoobscura",
+                    "droSec"="Drosophila sechellia",
+                    "droSim"="Drosophila simulans",
+                    "droVir"="Drosophila virilis",
+                    "droYak"="Drosophila yakuba",
+                    "caePb"="Caenorhabditis brenneri",
+                    "cb"="Caenorhabditis briggsae",
+                    "ce"="Caenorhabditis elegans",
+                    "caeJap"="Caenorhabditis japonica",
+                    "caeRem"="Caenorhabditis remanei",
+                    "priPac"="Pristionchus pacificus",
+                    "aplCal"="Aplysia californica",
+                    "sacCer"="Saccharomyces cerevisiae")
+  orgToSpec[names(orgToSpec) == genome][[1]]  
+}
 
 ### makeTranscriptDbFromUCSC() expects a UCSC transcript table to have at
 ### least the following columns:
@@ -430,10 +489,11 @@ getChromInfoFromUCSC <- function(genome,
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
+    
     metadata <- data.frame(
-        name=c("Data source", "Genome", "UCSC Table",
+        name=c("Data source", "Genome", "Genus and Species", "UCSC Table",
                "Type of Gene ID", "Full dataset"),
-        value=c("UCSC", genome, tablename,
+        value=c("UCSC", genome, .matchUCSCGenomeToSpecies(genome), tablename,
                 gene_id_type, ifelse(full_dataset, "yes", "no"))
     )
     message("OK")

@@ -13,6 +13,13 @@
 ###
 
 
+## helper to extract the Genus and species name from the dataset string.
+.extractSpeciesFromDatasetDesc <- function(description){
+  vals <- unlist(strsplit(description, " "))
+  paste(vals[[1]], vals[[2]])
+}
+
+
 .getBiomartDbVersion <- function(biomart)
 {
     marts <- listMarts()
@@ -522,9 +529,11 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
              "\" has no (or more than one) \"", dataset, "\" datasets")
     description <- as.character(datasets$description)[dataset_rowidx]
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
+    species <- .extractSpeciesFromDatasetDesc(description)
     message("OK")
     data.frame(
         name=c("Data source",
+               "Genus and Species",
                "BioMart database",
                "BioMart database version",
                "BioMart dataset",
@@ -532,6 +541,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                "BioMart dataset version",
                "Full dataset"),
         value=c("BioMart",
+                species,
                 biomart,
                 db_version,
                 dataset,

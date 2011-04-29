@@ -106,8 +106,9 @@ UCSCFeatureDbTableSchema(genome="mm9",
                          tablename="oreganno")
 
 ## Retrieving a full transcript dataset for Yeast from UCSC:
-txdb <- makeFeatureDbFromUCSC(genome="mm9",
+fdb <- makeFeatureDbFromUCSC(genome="mm9",
                               track="oreganno",
                               tablename="oreganno")
-txdb
+fdb
+
 }
