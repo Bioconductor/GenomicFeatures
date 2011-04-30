@@ -75,9 +75,10 @@ ucscGenomes()[ , "db"]
 ## Display the list of tables supported by makeTranscriptDbFromUCSC():
 supportedUCSCtables()
 
+\dontrun{
 ## Retrieving a full transcript dataset for Yeast from UCSC:
 txdb1 <- makeTranscriptDbFromUCSC(genome="sacCer2", tablename="ensGene")
-txdb1
+}
 
 ## Retrieving an incomplete transcript dataset for Mouse from UCSC
 ## (only transcripts linked to Entrez Gene ID 22290):
