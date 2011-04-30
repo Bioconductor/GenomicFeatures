@@ -492,9 +492,9 @@ getChromInfoFromUCSC <- function(genome,
     
     metadata <- data.frame(
         name=c("Data source", "Genome", "Genus and Species", "UCSC Table",
-               "Type of Gene ID", "Full dataset"),
+               "Resource URL", "Type of Gene ID", "Full dataset"),
         value=c("UCSC", genome, .matchUCSCGenomeToSpecies(genome), tablename,
-                gene_id_type, ifelse(full_dataset, "yes", "no"))
+                "http://genome.ucsc.edu/", gene_id_type, ifelse(full_dataset, "yes", "no"))
     )
     message("OK")
     metadata
