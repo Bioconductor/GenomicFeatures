@@ -4,8 +4,11 @@
 
 .onLoad <- function(libname, pkgname)
 {
-  require("GenomicFeatures", quietly=TRUE)
-  @TXDBOBJNAME@ <- loadFeatures(system.file("extdata", paste(pkgname,
+  txdb <- loadFeatures(system.file("extdata", paste(pkgname,
     ".sqlite",sep=""), package=pkgname, lib.loc=libname))
+  objname <- "@TXDBOBJNAME@"
+  ns <- asNamespace(pkgname)
+  assign(objname, txdb, envir=ns)
+  namespaceExport(ns, objname)
 }
 
