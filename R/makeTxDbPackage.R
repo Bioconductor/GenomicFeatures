@@ -16,7 +16,8 @@
   res <- dbGetQuery(con, 
     paste("SELECT value FROM metadata WHERE name='",
       name,"'", sep=""))[[1]]  
-  if(!is.character(res))error("Your metadata table is missing a value for:",name,".")
+  if(!is.character(res))error("Your metadata table is missing a value for:",
+    name,".")
   res
 }
 
@@ -43,9 +44,10 @@
 }
 
 .makeObjectName <- function(pkgName){
-  strs <- unlist(strsplit(pkgName, "."))
-  paste(strs[2:length(strs)],strs[1], sep="_")
+  strs <- unlist(strsplit(pkgName, "\\."))
+  paste(c(strs[2:length(strs)],strs[1]), collapse="_")
 }
+
 
 .getTxDbVersion <- function(txdb){
   type <- .getMetaDataValue(txdb,'Data source')
@@ -69,17 +71,20 @@ makeTxDbPackage <- function(txdb,
    pkgName <- .makePackageName(txdb)
 
    ## there should only be one template
-   template_path = system.file("inst","txdb-template",package="GenomicFeatures")
+   template_path <- system.file("txdb-template",package="GenomicFeatures")
    ## We need to define some symbols in order to have the 
    ## template filled out correctly.
    symvals <- list(
-    PKGTITLE=paste("Annotation package for the",.makeObjectName(pkgName),"object"),
+    PKGTITLE=paste("Annotation package for the",.makeObjectName(pkgName),
+      "object"),
     PKGDESCRIPTION=paste("Contains the",.makeObjectName(pkgName),"object",
-     "annotation database as generated from",.getMetaDataValue(txdb,'Data source')),
+      "annotation database as generated from",
+      .getMetaDataValue(txdb,'Data source')),
     PKGVERSION=version,
     AUTHOR=author,
     MAINTAINER=maintainer,
-    GFVERSION=.getMetaDataValue(txdb,'GenomicFeatures version at creation time'),
+    GFVERSION=.getMetaDataValue(txdb,
+      'GenomicFeatures version at creation time'),
     LIC=license,
     ORGANISM=.getMetaDataValue(txdb,'Genus and Species'),
     SPECIES=.getMetaDataValue(txdb,'Genus and Species'),
@@ -105,5 +110,10 @@ makeTxDbPackage <- function(txdb,
 		             destinationDir=destDir,
                  originDir=template_path,
                  symbolValues=symvals)
-
+   ## then copy the contents of the database into the extdata dir
+   db_path <- file.path(destDir, pkgName, "inst", "extdata", 
+     paste(pkgName,"sqlite",sep="."))
+   saveFeatures(txdb, file=db_path)
 }
+
+
