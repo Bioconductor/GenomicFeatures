@@ -1,6 +1,8 @@
 import(methods)
 importFrom(utils, download.file, installed.packages, read.table)
 
+importFrom(Biobase, createPackage)
+
 importMethodsFrom(DBI, dbCommit, dbConnect,
                   dbDisconnect, dbExistsTable, dbGetQuery,
                   dbReadTable, dbWriteTable, dbListTables, dbListFields)
@@ -60,6 +62,9 @@ export(
   extractTranscripts,
   extractTranscriptsFromGenome,
   makeFeatureDbFromUCSC,
+  makeTxDbPackage,
+  makeTxDbPackageFromUCSC,
+  makeTxDbPackageFromBiomart,
   features
 )
 

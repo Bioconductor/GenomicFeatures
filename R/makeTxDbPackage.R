@@ -66,7 +66,7 @@ makeTxDbPackage <- function(txdb,
 			                      maintainer,
                             author,
   	                        destDir=".",
-                            license="The Artistic License 2.0"){
+                            license="Artistic-2.0"){
    ## every package has a name We will generate this according to a heuristic
    pkgName <- .makePackageName(txdb)
 
@@ -116,4 +116,59 @@ makeTxDbPackage <- function(txdb,
    saveFeatures(txdb, file=db_path)
 }
 
+
+## wrapper functions to make BOTH the transcriptDb AND also package it up
+## One for UCSC
+makeTxDbPackageFromUCSC <- function(
+  version,
+  maintainer,
+  author,
+  destDir=".",
+  license="Artistic-2.0",
+  genome="hg19",
+  tablename="knownGene",
+  transcript_ids=NULL,
+  circ_seqs=DEFAULT_CIRC_SEQS,
+  url="http://genome.ucsc.edu/cgi-bin/",
+  goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath"){
+    ## Make the DB
+    txdb <- makeTranscriptDbFromUCSC(genome=genome,
+                                     tablename=tablename,
+                                     transcript_ids=transcript_ids,
+                                     circ_seqs=circ_seqs,
+                                     url=url,
+                                     goldenPath_url=goldenPath_url)
+    ## Make the Package
+    makeTxDbPackage(txdb,
+                    version=version,
+                    maintainer=maintainer,
+                    author=author,
+                    destDir=destDir,
+                    license=license)
+}
+
+## One for biomaRt
+makeTxDbPackageFromBiomart <- function(
+  version,
+  maintainer,
+  author,
+  destDir=".",
+  license="Artistic-2.0",
+  biomart="ensembl",
+  dataset="hsapiens_gene_ensembl",
+  transcript_ids=NULL,
+  circ_seqs=DEFAULT_CIRC_SEQS){
+    ## Make the DB
+    txdb <- makeTranscriptDbFromBiomart(biomart=biomart,
+                                        dataset=dataset,
+                                        transcript_ids=transcript_ids,
+                                        circ_seqs=circ_seqs)
+    ## Make the Package
+    makeTxDbPackage(txdb,
+                    version=version,
+                    maintainer=maintainer,
+                    author=author,
+                    destDir=destDir,
+                    license=license)
+}
 

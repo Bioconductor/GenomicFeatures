@@ -15,7 +15,8 @@ Description: A set of tools and methods for making and manipulating transcript
 Maintainer: Biocore Team c/o BioC user list <bioconductor@stat.math.ethz.ch>
 Depends: IRanges (>= 1.7.7), GenomicRanges (>= 1.3.23)
 Imports: methods, DBI (>= 0.2-5), RSQLite (>= 0.8-1), IRanges, GenomicRanges,
-         Biostrings (>= 2.17.6), rtracklayer (>= 1.7.11), biomaRt, RCurl, utils
+         Biostrings (>= 2.17.6), rtracklayer (>= 1.7.11), biomaRt, RCurl, utils,
+	 Biobase
 Suggests: rtracklayer, biomaRt,
           org.Mm.eg.db,
           Biostrings, BSgenome,
