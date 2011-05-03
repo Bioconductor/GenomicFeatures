@@ -40,7 +40,7 @@
       pkgName <- paste("TxDb",species,type,db, sep=".")      
     }
   }
-  pkgName  
+  gsub("_","",pkgName)  ## R does not allow underscores in package names
 }
 
 .makeObjectName <- function(pkgName){
@@ -92,7 +92,7 @@ makeTxDbPackage <- function(txdb,
     PROVIDERVERSION=.getTxDbVersion(txdb),
     RELEASEDATE= .getMetaDataValue(txdb,'Creation time'),
     SOURCEURL= .getMetaDataValue(txdb,'Resource URL'),
-    ORGANISMBIOCVIEW=.getMetaDataValue(txdb,'Genus and Species'),
+    ORGANISMBIOCVIEW=gsub(" ","_",.getMetaDataValue(txdb,'Genus and Species')),
     TXDBOBJNAME=.makeObjectName(pkgName)
    )
    ## Should never happen
