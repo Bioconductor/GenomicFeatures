@@ -25,6 +25,30 @@
   return(cbind(table,chromStart))
 }
 
+## helper function to re-assign column names as required
+## if the value has been set and there is precisely ONE col that matches the 
+## new val, then go ahead and rename it to the chrom, chromStart or chromEnd.
+.renamColsHelper <- function(table, col, newString){
+          tmpColNames <- colnames(table)
+          tmpColNames[colnames(table)==col] <- newString
+          colnames(table) <- tmpColNames  
+          table
+}
+
+.checkAndRenamCols <- function(table, chromCol, chromStartCol, chromEndCol){
+    if(!is.null(chromCol) && table(colnames(table)==chromCol)[["TRUE"]]==1) {
+          table <-.renamColsHelper(table, chromCol, "chrom")
+    }
+    if(!is.null(chromStartCol) 
+        && table(colnames(table)==chromStartCol)[["TRUE"]]==1){
+          table <- .renamColsHelper(table, chromStartCol, "chromStart")
+    }
+    if(!is.null(chromEndCol) 
+        && table(colnames(table)==chromEndCol)[["TRUE"]]==1){
+          table <-.renamColsHelper(table, chromEndCol, "chromEnd")
+    }
+  table
+}
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### prepare and write out the DB table contents 
@@ -183,7 +207,10 @@ makeFeatureDbFromUCSC <- function(genome,
          tablename,
          columns = UCSCFeatureDbTableSchema(genome, track, tablename),
          url="http://genome.ucsc.edu/cgi-bin/",
-         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
+         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+         chromCol=NULL,
+         chromStartCol=NULL,
+         chromEndCol=NULL)
 {
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
@@ -195,6 +222,12 @@ makeFeatureDbFromUCSC <- function(genome,
       stop("The default field names are not unique for this table.")
     ## Once we know the columns names are unique, we remove the default ones.
     columns <- columns[!(names(columns) %in% names(.UCSC_GENERICCOL2CLASS))] 
+    ## also have to remove any columns that are to be re-assigned!
+    if(!is.null(chromCol) || !is.null(chromStartCol) || !is.null(chromEndCol)){
+      ## if I concatenate to a vector, the NULL values will be MIA = perfect
+      altCols <- c(chromCol,chromStartCol,chromEndCol) 
+      columns <- columns[!(names(columns) %in% altCols )]
+    }
 
     ## Check other arguments
     if (!isSingleString(url))
@@ -220,10 +253,15 @@ makeFeatureDbFromUCSC <- function(genome,
     
     ## check that we have strand info, and if not, add some in
     ucsc_table <- .addMissingStrandCols(ucsc_table)
-    ucsc_table <- .adjustchromStarts(ucsc_table)
+    ## TODO: do any required substitutions (required column renames)
+    ucsc_table <- .checkAndRenamCols(ucsc_table,
+                                     chromCol,
+                                     chromStartCol,
+                                     chromEndCol)
+    
     
     ## check that we have at least the 5 columns of data
-    if (ncol(ucsc_table) < length(.UCSC_GENERICCOL2CLASS)+1)
+    if(ncol(ucsc_table) < length(.UCSC_GENERICCOL2CLASS)+1)
         stop("GenomicFeatures internal error: ", tablename, " table doesn't ",
              "exist, was corrupted during download, or doesn't contain ",
              "sufficient information. ",
@@ -231,7 +269,26 @@ makeFeatureDbFromUCSC <- function(genome,
              "or to the Bioconductor mailing list, and sorry for the ",
              "inconvenience.")
     message("OK")
-    
+    ## also check that our data CONTAINS the column names we need it to
+
+
+    message("Checking that required Columns are present ... ")
+    if(length(intersect(colnames(ucsc_table),names(.UCSC_GENERICCOL2CLASS)))<4) 
+        ## That means that some required cols are missing!
+        stop("GenomicFeatures internal error: ", tablename, " table doesn't ",
+             "contain a 'chrom', 'chromStart', or 'chromEnd' column and no ",
+             "reasonable substitute has been designated via the 'chromCol'",
+             "'chromStartCol' or 'chromEndCol' arguments.  ",
+             "If this is not possible, please report that fact to the ",
+             "GenomicFeatures maintainer or to the Bioconductor mailing list. ",
+             " Thank you.")
+    message("OK")
+
+
+    ## Then adjust the chromStarts column (corrects for unusual UCSC counting)
+    ucsc_table <- .adjustchromStarts(ucsc_table)
+
+
     ## then make our table, but remember, we have to add new columns to our
     ## base table type 1st:
     .UCSC_GENERICCOL2CLASS = c(.UCSC_GENERICCOL2CLASS, columns)
@@ -277,4 +334,12 @@ makeFeatureDbFromUCSC <- function(genome,
 ## TODO: see if I can figure out why some of these tracks don't work...
 
 ## like "vegaGeneComposite" and "encodeYaleAffyRNATars"
+
+## This should fail with a message to tell user to use the special arguments
+## makeFeatureDbFromUCSC(genome="hg18", track="knownGene", tablename="knownGene") 
+
+
+## This should not fail anymore:
+## makeFeatureDbFromUCSC(genome="hg18", track="knownGene", tablename="knownGene",
+## chromStartCol="txStart", chromEndCol="txEnd") 
 

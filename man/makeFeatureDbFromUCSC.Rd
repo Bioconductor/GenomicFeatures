@@ -34,7 +34,10 @@ makeFeatureDbFromUCSC(
         tablename,
         columns = UCSCFeatureDbTableSchema(genome,track,tablename),
         url="http://genome.ucsc.edu/cgi-bin/",
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
+        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+        chromCol, 
+        chromStartCol, 
+        chromEndCol)
 }
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
@@ -52,6 +55,16 @@ makeFeatureDbFromUCSC(
         information for a particular table.}
   \item{url,goldenPath_url}{use to specify the location of an
         alternate UCSC Genome Browser.}
+  \item{chromCol}{If the schema comes back and the 'chrom' column has been 
+        labeled something other than 'chrom', use this argument to indicate 
+        what that column has been labeled as so we can properly designate it.
+        This could happen (for example) with the knownGene track tables, which
+        has no 'chromStart' or 'chromEnd' columns, but which DOES have columns
+        that could reasonably substitute for these columns under particular 
+        circumstances.  Therefore we allow these three columns to have arguments
+        so that their definition can be re-specified}
+  \item{chromStartCol}{Same thing as chromCol, but for renames of 'chromStart'}
+  \item{chromEndCol}{Same thing as chromCol, but for renames of 'chromEnd'}
 }
 \details{
   \code{makeFeatureDbFromUCSC} {is a convenience function that builds a
