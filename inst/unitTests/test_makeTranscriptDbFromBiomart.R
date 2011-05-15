@@ -11,13 +11,13 @@ test_makeTranscriptDbFromBiomart <- function()
 
     ## get
     transcript_ids <- c(
-         "ENST00000400839",
-         "ENST00000400840",
-         "ENST00000478783",
-         "ENST00000435657",
-         "ENST00000268655",
-         "ENST00000313243",
-         "ENST00000341724"
+        "ENST00000268655",
+        "ENST00000313243",
+        "ENST00000341724",
+        "ENST00000400839",
+        "ENST00000400840",
+        "ENST00000435657",
+        "ENST00000478783"
     )
     txdb1 <- makeTranscriptDbFromBiomart(transcript_ids=transcript_ids)
 
