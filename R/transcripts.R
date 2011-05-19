@@ -353,18 +353,16 @@
     child_data <- .extractChildData(root_table, txdb,
                           root_data[[CORECOLS["id"]]], assigned_columns)
     ## Construct the GRanges object and return it.
-    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
-    ans_seqinfo <- getTranscriptDbSeqinfo(txdb)
+    ans_seqinfo <- seqinfo(txdb)
     ans_seqnames <- factor(root_data[[CORECOLS["chrom"]]],
-                           levels=seqnames(ans_seqinfo))
+                           levels=seqlevels(ans_seqinfo))
     ans_ranges <- IRanges(start=root_data[[CORECOLS["start"]]],
                           end=root_data[[CORECOLS["end"]]])
     ans_strand <- strand(root_data[[CORECOLS["strand"]]])
     ans <- GRanges(seqnames=ans_seqnames,
                    ranges=ans_ranges,
                    strand=ans_strand)
-    ## TODO: Use seqinfo(ans) <- ans_seqinfo when this becomes available.
-    ans@seqinfo <- ans_seqinfo
+    seqinfo(ans) <- ans_seqinfo
     ans_values <- c(DataFrame(root_data[root_columns]), child_data)
     values(ans) <- ans_values[columns]
     ans

@@ -14,9 +14,7 @@
 
 \alias{metadata,TranscriptDb-method}
 \alias{metadata,FeatureDb-method}
-\alias{seqnames,TranscriptDb-method}
-\alias{seqlengths,TranscriptDb-method}
-\alias{isCircular,TranscriptDb-method}
+\alias{seqinfo,TranscriptDb-method}
 \alias{show,TranscriptDb-method}
 \alias{show,FeatureDb-method}
 \alias{as.list,TranscriptDb-method}
@@ -51,26 +49,9 @@
       Returns \code{x}'s metadata in a data frame.
     }
     \item{}{
-      \code{seqnames(x)}:
-      Returns the names of all chromosomes in a character vector.
-      Note that "all" here means at least the chromosomes that have
-      features. But some TranscriptDb objects (in particular those
-      created with \code{\link{makeTranscriptDbFromUCSC}})
-      are storing the names of all the chromosomes forming the genome.
-    }
-    \item{}{
-      \code{seqlengths(x)}:
-      Returns the lengths of the chromosomes \emph{or NAs}
-      in an integer vector named with \code{seqnames(x)}.
-      Either \emph{all} elements are NAs or \emph{none} is,
-      depending on the avaibality of this information at creation time.
-    }
-    \item{}{
-      \code{isCircular(x)}:
-      Returns the circularity flag of the chromosomes \emph{or NAs}
-      in a logical vector named with \code{seqnames(x)}.
-      Either \emph{all} elements are NAs or \emph{none} is,
-      depending on the avaibality of this information at creation time.
+      \code{seqinfo(x)}:
+      Gets the information about the underlying sequences as a
+      \link[GenomicRanges]{Seqinfo} object.
     }
     \item{}{
       \code{as.list(x)}:
@@ -90,6 +71,7 @@
 \author{H. Pages}
 
 \seealso{
+  \link[GenomicRanges]{Seqinfo-class},
   \code{\link{makeTranscriptDbFromUCSC}},
   \code{\link{makeTranscriptDbFromBiomart}},
   \code{\link{loadFeatures}},
@@ -104,8 +86,10 @@ txdb_file <- system.file("extdata", "Biomart_Ensembl_sample.sqlite",
 txdb <- loadFeatures(txdb_file)
 txdb
 
-seqnames(txdb)
-seqlengths(txdb)
+seqinfo(txdb)
+seqlevels(txdb)  # shortcut for 'seqlevels(seqinfo(txdb))'
+seqlengths(txdb)  # shortcut for 'seqlengths(seqinfo(txdb))'
+isCircular(txdb)  # shortcut for 'isCircular(seqinfo(txdb))'
 names(which(isCircular(txdb)))
 
 txdump <- as.list(txdb)
