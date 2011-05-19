@@ -5,6 +5,10 @@
 ## 'distal' is the number of bases on either side for upstream/downstream,
 ##   i.e. enhancer/silencer regions.
 transcripts_deprecated <- function(genes, proximal = 500L, distal = 10000L) {
+  msg <- c("  transcripts_deprecated() is deprecated.\n",
+           "  Please use transcripts() on a TranscriptDb object instead ",
+           "(see ?transcripts).")
+  .Deprecated(msg=msg)
   transcript <- IRanges(genes$txStart, genes$txEnd)
   # some have multiple exons, CDS, etc
   notdup <- !duplicated(genes[c("chrom", "txStart", "txEnd")])
@@ -51,6 +55,10 @@ transcripts_deprecated <- function(genes, proximal = 500L, distal = 10000L) {
 ## Introns are stored in the local DB ... for now
 
 exons_deprecated <- function(genes) {
+  msg <- c("  exons_deprecated() is deprecated.\n",
+           "  Please use exons() on a TranscriptDb object instead ",
+           "(see ?exons).")
+  .Deprecated(msg=msg)
   ## [exon:start, exon:end]
   RangedData(IRanges(.splitPos(genes$exonStarts),
                      .splitPos(genes$exonEnds)),
@@ -63,6 +71,10 @@ exons_deprecated <- function(genes) {
 ## and that the first intron comes after the first exon
 ## For this data at least, I believe that RG is correct. -MC
 introns_deprecated <- function(genes) {
+  msg <- c("  introns_deprecated() is deprecated.\n",
+           "  Please use intronsByTranscript() on a TranscriptDb object instead ",
+           "(see ?intronsByTranscript).")
+  .Deprecated(msg=msg)
   ## [intron:start, intron:end]
   tmp <- .countPos(genes$intronStarts)
   nIntrons <- sapply(tmp, length)

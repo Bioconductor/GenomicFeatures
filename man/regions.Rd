@@ -10,6 +10,10 @@
   Functions that compute genomic regions of interest such as promotor,
   upstream regions etc, from the genomic locations provided in a
   UCSC-style data frame.
+
+  WARNING: All the functions described in this man page are deprecated.
+  Please use \code{\link{transcripts}}, \code{\link{exons}} or
+  \code{\link{intronsByTranscript}} on a \link{TranscriptDb} object instead.
 }
 \usage{
 transcripts_deprecated(genes, proximal = 500, distal = 10000)
@@ -51,6 +55,12 @@ introns_deprecated(genes)
   upstream, and downstream).
   For \code{exons_deprecated}, each element corresponds to an exon.
   For \code{introns_deprecated}, each element corresponds to an intron.
+}
+\seealso{
+  \code{\link{transcripts}},
+  \code{\link{exons}},
+  \code{\link{intronsByTranscript}},
+  \link{TranscriptDb} 
 }
 \author{
   M. Lawrence.
