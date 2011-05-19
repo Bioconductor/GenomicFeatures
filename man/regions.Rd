@@ -60,7 +60,7 @@ introns_deprecated(genes)
   \code{\link{transcripts}},
   \code{\link{exons}},
   \code{\link{intronsByTranscript}},
-  \link{TranscriptDb} 
+  \link{TranscriptDb-class}
 }
 \author{
   M. Lawrence.
