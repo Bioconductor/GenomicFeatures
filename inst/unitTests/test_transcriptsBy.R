@@ -15,9 +15,8 @@ test_transcriptsBy <- function()
                         exon_end=c(100L, 16844760L, 100L, 16844760L))
     txdb0 <- suppressWarnings(makeTranscriptDb(transcripts0, splicings0))
 
-    ## TODO: Use seqinfo <- seqinfo(txdb0) when this becomes available.
-    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb0)
-    seqlevels <- seqnames(seqinfo)
+    seqinfo <- seqinfo(txdb0)
+    seqlevels <- seqlevels(seqinfo)
 
     ans <- transcriptsBy(txdb0, "exon")
     grg1 <- GRanges(seqnames=factor("chr1", levels = seqlevels),
@@ -32,8 +31,7 @@ test_transcriptsBy <- function()
                     tx_id=c(5L, 11L),
                     tx_name=as.character(c(NA, NA)))
     want <- GRangesList(`1`=grg1, `2`=grg2)
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@unlistData@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(ans, want)
 
     ans <- exonsBy(txdb0, "tx")
@@ -50,8 +48,7 @@ test_transcriptsBy <- function()
                     exon_name=NA_character_,
                     exon_rank=1:2)
     want <- GRangesList(`5`=grg5, `11`=grg5, `26`=grg26)
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@unlistData@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(ans, want)
                     
     ## WITH REAL DATA
@@ -63,9 +60,8 @@ test_transcriptsBy <- function()
     checkException(transcriptsBy(txdb1, "bad"), silent = TRUE)
     checkException(transcriptsBy(txdb1, "tx"), silent = TRUE)
 
-    ## TODO: Use seqinfo <- seqinfo(txdb1) when this becomes available.
-    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb1)
-    seqlevels <- seqnames(seqinfo)
+    seqinfo <- seqinfo(txdb1)
+    seqlevels <- seqlevels(seqinfo)
 
     dupCount <- function(x) {
         sum(sapply(x, function(y) anyDuplicated(elementMetadata(y)[,"tx_id"])))
@@ -80,8 +76,7 @@ test_transcriptsBy <- function()
                     strand   = strand("-"),
                     tx_id    = 120L,
                     tx_name  = "uc002zka.1")
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(txByGene[[1]], want)
 
     ## transcripts by exon
@@ -93,8 +88,7 @@ test_transcriptsBy <- function()
                     strand   = strand(c("+", "+")),
                     tx_id    = c(1L, 2L),
                     tx_name  = c("uc001aaa.2", "uc009vip.1"))
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(txByExon[[1]], want)
 
     ## transcripts by cds
@@ -106,8 +100,7 @@ test_transcriptsBy <- function()
                     strand   = strand("-"),
                     tx_id    = 4L,
                     tx_name  = "uc002qvt.1")
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(txByCds[[1]], want)
 
     ## threeUTRsByTranscript, fiveUTRsByTranscript
@@ -127,9 +120,8 @@ test_exonsBy <- function()
     checkException(exonsBy(txdb, "exon"), silent = TRUE)
     checkException(exonsBy(txdb, "cds"), silent = TRUE)
 
-    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
-    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb)
-    seqlevels <- seqnames(seqinfo)
+    seqinfo <- seqinfo(txdb)
+    seqlevels <- seqlevels(seqinfo)
 
     dupCount <- function(x) {
         sum(sapply(x, function(y) anyDuplicated(elementMetadata(y)[,"exon_id"])))
@@ -146,8 +138,7 @@ test_exonsBy <- function()
                     exon_id = c(1L,4L),
                     exon_name = as.character(c(NA,NA)),
                     exon_rank = 1:2)
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(exonByTx[[2]], want)
 
     ## exons by gene
@@ -166,9 +157,8 @@ test_cdsBy <- function()
     checkException(cdsBy(txdb, "exon"), silent = TRUE)
     checkException(cdsBy(txdb, "cds"), silent = TRUE)
 
-    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
-    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb)
-    seqlevels <- seqnames(seqinfo)
+    seqinfo <- seqinfo(txdb)
+    seqlevels <- seqlevels(seqinfo)
 
     dupCount <- function(x) {
         sum(sapply(x, function(y) anyDuplicated(elementMetadata(y)[,"cds_id"])))
@@ -189,8 +179,7 @@ test_cdsBy <- function()
                     strand = strand(c("-","-")),
                     cds_id = c(53L,54L),
                     cds_name = as.character(c(NA,NA)))
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(cdsByGene[[6]], want)
 }
 
@@ -199,16 +188,14 @@ test_intronsByTranscript <- function()
     txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
-    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
-    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb)
-    seqlevels <- seqnames(seqinfo)
+    seqinfo <- seqinfo(txdb)
+    seqlevels <- seqlevels(seqinfo)
 
     intronByTx <- intronsByTranscript(txdb)
     checkTrue(validObject(intronByTx))
     want <- GRanges(seqnames = factor("chr1", levels = seqlevels),
                     ranges = IRanges(start = 2091, end = 2475),
                     strand = strand("+"))
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(intronByTx[[2]], want)
 }

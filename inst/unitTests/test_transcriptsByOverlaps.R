@@ -10,9 +10,8 @@ test_transcriptsByOverlaps <- function()
     checkException(transcriptsByOverlaps(txdb, GRanges(), columns = "bad"),
                    silent = TRUE)
 
-    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
-    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb)
-    seqlevels <- seqnames(seqinfo)
+    seqinfo <- seqinfo(txdb)
+    seqlevels <- seqlevels(seqinfo)
 
     gr <- GRanges(seqnames = "chr5",
                   ranges = IRanges(start=190000, end=280000),
@@ -23,8 +22,7 @@ test_transcriptsByOverlaps <- function()
               strand = strand("-"),
               tx_id = 15L,
               tx_name = "uc003jam.1")
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(transcriptsByOverlaps(txdb, gr), want)
 
     ranges <- IRanges(start = c(1000, 1000, 20000, 30000),
@@ -38,8 +36,7 @@ test_transcriptsByOverlaps <- function()
                                      end   = c(4121, 4272, 36385)),
                     strand = strand(c("+", "+", "-")),
                     tx_id = c(1L,2L,4L))
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(transcriptsByOverlaps(txdb, gr, columns="tx_id"), want)
 }
 
@@ -53,9 +50,8 @@ test_exonsByOverlaps <- function()
     checkException(exonsByOverlaps(txdb, GRanges(), columns = "bad"),
                    silent = TRUE)
 
-    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
-    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb)
-    seqlevels <- seqnames(seqinfo)
+    seqinfo <- seqinfo(txdb)
+    seqlevels <- seqlevels(seqinfo)
 
     gr <- GRanges(seqnames = "chr5",
                   ranges = IRanges(start=190000, end=280000),
@@ -66,8 +62,7 @@ test_exonsByOverlaps <- function()
                                end  =c(259073,269974,271297)),
               strand = strand(rep("-",3)),
               exon_id = 77:79)
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(exonsByOverlaps(txdb, gr), want)
 }
 
@@ -81,9 +76,8 @@ test_cdsByOverlaps <- function()
     checkException(cdsByOverlaps(txdb, GRanges(), columns = "bad"),
                    silent = TRUE)
 
-    ## TODO: Use seqinfo <- seqinfo(txdb) when this becomes available.
-    seqinfo <- GenomicFeatures:::getTranscriptDbSeqinfo(txdb)
-    seqlevels <- seqnames(seqinfo)
+    seqinfo <- seqinfo(txdb)
+    seqlevels <- seqlevels(seqinfo)
 
     gr <- GRanges(seqnames  = "chr5",
                   ranges = IRanges(start=258412, end=269964),
@@ -94,7 +88,6 @@ test_cdsByOverlaps <- function()
                                end  =c(259073,269964)),
               strand = strand(rep("-",2)),
               cds_id = 53:54)
-    ## TODO: Use seqinfo(want) <- seqinfo when this becomes available.
-    want@seqinfo <- seqinfo
+    seqinfo(want) <- seqinfo
     checkIdentical(cdsByOverlaps(txdb, gr), want)
 }
