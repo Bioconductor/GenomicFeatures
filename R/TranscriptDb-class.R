@@ -431,7 +431,9 @@ setAsActiveSeqs <- function(txdb, keep){
   activeSeqs(txdb) <- new
 }
 
+
 ## TODO: make this crazy thing work...
 
 ## library(GenomicFeatures);example(loadFeatures); keep = "chr1"; setAsActiveSeqs(txdb, keep); activeSeqs(txdb)
 
+## library(GenomicFeatures);example(loadFeatures); keep = "chr1"

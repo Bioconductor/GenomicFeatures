@@ -37,6 +37,11 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
     ans
 }
 
+.getOnlyActiveSeqs <- function(txdb){
+    actSqs <- activeSeqs(txdb)
+    names(actSqs)[actSqs]
+}
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### transcriptsBy(), exonsBy() and cdsBy().
@@ -93,8 +98,12 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
           paste(orderByClause, ", SHORT_chrom, SHORT_strand, ",
                 "SHORT_start, SHORT_end", sep = "")
     }
-
-    sql <- paste(selectClause, fromClause, whereClause, orderByClause)
+    whereSeqsClause <- paste("AND SHORT_chrom IN ('",
+                             paste(.getOnlyActiveSeqs(txdb),collapse="','")
+                             ,"')", sep="")
+    
+    sql <- paste(selectClause, fromClause, whereClause, whereSeqsClause,
+                 orderByClause)
     sql <- gsub("LONG", long, sql)
     sql <- gsub("SHORT", short, sql)
     sql <- gsub("GROUPBY", by, sql)
