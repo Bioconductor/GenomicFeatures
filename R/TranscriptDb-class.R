@@ -179,7 +179,8 @@ TranscriptDb <- function(conn)
     envir <- new.env(parent=emptyenv())
     assign("conn", conn, envir=envir)
     reg.finalizer(envir, function(e) dbDisconnect(.getConn(e)))
-    new("TranscriptDb", envir=envir)
+    seqNames <- getOriginalSeqNames(conn)
+    new("TranscriptDb", envir=envir, seqnames=seqNames)
 }
 
 
@@ -386,5 +387,36 @@ compareTranscriptDbs <- function(txdb1, txdb2)
     txdump1 <- as.list(txdb1)
     txdump2 <- as.list(txdb2)
     identical(txdump1, txdump2)
+}
+
+
+### =========================================================================
+### Setters and getters for seqlevels
+### -------------------------------------------------------------------------
+
+## setters - fix this is overwriting my object!  (the horror)
+.setSeqNames <- function(x, value){
+  ## check to make sure that the values are legitimate
+  seqNames <- getOriginalSeqNames(txdbConn(x))
+  if(length(intersect(value,seqNames)) == length(value)){
+    x@seqnames <- value	
+    x
+  }else{stop("The input seqnames must match what is in the database.")}
+}
+
+setReplaceMethod("seqnames","TranscriptDb",
+	  function(x, value){.setSeqNames(x,value)}) 
+## setReplaceMethod("seqnames","FeatureDb", 
+##           function(x, value){.setSeqNames(x,value)}) 
+
+## getters
+setMethod("seqnames", "TranscriptDb", function(x){x@seqnames} ) 
+## setMethod("seqnames", "FeatureDb", function(x){x@seqnames} ) 
+
+
+## helper to get all possible seqnames (may want to export this)
+getOriginalSeqNames <- function(con){
+  sql <- "SELECT DISTINCT chrom FROM chrominfo;"
+  as.character(t(sqliteQuickSQL(con,sql)))
 }
 

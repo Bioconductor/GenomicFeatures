@@ -7,7 +7,7 @@ importMethodsFrom(DBI, dbCommit, dbConnect,
                   dbDisconnect, dbExistsTable, dbGetQuery,
                   dbReadTable, dbWriteTable, dbListTables, dbListFields)
 
-importFrom(RSQLite, SQLite, sqliteCopyDatabase, SQLITE_RO)
+importFrom(RSQLite, SQLite, sqliteCopyDatabase, SQLITE_RO, sqliteQuickSQL)
 importMethodsFrom(RSQLite, dbBeginTransaction, dbGetPreparedQuery)
 
 import(IRanges)
