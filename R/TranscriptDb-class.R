@@ -403,13 +403,13 @@ setGeneric("activeSeqs<-",function(x, value) standardGeneric("activeSeqs<-"))
   ## Must check to make sure that the values are legitimate
   seqNames <- seqlevels(x)
   ## The names must be all containe in seqNames
-  if(length(intersect(names(value),seqNames)) == length(value) &
-     length(value) == length(seqNames) & ## cannot be shorter than seqNames
+  if(length(intersect(names(value),seqNames)) == length(value) &&
+     ##length(value) == length(seqNames) && ## cannot be shorter than seqNames
      is.logical(value)){ ## and it must be a logical
-    x@activeSeqs <- value	
-  }else{stop(paste("The replacement value for activeSeqs must be a logical",
-                   "vector, with names that match the seqlevels of the",
-                   "TranscriptDb object."))
+    x@activeSeqs[names(value)] <- value	
+  }else{stop("The replacement value for activeSeqs must be a logical ",
+             "vector, with names that match the seqlevels of the ",
+             "TranscriptDb object.")
   }
   x
 }
@@ -422,18 +422,19 @@ setReplaceMethod("activeSeqs","TranscriptDb",
 setMethod("activeSeqs", "TranscriptDb", function(x){x@activeSeqs})
 
 
-## convenience function for setting only a subset of the sequences as active.
-## you get to be in the vector ONLY by being passed in to keep
-setAsActiveSeqs <- function(txdb, keep){
-  currActive <- activeSeqs(txdb)
-  new <- names(currActive) %in% keep 
-  names(new) <- names(currActive)
-  activeSeqs(txdb) <- new
-}
+## TODO: make manual pages.
 
+## library(GenomicFeatures);example(loadFeatures); keep = "chr1"; activeSeqs(txdb)[c("chr1", "chr3")] <- FALSE ; activeSeqs(txdb)
 
-## TODO: make this crazy thing work...
-
-## library(GenomicFeatures);example(loadFeatures); keep = "chr1"; setAsActiveSeqs(txdb, keep); activeSeqs(txdb)
+## activeSeqs(txdb)
 
 ## library(GenomicFeatures);example(loadFeatures); keep = "chr1"
+
+## How to use the accessors:  (add to manual page)
+## activeSeqs(txdb)[value] <- TRUE
+## activeSeqs(txdb)[c("chr1", "chr3")] <- FALSE
+
+## activeSeqs(txdb)[seqlevels(txdb)] <- FALSE
+## activeSeqs(txdb)[c("chr1", "chr3")] <- TRUE
+
+## then transcripts and transcriptsBy etc will pay attention to non-default vals

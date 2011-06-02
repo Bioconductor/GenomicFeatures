@@ -66,8 +66,7 @@ export(
   makeTxDbPackage,
   makeTxDbPackageFromUCSC,
   makeTxDbPackageFromBiomart,
-  features,
-  setAsActiveSeqs
+  features
 )
 
 exportMethods(
