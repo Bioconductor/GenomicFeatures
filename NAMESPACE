@@ -66,7 +66,8 @@ export(
   makeTxDbPackage,
   makeTxDbPackageFromUCSC,
   makeTxDbPackageFromBiomart,
-  features
+  features,
+  setAsActiveSeqs
 )
 
 exportMethods(
@@ -86,5 +87,7 @@ exportMethods(
   cdsBy,
   intronsByTranscript,
   fiveUTRsByTranscript,
-  threeUTRsByTranscript
+  threeUTRsByTranscript,
+  activeSeqs,
+  "activeSeqs<-"
 )

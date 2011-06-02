@@ -179,8 +179,10 @@ TranscriptDb <- function(conn)
     envir <- new.env(parent=emptyenv())
     assign("conn", conn, envir=envir)
     reg.finalizer(envir, function(e) dbDisconnect(.getConn(e)))
-    seqNames <- getOriginalSeqNames(conn)
-    new("TranscriptDb", envir=envir, seqnames=seqNames)
+    seqNames <- .getChromInfo(conn)$chrom
+    seqNVals <- rep(TRUE, length(seqNames))
+    names(seqNVals) <- seqNames
+    new("TranscriptDb", envir=envir, activeSeqs=seqNVals)
 }
 
 
@@ -391,32 +393,45 @@ compareTranscriptDbs <- function(txdb1, txdb2)
 
 
 ### =========================================================================
-### Setters and getters for seqlevels
+### Setters and getters for activeSeqs
 ### -------------------------------------------------------------------------
+setGeneric("activeSeqs", function(x) standardGeneric("activeSeqs"))
+setGeneric("activeSeqs<-",function(x, value) standardGeneric("activeSeqs<-"))
 
-## setters - fix this is overwriting my object!  (the horror)
+## setters 
 .setSeqNames <- function(x, value){
-  ## check to make sure that the values are legitimate
-  seqNames <- getOriginalSeqNames(txdbConn(x))
-  if(length(intersect(value,seqNames)) == length(value)){
-    x@seqnames <- value	
-    x
-  }else{stop("The input seqnames must match what is in the database.")}
+  ## Must check to make sure that the values are legitimate
+  seqNames <- seqlevels(x)
+  ## The names must be all containe in seqNames
+  if(length(intersect(names(value),seqNames)) == length(value) &
+     length(value) == length(seqNames) & ## cannot be shorter than seqNames
+     is.logical(value)){ ## and it must be a logical
+    x@activeSeqs <- value	
+  }else{stop(paste("The replacement value for activeSeqs must be a logical",
+                   "vector, with names that match the seqlevels of the",
+                   "TranscriptDb object."))
+  }
+  x
 }
 
-setReplaceMethod("seqnames","TranscriptDb",
-	  function(x, value){.setSeqNames(x,value)}) 
-## setReplaceMethod("seqnames","FeatureDb", 
-##           function(x, value){.setSeqNames(x,value)}) 
+setReplaceMethod("activeSeqs","TranscriptDb",
+	  function(x, value){.setSeqNames(x,value)})
+
 
 ## getters
-setMethod("seqnames", "TranscriptDb", function(x){x@seqnames} ) 
-## setMethod("seqnames", "FeatureDb", function(x){x@seqnames} ) 
+setMethod("activeSeqs", "TranscriptDb", function(x){x@activeSeqs})
 
 
-## helper to get all possible seqnames (may want to export this)
-getOriginalSeqNames <- function(con){
-  sql <- "SELECT DISTINCT chrom FROM chrominfo;"
-  as.character(t(sqliteQuickSQL(con,sql)))
+## convenience function for setting only a subset of the sequences as active.
+## you get to be in the vector ONLY by being passed in to keep
+setAsActiveSeqs <- function(txdb, keep){
+  currActive <- activeSeqs(txdb)
+  new <- names(currActive) %in% keep 
+  names(new) <- names(currActive)
+  activeSeqs(txdb) <- new
 }
+
+## TODO: make this crazy thing work...
+
+## library(GenomicFeatures);example(loadFeatures); keep = "chr1"; setAsActiveSeqs(txdb, keep); activeSeqs(txdb)
 

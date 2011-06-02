@@ -369,6 +369,16 @@
 }
 
 
+## This is used to create a list from the activeSeqs slot 
+.makeActiveSeqsList <- function(type, txdb){
+    actSqs <- activeSeqs(txdb)
+    keepSeqs <- names(actSqs)[actSqs]
+    res <- list(keepSeqs)
+    names(res) <- type
+    res
+}
+
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### The top-level extractors.
 ###
@@ -390,8 +400,10 @@ setMethod("transcripts", "data.frame",
 )
 
 setMethod("transcripts", "TranscriptDb",
-    function(x, vals=NULL, columns=c("tx_id", "tx_name"))
+    function(x, vals=NULL, columns=c("tx_id", "tx_name")){
+        vals = c(vals, .makeActiveSeqsList("tx_chrom", x))
         .extractFeatureRowsAsGRanges("transcript", x, vals, columns)
+      }
 )
 
 setMethod("exons", "data.frame",
@@ -401,12 +413,16 @@ setMethod("exons", "data.frame",
 )
 
 setMethod("exons", "TranscriptDb",
-    function(x, vals=NULL, columns="exon_id")
+    function(x, vals=NULL, columns="exon_id"){
+        vals = c(vals, .makeActiveSeqsList("exon_chrom", x))
         .extractFeatureRowsAsGRanges("exon", x, vals, columns)
+        }
 )
 
 setMethod("cds", "TranscriptDb",
-    function(x, vals=NULL, columns="cds_id")
+    function(x, vals=NULL, columns="cds_id"){
+        vals = c(vals, .makeActiveSeqsList("cds_chrom", x))
         .extractFeatureRowsAsGRanges("cds", x, vals, columns)
+        }
 )
 
