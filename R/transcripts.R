@@ -362,16 +362,20 @@
     ans <- GRanges(seqnames=ans_seqnames,
                    ranges=ans_ranges,
                    strand=ans_strand)
+    ## Filter seqinfo
+    isActSeq <- isActiveSeq(txdb)
     seqinfo(ans) <- ans_seqinfo
+    seqlevels(ans) <- names(isActSeq)[isActSeq]
+
     ans_values <- c(DataFrame(root_data[root_columns]), child_data)
     values(ans) <- ans_values[columns]
     ans
 }
 
 
-## This is used to create a list from the activeSeqs slot 
+## This is used to create a list from the isActiveSeq slot 
 .makeActiveSeqsList <- function(type, txdb){
-    actSqs <- activeSeqs(txdb)
+    actSqs <- isActiveSeq(txdb)
     keepSeqs <- names(actSqs)[actSqs]
     res <- list(keepSeqs)
     names(res) <- type

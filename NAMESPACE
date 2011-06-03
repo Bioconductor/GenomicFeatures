@@ -87,6 +87,6 @@ exportMethods(
   intronsByTranscript,
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
-  activeSeqs,
-  "activeSeqs<-"
+  isActiveSeq,
+  "isActiveSeq<-"
 )

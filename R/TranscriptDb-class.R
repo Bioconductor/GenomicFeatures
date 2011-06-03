@@ -182,7 +182,7 @@ TranscriptDb <- function(conn)
     seqNames <- .getChromInfo(conn)$chrom
     seqNVals <- rep(TRUE, length(seqNames))
     names(seqNVals) <- seqNames
-    new("TranscriptDb", envir=envir, activeSeqs=seqNVals)
+    new("TranscriptDb", envir=envir, isActiveSeq=seqNVals)
 }
 
 
@@ -393,10 +393,10 @@ compareTranscriptDbs <- function(txdb1, txdb2)
 
 
 ### =========================================================================
-### Setters and getters for activeSeqs
+### Setters and getters for isActiveSeq
 ### -------------------------------------------------------------------------
-setGeneric("activeSeqs", function(x) standardGeneric("activeSeqs"))
-setGeneric("activeSeqs<-",function(x, value) standardGeneric("activeSeqs<-"))
+setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
+setGeneric("isActiveSeq<-",function(x, value) standardGeneric("isActiveSeq<-"))
 
 ## setters 
 .setSeqNames <- function(x, value){
@@ -406,35 +406,38 @@ setGeneric("activeSeqs<-",function(x, value) standardGeneric("activeSeqs<-"))
   if(length(intersect(names(value),seqNames)) == length(value) &&
      ##length(value) == length(seqNames) && ## cannot be shorter than seqNames
      is.logical(value)){ ## and it must be a logical
-    x@activeSeqs[names(value)] <- value	
-  }else{stop("The replacement value for activeSeqs must be a logical ",
+    x@isActiveSeq[names(value)] <- value	
+  }else{stop("The replacement value for isActiveSeq must be a logical ",
              "vector, with names that match the seqlevels of the ",
              "TranscriptDb object.")
   }
   x
 }
 
-setReplaceMethod("activeSeqs","TranscriptDb",
+setReplaceMethod("isActiveSeq","TranscriptDb",
 	  function(x, value){.setSeqNames(x,value)})
 
 
 ## getters
-setMethod("activeSeqs", "TranscriptDb", function(x){x@activeSeqs})
+setMethod("isActiveSeq", "TranscriptDb", function(x){x@isActiveSeq})
 
 
 ## TODO: make manual pages.
 
-## library(GenomicFeatures);example(loadFeatures); keep = "chr1"; activeSeqs(txdb)[c("chr1", "chr3")] <- FALSE ; activeSeqs(txdb)
+## library(GenomicFeatures);example(loadFeatures); keep = "chr1"; isActiveSeq(txdb)[c("chr1", "chr3")] <- FALSE ; isActiveSeq(txdb)
 
-## activeSeqs(txdb)
+## isActiveSeq(txdb)
 
 ## library(GenomicFeatures);example(loadFeatures); keep = "chr1"
 
 ## How to use the accessors:  (add to manual page)
-## activeSeqs(txdb)[value] <- TRUE
-## activeSeqs(txdb)[c("chr1", "chr3")] <- FALSE
+## isActiveSeq(txdb)[value] <- TRUE
+## isActiveSeq(txdb)[c("chr1", "chr3")] <- FALSE
 
-## activeSeqs(txdb)[seqlevels(txdb)] <- FALSE
-## activeSeqs(txdb)[c("chr1", "chr3")] <- TRUE
+## isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
+## isActiveSeq(txdb)[c("chr1", "chr3")] <- TRUE
+## transcripts(txdb)
+## transcriptsBy(txdb)
+
 
 ## then transcripts and transcriptsBy etc will pay attention to non-default vals

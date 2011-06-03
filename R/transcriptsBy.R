@@ -38,7 +38,7 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
 }
 
 .getOnlyActiveSeqs <- function(txdb){
-    actSqs <- activeSeqs(txdb)
+    actSqs <- isActiveSeq(txdb)
     names(actSqs)[actSqs]
 }
 
@@ -124,7 +124,10 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
                                end = data[[paste(type, "_end", sep="")]]),
               strand = strand(data[[paste(type, "_strand", sep="")]]),
               data[cols])
+    ## Filter seqinfo
+    isActSeq <- isActiveSeq(txdb)
     seqinfo(grngs) <- seqinfo
+    seqlevels(grngs) <- names(isActSeq)[isActSeq]
 
     ## split by grouping variable
     ans <- split(grngs, data[[paste(by, "_id", sep="")]])
