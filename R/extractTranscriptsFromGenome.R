@@ -264,8 +264,8 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
     ## Loop over the names of the reference sequences and extract the
     ## transcripts.
     dnaset_list <- lapply(REFSEQnames, extractTranscriptsFromREFSEQ)
-    ans <- unsplit.list.of.XStringSet("DNAStringSet", dnaset_list,
-                                      ucsc_txlist$chrom)
+    ans <- unsplit.list.of.XVectorList("DNAStringSet", dnaset_list,
+                                       ucsc_txlist$chrom)
     names(ans) <- ucsc_txlist$name
     ans
 }
