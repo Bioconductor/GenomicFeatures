@@ -238,7 +238,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
     ans
 }
 
-.makeUTRsByTranscript <- function(splicings, utr_start, utr_end, seqinfo)
+.makeUTRsByTranscript <- function(x, splicings, utr_start, utr_end, seqinfo)
 {
     seqlevels <- seqlevels(seqinfo)
     grg <- GRanges(seqnames=factor(splicings$exon_chrom, levels=seqlevels),
@@ -247,7 +247,11 @@ setMethod("intronsByTranscript", "TranscriptDb",
                    exon_id=splicings$exon_id,
                    exon_name=splicings$exon_name,
                    exon_rank=splicings$exon_rank)
+    ## Filter seqinfo
+    isActSeq <- isActiveSeq(x)
     seqinfo(grg) <- seqinfo
+    seqlevels(grg) <- names(isActSeq)[isActSeq]
+    
     idx <- width(grg) != 0L  # drop 0-width UTRs
     split(grg[idx], splicings$tx_id[idx])
 }
@@ -283,8 +287,12 @@ setMethod("fiveUTRsByTranscript", "TranscriptDb",
 
         ## Make and return the GRangesList object.
         seqinfo <- seqinfo(x)
-        ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqinfo)
-        .set.group.names(ans, use.names, x, "tx")
+
+        ## split by grouping variable
+        ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end, seqinfo)
+        ans <- .set.group.names(ans, use.names, x, "tx")
+        metadata(ans)[[1]] <- DataFrame(metadata(x))
+        ans
     }
 )
 
@@ -319,7 +327,11 @@ setMethod("threeUTRsByTranscript", "TranscriptDb",
 
         ## Make and return the GRangesList object.
         seqinfo <- seqinfo(x)
-        ans <- .makeUTRsByTranscript(splicings, utr_start, utr_end, seqinfo)
-        .set.group.names(ans, use.names, x, "tx")
+
+        ## split by grouping variable
+        ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end, seqinfo)
+        ans <- .set.group.names(ans, use.names, x, "tx")            
+        metadata(ans)[[1]] <- DataFrame(metadata(x))
+        ans
     }
 )
