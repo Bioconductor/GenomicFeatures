@@ -18,6 +18,11 @@
 \alias{show,TranscriptDb-method}
 \alias{show,FeatureDb-method}
 \alias{as.list,TranscriptDb-method}
+\alias{isActiveSeq}
+\alias{isActiveSeq<-}
+\alias{isActiveSeq,TranscriptDb-method}
+\alias{isActiveSeq<-,TranscriptDb-method}
+
 
 \title{TranscriptDb objects}
 
@@ -61,6 +66,19 @@
       Note that the transcripts are dumped in the same order in all the
       data frames.
     }
+    \item{}{
+      \code{isActiveSeq(x)}:
+      Returns the currently active sequences for this txdb object as a
+      named logical vector.  Only active sequences will be tapped when
+      using the supplied accessor methods.  Inactive sequences will be
+      ignored.  By default, all available sequences will be active.
+    }    
+    \item{}{
+      \code{isActiveSeq(x) <-}:
+      Allows the user to change which sequences will be actively
+      accessed by the accessor methods by altering the contents of this
+      named logical vector.
+    }    
   }
 
   See \code{?\link{transcripts}}, \code{?\link{transcriptsByOverlaps}},
@@ -86,12 +104,22 @@ txdb_file <- system.file("extdata", "Biomart_Ensembl_sample.sqlite",
 txdb <- loadFeatures(txdb_file)
 txdb
 
+## Use of seqinfo
 seqinfo(txdb)
 seqlevels(txdb)  # shortcut for 'seqlevels(seqinfo(txdb))'
 seqlengths(txdb)  # shortcut for 'seqlengths(seqinfo(txdb))'
 isCircular(txdb)  # shortcut for 'isCircular(seqinfo(txdb))'
 names(which(isCircular(txdb)))
 
+## Examples on how to change which sequences are active
+## Set chr1 and chr3 to be inactive:
+isActiveSeq(txdb)[c("1", "3")] <- FALSE
+## Set ALL of the chromsomed to be inactive
+isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
+## Now set only chr1 and chr5 to be active
+isActiveSeq(txdb)[c("1", "4")] <- TRUE
+
+## Use of as.list
 txdump <- as.list(txdb)
 txdump
 txdb1 <- do.call(makeTranscriptDb, txdump)

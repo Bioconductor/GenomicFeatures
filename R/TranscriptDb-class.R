@@ -419,22 +419,3 @@ setReplaceMethod("isActiveSeq","TranscriptDb",
 setMethod("isActiveSeq", "TranscriptDb", function(x){x@isActiveSeq})
 
 
-## TODO: make manual pages.
-
-## library(GenomicFeatures);example(loadFeatures); keep = "chr1"; isActiveSeq(txdb)[c("chr1", "chr3")] <- FALSE ; isActiveSeq(txdb)
-
-## isActiveSeq(txdb)
-
-## library(GenomicFeatures);example(loadFeatures); keep = "chr1"
-
-## How to use the accessors:  (add to manual page)
-## isActiveSeq(txdb)[value] <- TRUE
-## isActiveSeq(txdb)[c("chr1", "chr3")] <- FALSE
-
-## isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
-## isActiveSeq(txdb)[c("chr1", "chr3")] <- TRUE
-## transcripts(txdb)
-## transcriptsBy(txdb)
-
-
-## then transcripts and transcriptsBy etc will pay attention to non-default vals
