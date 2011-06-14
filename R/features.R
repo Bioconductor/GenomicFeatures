@@ -30,6 +30,7 @@
                  strand = unlist(df["strand"]))
   otherVals <- as(df[colNames], "DataFrame")
   values(ans) <- otherVals
+  metadata(ans)[[1]] <- DataFrame(metadata(db))
   ans
 }
 

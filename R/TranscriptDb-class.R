@@ -245,7 +245,7 @@ loadFeatures <- function(file)
         dbEasyQuery(db, sql)
         message("The TranscriptDb object has been updated to the latest schema version 1.0.")
         message("The updated object can be saved using saveFeatures()")
-    } 
+    }
     db
 }
 
@@ -257,6 +257,7 @@ loadFeatures <- function(file)
 setMethod("metadata", "TranscriptDb",
     function(x) dbReadTable(txdbConn(x), "metadata")
 )
+
 
 .getChromInfo <- function(x)
 {
@@ -395,10 +396,7 @@ compareTranscriptDbs <- function(txdb1, txdb2)
 ### =========================================================================
 ### Setters and getters for isActiveSeq
 ### -------------------------------------------------------------------------
-setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
-setGeneric("isActiveSeq<-",function(x, value) standardGeneric("isActiveSeq<-"))
-
-## setters 
+## generic internal setter
 .setSeqNames <- function(x, value){
   ## Must check to make sure that the values are legitimate
   seqNames <- seqlevels(x)
@@ -408,17 +406,16 @@ setGeneric("isActiveSeq<-",function(x, value) standardGeneric("isActiveSeq<-"))
      is.logical(value)){ ## and it must be a logical
     x@isActiveSeq[names(value)] <- value	
   }else{stop("The replacement value for isActiveSeq must be a logical ",
-             "vector, with names that match the seqlevels of the ",
-             "TranscriptDb object.")
+             "vector, with names that match the seqlevels of the object")
   }
   x
 }
 
+## setter
 setReplaceMethod("isActiveSeq","TranscriptDb",
 	  function(x, value){.setSeqNames(x,value)})
 
-
-## getters
+## getter
 setMethod("isActiveSeq", "TranscriptDb", function(x){x@isActiveSeq})
 
 

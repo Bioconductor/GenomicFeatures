@@ -57,3 +57,9 @@ setGeneric("saveFeatures", signature="x",
 ## features.R
 setGeneric("features", signature="x",
            function(x) standardGeneric("features"))
+
+
+## isActiveSeq
+setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
+setGeneric("isActiveSeq<-",function(x, value) standardGeneric("isActiveSeq<-"))
+

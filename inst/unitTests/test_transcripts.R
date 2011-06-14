@@ -19,6 +19,7 @@ test_transcripts <- function()
                         tx_id = 3L,
                         tx_name = "uc009vis.1")
     seqinfo(want_grg) <- seqinfo
+    metadata(want_grg)[[1]] <- DataFrame(metadata(txdb))
     checkIdentical(get_grg, want_grg)
 
     vals <- list(tx_chrom = c("chr1", "chr5"), tx_strand = "-")
@@ -32,6 +33,7 @@ test_transcripts <- function()
                         tx_name = c("uc009vis.1", "uc003jam.1"),
                         exon_id = IntegerList(c(5,6,7,8), c(77,78,79)))
     seqinfo(want_grg) <- seqinfo
+    metadata(want_grg)[[1]] <- DataFrame(metadata(txdb))
     checkIdentical(get_grg, want_grg)
 
     get_grg <- transcripts(txdb, vals=list(gene_id=c("3081", "9501")),
@@ -51,6 +53,7 @@ test_transcripts <- function()
                                     "uc003fzi.1", "uc003fzj.1"),
                         gene_id = gene_id_col)
     seqinfo(want_grg) <- seqinfo
+    metadata(want_grg)[[1]] <- DataFrame(metadata(txdb))
     checkIdentical(get_grg, want_grg)
 }
 
@@ -71,6 +74,7 @@ test_exons <- function()
                         strand = strand("+"),
                         exon_id = 1L)
     seqinfo(want_grg) <- seqinfo
+    metadata(want_grg)[[1]] <- DataFrame(metadata(txdb))
     checkIdentical(get_grg, want_grg)
 
     get_grg <- exons(txdb, vals = list(exon_chrom = c("chr1", "chr5"),
@@ -83,6 +87,7 @@ test_exons <- function()
                         strand = strand(rep("-", 7)),
                         exon_id = c(5L, 6L, 7L, 8L, 77L, 78L, 79L))
     seqinfo(want_grg) <- seqinfo
+    metadata(want_grg)[[1]] <- DataFrame(metadata(txdb))
     checkIdentical(get_grg, want_grg)
 }
 
@@ -103,6 +108,7 @@ test_cds <- function()
                         strand = strand("-"),
                         cds_id = 91L)
     seqinfo(want_grg) <- seqinfo
+    metadata(want_grg)[[1]] <- DataFrame(metadata(txdb))
     checkIdentical(get_grg, want_grg)
 
     get_grg <- cds(txdb, vals = list(cds_chrom = c("chr1", "chr5"),
@@ -112,5 +118,6 @@ test_cds <- function()
                         strand = strand(c("-", "-")),
                         cds_id = 53:54)
     seqinfo(want_grg) <- seqinfo
+    metadata(want_grg)[[1]] <- DataFrame(metadata(txdb))
     checkIdentical(get_grg, want_grg)
 }

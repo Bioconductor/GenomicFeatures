@@ -9,7 +9,6 @@ setClass("GenomicFeatures", contains="VIRTUAL")
 setClass("TranscriptDb",
     contains="GenomicFeatures",
     representation(envir="environment", isActiveSeq="logical")
-    ## representation(envir="environment")
 )
 
 setClass("FeatureDb",

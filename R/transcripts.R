@@ -369,6 +369,7 @@
 
     ans_values <- c(DataFrame(root_data[root_columns]), child_data)
     values(ans) <- ans_values[columns]
+    metadata(ans)[[1]] <- DataFrame(metadata(txdb))
     ans
 }
 

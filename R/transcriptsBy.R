@@ -131,7 +131,9 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
 
     ## split by grouping variable
     ans <- split(grngs, data[[paste(by, "_id", sep="")]])
-    .set.group.names(ans, use.names, txdb, by)
+    ans <- .set.group.names(ans, use.names, txdb, by)
+    metadata(ans)[[1]] <- DataFrame(metadata(txdb))
+    ans
 }
 
 ###                    use  splicing      gene

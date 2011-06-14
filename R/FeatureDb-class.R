@@ -107,4 +107,10 @@ setMethod("show", "FeatureDb",
 
 
 
+## ### =========================================================================
+## ### Setters and getters for isActiveSeq - not needed?
+## ### -------------------------------------------------------------------------
+## setReplaceMethod("isActiveSeq","FeatureDb",
+## 	  function(x, value){.setSeqNames(x,value)})
 
+## setMethod("isActiveSeq", "FeatureDb", function(x){x@isActiveSeq})

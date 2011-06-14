@@ -32,6 +32,7 @@ test_transcriptsBy <- function()
                     tx_name=as.character(c(NA, NA)))
     want <- GRangesList(`1`=grg1, `2`=grg2)
     seqinfo(want) <- seqinfo
+    metadata(want)[[1]] <- DataFrame(metadata(txdb0))
     checkIdentical(ans, want)
 
     ans <- exonsBy(txdb0, "tx")
@@ -49,6 +50,7 @@ test_transcriptsBy <- function()
                     exon_rank=1:2)
     want <- GRangesList(`5`=grg5, `11`=grg5, `26`=grg26)
     seqinfo(want) <- seqinfo
+    metadata(want)[[1]] <- DataFrame(metadata(txdb0))
     checkIdentical(ans, want)
                     
     ## WITH REAL DATA
@@ -61,6 +63,7 @@ test_transcriptsBy <- function()
     checkException(transcriptsBy(txdb1, "tx"), silent = TRUE)
 
     seqinfo <- seqinfo(txdb1)
+    metadata(want)[[1]] <- DataFrame(metadata(txdb1))
     seqlevels <- seqlevels(seqinfo)
 
     dupCount <- function(x) {
@@ -77,6 +80,7 @@ test_transcriptsBy <- function()
                     tx_id    = 120L,
                     tx_name  = "uc002zka.1")
     seqinfo(want) <- seqinfo
+#    metadata(want)[[1]] <- DataFrame(metadata(txdb1)) ##WTH?
     checkIdentical(txByGene[[1]], want)
 
     ## transcripts by exon
@@ -89,6 +93,7 @@ test_transcriptsBy <- function()
                     tx_id    = c(1L, 2L),
                     tx_name  = c("uc001aaa.2", "uc009vip.1"))
     seqinfo(want) <- seqinfo
+#    metadata(want)[[1]] <- DataFrame(metadata(txdb1)) ##WTH?
     checkIdentical(txByExon[[1]], want)
 
     ## transcripts by cds
@@ -101,6 +106,7 @@ test_transcriptsBy <- function()
                     tx_id    = 4L,
                     tx_name  = "uc002qvt.1")
     seqinfo(want) <- seqinfo
+#    metadata(want)[[1]] <- DataFrame(metadata(txdb1)) ##WTH?
     checkIdentical(txByCds[[1]], want)
 
     ## threeUTRsByTranscript, fiveUTRsByTranscript
@@ -139,6 +145,7 @@ test_exonsBy <- function()
                     exon_name = as.character(c(NA,NA)),
                     exon_rank = 1:2)
     seqinfo(want) <- seqinfo
+#    metadata(want)[[1]] <- DataFrame(metadata(txdb))  ##WTH?
     checkIdentical(exonByTx[[2]], want)
 
     ## exons by gene
@@ -180,6 +187,7 @@ test_cdsBy <- function()
                     cds_id = c(53L,54L),
                     cds_name = as.character(c(NA,NA)))
     seqinfo(want) <- seqinfo
+#    metadata(want)[[1]] <- DataFrame(metadata(txdb))  ##WTH?
     checkIdentical(cdsByGene[[6]], want)
 }
 
