@@ -132,7 +132,7 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
     ## split by grouping variable
     ans <- split(grngs, data[[paste(by, "_id", sep="")]])
     ans <- .set.group.names(ans, use.names, txdb, by)
-    metadata(ans)[[1]] <- DataFrame(metadata(txdb))
+    ans <- .assignMetadataList(ans, txdb)
     ans
 }
 
@@ -291,8 +291,8 @@ setMethod("fiveUTRsByTranscript", "TranscriptDb",
         ## split by grouping variable
         ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end, seqinfo)
         ans <- .set.group.names(ans, use.names, x, "tx")
-        metadata(ans)[[1]] <- DataFrame(metadata(x))
-        ans
+        ans <- .assignMetadataList(ans, x)
+	ans
     }
 )
 
@@ -331,7 +331,7 @@ setMethod("threeUTRsByTranscript", "TranscriptDb",
         ## split by grouping variable
         ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end, seqinfo)
         ans <- .set.group.names(ans, use.names, x, "tx")            
-        metadata(ans)[[1]] <- DataFrame(metadata(x))
+        ans <- .assignMetadataList(ans, x)
         ans
     }
 )

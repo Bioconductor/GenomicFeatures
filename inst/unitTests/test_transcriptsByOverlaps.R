@@ -23,7 +23,7 @@ test_transcriptsByOverlaps <- function()
               tx_id = 15L,
               tx_name = "uc003jam.1")
     seqinfo(want) <- seqinfo
-    metadata(want)[[1]] <- DataFrame(metadata(txdb))
+    want <- GenomicFeatures:::.assignMetadataList(want, txdb)
     checkIdentical(transcriptsByOverlaps(txdb, gr), want)
 
     ranges <- IRanges(start = c(1000, 1000, 20000, 30000),
@@ -38,7 +38,7 @@ test_transcriptsByOverlaps <- function()
                     strand = strand(c("+", "+", "-")),
                     tx_id = c(1L,2L,4L))
     seqinfo(want) <- seqinfo
-    metadata(want)[[1]] <- DataFrame(metadata(txdb))
+    want <- GenomicFeatures:::.assignMetadataList(want, txdb)
     checkIdentical(transcriptsByOverlaps(txdb, gr, columns="tx_id"), want)
 }
 
@@ -65,7 +65,7 @@ test_exonsByOverlaps <- function()
               strand = strand(rep("-",3)),
               exon_id = 77:79)
     seqinfo(want) <- seqinfo
-    metadata(want)[[1]] <- DataFrame(metadata(txdb))
+    want <- GenomicFeatures:::.assignMetadataList(want, txdb)
     checkIdentical(exonsByOverlaps(txdb, gr), want)
 }
 
@@ -92,6 +92,6 @@ test_cdsByOverlaps <- function()
               strand = strand(rep("-",2)),
               cds_id = 53:54)
     seqinfo(want) <- seqinfo
-    metadata(want)[[1]] <- DataFrame(metadata(txdb))
+    want <- GenomicFeatures:::.assignMetadataList(want, txdb)
     checkIdentical(cdsByOverlaps(txdb, gr), want)
 }

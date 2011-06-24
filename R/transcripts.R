@@ -341,6 +341,20 @@
     ans
 }
 
+## make a named list from the metadata data.frame
+.makeMetadataList <- function(meta){
+    lst <- as.list(meta[,2])
+    names(lst) <- meta[,1]
+    lst
+}
+
+## assign this to the metadata list in relevant object
+.assignMetadataList <- function(obj, txdb){
+    metadata(obj)[[1]] <- .makeMetadataList(metadata(txdb))
+    names(metadata(obj))[[1]] <- "genomeInfo"
+    obj
+}
+
 .extractFeatureRowsAsGRanges <- function(root_table, txdb, vals, columns)
 {
     CORECOLS <- .DBDESC[[root_table]]$CORECOLS
@@ -369,7 +383,7 @@
 
     ans_values <- c(DataFrame(root_data[root_columns]), child_data)
     values(ans) <- ans_values[columns]
-    metadata(ans)[[1]] <- DataFrame(metadata(txdb))
+    ans <- .assignMetadataList(ans, txdb)
     ans
 }
 

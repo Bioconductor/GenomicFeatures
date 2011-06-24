@@ -32,7 +32,7 @@ test_transcriptsBy <- function()
                     tx_name=as.character(c(NA, NA)))
     want <- GRangesList(`1`=grg1, `2`=grg2)
     seqinfo(want) <- seqinfo
-    metadata(want)[[1]] <- DataFrame(metadata(txdb0))
+    want <- GenomicFeatures:::.assignMetadataList(want, txdb0)
     checkIdentical(ans, want)
 
     ans <- exonsBy(txdb0, "tx")
@@ -50,7 +50,7 @@ test_transcriptsBy <- function()
                     exon_rank=1:2)
     want <- GRangesList(`5`=grg5, `11`=grg5, `26`=grg26)
     seqinfo(want) <- seqinfo
-    metadata(want)[[1]] <- DataFrame(metadata(txdb0))
+    want <- GenomicFeatures:::.assignMetadataList(want, txdb0)
     checkIdentical(ans, want)
                     
     ## WITH REAL DATA
@@ -63,7 +63,7 @@ test_transcriptsBy <- function()
     checkException(transcriptsBy(txdb1, "tx"), silent = TRUE)
 
     seqinfo <- seqinfo(txdb1)
-    metadata(want)[[1]] <- DataFrame(metadata(txdb1))
+    want <- GenomicFeatures:::.assignMetadataList(want, txdb1)
     seqlevels <- seqlevels(seqinfo)
 
     dupCount <- function(x) {
