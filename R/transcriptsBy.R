@@ -235,23 +235,29 @@ setMethod("intronsByTranscript", "TranscriptDb",
         ids <- unique(ans$tx_id[!is.na(ans$cds_id)])
         ans <- ans[ans$tx_id %in% ids, ]
     }
-    ans
+
+    ## modify results to not respect our activeSeqs mask.
+    isActSeq <- isActiveSeq(txdb)
+    ## remove unwanted stuff from df 
+    remove <- names(isActSeq)[isActSeq==FALSE]
+    ans[!(ans$exon_chrom %in% remove),]
 }
 
-.makeUTRsByTranscript <- function(x, splicings, utr_start, utr_end, seqinfo)
+
+.makeUTRsByTranscript <- function(x, splicings, utr_start, utr_end)
 {
-    seqlevels <- seqlevels(seqinfo)
-    grg <- GRanges(seqnames=factor(splicings$exon_chrom, levels=seqlevels),
+    seqinfo <- seqinfo(x)
+    grg <- GRanges(seqnames=factor(splicings$exon_chrom, 
+			levels=seqlevels(seqinfo)),
                    ranges=IRanges(start=utr_start, end=utr_end),
                    strand=strand(splicings$exon_strand),
                    exon_id=splicings$exon_id,
                    exon_name=splicings$exon_name,
                    exon_rank=splicings$exon_rank)
-    ## Filter seqinfo
+    ## Then clean up the seqinfo
     isActSeq <- isActiveSeq(x)
     seqinfo(grg) <- seqinfo
     seqlevels(grg) <- names(isActSeq)[isActSeq]
-    
     idx <- width(grg) != 0L  # drop 0-width UTRs
     split(grg[idx], splicings$tx_id[idx])
 }
@@ -285,11 +291,8 @@ setMethod("fiveUTRsByTranscript", "TranscriptDb",
         idx <- idx1 & (splicings$exon_strand == "-")
         utr_start[idx] <- splicings$cds_end[idx] + 1L
 
-        ## Make and return the GRangesList object.
-        seqinfo <- seqinfo(x)
-
         ## split by grouping variable
-        ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end, seqinfo)
+        ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end)
         ans <- .set.group.names(ans, use.names, x, "tx")
         ans <- .assignMetadataList(ans, x)
 	ans
@@ -325,11 +328,8 @@ setMethod("threeUTRsByTranscript", "TranscriptDb",
         idx <- idx1 & (splicings$exon_strand == "-")
         utr_end[idx] <- splicings$cds_start[idx] - 1L
 
-        ## Make and return the GRangesList object.
-        seqinfo <- seqinfo(x)
-
         ## split by grouping variable
-        ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end, seqinfo)
+        ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end)
         ans <- .set.group.names(ans, use.names, x, "tx")            
         ans <- .assignMetadataList(ans, x)
         ans
