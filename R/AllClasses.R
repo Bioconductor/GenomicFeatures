@@ -1,17 +1,16 @@
 ### Maybe we'll support other types of GenomicFeatures objects later.
-setClass("GenomicFeatures", contains="VIRTUAL")
+#setClass("GenomicFeatures", contains="VIRTUAL")
 
-#####################################################################
-## the following looks odd.  Why have more than one class?  The
-## distinction is the DB schema held behind each class
+############################################################################
+## We define a new class when we have a new kind of schema to represent.
 
 ### Concrete GenomicFeatures types
 setClass("TranscriptDb",
-    contains="GenomicFeatures",
+    contains="AnnotationDb",
     representation(envir="environment", isActiveSeq="logical")
 )
 
 setClass("FeatureDb",
-    contains="GenomicFeatures",
+    contains="AnnotationDb",
     representation(envir="environment")
 )

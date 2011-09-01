@@ -1,4 +1,5 @@
 import(methods)
+importClassesFrom(AnnotationDbi, AnnotationDb)
 importFrom(utils, download.file, installed.packages, read.table)
 
 importFrom(Biobase, createPackage)
@@ -26,7 +27,7 @@ importFrom(rtracklayer, browserSession, genome, "genome<-", ucscTableQuery,
 
 importFrom(RCurl, getURL)
 
-exportClasses(GenomicFeatures, TranscriptDb)
+exportClasses(TranscriptDb, FeatureDb)
 
 export(
   loadFeatures,

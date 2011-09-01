@@ -1,9 +1,5 @@
 \name{TranscriptDb-class}
 
-\alias{GenomicFeatures-class}
-\alias{class:GenomicFeatures}
-\alias{GenomicFeatures}
-
 \alias{TranscriptDb-class}
 \alias{class:TranscriptDb}
 \alias{TranscriptDb}
