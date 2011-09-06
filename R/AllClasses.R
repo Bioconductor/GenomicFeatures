@@ -5,12 +5,9 @@
 ## We define a new class when we have a new kind of schema to represent.
 
 ### Concrete GenomicFeatures types
-setClass("TranscriptDb",
-    contains="AnnotationDb",
-    representation(envir="environment", isActiveSeq="logical")
-)
+.TranscriptDb <-
+    setRefClass("TranscriptDb", contains="AnnotationDb",
+        fields=list(isActiveSeq="logical"))
 
-setClass("FeatureDb",
-    contains="AnnotationDb",
-    representation(envir="environment")
-)
+.FeatureDb <-
+    setRefClass("FeatureDb", contains="AnnotationDb")
