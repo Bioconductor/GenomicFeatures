@@ -7,7 +7,7 @@
 ### A low-level accessor (not exported).
 ###
 
-featuredbConn <- function(featuredb) .getConn(featuredb@envir)
+featuredbConn <- function(featuredb) featuredb$conc
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -52,14 +52,9 @@ setValidity2("FeatureDb", .valid.FeatureDb)
 ### Low-level constructor (not exported).
 ###
 
-FeatureDb <- function(conn)
+FeatureDb <- function(sqliteFile)
 {
-    if (!is(conn, "SQLiteConnection"))
-        stop("'conn' must be an SQLiteConnection object")
-    envir <- new.env(parent=emptyenv())
-    assign("conn", conn, envir=envir)
-    reg.finalizer(envir, function(e) dbDisconnect(.getConn(e)))
-    new("FeatureDb", envir=envir)
+    .FeatureDb$new(sqliteFile=sqliteFile)
 }
 
 
@@ -84,7 +79,7 @@ setMethod("saveFeatures", "FeatureDb",
 ###
 
 setMethod("metadata", "FeatureDb",
-    function(x) dbReadTable(featuredbConn(x), "metadata")
+    function(x) dbReadTable(conn(x), "metadata")
 )
 
 
