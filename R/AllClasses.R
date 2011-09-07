@@ -8,18 +8,18 @@
 .TranscriptDb <-
     setRefClass("TranscriptDb", contains="AnnotationDb",
         fields=list(isActiveSeq="logical"),
-                methods=list(
-                  initialize=function(){
-                    .conn <-
-                      if (missing(sqliteFile)) dbConnect(SQLite())
-                      else dbConnect(SQLite(), sqliteFile)
-                    ## then get default values for ActiveSeqs
-                    seqNames <- .getChromInfo(conn)$chrom
-                    seqNVals <- rep(TRUE, length(seqNames))
-                    names(seqNVals) <- seqNames
-                    callSuper(..., conn=.conn, isActiveSeq=seqNVals)
-                  }))
+        methods=list(
+          initialize=function(...) {
+              callSuper(...)
+              if (0L == length(dbListTables(conn))) {
+                  .self$isActiveSeq <- logical()
+              } else {
+                  seqNames <- .getChromInfo(conn)$chrom
+                  .self$isActiveSeq <-
+                      structure(!logical(length(seqNames)), .Names=seqNames)
+              }
+          .self
+      }))
 
 .FeatureDb <-
     setRefClass("FeatureDb", contains="AnnotationDb")
-
