@@ -178,19 +178,19 @@ setValidity2("TranscriptDb", .valid.TranscriptDb)
 ### AnnnotationDb
 ###
 
-TranscriptDb <- function(conn, package, isActiveSeq, ...)
-{
-    ## if (!is(conn, "SQLiteConnection"))
-    ##     stop("'conn' must be an SQLiteConnection object")
-    ## envir <- new.env(parent=emptyenv())
-    ## assign("conn", conn, envir=envir)
-    ## reg.finalizer(envir, function(e) dbDisconnect(.getConn(e)))
-    ## seqNames <- .getChromInfo(conn)$chrom
-    ## seqNVals <- rep(TRUE, length(seqNames))
-    ## names(seqNVals) <- seqNames
-    ## new("TranscriptDb", envir=envir, isActiveSeq=seqNVals)
-    .TranscriptDb$new(conn=conn, isActiveSeq, ...)
-}
+## TranscriptDb <- function(conn, package, isActiveSeq, ...)
+## {
+##     ## if (!is(conn, "SQLiteConnection"))
+##     ##     stop("'conn' must be an SQLiteConnection object")
+##     ## envir <- new.env(parent=emptyenv())
+##     ## assign("conn", conn, envir=envir)
+##     ## reg.finalizer(envir, function(e) dbDisconnect(.getConn(e)))
+##     ## seqNames <- .getChromInfo(conn)$chrom
+##     ## seqNVals <- rep(TRUE, length(seqNames))
+##     ## names(seqNVals) <- seqNames
+##     ## new("TranscriptDb", envir=envir, isActiveSeq=seqNVals)
+##     .TranscriptDb$new(conn=conn, isActiveSeq, ...)
+## }
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -449,7 +449,7 @@ compareTranscriptDbs <- function(txdb1, txdb2)
   if(length(intersect(names(value),seqNames)) == length(value) &&
      ##length(value) == length(seqNames) && ## cannot be shorter than seqNames
      is.logical(value)){ ## and it must be a logical
-    x@isActiveSeq[names(value)] <- value	
+    x$isActiveSeq[names(value)] <- value	
   }else{stop("The replacement value for isActiveSeq must be a logical ",
              "vector, with names that match the seqlevels of the object")
   }
@@ -461,6 +461,6 @@ setReplaceMethod("isActiveSeq","TranscriptDb",
 	  function(x, value){.setSeqNames(x,value)})
 
 ## getter
-setMethod("isActiveSeq", "TranscriptDb", function(x){x@isActiveSeq})
+setMethod("isActiveSeq", "TranscriptDb", function(x){x$isActiveSeq})
 
 
