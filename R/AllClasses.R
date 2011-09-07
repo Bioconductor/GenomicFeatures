@@ -11,3 +11,4 @@
 
 .FeatureDb <-
     setRefClass("FeatureDb", contains="AnnotationDb")
+

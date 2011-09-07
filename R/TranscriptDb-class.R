@@ -32,72 +32,77 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 ### The specified table must have *at least* the cols specified in 'colnames'.
 ### It's OK if it has more cols or if it has them in a different order.
 
-.getMetaValue <- function(conn, name) {
-    colnames <- c("name", "value")
-    msg <- .valid.table.colnames(conn, "metadata", colnames)
-    if (!is.null(msg))
-        stop(msg)
-    sql <-  paste("SELECT * FROM metadata",
-                 " WHERE name = '", name, "'", sep="")
-    data <- dbEasyQuery(conn, sql)
-    if (nrow(data) != 1L) {
-        msg <- paste("The metadata table in the DB has 0 or more ",
-                     "than 1 '", name, "' entries", sep="")
-        stop(msg)
-    }
-    data$value
-}
+## .getMetaValue is moved to AnnotationDbi along with a few others
+## (commented).  Eventually, the plan is to hide these helper methods inside
+## of a reference class so that everyone can use them (but they will still be
+## invisible to the users)
+
+## .getMetaValue <- function(conn, name) {
+##     colnames <- c("name", "value")
+##     msg <- .valid.table.colnames(conn, "metadata", colnames)
+##     if (!is.null(msg))
+##         stop(msg)
+##     sql <-  paste("SELECT * FROM metadata",
+##                  " WHERE name = '", name, "'", sep="")
+##     data <- dbEasyQuery(conn, sql)
+##     if (nrow(data) != 1L) {
+##         msg <- paste("The metadata table in the DB has 0 or more ",
+##                      "than 1 '", name, "' entries", sep="")
+##         stop(msg)
+##     }
+##     data$value
+## }
 
 
-.valid.colnames <- function(conn, tablename, colnames)
-{
-    sql0 <- paste("SELECT * FROM ", tablename, " LIMIT 0", sep="")
-    data0 <- dbEasyQuery(conn, sql0)
-    colnames0 <- colnames(data0)
-    if (!all(colnames %in% colnames0)) {
-        msg <- paste("the ", tablename, " table in the DB doesn't have ",
-                     "all the expected columns (",
-                     paste("\"", colnames, "\"", sep="", collapse=", "),
-                     ")", sep="")
-        return(msg)
-    }
-    NULL
-}
+## .valid.colnames <- function(conn, tablename, colnames)
+## {
+##     sql0 <- paste("SELECT * FROM ", tablename, " LIMIT 0", sep="")
+##     data0 <- dbEasyQuery(conn, sql0)
+##     colnames0 <- colnames(data0)
+##     if (!all(colnames %in% colnames0)) {
+##         msg <- paste("the ", tablename, " table in the DB doesn't have ",
+##                      "all the expected columns (",
+##                      paste("\"", colnames, "\"", sep="", collapse=", "),
+##                      ")", sep="")
+##         return(msg)
+##     }
+##     NULL
+## }
 
-.valid.table.colnames <- function(conn, tablename, colnames)
-{
-    tmp <- try(dbExistsTable(conn, tablename), silent=TRUE)
-    if (is(tmp, "try-error"))
-        return("invalid DB file")
-    if (!tmp)
-        return(paste("the DB has no ", tablename, " table", sep=""))
-    .valid.colnames(conn, tablename, colnames)
-}
+## .valid.table.colnames <- function(conn, tablename, colnames)
+## {
+##     tmp <- try(dbExistsTable(conn, tablename), silent=TRUE)
+##     if (is(tmp, "try-error"))
+##         return("invalid DB file")
+##     if (!tmp)
+##         return(paste("the DB has no ", tablename, " table", sep=""))
+##     .valid.colnames(conn, tablename, colnames)
+## }
 
 
 
-.valid.metadata.table <- function(conn, type)
-{
-    colnames <- c("name", "value")
-    msg <- .valid.table.colnames(conn, "metadata", colnames)
-    if (!is.null(msg))
-        return(msg)
-    db_type <- try(.getMetaValue(conn, DB_TYPE_NAME), silent = TRUE)
-    if(is(db_type, "try-error"))
-        return(db_type[1])
-    if (is.na(db_type) || db_type != type) {
-        msg <- paste("'", DB_TYPE_NAME, "' is not \"", type,
-                     "\"", sep="")
-        return(msg)
-    }
-    NULL
-}
+## .valid.metadata.table <- function(conn, type)
+## {
+##     colnames <- c("name", "value")
+##     msg <- .valid.table.colnames(conn, "metadata", colnames)
+##     if (!is.null(msg))
+##         return(msg)
+##     db_type <- try(.getMetaValue(conn, DB_TYPE_NAME), silent = TRUE)
+##     if(is(db_type, "try-error"))
+##         return(db_type[1])
+##     if (is.na(db_type) || db_type != type) {
+##         msg <- paste("'", DB_TYPE_NAME, "' is not \"", type,
+##                      "\"", sep="")
+##         return(msg)
+##     }
+##     NULL
+## }
 
 ### TODO: Add more checks!
 .valid.transcript.table <- function(conn)
 {
     colnames <- makeFeatureColnames("tx")
-    msg <- .valid.table.colnames(conn, "transcript", colnames)
+    msg <- AnnotationDbi:::.valid.table.colnames(conn, "transcript", colnames)
     if (!is.null(msg))
         return(msg)
     NULL
@@ -107,7 +112,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 .valid.exon.table <- function(conn)
 {
     colnames <- makeFeatureColnames("exon")
-    msg <- .valid.table.colnames(conn, "exon", colnames)
+    msg <- AnnotationDbi:::.valid.table.colnames(conn, "exon", colnames)
     if (!is.null(msg))
         return(msg)
     NULL
@@ -117,7 +122,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 .valid.cds.table <- function(conn)
 {
     colnames <- makeFeatureColnames("cds")
-    msg <- .valid.table.colnames(conn, "cds", colnames)
+    msg <- AnnotationDbi:::.valid.table.colnames(conn, "cds", colnames)
     if (!is.null(msg))
         return(msg)
     NULL
@@ -127,7 +132,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 .valid.splicing.table <- function(conn)
 {
     colnames <- c("_tx_id", "exon_rank", "_exon_id", "_cds_id")
-    msg <- .valid.table.colnames(conn, "splicing", colnames)
+    msg <- AnnotationDbi:::.valid.table.colnames(conn, "splicing", colnames)
     if (!is.null(msg))
         return(msg)
     NULL
@@ -137,7 +142,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 .valid.gene.table <- function(conn)
 {
     colnames <- c("gene_id", "_tx_id")
-    msg <- .valid.table.colnames(conn, "gene", colnames)
+    msg <- AnnotationDbi:::.valid.table.colnames(conn, "gene", colnames)
     if (!is.null(msg))
         return(msg)
     NULL
@@ -147,7 +152,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 .valid.chrominfo.table <- function(conn)
 {
     colnames <- c("_chrom_id", "chrom", "length", "is_circular")
-    msg <- .valid.table.colnames(conn, "chrominfo", colnames)
+    msg <- AnnotationDbi:::.valid.table.colnames(conn, "chrominfo", colnames)
     if (!is.null(msg))
         return(msg)
     NULL
@@ -156,7 +161,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 .valid.TranscriptDb <- function(x)
 {
     conn <- txdbConn(x)
-    c(.valid.metadata.table(conn, DB_TYPE_VALUE),
+    c(AnnotationDbi:::.valid.metadata.table(conn, DB_TYPE_VALUE),
       .valid.transcript.table(conn),
       .valid.exon.table(conn),
       .valid.cds.table(conn),
@@ -169,20 +174,22 @@ setValidity2("TranscriptDb", .valid.TranscriptDb)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Low-level constructor (not exported).
+### Low-level constructor (filled out so that we can be consistent with
+### AnnnotationDb
 ###
 
-TranscriptDb <- function(conn)
+TranscriptDb <- function(conn, package, isActiveSeq, ...)
 {
-    if (!is(conn, "SQLiteConnection"))
-        stop("'conn' must be an SQLiteConnection object")
-    envir <- new.env(parent=emptyenv())
-    assign("conn", conn, envir=envir)
-    reg.finalizer(envir, function(e) dbDisconnect(.getConn(e)))
-    seqNames <- .getChromInfo(conn)$chrom
-    seqNVals <- rep(TRUE, length(seqNames))
-    names(seqNVals) <- seqNames
-    new("TranscriptDb", envir=envir, isActiveSeq=seqNVals)
+    ## if (!is(conn, "SQLiteConnection"))
+    ##     stop("'conn' must be an SQLiteConnection object")
+    ## envir <- new.env(parent=emptyenv())
+    ## assign("conn", conn, envir=envir)
+    ## reg.finalizer(envir, function(e) dbDisconnect(.getConn(e)))
+    ## seqNames <- .getChromInfo(conn)$chrom
+    ## seqNVals <- rep(TRUE, length(seqNames))
+    ## names(seqNVals) <- seqNames
+    ## new("TranscriptDb", envir=envir, isActiveSeq=seqNVals)
+    .TranscriptDb$new(conn=conn, isActiveSeq, ...)
 }
 
 
@@ -201,31 +208,65 @@ setMethod("saveFeatures", "TranscriptDb",
           }
 )
 
+
+## load methods for TranscriptDb: (default version should be adequate???)
+## setMethod(loadDb, c("character", "character", "character"),
+##     function(x, dbType, dbPackage, ...)
+## {
+##     require(dbPackage)
+##     getRefClass(dbType)$new(sqliteFile=x, ...)
+## })
+
+## ## This is the method people will use
+## setMethod(loadDb, c("character", "missing", "missing"),
+##     function(x, dbType, dbPackage, ...)
+## {
+##     conn <- dbConnect(SQLite(), x)
+##     if(dbExistsTable(conn, "metadata")) {
+##         dbType <- try(AnnoationDbi:::.getMetaValue(conn, "Db type"),silent = TRUE)
+##         dbPackage <- try(AnnoationDbi:::.getMetaValue(conn, "package"),silent = TRUE)
+##             if(is(dbType, "try-error") || is(dbPackage, "try-error")){
+##               stop("The Database is missing metadata required to establish either the database type or the package where that type is defined.")
+##             }
+##     }
+##     ## I need to do this extra step, but maybe onload is not the place to do it...
+##     seqNames <- .getChromInfo(conn)$chrom
+##     seqNVals <- rep(TRUE, length(seqNames))
+##     names(seqNVals) <- seqNames
+##     ## then cleanup
+##     dbDisconnect(conn)
+##     loadDb(x, dbType, dbPackage, isActiveSeq=seqNVals, ...)
+## })
+
+## Old loadFeatures will be deprecated, but for now lets just not make any
+## current users too unhappy.
 loadFeatures <- function(file)
 {
-    if (!isSingleString(file))
-        stop("'file' must be a single string")
-    if(!file.exists(file))
-        stop("file '", file, "' does not exist")
+    ## if (!isSingleString(file))
+    ##     stop("'file' must be a single string")
+    ## if(!file.exists(file))
+    ##     stop("file '", file, "' does not exist")
 
-    conn <- dbConnect(SQLite(), file)
-    if(dbExistsTable(conn, "metadata")) {
-        type <- .getMetaValue(conn, "Db type")
-            if(type == "TranscriptDb") {
-              version <- try(.getMetaValue(conn,"DBSCHEMAVERSION"),
-                             silent = TRUE)
-              if(is(version, "try-error")){
-                  conn <- .fixOldDbSchema(conn)
-              }
-              return(TranscriptDb(conn))
-            }else if(type == "FeatureDb") {
-              return(FeatureDb(conn))
-            }else{
-              stop("The file you are trying to load is of unknown Db type")
-            }
-    }
-    ##TranscriptDb(conn)
+    ## conn <- dbConnect(SQLite(), file)
+    ## if(dbExistsTable(conn, "metadata")) {
+    ##     type <- .getMetaValue(conn, "Db type")
+    ##         if(type == "TranscriptDb") {
+    ##           version <- try(.getMetaValue(conn,"DBSCHEMAVERSION"),
+    ##                          silent = TRUE)
+    ##           if(is(version, "try-error")){
+    ##               conn <- .fixOldDbSchema(conn)
+    ##           }
+    ##           return(TranscriptDb(conn))
+    ##         }else if(type == "FeatureDb") {
+    ##           return(FeatureDb(conn))
+    ##         }else{
+    ##           stop("The file you are trying to load is of unknown Db type")
+    ##         }
+    ## }
+    loadDb(file)
 }
+
+
 
 
 
@@ -262,7 +303,7 @@ setMethod("metadata", "TranscriptDb",
 .getChromInfo <- function(x)
 {
     sql <- "SELECT chrom, length, is_circular FROM chrominfo ORDER BY _chrom_id"
-    chrominfo <- dbEasyQuery(x, sql)
+    chrominfo <- AnnotationDbi:::dbEasyQuery(x, sql)
     COL2CLASS <- c(
          chrom="character",
          length="integer",
@@ -282,21 +323,23 @@ setMethod("seqinfo", "TranscriptDb",
 )
 
 
+## Show should just get inherited now.
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### The "show" method for TranscriptDb objects.
 ###
 
-setMethod("show", "TranscriptDb",
-    function(object)
-    {
-        cat("TranscriptDb object:\n")
-        metadata <- metadata(object)
-        for (i in seq_len(nrow(metadata))) {
-            cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
-                "\n", sep="")
-        }
-    }
-)
+## setMethod("show", "TranscriptDb",
+##     function(object)
+##     {
+##         cat("TranscriptDb object:\n")
+##         metadata <- metadata(object)
+##         for (i in seq_len(nrow(metadata))) {
+##             cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
+##                 "\n", sep="")
+##         }
+##     }
+## )
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -316,7 +359,7 @@ setMethod("as.list", "TranscriptDb",
         sql <- paste("SELECT transcript._tx_id AS tx_id, tx_name,",
                      "tx_chrom, tx_strand, tx_start, tx_end FROM transcript",
                      ORDER_BY)
-        transcripts <- dbEasyQuery(txdbConn(x), sql)
+        transcripts <- AnnotationDbi:::dbEasyQuery(txdbConn(x), sql)
         COL2CLASS <- c(
              tx_id="integer",
              tx_name="character",
@@ -343,7 +386,7 @@ setMethod("as.list", "TranscriptDb",
             "LEFT JOIN cds",
             "ON (splicing._cds_id=cds._cds_id)",
             ORDER_BY, ", exon_rank")
-        splicings <- dbEasyQuery(txdbConn(x), sql)
+        splicings <- AnnotationDbi:::dbEasyQuery(txdbConn(x), sql)
         COL2CLASS <- c(
              tx_id="integer",
              exon_rank="integer",
@@ -367,7 +410,7 @@ setMethod("as.list", "TranscriptDb",
             "INNER JOIN gene",
             "ON (transcript._tx_id=gene._tx_id)",
             ORDER_BY, ", gene_id")
-        genes <- dbEasyQuery(txdbConn(x), sql)
+        genes <- AnnotationDbi:::dbEasyQuery(txdbConn(x), sql)
         COL2CLASS <- c(
              tx_id="integer",
              gene_id="character"
