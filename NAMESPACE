@@ -1,6 +1,4 @@
 import(methods)
-importClassesFrom(AnnotationDbi, AnnotationDb)
-importMethodsFrom(AnnotationDbi, loadDb)
 
 importFrom(utils, download.file, installed.packages, read.table)
 

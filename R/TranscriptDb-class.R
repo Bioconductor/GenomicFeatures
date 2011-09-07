@@ -20,9 +20,9 @@ makeFeatureColnames <- function(feature_shortname)
 ### Low-level accessor (not exported).
 ###
 
-.getConn <- function(envir) get("conn", envir=envir, inherits=FALSE)
+## .getConn <- function(envir) get("conn", envir=envir, inherits=FALSE)
 
-txdbConn <- function(txdb) .getConn(txdb@envir)
+## txdbConn <- function(txdb) .getConn(txdb@envir)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -160,7 +160,7 @@ txdbConn <- function(txdb) .getConn(txdb@envir)
 
 .valid.TranscriptDb <- function(x)
 {
-    conn <- txdbConn(x)
+    conn <- AnnotationDbi:::dbConn(x)
     c(AnnotationDbi:::.valid.metadata.table(conn, DB_TYPE_VALUE),
       .valid.transcript.table(conn),
       .valid.exon.table(conn),
@@ -204,7 +204,7 @@ setMethod("saveFeatures", "TranscriptDb",
               stop("'x' must be a TranscriptDb object")
             if (!isSingleString(file))
               stop("'file' must be a single string")
-            sqliteCopyDatabase(txdbConn(x), file)
+            sqliteCopyDatabase(AnnotationDbi:::dbConn(x), file)
           }
 )
 
@@ -295,9 +295,9 @@ loadFeatures <- function(file)
 ### Accessors.
 ###
 
-setMethod("metadata", "TranscriptDb",
-    function(x) dbReadTable(txdbConn(x), "metadata")
-)
+## setMethod("metadata", "TranscriptDb",
+##     function(x) dbReadTable(txdbConn(x), "metadata")
+## )
 
 
 .getChromInfo <- function(x)
@@ -315,7 +315,7 @@ setMethod("metadata", "TranscriptDb",
 setMethod("seqinfo", "TranscriptDb",
     function(x)
     {
-        data <- .getChromInfo(txdbConn(x))
+        data <- .getChromInfo(AnnotationDbi:::dbConn(x))
         Seqinfo(seqnames = data[["chrom"]],
                 seqlengths = data[["length"]],
                 isCircular = data[["is_circular"]])
@@ -359,7 +359,8 @@ setMethod("as.list", "TranscriptDb",
         sql <- paste("SELECT transcript._tx_id AS tx_id, tx_name,",
                      "tx_chrom, tx_strand, tx_start, tx_end FROM transcript",
                      ORDER_BY)
-        transcripts <- AnnotationDbi:::dbEasyQuery(txdbConn(x), sql)
+        transcripts <- AnnotationDbi:::dbEasyQuery(AnnotationDbi:::dbConn(x),
+                                                   sql)
         COL2CLASS <- c(
              tx_id="integer",
              tx_name="character",
@@ -386,7 +387,8 @@ setMethod("as.list", "TranscriptDb",
             "LEFT JOIN cds",
             "ON (splicing._cds_id=cds._cds_id)",
             ORDER_BY, ", exon_rank")
-        splicings <- AnnotationDbi:::dbEasyQuery(txdbConn(x), sql)
+        splicings <- AnnotationDbi:::dbEasyQuery(AnnotationDbi:::dbConn(x),
+                                                 sql)
         COL2CLASS <- c(
              tx_id="integer",
              exon_rank="integer",
@@ -410,7 +412,7 @@ setMethod("as.list", "TranscriptDb",
             "INNER JOIN gene",
             "ON (transcript._tx_id=gene._tx_id)",
             ORDER_BY, ", gene_id")
-        genes <- AnnotationDbi:::dbEasyQuery(txdbConn(x), sql)
+        genes <- AnnotationDbi:::dbEasyQuery(AnnotationDbi:::dbConn(x), sql)
         COL2CLASS <- c(
              tx_id="integer",
              gene_id="character"
@@ -418,7 +420,7 @@ setMethod("as.list", "TranscriptDb",
         genes <- setDataFrameColClass(genes, COL2CLASS)
 
         ## Retrieve the "chrominfo" element.
-        chrominfo <- .getChromInfo(txdbConn(x))
+        chrominfo <- .getChromInfo(AnnotationDbi:::dbConn(x))
 
         list(transcripts=transcripts, splicings=splicings,
              genes=genes, chrominfo=chrominfo)

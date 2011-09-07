@@ -37,7 +37,7 @@ featuredbConn <- function(featuredb) featuredb$conc
 
 .valid.FeatureDb <- function(x)
 {
-    conn <- txdbConn(x)
+    conn <- AnnotationDbi:::dbConn(x)
     c(.valid.metadata.table(conn,"FeatureDb"), 
       .valid.feature.table(conn))
 }
@@ -69,7 +69,7 @@ setMethod("saveFeatures", "FeatureDb",
               stop("'x' must be a FeatureDb object")
             if (!isSingleString(file))
               stop("'file' must be a single string")
-            sqliteCopyDatabase(txdbConn(x), file)
+            sqliteCopyDatabase(AnnotationDbi:::dbConn(x), file)
           }
 )
 

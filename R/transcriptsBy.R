@@ -17,7 +17,7 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
     SQL <- paste("SELECT",
                  paste(what_cols, collapse=", "),
                  "FROM", tablename)
-    data <- dbEasyQuery(txdbConn(txdb), SQL)
+    data <- dbEasyQuery(AnnotationDbi:::dbConn(txdb), SQL)
     ans <- data[[what_cols[2L]]]
     names(ans) <- as.character(data[[what_cols[1L]]])
     ans
@@ -109,7 +109,7 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
     sql <- gsub("GROUPBY", by, sql)
 
     ## get the data from the database
-    data <- dbEasyQuery(txdbConn(txdb), sql)
+    data <- dbEasyQuery(AnnotationDbi:::dbConn(txdb), sql)
 
     ## create the GRanges object
     cols <- gsub("TYPE", type, c("TYPE_id", "TYPE_name"))
@@ -230,7 +230,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
         " LEFT JOIN cds",
         "  ON (cds_id=cds._cds_id)",
         ORDER_BY, ", exon_rank")
-    ans <- dbEasyQuery(txdbConn(txdb), sql)
+    ans <- dbEasyQuery(AnnotationDbi:::dbConn(txdb), sql)
     if (translated.transcripts.only) {
         ids <- unique(ans$tx_id[!is.na(ans$cds_id)])
         ans <- ans[ans$tx_id %in% ids, ]

@@ -12,7 +12,7 @@
 
 ## simplify DB retrievals from metadata table
 .getMetaDataValue <- function(txdb, name){
-  con <- txdbConn(txdb)
+  con <- AnnotationDbi:::dbConn(txdb)
   res <- dbGetQuery(con, 
     paste("SELECT value FROM metadata WHERE name='",
       name,"'", sep=""))[[1]]  
@@ -24,7 +24,7 @@
 
 ## helper functions
 .makePackageName <- function(txdb){
-  con <- txdbConn(txdb)
+  con <- AnnotationDbi:::dbConn(txdb)
   species <- .abbrevSpeciesName(.getMetaDataValue(txdb,'Genus and Species'))  
   type <- .getMetaDataValue(txdb,'Data source')
   if(type=="UCSC"){
