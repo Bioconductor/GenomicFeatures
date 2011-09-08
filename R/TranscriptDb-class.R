@@ -178,6 +178,7 @@ setValidity2("TranscriptDb", .valid.TranscriptDb)
 ### AnnnotationDb
 ###
 
+## I don't think we need this anymore
 ## TranscriptDb <- function(conn, package, isActiveSeq, ...)
 ## {
 ##     ## if (!is(conn, "SQLiteConnection"))
@@ -200,11 +201,12 @@ setValidity2("TranscriptDb", .valid.TranscriptDb)
 setMethod("saveFeatures", "TranscriptDb",
           function(x, file)
           {
-            if (!is(x, "TranscriptDb"))
-              stop("'x' must be a TranscriptDb object")
-            if (!isSingleString(file))
-              stop("'file' must be a single string")
-            sqliteCopyDatabase(AnnotationDbi:::dbConn(x), file)
+            ## if (!is(x, "TranscriptDb"))
+            ##   stop("'x' must be a TranscriptDb object")
+            ## if (!isSingleString(file))
+            ##   stop("'file' must be a single string")
+            ## sqliteCopyDatabase(AnnotationDbi:::dbConn(x), file)
+            saveDb(x, file)
           }
 )
 
