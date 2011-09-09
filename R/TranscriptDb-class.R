@@ -178,20 +178,12 @@ setValidity2("TranscriptDb", .valid.TranscriptDb)
 ### AnnnotationDb
 ###
 
-## I don't think we need this anymore
-## TranscriptDb <- function(conn, package, isActiveSeq, ...)
-## {
-##     ## if (!is(conn, "SQLiteConnection"))
-##     ##     stop("'conn' must be an SQLiteConnection object")
-##     ## envir <- new.env(parent=emptyenv())
-##     ## assign("conn", conn, envir=envir)
-##     ## reg.finalizer(envir, function(e) dbDisconnect(.getConn(e)))
-##     ## seqNames <- .getChromInfo(conn)$chrom
-##     ## seqNVals <- rep(TRUE, length(seqNames))
-##     ## names(seqNVals) <- seqNames
-##     ## new("TranscriptDb", envir=envir, isActiveSeq=seqNVals)
-##     .TranscriptDb$new(conn=conn, isActiveSeq, ...)
-## }
+## Legacy constructor (still not exported) - used in some other places so
+## preserved for now
+TranscriptDb <- function(conn)
+{
+    .TranscriptDb$new(conn=conn)
+}
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -201,70 +193,16 @@ setValidity2("TranscriptDb", .valid.TranscriptDb)
 setMethod("saveFeatures", "TranscriptDb",
           function(x, file)
           {
-            ## if (!is(x, "TranscriptDb"))
-            ##   stop("'x' must be a TranscriptDb object")
-            ## if (!isSingleString(file))
-            ##   stop("'file' must be a single string")
-            ## sqliteCopyDatabase(AnnotationDbi:::dbConn(x), file)
             saveDb(x, file)
           }
 )
 
 
-## load methods for TranscriptDb: (default version should be adequate???)
-## setMethod(loadDb, c("character", "character", "character"),
-##     function(x, dbType, dbPackage, ...)
-## {
-##     require(dbPackage)
-##     getRefClass(dbType)$new(sqliteFile=x, ...)
-## })
-
-## ## This is the method people will use
-## setMethod(loadDb, c("character", "missing", "missing"),
-##     function(x, dbType, dbPackage, ...)
-## {
-##     conn <- dbConnect(SQLite(), x)
-##     if(dbExistsTable(conn, "metadata")) {
-##         dbType <- try(AnnoationDbi:::.getMetaValue(conn, "Db type"),silent = TRUE)
-##         dbPackage <- try(AnnoationDbi:::.getMetaValue(conn, "package"),silent = TRUE)
-##             if(is(dbType, "try-error") || is(dbPackage, "try-error")){
-##               stop("The Database is missing metadata required to establish either the database type or the package where that type is defined.")
-##             }
-##     }
-##     ## I need to do this extra step, but maybe onload is not the place to do it...
-##     seqNames <- .getChromInfo(conn)$chrom
-##     seqNVals <- rep(TRUE, length(seqNames))
-##     names(seqNVals) <- seqNames
-##     ## then cleanup
-##     dbDisconnect(conn)
-##     loadDb(x, dbType, dbPackage, isActiveSeq=seqNVals, ...)
-## })
 
 ## Old loadFeatures will be deprecated, but for now lets just not make any
 ## current users too unhappy.
 loadFeatures <- function(file)
 {
-    ## if (!isSingleString(file))
-    ##     stop("'file' must be a single string")
-    ## if(!file.exists(file))
-    ##     stop("file '", file, "' does not exist")
-
-    ## conn <- dbConnect(SQLite(), file)
-    ## if(dbExistsTable(conn, "metadata")) {
-    ##     type <- .getMetaValue(conn, "Db type")
-    ##         if(type == "TranscriptDb") {
-    ##           version <- try(.getMetaValue(conn,"DBSCHEMAVERSION"),
-    ##                          silent = TRUE)
-    ##           if(is(version, "try-error")){
-    ##               conn <- .fixOldDbSchema(conn)
-    ##           }
-    ##           return(TranscriptDb(conn))
-    ##         }else if(type == "FeatureDb") {
-    ##           return(FeatureDb(conn))
-    ##         }else{
-    ##           stop("The file you are trying to load is of unknown Db type")
-    ##         }
-    ## }
     loadDb(file)
 }
 
@@ -466,3 +404,9 @@ setReplaceMethod("isActiveSeq","TranscriptDb",
 setMethod("isActiveSeq", "TranscriptDb", function(x){x$isActiveSeq})
 
 
+## fl = "UCSC_knownGene_sample.sqlite"
+## library(GenomicFeatures)
+## foo = loadDb(fl)
+## library(RSQLite)
+## conn = dbConnect(SQLite(), fl)
+## bar = TranscriptDb(conn)
