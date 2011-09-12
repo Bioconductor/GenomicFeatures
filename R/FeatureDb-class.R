@@ -7,7 +7,7 @@
 ### A low-level accessor (not exported).
 ###
 
-featuredbConn <- function(featuredb) featuredb$conc
+## featuredbConn <- function(featuredb) featuredb$conc
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -52,24 +52,20 @@ setValidity2("FeatureDb", .valid.FeatureDb)
 ### Low-level constructor (not exported).
 ###
 
-FeatureDb <- function(sqliteFile)
+FeatureDb <- function(conn)
 {
-    .FeatureDb$new(sqliteFile=sqliteFile)
+    .FeatureDb$new(conn=conn)
 }
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Saving/loading. 
+### Saving. 
 ###
 
 setMethod("saveFeatures", "FeatureDb",
           function(x, file)
           {
-            if (!is(x, "FeatureDb"))
-              stop("'x' must be a FeatureDb object")
-            if (!isSingleString(file))
-              stop("'file' must be a single string")
-            sqliteCopyDatabase(AnnotationDbi:::dbConn(x), file)
+            saveDb(x, file)
           }
 )
 
@@ -78,34 +74,27 @@ setMethod("saveFeatures", "FeatureDb",
 ### Accessors.  
 ###
 
-setMethod("metadata", "FeatureDb",
-    function(x) dbReadTable(conn(x), "metadata")
-)
+## setMethod("metadata", "FeatureDb",
+##     function(x) dbReadTable(conn(x), "metadata")
+## )
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### The "show" method for FeatureDb objects.
 ###
 
-setMethod("show", "FeatureDb",
-    function(object)
-    {
-        cat("FeatureDb object:\n")
-        metadata <- metadata(object)
-        for (i in seq_len(nrow(metadata))) {
-            cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
-                "\n", sep="")
-        }
-    }
-)
+## setMethod("show", "FeatureDb",
+##     function(object)
+##     {
+##         cat("FeatureDb object:\n")
+##         metadata <- metadata(object)
+##         for (i in seq_len(nrow(metadata))) {
+##             cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
+##                 "\n", sep="")
+##         }
+##     }
+## )
 
 
 
 
-## ### =========================================================================
-## ### Setters and getters for isActiveSeq - not needed?
-## ### -------------------------------------------------------------------------
-## setReplaceMethod("isActiveSeq","FeatureDb",
-## 	  function(x, value){.setSeqNames(x,value)})
-
-## setMethod("isActiveSeq", "FeatureDb", function(x){x@isActiveSeq})
