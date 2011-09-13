@@ -7,7 +7,7 @@
 ### A low-level accessor (not exported).
 ###
 
-## featuredbConn <- function(featuredb) featuredb$conc
+## featuredbConn <- function(featuredb) featuredb$conn
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
