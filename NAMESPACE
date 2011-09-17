@@ -13,7 +13,7 @@ importMethodsFrom(RSQLite, dbBeginTransaction, dbGetPreparedQuery)
 
 import(IRanges)
 
-importFrom(GenomicRanges, GRanges, Seqinfo, seqinfo)
+importFrom(GenomicRanges, GRanges, Seqinfo, seqinfo, genome, "genome<-")
 importMethodsFrom(GenomicRanges, strand)
 
 importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
@@ -22,7 +22,7 @@ importFrom(Biostrings, "masks<-")
 importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
            useDataset, useMart)
 
-importFrom(rtracklayer, browserSession, genome, "genome<-", ucscTableQuery,
+importFrom(rtracklayer, browserSession, ucscTableQuery,
            tableNames, getTable, trackNames, ucscSchema)
 
 importFrom(RCurl, getURL)
