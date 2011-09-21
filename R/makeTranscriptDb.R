@@ -455,7 +455,8 @@
         "Creation time",   svn.time(),
         "GenomicFeatures version at creation time", thispkg_version,
         "RSQLite version at creation time", rsqlite_version,
-        "DBSCHEMAVERSION", DB_SCHEMA_VERSION),    
+        "DBSCHEMAVERSION", DB_SCHEMA_VERSION,
+        "package", "GenomicFeatures"),    
         ncol=2, byrow=TRUE
     )
     colnames(mat1) <- colnames(mat2) <- c("name", "value")
