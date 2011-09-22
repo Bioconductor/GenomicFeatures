@@ -27,7 +27,7 @@ importFrom(rtracklayer, browserSession, ucscTableQuery,
 
 importFrom(RCurl, getURL)
 
-importMethodsFrom(AnnotationDbi, loadDb, saveDb)
+importFrom(AnnotationDbi, loadDb, saveDb)
 
 exportClasses(TranscriptDb, FeatureDb)
 
