@@ -93,7 +93,7 @@ makeTxDbPackage <- function(txdb,
     RELEASEDATE= .getMetaDataValue(txdb,'Creation time'),
     SOURCEURL= .getMetaDataValue(txdb,'Resource URL'),
     ORGANISMBIOCVIEW=gsub(" ","_",.getMetaDataValue(txdb,'Genus and Species')),
-    TXDBOBJNAME=.makeObjectName(pkgName)
+    TXDBOBJNAME=pkgName ## .makeObjectName(pkgName)
    )
    ## Should never happen
    if (any(duplicated(names(symvals)))) {
