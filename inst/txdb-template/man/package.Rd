@@ -33,7 +33,7 @@ library(@PKGNAME@)
 ## list the contents that are loaded into memory
 ls('package:@PKGNAME@')
 ## show the txdb object that is loaded by calling it's name
-@TXDBOBJNAME@
+@PKGNAME@
 
 }
 
