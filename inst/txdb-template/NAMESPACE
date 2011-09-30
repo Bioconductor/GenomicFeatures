@@ -1,3 +1,4 @@
+import(AnnotationDbi)
 import(GenomicFeatures)
 
 ### Don't export @TXDBOBJNAME@ (the object defined in this

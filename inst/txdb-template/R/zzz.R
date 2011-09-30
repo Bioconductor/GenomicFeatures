@@ -4,8 +4,9 @@
 
 .onLoad <- function(libname, pkgname)
 {
-  txdb <- loadFeatures(system.file("extdata", paste(pkgname,
-    ".sqlite",sep=""), package=pkgname, lib.loc=libname))
+  txdb <- loadDb(system.file("extdata", paste(pkgname,
+    ".sqlite",sep=""), package=pkgname, lib.loc=libname),
+                   packageName=pkgname)
   objname <- "@TXDBOBJNAME@"
   ns <- asNamespace(pkgname)
   assign(objname, txdb, envir=ns)
