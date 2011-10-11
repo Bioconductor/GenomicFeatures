@@ -302,7 +302,9 @@
     vals <- list(ids)
     names(vals) <- primary_key
     SQL_where <- .sqlWhereIn(vals)
-    SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from, SQL_where)
+    SQL_orderby <- SQL_what
+    SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from,
+                 SQL_where, "ORDER BY", SQL_orderby)
     ans <- dbEasyQuery(AnnotationDbi:::dbConn(txdb), SQL)
     names(ans) <- ans_names
     ans
