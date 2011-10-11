@@ -185,12 +185,20 @@ supportedUCSCtables <- function()
         ),
         gene_id_type="HAVANA Pseudogene ID"
     ),
-    ensGene=list(
-        L2Rchain=list(
-            c(tablename="ensGtp",
-              Lcolname="transcript",
-              Rcolname="gene")
-        ),
+    ## UCSC changed its db schema in September 2011 and the ensGtp table became
+    ## unavailable for some genomes (sacCer2, hg18, etc..., apparently for
+    ## those assemblies that are not the latest). But the (new?) name2 column
+    ## in the ensGene table seems to contain the Ensembl gene ids so the join
+    ## with the ensGtp table is not needed anymore.
+    #ensGene=list(
+    #    L2Rchain=list(
+    #        c(tablename="ensGtp",
+    #          Lcolname="transcript",
+    #          Rcolname="gene")
+    #    ),
+    #)
+    ensGene=c(
+        colname="name2",
         gene_id_type="Ensembl gene ID"
     ),
     sgdGene=list(
@@ -206,14 +214,15 @@ supportedUCSCtables <- function()
     )
 )
 
-### Returns a named list with 2 elements:
+.howToGetTxName2GeneIdMapping <- function(tablename)
+    .UCSC_TXNAME2GENEID_MAPDEFS[[tablename]]
+
+### The 2 functions below must return a named list with 2 elements:
 ###   $genes: data.frame with tx_name and gene_id cols;
 ###   $gene_id_type: single string.
-.fetchTxName2GeneIdMappingFromUCSC <- function(session, track, Ltablename)
+.fetchTxName2GeneIdMappingFromUCSC <- function(session, track,
+                                               Ltablename, mapdef)
 {
-    mapdef <- .UCSC_TXNAME2GENEID_MAPDEFS[[Ltablename]]
-    if (is.null(mapdef))
-        return(list(genes=NULL, gene_id_type="no gene ids"))
     nlink <- length(mapdef$L2Rchain)
     for (i in seq_len(nlink)) {
         L2Rlink <- mapdef$L2Rchain[[i]]
@@ -243,6 +252,14 @@ supportedUCSCtables <- function()
     }
     genes <- data.frame(tx_name=tmp$Lcol, gene_id=tmp$Rcol)
     gene_id_type <- mapdef$gene_id_type
+    list(genes=genes, gene_id_type=gene_id_type)
+}
+
+.extractTxName2GeneIdMappingFromUCSCTxTable <- function(ucsc_txtable, mapdef)
+{
+    genes <- data.frame(tx_name=ucsc_txtable[["name"]],
+                        gene_id=ucsc_txtable[[mapdef["colname"]]])
+    gene_id_type <- mapdef["gene_id_type"]
     list(genes=genes, gene_id_type=gene_id_type)
 }
 
@@ -585,9 +602,19 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
              "inconvenience.")
     message("OK")
 
-    ## Download the tx_name-to-gene_id mapping.
-    txname2geneid <- .fetchTxName2GeneIdMappingFromUCSC(session,
-                                                        track, tablename)
+    ## Get the tx_name-to-gene_id mapping.
+    mapdef <- .howToGetTxName2GeneIdMapping(tablename)
+    if (is.null(mapdef)) {
+        txname2geneid <- list(genes=NULL, gene_id_type="no gene ids")
+    } else if (is.list(mapdef)) {
+        txname2geneid <- .fetchTxName2GeneIdMappingFromUCSC(session, track,
+                                 tablename, mapdef)
+    } else if (is.character(mapdef)) {
+        txname2geneid <- .extractTxName2GeneIdMappingFromUCSCTxTable(
+                                 ucsc_txtable, mapdef)
+    } else {
+        stop("GenomicFeatures internal error: invalid 'mapdef'")
+    }
 
     .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, txname2geneid$genes,
                                      genome, tablename,
