@@ -49,19 +49,17 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
   See \code{?\link{makeTranscriptDbFromUCSC}} for a similar function
   that feeds data from the UCSC source.
 
-  As of November 30, 2010, the BioMart databases with compatible transcript
-  annotations are:
+  BioMart databases that are known to have compatible transcript annotations are:
   \itemize{
-    \item ensembl: ENSEMBL GENES 60 (SANGER UK)
-    \item bacterial_mart_7: ENSEMBL BACTERIA 7 (EBI UK)
-    \item fungal_mart_7: ENSEMBL FUNGAL 7 (EBI UK)
-    \item metazoa_mart_7: ENSEMBL METAZOA 7 (EBI UK)
-    \item plant_mart_7: ENSEMBL PLANT 7 (EBI UK)
-    \item protist_mart_7: ENSEMBL PROTISTS 7 (EBI UK)
-    \item ensembl_expressionmart_48: EURATMART (EBI UK)
-    \item Ensembl56: PANCREATIC EXPRESSION DATABASE (INSTITUTE OF CANCER  UK)
+    \item the most recent ensembl: ENSEMBL GENES (SANGER UK)
+    \item the most recent bacterial_mart: ENSEMBL BACTERIA (EBI UK)
+    \item the most recent fungal_mart: ENSEMBL FUNGAL (EBI UK)
+    \item the most recent metazoa_mart: ENSEMBL METAZOA (EBI UK)
+    \item the most recent plant_mart: ENSEMBL PLANT (EBI UK)
+    \item the most recent protist_mart: ENSEMBL PROTISTS (EBI UK)
+    \item the most recent ensembl_expressionmart: EURATMART (EBI UK)
   }
-  Only ensembl and Ensembl56 have CDS information.
+  Not all annotations will have CDS information.
 }
 
 \value{A \link{TranscriptDb} object.}
