@@ -157,7 +157,7 @@ stopifnot(identical(as.list(txdb1), txdump))
 ## find key types
 keytypes(txdb)
 ## list IDs that can be used to filter
-head(keys(txdb, "GENENAME"))
+head(keys(txdb, "GENEID"))
 head(keys(txdb, "TXID"))
 head(keys(txdb, "TXNAME"))
 ## list columns that can be returned by select
