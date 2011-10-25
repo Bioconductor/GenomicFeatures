@@ -163,5 +163,8 @@ head(keys(txdb, "TXNAME"))
 ## list columns that can be returned by select
 cols(txdb)
 ## call select
-
+res = select(txdb, head(keys(txdb, "GENEID")),
+             cols = c("GENEID","TXNAME"),
+             keytype="GENEID")
+head(res)
 }

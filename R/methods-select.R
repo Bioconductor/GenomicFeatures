@@ -55,7 +55,7 @@
 ## genes AS g, splicing AS s etc.
 .makeAsList <- function(x, cnames){
   simpTNames <- .getSimpleTableNames(x, cnames)
-  paste(simpTNames, "AS", substr(simpTNames,1,1), ",",collapse=" ")
+  paste(simpTNames, "AS", substr(simpTNames,1,1), collapse=", ")
 }
 
 ## WHERE g._tx_id = s._tx_id etc.
@@ -63,12 +63,15 @@
   simpTNames <- .getSimpleTableNames(x, cnames)
   joins <- character()
   ## loop through elements of simpTNames
-  for(tName in seq_len(length(simpTNames))){
+  for(i in seq_len(length(simpTNames))){
+    tName <- simpTNames[i]
+    ## message(paste("Trying to join to:",tName))
     switch(EXPR = tName,
            "gene" =  joins <- c(joins, "g._tx_id = s._tx_id"),
            "transcript"  = joins <- c(joins, "t._tx_id = s._tx_id"),
            "exon"  = joins <- c(joins, "e._exon_id = s._exon_id"),
-           "cds"  = joins <- c(joins, "c._cds_id = s._cds_id"))
+           "cds"  = joins <- c(joins, "c._cds_id = s._cds_id"),
+           joins <- joins)
   }
   paste(joins, collapse=" AND ")
 }
@@ -167,7 +170,10 @@ setMethod("keytypes", "TranscriptDb",
 
 
 
-##   library(TxDb.Hsapiens.UCSC.hg19.knownGene); x <- txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene; cnames = c("GENEID","TXNAME"); k = head(keys(x,keytype="GENEID")); keytype = "GENEID"; cols = c("GENEID","TXNAME")
+##   library(TxDb.Hsapiens.UCSC.hg19.knownGene); x <- txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene;
+
+
+##  cnames = c("GENEID","TXNAME"); k = head(keys(x,keytype="GENEID")); keytype = "GENEID"; cols = c("GENEID","TXNAME")
 
 
 ##   keytypes(txdb)
@@ -182,5 +188,5 @@ setMethod("keytypes", "TranscriptDb",
 ##   cols(txdb)
 
 
-## AnnotationDbi:::debugSQL()
-##   select(txdb, head(keys(txdb, "GENEID")), cols = c("GENEID","TXNAME"), keytype="GENEID") 
+##   AnnotationDbi:::debugSQL()  
+##   foo = select(txdb, head(keys(txdb, "GENEID")), cols = c("GENEID","TXNAME"), keytype="GENEID")
