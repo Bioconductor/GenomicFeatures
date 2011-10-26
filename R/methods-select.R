@@ -98,6 +98,10 @@
   ## Then drop any cols that were not explicitely requested but that may have
   ## been appended to make a joind (like TXID)
   res <- res[,.reverseColAbbreviations(x,cols)]
+  ## Then sort rows and cols and drop the filtered rows etc. using .resort
+  ## from AnnoationDbi
+  joinType <- .reverseColAbbreviations(x, keytype)
+  res <- AnnotationDbi:::.resort(res, keys, joinType)
   ## Then put the user preferred headers onto the table
   res
 }
@@ -189,4 +193,10 @@ setMethod("keytypes", "TranscriptDb",
 
 
 ##   AnnotationDbi:::debugSQL()  
-##   foo = select(txdb, head(keys(txdb, "GENEID")), cols = c("GENEID","TXNAME"), keytype="GENEID")
+##   k = c("foo",head(keys(txdb, "GENEID"))); foo = select(txdb, k, cols = c("GENEID","TXNAME"), keytype="GENEID"); head(foo)
+
+
+
+## TODO: 1) add allCAPS headers. 2) make sure results are coming back in order
+## of keys that went in (resort them- and see if we can't reuse some of the
+## sorting code from AnnotationDbi).
