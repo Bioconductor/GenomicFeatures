@@ -49,7 +49,7 @@
   ## then continue on...  
   tabAbbrevs <- substr(unlist(tNames),1,1)
   names(tabAbbrevs) <- rep(names(tNames),elementLengths(tNames))  
-  paste( paste(tabAbbrevs, ".",names(tabAbbrevs), sep=""), collapse=", ")  
+  paste( paste(tabAbbrevs, ".",names(tabAbbrevs), sep=""), collapse=", ")
 }
 
 ## genes AS g, splicing AS s etc.
@@ -77,16 +77,22 @@
 }
 
 .makeKeyList <- function(x, keys, keytype){
-  colType <- .reverseColAbbreviations(x, keytype)
+  #colType <- .reverseColAbbreviations(x, keytype)
+  colType <- .makeSelectList(x, keytype)
   keys <- paste(paste("'",keys,"'",sep=""),collapse=",")
   paste(colType, "IN (", keys,")")
 }
 
 .select <- function(x, keys, cols, keytype){
+  ## 1st we check the keytype to see if it is valid:
+  if(is.na(keys(x, keytype)[1]) & length(keys(x, keytype))==1){ 
+    stop(paste("There do not appear to be any keys",
+               "for the keytype you have specified."))
+    }
   ## we add TXID to cnames, which forces splicing to always be included
   ## Splicing is a almost always needed, but almost never requested.
-  cnames <- c(cols, "TXID") 
-  sql <- paste("SELECT",
+  cnames <- unique(c(cols, "TXID", keytype)) 
+  sql <- paste("SELECT DISTINCT",
                .makeSelectList(x, cnames),
                "FROM",
                .makeAsList(x, cnames),
@@ -95,13 +101,22 @@
                "AND",
                .makeKeyList(x, keys, keytype))
   res <- AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x), sql)
-  ## Then drop any cols that were not explicitely requested but that may have
-  ## been appended to make a joind (like TXID)
-  res <- res[,.reverseColAbbreviations(x,cols)]
   ## Then sort rows and cols and drop the filtered rows etc. using .resort
   ## from AnnoationDbi
   joinType <- .reverseColAbbreviations(x, keytype)
-  res <- AnnotationDbi:::.resort(res, keys, joinType)
+  if(dim(res)[1]>0){
+    res <- AnnotationDbi:::.resort(res, keys, joinType)
+  }
+  ## Then drop any cols that were not explicitely requested but that may have
+  ## been appended to make a joind (like TXID)
+  res <- res[,.reverseColAbbreviations(x,cols)]
+##TODO: implement the above (equiv.) for the AnnotationDbi .select
+  
+  ## Then I need to filter out rows of NAs
+  res <- res[!apply(is.na(res),1,all),]
+  ## always reset rownames after removing rows
+  rownames(res) <- NULL
+  
   ## Then put the user preferred headers onto the table
   fcNames <- .makeColAbbreviations(x)
   colnames(res) <- fcNames[match(colnames(res), names(fcNames))]
@@ -199,7 +214,96 @@ setMethod("keytypes", "TranscriptDb",
 ##   k = c("foo",head(keys(txdb, "GENEID"))); foo = select(txdb, k, cols = c("GENEID","TXNAME"), keytype="GENEID"); head(foo)
 
 
+## more testing:
+##   cols = cols(x); k = head(keys(x,keytype="GENEID")); foo = select(txdb, k, cols = cols, keytype="GENEID");head(foo)
 
-## TODO: 1) add allCAPS headers. 2) make sure results are coming back in order
-## of keys that went in (resort them- and see if we can't reuse some of the
-## sorting code from AnnotationDbi).
+
+
+
+
+## A SQL bug seems to happen if I ask for a bit of everything (every table)
+## and provide a key that is not an entrez gene ID
+
+## cols = c("GENEID","TXNAME", "CDSID", "EXONSTART"); k = head(keys(txdb, "TXNAME")); foo = select(txdb, k, cols = cols, keytype="TXNAME"); head(foo)
+
+## what is odd also is that the SQL (in a SQL session) does not seem to
+## complete...
+
+
+## It's not just exonstart stuff because this works:
+##  cols = c("GENEID", "EXONSTART","TXNAME"); k = head(keys(txdb, "TXNAME")); foo = select(txdb, k, cols = cols, keytype="TXNAME"); head(foo)
+
+
+## While this fails
+##  cols = c("GENEID", "CDSID","TXNAME"); k = head(keys(txdb, "TXNAME")); foo = select(txdb, k, cols = cols, keytype="TXNAME"); head(foo)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###############################################
+############ Cleared up
+###############################################
+## Also this gives me a strange answer (one that is not really filtered quite right) - There may be a problem with AnnotationDbi:::.resort() - OR maybe I can just put a "DISTINCT" into the query? - and maybe I should really do both???
+
+## cols = c("GENEID","TXNAME", "TXID"); k = head(keys(txdb, "TXID"));foo = select(txdb, k, cols = cols, keytype="TXID"); head(foo)
+
+## Issue (used to) exist with above where the txid is NOT actually being
+## filtered
+## right.  The answer that comes back looks like:
+##   TXID GENEID     TXNAME
+## 1    1   <NA>       <NA>
+## 2    2   <NA>       <NA>
+## 3    3   <NA>       <NA>
+## 4    4 653635 uc009vis.2
+## 5    4 653635 uc009vis.2
+## 6    4 653635 uc009vis.2
+## ## but should look like:
+##   TXID GENEID     TXNAME
+## 1    1   <NA>       <NA>
+## 2    2   <NA>       <NA>
+## 3    3   <NA>       <NA>
+## 4    4 653635 uc009vis.2
+## 5    5 653635 uc009vjc.1
+## 6    6 653635 uc009vjd.2
+
+
+## DONE: add checks to pre-warn when a keytype has no values for it's key
+## cols = c("GENEID","TXNAME", "TXID", "CDSNAME"); k = head(keys(txdb, "CDSNAME"));foo = select(txdb, k, cols = cols, keytype="CDSNAME"); head(foo)
+
+
+
+
+## The following breaks because I end up with a jointype of _cds_id, but with
+## NO COLLUMNS that match to it..  So my SQL code has failed to retrieve
+## everything I needed...
+
+## IOW, the res has content from the DB but not the right amount?
+## cols = c("GENEID","TXNAME", "TXID"); k = head(keys(txdb, "CDSID"));foo = select(txdb, k, cols = cols, keytype="CDSID"); head(foo)
+
+
+## Another example of this:
+## The following wasn't working because the key column must always be part of
+## the query. (fixed)
+
+##  debug(AnnotationDbi:::.resort); AnnotationDbi:::debugSQL();
+##  cols = c("GENEID","TXNAME", "TXID", "CDSNAME"); k = head(keys(txdb, "CDSID"));foo = select(txdb, k, cols = cols, keytype="CDSID"); head(foo)
+
+## TODO: Drop rows that contain only NAs. - This is a good cleanup generalyl, and also if you drop the column that you sorted on then you may have added a bunch of NA rows for where there was no data, and now those are just silly. - DONE
+
+
