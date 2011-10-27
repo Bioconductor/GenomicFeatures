@@ -103,6 +103,8 @@
   joinType <- .reverseColAbbreviations(x, keytype)
   res <- AnnotationDbi:::.resort(res, keys, joinType)
   ## Then put the user preferred headers onto the table
+  fcNames <- .makeColAbbreviations(x)
+  colnames(res) <- fcNames[match(colnames(res), names(fcNames))]
   res
 }
 
@@ -119,8 +121,9 @@ setMethod("select", "TranscriptDb",
 #####################################################################
 ## method for cols()
 .cols <- function(x){
-  ## cast is just to drop names here
-  as.character(.makeColAbbreviations(x))  
+  res <- .makeColAbbreviations(x)
+  names(res) <- NULL
+  res
 }
 
 
