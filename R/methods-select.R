@@ -63,6 +63,8 @@
                   "ge" = "gtse",
                   "gc" = "gtsc",
                   "gs" = "gts",
+                  "sec" = "tsec",
+                  "gsec" = "gtsec",
                   "gtce" = "gtsec",
                   "gte" = "gtse",
                   tName)
@@ -73,50 +75,36 @@
 .tableJoinSelector <- function(tName){
   ## if its not one of these, then it needs to become one
   tName <- .missingTableInterpolator(tName)
-  gt <-  paste("SELECT * FROM gene AS g LEFT OUTER JOIN transcript AS t",
-               "ON g._tx_id=t._tx_id UNION",
-               "SELECT * FROM transcript AS t LEFT OUTER JOIN gene AS g",
-               "ON g._tx_id=t._tx_id")
-  gts <- paste("SELECT * FROM (",gt,
-               ") AS gt LEFT OUTER JOIN splicing AS s",
-               "ON gt._tx_id=s._tx_id  UNION",
-               "SELECT * FROM splicing AS s  LEFT OUTER JOIN (",gt,
-               ") AS gt ON gt._tx_id=s._tx_id")
-  gtse <- paste("SELECT * FROM (",gts,
-               ") AS gts LEFT OUTER JOIN exon AS e",
-               "ON gts._exon_id=e._exon_id  UNION",
-               "SELECT * FROM exon AS e  LEFT OUTER JOIN (",gts,
-               ") AS gts ON gts._exon_id=e._exon_id")
-  gtsc <- paste("SELECT * FROM (",gts,
-               ") AS gts LEFT OUTER JOIN cds AS c",
-               "ON gts._cds_id=c._cds_id  UNION",
-               "SELECT * FROM cds AS c  LEFT OUTER JOIN (",gts,
-               ") AS gts ON gts._cds_id=c._cds_id")
-  gtsec <- paste("SELECT * FROM (",gtse,
-               ") AS gtse LEFT OUTER JOIN cds AS c",
-               "ON gtse._cds_id=c._cds_id  UNION",
-               "SELECT * FROM cds AS c  LEFT OUTER JOIN (",gtse,
-               ") AS gtse ON gtse._cds_id=c._cds_id")
-  
-  ts <-  paste("SELECT * FROM transcript AS t LEFT OUTER JOIN splicing AS s",
-               "ON t._tx_id=s._tx_id UNION",
-               "SELECT * FROM splicing AS s LEFT OUTER JOIN transcript AS t",
-               "ON t._tx_id=s._tx_id")
-  tse <- paste("SELECT * FROM (",ts,
-               ") AS ts LEFT OUTER JOIN exon AS e",
-               "ON ts._exon_id=e._exon_id  UNION",
-               "SELECT * FROM exon AS e  LEFT OUTER JOIN (",ts,
-               ") AS ts ON ts._exon_id=e._exon_id")
-  tsc <- paste("SELECT * FROM (",ts,
-               ") AS ts LEFT OUTER JOIN cds AS c",
-               "ON ts._cds_id=c._cds_id  UNION",
-               "SELECT * FROM cds AS c  LEFT OUTER JOIN (",ts,
-               ") AS ts ON ts._cds_id=c._cds_id")
-  tsec <- paste("SELECT * FROM (",tse,
-               ") AS tse LEFT OUTER JOIN cds AS c",
-               "ON tse._cds_id=c._cds_id  UNION",
-               "SELECT * FROM cds AS c  LEFT OUTER JOIN (",tse,
-               ") AS tse ON tse._cds_id=c._cds_id")
+  gt <- paste("SELECT * FROM transcript LEFT JOIN gene ",
+                 "ON (transcript._tx_id = gene._tx_id) ")
+  gts <- paste("SELECT * FROM transcript LEFT JOIN gene ",
+                 "ON (transcript._tx_id = gene._tx_id) INNER JOIN splicing ",
+                 "ON (transcript._tx_id = splicing._tx_id) ")
+  gtse <- paste("SELECT * FROM transcript LEFT JOIN gene ",
+                 "ON (transcript._tx_id = gene._tx_id) INNER JOIN splicing ",
+                 "ON (transcript._tx_id = splicing._tx_id) ",
+                 "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) ")
+  gtsc <- paste("SELECT * FROM transcript LEFT JOIN gene ",
+                 "ON (transcript._tx_id = gene._tx_id) INNER JOIN splicing ",
+                 "ON (transcript._tx_id = splicing._tx_id) ",
+                 "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) ")
+  gtsec <- paste("SELECT * FROM transcript LEFT JOIN gene ",
+                 "ON (transcript._tx_id = gene._tx_id) INNER JOIN splicing ",
+                 "ON (transcript._tx_id = splicing._tx_id) ",
+                 "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) ",
+                 "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) ")
+  ts <- paste("SELECT * FROM transcript INNER JOIN splicing ",
+              "ON (transcript._tx_id = splicing._tx_id) ")
+  tse <- paste("SELECT * FROM transcript INNER JOIN splicing ",
+               "ON (transcript._tx_id = splicing._tx_id) ",
+               "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) ")
+  tsc <- paste("SELECT * FROM transcript INNER JOIN splicing ",
+               "ON (transcript._tx_id = splicing._tx_id) ",
+               "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) ")
+  tsec <- paste("SELECT * FROM transcript INNER JOIN splicing ",
+                "ON (transcript._tx_id = splicing._tx_id) ",
+                "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) ",
+                "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) ")
   
   sql <- switch(EXPR = tName,
                 "g" = "SELECT * FROM gene as g",
@@ -170,23 +158,6 @@
   .tableJoinSelector(tKey)  
 }
 
-## older form was an inner join (no good)
-## .makeJoinList <- function(x, cnames){
-##   simpTNames <- .getSimpleTableNames(x, cnames)
-##   joins <- character()
-##   ## loop through elements of simpTNames
-##   for(i in seq_len(length(simpTNames))){
-##     tName <- simpTNames[i]
-##     ## message(paste("Trying to join to:",tName))
-##     switch(EXPR = tName,
-##            "gene" =  joins <- c(joins, "g._tx_id = s._tx_id"),
-##            "transcript"  = joins <- c(joins, "t._tx_id = s._tx_id"),
-##            "exon"  = joins <- c(joins, "e._exon_id = s._exon_id"),
-##            "cds"  = joins <- c(joins, "c._cds_id = s._cds_id"),
-##            joins <- joins)
-##   }
-##   paste(joins, collapse=" AND ")
-## }
 
 .makeKeyList <- function(x, keys, keytype, abbrev=TRUE){
   #colType <- .reverseColAbbreviations(x, keytype)
@@ -206,30 +177,14 @@
   ## cnames <- unique(c(cols, "TXID", keytype))
   ## 
   cnames <- unique(c(cols, keytype))
-  ## sql <- paste("SELECT DISTINCT",
-  ##              .makeSelectList(x, cnames),
-  ##              "FROM",
-  ##              .makeAsList(x, cnames),
-  ##              "WHERE",
-  ##              .makeJoinList(x, cnames),
-  ##              "AND",
-  ##              .makeKeyList(x, keys, keytype))
   tKey <- .makeTableKey(x,cnames)
-  if(nchar(tKey) >1){
-    sql <- paste("SELECT DISTINCT",
-                 .makeSelectList(x, cnames, abbrev=FALSE),
-                 "FROM (",
-                 .makeJoinSQL(x, cnames),
-                 ") WHERE",
-                 .makeKeyList(x, keys, keytype, abbrev=FALSE))
-  }else{
-    sql <- paste("SELECT DISTINCT",
-                 .makeSelectList(x, cnames, abbrev=FALSE),
-                 "FROM (",
-                 .makeJoinSQL(x, cnames),
-                 ") WHERE",
-                 .makeKeyList(x, keys, keytype, abbrev=FALSE))
-  }
+#message(paste("keytype generated:",tKey))
+  sql <- paste("SELECT DISTINCT",
+               .makeSelectList(x, cnames, abbrev=FALSE),
+               "FROM (",
+               .makeJoinSQL(x, cnames),
+               ") WHERE",
+               .makeKeyList(x, keys, keytype, abbrev=FALSE))
   res <- AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x), sql)
   ## Then sort rows and cols and drop the filtered rows etc. using .resort
   ## from AnnoationDbi
@@ -332,9 +287,23 @@ setMethod("keytypes", "TranscriptDb",
 
 
 
+##   cols = c("GENEID","TXID", "EXONRANK","CDSID"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
+
+
+##   cols = c("GENEID","TXID", "EXONRANK", "EXONID"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
+
+
+## SUPER SLOW:
+##   cols = c("GENEID","TXID", "EXONRANK", "EXONID", "CDSID"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
+
+## TODO: WHY is THIS a gtsec? Where is gene coming from?  (I fear it is from
+## TXID...)
+##   cols = c("TXID", "EXONRANK", "EXONID", "CDSID"); keys = head(keys(x, "TXID")); foo = select(x, keys, cols = cols, keytype="TXID");head(foo)
 
 
 
+
+##   cols = c("EXONRANK", "EXONID", "CDSID"); keys = head(keys(x, "EXONID")); foo = select(x, keys, cols = cols, keytype="EXONID");head(foo)
 
 
 
@@ -473,10 +442,10 @@ setMethod("keytypes", "TranscriptDb",
 
 #### create 8 core-combos
 #### and select appropriate one based on who is in .getSimpleTableNames()
-## (SELECT * FROM gene AS g LEFT OUTER JOIN transcript AS t ON
+## (SELECT * FROM gene AS g LEFT JOIN transcript AS t ON
 ## g._tx_id=t._tx_id
 ## UNION
-## SELECT * FROM transcript AS t LEFT OUTER JOIN gene AS g ON
+## SELECT * FROM transcript AS t LEFT JOIN gene AS g ON
 ## g._tx_id=t._tx_id )
 
 #### suffix (add later, once we have our cores)
