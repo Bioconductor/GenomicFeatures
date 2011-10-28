@@ -34,6 +34,9 @@
   tabNames
 }
 
+## This function is necessarily conservative.  It will always get all the
+## possible tables that may be involved since it cannot know which ones will
+## be present
 .getSimpleTableNames <- function(x, cnames){
   unique(unlist(.getTableNames(x, cnames)))
 }
@@ -75,43 +78,43 @@
 .tableJoinSelector <- function(tName){
   ## if its not one of these, then it needs to become one
   tName <- .missingTableInterpolator(tName)
-  gt <- paste("SELECT * FROM transcript LEFT JOIN gene ",
-                 "ON (transcript._tx_id = gene._tx_id) ")
-  gts <- paste("SELECT * FROM transcript LEFT JOIN gene ",
+  gt <- paste("(SELECT * FROM transcript LEFT JOIN gene ",
+                 "ON (transcript._tx_id = gene._tx_id) )")
+  gts <- paste("(SELECT * FROM transcript LEFT JOIN gene ",
                  "ON (transcript._tx_id = gene._tx_id) INNER JOIN splicing ",
-                 "ON (transcript._tx_id = splicing._tx_id) ")
-  gtse <- paste("SELECT * FROM transcript LEFT JOIN gene ",
-                 "ON (transcript._tx_id = gene._tx_id) INNER JOIN splicing ",
-                 "ON (transcript._tx_id = splicing._tx_id) ",
-                 "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) ")
-  gtsc <- paste("SELECT * FROM transcript LEFT JOIN gene ",
+                 "ON (transcript._tx_id = splicing._tx_id) )")
+  gtse <- paste("(SELECT * FROM transcript LEFT JOIN gene ",
                  "ON (transcript._tx_id = gene._tx_id) INNER JOIN splicing ",
                  "ON (transcript._tx_id = splicing._tx_id) ",
-                 "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) ")
-  gtsec <- paste("SELECT * FROM transcript LEFT JOIN gene ",
+                 "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) )")
+  gtsc <- paste("(SELECT * FROM transcript LEFT JOIN gene ",
+                 "ON (transcript._tx_id = gene._tx_id) INNER JOIN splicing ",
+                 "ON (transcript._tx_id = splicing._tx_id) ",
+                 "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) )")
+  gtsec <- paste("(SELECT * FROM transcript LEFT JOIN gene ",
                  "ON (transcript._tx_id = gene._tx_id) INNER JOIN splicing ",
                  "ON (transcript._tx_id = splicing._tx_id) ",
                  "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) ",
-                 "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) ")
-  ts <- paste("SELECT * FROM transcript INNER JOIN splicing ",
-              "ON (transcript._tx_id = splicing._tx_id) ")
-  tse <- paste("SELECT * FROM transcript INNER JOIN splicing ",
+                 "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) )")
+  ts <- paste("(SELECT * FROM transcript INNER JOIN splicing ",
+              "ON (transcript._tx_id = splicing._tx_id) )")
+  tse <- paste("(SELECT * FROM transcript INNER JOIN splicing ",
                "ON (transcript._tx_id = splicing._tx_id) ",
-               "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) ")
-  tsc <- paste("SELECT * FROM transcript INNER JOIN splicing ",
+               "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) )")
+  tsc <- paste("(SELECT * FROM transcript INNER JOIN splicing ",
                "ON (transcript._tx_id = splicing._tx_id) ",
-               "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) ")
-  tsec <- paste("SELECT * FROM transcript INNER JOIN splicing ",
+               "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) )")
+  tsec <- paste("(SELECT * FROM transcript INNER JOIN splicing ",
                 "ON (transcript._tx_id = splicing._tx_id) ",
                 "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) ",
-                "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) ")
+                "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) )")
   
   sql <- switch(EXPR = tName,
-                "g" = "SELECT * FROM gene as g",
-                "t" = "SELECT * FROM transcript as t",
-                "s" = "SELECT * FROM splicing as s",
-                "e" = "SELECT * FROM exon as e",
-                "c" = "SELECT * FROM cds as c",
+                "g" = "gene",
+                "t" = "transcript",
+                "s" = "splicing",
+                "e" = "exon",
+                "c" = "cds",
                 "gt" = gt,
                 "gts" = gts,
                 "gtse" = gtse,
@@ -138,7 +141,7 @@
     tNames <- lapply(tNames,function(x){x[1]})
     ## then continue on...  
     tabAbbrevs <- substr(unlist(tNames),1,1)
-    names(tabAbbrevs) <- rep(names(tNames),elementLengths(tNames))    
+    names(tabAbbrevs) <- rep(names(tNames),elementLengths(tNames))   
   if(abbrev==TRUE){
     paste( paste(tabAbbrevs, ".",names(tabAbbrevs), sep=""), collapse=", ")
   }else{
@@ -178,24 +181,26 @@
   ## 
   cnames <- unique(c(cols, keytype))
   tKey <- .makeTableKey(x,cnames)
-#message(paste("keytype generated:",tKey))
+  ## message(paste("keytype generated:",tKey))
   sql <- paste("SELECT DISTINCT",
                .makeSelectList(x, cnames, abbrev=FALSE),
-               "FROM (",
+               "FROM",
                .makeJoinSQL(x, cnames),
-               ") WHERE",
+               "WHERE",
                .makeKeyList(x, keys, keytype, abbrev=FALSE))
   res <- AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x), sql)
+
+  
+  ## Then drop any cols that were not explicitely requested but that may have
+  ## been appended to make a joind (like TXID)
+  res <- res[,.reverseColAbbreviations(x,cols),drop=FALSE]
+
   ## Then sort rows and cols and drop the filtered rows etc. using .resort
   ## from AnnoationDbi
   joinType <- .reverseColAbbreviations(x, keytype)
   if(dim(res)[1]>0){
     res <- AnnotationDbi:::.resort(res, keys, joinType)
   }
-  ## Then drop any cols that were not explicitely requested but that may have
-  ## been appended to make a joind (like TXID)
-  res <- res[,.reverseColAbbreviations(x,cols),drop=FALSE]
-##TODO: implement the above (equiv.) for the AnnotationDbi .select()
   
   ## Then I need to filter out rows of NAs
   res <- res[!apply(is.na(res),1,all),,drop=FALSE]
@@ -281,6 +286,8 @@ setMethod("keytypes", "TranscriptDb",
 
 ##   cols = c("GENEID"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
 
+##   cols = c("TXID"); keys = head(keys(x, "TXID")); foo = select(x, keys, cols = cols, keytype="TXID");head(foo)
+
 ##   cols = c("GENEID","TXID"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
 
 ##   cols = c("GENEID","TXID", "EXONRANK"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
@@ -293,11 +300,11 @@ setMethod("keytypes", "TranscriptDb",
 ##   cols = c("GENEID","TXID", "EXONRANK", "EXONID"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
 
 
-## SUPER SLOW:
+## formerly this was too slow
 ##   cols = c("GENEID","TXID", "EXONRANK", "EXONID", "CDSID"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
 
-## TODO: WHY is THIS a gtsec? Where is gene coming from?  (I fear it is from
-## TXID...)
+
+## WHY is THIS a gtsec? Because our name translation is conservative.
 ##   cols = c("TXID", "EXONRANK", "EXONID", "CDSID"); keys = head(keys(x, "TXID")); foo = select(x, keys, cols = cols, keytype="TXID");head(foo)
 
 
@@ -425,7 +432,7 @@ setMethod("keytypes", "TranscriptDb",
 ##  debug(AnnotationDbi:::.resort); AnnotationDbi:::debugSQL();
 ##  cols = c("GENEID","TXNAME", "TXID", "CDSNAME"); k = head(keys(txdb, "CDSID"));foo = select(txdb, k, cols = cols, keytype="CDSID"); head(foo)
 
-## TODO: Drop rows that contain only NAs. - This is a good cleanup generalyl, and also if you drop the column that you sorted on then you may have added a bunch of NA rows for where there was no data, and now those are just silly. - DONE
+## Drop rows that contain only NAs. - This is a good cleanup generalyl, and also if you drop the column that you sorted on then you may have added a bunch of NA rows for where there was no data, and now those are just silly. - DONE
 
 
 
