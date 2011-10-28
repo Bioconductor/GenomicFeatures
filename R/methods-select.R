@@ -1,4 +1,3 @@
-
 #####################################################################
 ## Helpers to access/process the table names and columns
 .getTableColMapping <- function(x){
@@ -40,16 +39,123 @@
 }
 
 #####################################################################
+## Helpers for join-type selection
+
+## this just takes the 1 letter abrevs and makes them into a sorted string
+## that can be used as a key below
+.encodeSortedTableKey <- function(sTNames){
+  prefSort <- c("g","t","s","e","c")  
+  res <- sTNames[match(prefSort, sTNames)]
+  paste(res[!is.na(res)], collapse="")
+}
+.makeTableKey <- function(x,cnames){
+  sTNames <- substr(.getSimpleTableNames(x, cnames),1,1)
+  .encodeSortedTableKey(sTNames)    
+}
+
+## for unlikely table combos 
+.missingTableInterpolator <- function(tName){
+  tName <- switch(EXPR = tName,
+                  "se" = "tse",
+                  "sc" = "tsc",
+                  "te" = "tse",
+                  "tc" = "tsc",
+                  "ge" = "gtse",
+                  "gc" = "gtsc",
+                  "gs" = "gts",
+                  "gtce" = "gtsec",
+                  "gte" = "gtse",
+                  tName)
+  tName
+}
+
+## real joins for likely combos
+.tableJoinSelector <- function(tName){
+  ## if its not one of these, then it needs to become one
+  tName <- .missingTableInterpolator(tName)
+  gt <-  paste("SELECT * FROM gene AS g LEFT OUTER JOIN transcript AS t",
+               "ON g._tx_id=t._tx_id UNION",
+               "SELECT * FROM transcript AS t LEFT OUTER JOIN gene AS g",
+               "ON g._tx_id=t._tx_id")
+  gts <- paste("SELECT * FROM (",gt,
+               ") AS gt LEFT OUTER JOIN splicing AS s",
+               "ON gt._tx_id=s._tx_id  UNION",
+               "SELECT * FROM splicing AS s  LEFT OUTER JOIN (",gt,
+               ") AS gt ON gt._tx_id=s._tx_id")
+  gtse <- paste("SELECT * FROM (",gts,
+               ") AS gts LEFT OUTER JOIN exon AS e",
+               "ON gts._exon_id=e._exon_id  UNION",
+               "SELECT * FROM exon AS e  LEFT OUTER JOIN (",gts,
+               ") AS gts ON gts._exon_id=e._exon_id")
+  gtsc <- paste("SELECT * FROM (",gts,
+               ") AS gts LEFT OUTER JOIN cds AS c",
+               "ON gts._cds_id=c._cds_id  UNION",
+               "SELECT * FROM cds AS c  LEFT OUTER JOIN (",gts,
+               ") AS gts ON gts._cds_id=c._cds_id")
+  gtsec <- paste("SELECT * FROM (",gtse,
+               ") AS gtse LEFT OUTER JOIN cds AS c",
+               "ON gtse._cds_id=c._cds_id  UNION",
+               "SELECT * FROM cds AS c  LEFT OUTER JOIN (",gtse,
+               ") AS gtse ON gtse._cds_id=c._cds_id")
+  
+  ts <-  paste("SELECT * FROM transcript AS t LEFT OUTER JOIN splicing AS s",
+               "ON t._tx_id=s._tx_id UNION",
+               "SELECT * FROM splicing AS s LEFT OUTER JOIN transcript AS t",
+               "ON t._tx_id=s._tx_id")
+  tse <- paste("SELECT * FROM (",ts,
+               ") AS ts LEFT OUTER JOIN exon AS e",
+               "ON ts._exon_id=e._exon_id  UNION",
+               "SELECT * FROM exon AS e  LEFT OUTER JOIN (",ts,
+               ") AS ts ON ts._exon_id=e._exon_id")
+  tsc <- paste("SELECT * FROM (",ts,
+               ") AS ts LEFT OUTER JOIN cds AS c",
+               "ON ts._cds_id=c._cds_id  UNION",
+               "SELECT * FROM cds AS c  LEFT OUTER JOIN (",ts,
+               ") AS ts ON ts._cds_id=c._cds_id")
+  tsec <- paste("SELECT * FROM (",tse,
+               ") AS tse LEFT OUTER JOIN cds AS c",
+               "ON tse._cds_id=c._cds_id  UNION",
+               "SELECT * FROM cds AS c  LEFT OUTER JOIN (",tse,
+               ") AS tse ON tse._cds_id=c._cds_id")
+  
+  sql <- switch(EXPR = tName,
+                "g" = "SELECT * FROM gene as g",
+                "t" = "SELECT * FROM transcript as t",
+                "s" = "SELECT * FROM splicing as s",
+                "e" = "SELECT * FROM exon as e",
+                "c" = "SELECT * FROM cds as c",
+                "gt" = gt,
+                "gts" = gts,
+                "gtse" = gtse,
+                "gtsc" = gtsc,
+                "gtsec" = gtsec,
+                "tse" = tse,
+                "tsc" = tsc,
+                "tsec" = tsec,
+                stop(paste("No query for this combination of tables.",
+                           "Please add",tName,"to the interpolator")))
+  sql
+}
+
+
+#####################################################################
 ## Helpers to generate SQL statements for select()
+
 ## g.gene_id, s.exon_rank
-.makeSelectList <- function(x, cnames){
-  tNames <- .getTableNames(x, cnames)
-  ## For just this fun, drop all but 1st element for each tNames
-  tNames <- lapply(tNames,function(x){x[1]})
-  ## then continue on...  
-  tabAbbrevs <- substr(unlist(tNames),1,1)
-  names(tabAbbrevs) <- rep(names(tNames),elementLengths(tNames))  
-  paste( paste(tabAbbrevs, ".",names(tabAbbrevs), sep=""), collapse=", ")
+## For some cols, they will occur in more than one table within the join,
+## in that case, we just grab the 1st one.
+.makeSelectList <- function(x, cnames, abbrev=TRUE){
+    tNames <- .getTableNames(x, cnames)
+    ## Here is where we only grab the 1st one...
+    tNames <- lapply(tNames,function(x){x[1]})
+    ## then continue on...  
+    tabAbbrevs <- substr(unlist(tNames),1,1)
+    names(tabAbbrevs) <- rep(names(tNames),elementLengths(tNames))    
+  if(abbrev==TRUE){
+    paste( paste(tabAbbrevs, ".",names(tabAbbrevs), sep=""), collapse=", ")
+  }else{
+    paste(names(tabAbbrevs), collapse=", ")
+  }
 }
 
 ## genes AS g, splicing AS s etc.
@@ -59,26 +165,32 @@
 }
 
 ## WHERE g._tx_id = s._tx_id etc.
-.makeJoinList <- function(x, cnames){
-  simpTNames <- .getSimpleTableNames(x, cnames)
-  joins <- character()
-  ## loop through elements of simpTNames
-  for(i in seq_len(length(simpTNames))){
-    tName <- simpTNames[i]
-    ## message(paste("Trying to join to:",tName))
-    switch(EXPR = tName,
-           "gene" =  joins <- c(joins, "g._tx_id = s._tx_id"),
-           "transcript"  = joins <- c(joins, "t._tx_id = s._tx_id"),
-           "exon"  = joins <- c(joins, "e._exon_id = s._exon_id"),
-           "cds"  = joins <- c(joins, "c._cds_id = s._cds_id"),
-           joins <- joins)
-  }
-  paste(joins, collapse=" AND ")
+.makeJoinSQL <- function(x, cnames){
+  tKey <- .makeTableKey(x,cnames)
+  .tableJoinSelector(tKey)  
 }
 
-.makeKeyList <- function(x, keys, keytype){
+## older form was an inner join (no good)
+## .makeJoinList <- function(x, cnames){
+##   simpTNames <- .getSimpleTableNames(x, cnames)
+##   joins <- character()
+##   ## loop through elements of simpTNames
+##   for(i in seq_len(length(simpTNames))){
+##     tName <- simpTNames[i]
+##     ## message(paste("Trying to join to:",tName))
+##     switch(EXPR = tName,
+##            "gene" =  joins <- c(joins, "g._tx_id = s._tx_id"),
+##            "transcript"  = joins <- c(joins, "t._tx_id = s._tx_id"),
+##            "exon"  = joins <- c(joins, "e._exon_id = s._exon_id"),
+##            "cds"  = joins <- c(joins, "c._cds_id = s._cds_id"),
+##            joins <- joins)
+##   }
+##   paste(joins, collapse=" AND ")
+## }
+
+.makeKeyList <- function(x, keys, keytype, abbrev=TRUE){
   #colType <- .reverseColAbbreviations(x, keytype)
-  colType <- .makeSelectList(x, keytype)
+  colType <- .makeSelectList(x, keytype, abbrev)
   keys <- paste(paste("'",keys,"'",sep=""),collapse=",")
   paste(colType, "IN (", keys,")")
 }
@@ -89,17 +201,35 @@
     stop(paste("There do not appear to be any keys",
                "for the keytype you have specified."))
     }
-  ## we add TXID to cnames, which forces splicing to always be included
+  ## we used to add TXID to cnames, which forces splicing to always be included
   ## Splicing is a almost always needed, but almost never requested.
-  cnames <- unique(c(cols, "TXID", keytype)) 
-  sql <- paste("SELECT DISTINCT",
-               .makeSelectList(x, cnames),
-               "FROM",
-               .makeAsList(x, cnames),
-               "WHERE",
-               .makeJoinList(x, cnames),
-               "AND",
-               .makeKeyList(x, keys, keytype))
+  ## cnames <- unique(c(cols, "TXID", keytype))
+  ## 
+  cnames <- unique(c(cols, keytype))
+  ## sql <- paste("SELECT DISTINCT",
+  ##              .makeSelectList(x, cnames),
+  ##              "FROM",
+  ##              .makeAsList(x, cnames),
+  ##              "WHERE",
+  ##              .makeJoinList(x, cnames),
+  ##              "AND",
+  ##              .makeKeyList(x, keys, keytype))
+  tKey <- .makeTableKey(x,cnames)
+  if(nchar(tKey) >1){
+    sql <- paste("SELECT DISTINCT",
+                 .makeSelectList(x, cnames, abbrev=FALSE),
+                 "FROM (",
+                 .makeJoinSQL(x, cnames),
+                 ") WHERE",
+                 .makeKeyList(x, keys, keytype, abbrev=FALSE))
+  }else{
+    sql <- paste("SELECT DISTINCT",
+                 .makeSelectList(x, cnames, abbrev=FALSE),
+                 "FROM (",
+                 .makeJoinSQL(x, cnames),
+                 ") WHERE",
+                 .makeKeyList(x, keys, keytype, abbrev=FALSE))
+  }
   res <- AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x), sql)
   ## Then sort rows and cols and drop the filtered rows etc. using .resort
   ## from AnnoationDbi
@@ -109,11 +239,11 @@
   }
   ## Then drop any cols that were not explicitely requested but that may have
   ## been appended to make a joind (like TXID)
-  res <- res[,.reverseColAbbreviations(x,cols)]
-##TODO: implement the above (equiv.) for the AnnotationDbi .select
+  res <- res[,.reverseColAbbreviations(x,cols),drop=FALSE]
+##TODO: implement the above (equiv.) for the AnnotationDbi .select()
   
   ## Then I need to filter out rows of NAs
-  res <- res[!apply(is.na(res),1,all),]
+  res <- res[!apply(is.na(res),1,all),,drop=FALSE]
   ## always reset rownames after removing rows
   rownames(res) <- NULL
   
@@ -193,6 +323,28 @@ setMethod("keytypes", "TranscriptDb",
 
 
 ##   library(TxDb.Hsapiens.UCSC.hg19.knownGene); x <- txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene;
+
+##   cols = c("GENEID"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
+
+##   cols = c("GENEID","TXID"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
+
+##   cols = c("GENEID","TXID", "EXONRANK"); keys = head(keys(x, "GENEID")); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ##  cnames = c("GENEID","TXNAME"); k = head(keys(x,keytype="GENEID")); keytype = "GENEID"; cols = c("GENEID","TXNAME")
@@ -305,5 +457,30 @@ setMethod("keytypes", "TranscriptDb",
 ##  cols = c("GENEID","TXNAME", "TXID", "CDSNAME"); k = head(keys(txdb, "CDSID"));foo = select(txdb, k, cols = cols, keytype="CDSID"); head(foo)
 
 ## TODO: Drop rows that contain only NAs. - This is a good cleanup generalyl, and also if you drop the column that you sorted on then you may have added a bunch of NA rows for where there was no data, and now those are just silly. - DONE
+
+
+
+
+
+
+#### So what is the pattern?
+#### prefix (add later)
+## SELECT * FROM
+
+#### OPTIONAL: swap in as clause code for "gene AS g" etc.
+#### OPTIONAL EFFICIENCY: replace * from core clauses with string from .makeSelectList() (but after filtering out unwanted stuff of course) so that we only grab stuff that was asked for from the beginning.
+#### OPTIONAL EFFICIENCY???: Can I make it smarter so that it starts with the table that has the selected keys and then builds out from there?  No that can't work, because of the outer join requirements?? - definitely want to do this one "later" since even if it can work it will be difficult to implement gracefully.
+
+#### create 8 core-combos
+#### and select appropriate one based on who is in .getSimpleTableNames()
+## (SELECT * FROM gene AS g LEFT OUTER JOIN transcript AS t ON
+## g._tx_id=t._tx_id
+## UNION
+## SELECT * FROM transcript AS t LEFT OUTER JOIN gene AS g ON
+## g._tx_id=t._tx_id )
+
+#### suffix (add later, once we have our cores)
+## WHERE gene_id IN ('10772','22947')
+## limit 10;
 
 
