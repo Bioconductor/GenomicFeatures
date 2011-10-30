@@ -1,0 +1,49 @@
+CHANGES IN VERSION 1.6
+-----------------------
+
+NEW FEATURES
+
+    o TranscriptDbs are now available as standard packages.  Functions
+    that were made available before the last release allow users to
+    create these packages.
+
+    o TranscriptDb objects now can be used with select
+
+    o select method for TranscriptDb objects to extract data.frames of
+    available annotations.  Users can specify keys, along with the
+    keytype, and the columns of data that they want extracted from the
+    annotation package.
+
+    o keys now will operate on TranscriptDB objects to expose ID types
+    as potential keys
+
+    o keytypes will show which kinds of IDs can be used as a key by select
+
+    o cols will display the kinds of data that can be extracted by select
+
+    o isActiveSeq has been added to allow entire chromosomes to be
+    toggled active/inactive by the user.  By default, everything is
+    exposed, but if you wish you can now easily hide everything that
+    you don't want to see.  Subsequence to this, all your accessors
+    will behave as if only the "active" things are present in the
+    database.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o saveDb and loadDb are here and will be replacing saveFeatures
+    and loadFeatures.  The reason for the name change is that they
+    dispatch on (and should work with a wider range of object types
+    than just trancriptDb objects (and their associated databases).
+
+BUG FIXES
+
+    o ORDER BY clause has been added to SQL statements to enforce more
+    consistent ordering of returned rows.
+
+    o bug fixes to enable DB construction to still work even after
+    changes in schemas etc at UCSC, and ensembl sources.
+
+    o bug fixes to makeFeatureDbFromUCSC allow it to work more
+    reliably (it was being a little too optimistic about what UCSC
+    would actually supply data for)
+
