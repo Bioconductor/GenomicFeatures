@@ -46,7 +46,6 @@ export(
   makeTranscriptDbFromUCSC,
   getChromInfoFromBiomart,
   makeTranscriptDbFromBiomart,
-  as.list,
   seqinfo,
   transcripts,
   exons,
