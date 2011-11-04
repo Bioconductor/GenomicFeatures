@@ -138,8 +138,10 @@
     }
     transcripts_tx_id <- seq_len(nrow(bm_table))
     transcripts_tx_name <- bm_table$ensembl_transcript_id
-    if (any(duplicated(transcripts_tx_name)))
-        stop("the 'ensembl_transcript_id' attribute contains duplicated values")
+    ## if (any(duplicated(transcripts_tx_name)))
+    ##     stop("the 'ensembl_transcript_id' attribute contains duplicated values")
+    if (any(duplicated(bm_table)))
+        stop("The 'transcripts' data frame from biomart contains duplicated rows.")
     transcripts <- data.frame(
         tx_id=transcripts_tx_id,
         tx_name=transcripts_tx_name,

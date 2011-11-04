@@ -4,6 +4,9 @@
 ############################################################################
 ## We define a new class when we have a new kind of schema to represent.
 
+## This is to try and tidy up before setRefClass()
+gc()
+
 ### Concrete GenomicFeatures types
 .TranscriptDb <-
     setRefClass("TranscriptDb", contains="AnnotationDb",
@@ -23,3 +26,6 @@
 
 .FeatureDb <-
     setRefClass("FeatureDb", contains="AnnotationDb")
+
+## This is to try and tidy up after setRefClass()
+#gc()
