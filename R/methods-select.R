@@ -120,6 +120,8 @@
                 "gtse" = gtse,
                 "gtsc" = gtsc,
                 "gtsec" = gtsec,
+                "gse" = gtse,
+                "gsc" = gtsc,
                 "tse" = tse,
                 "tsc" = tsc,
                 "tsec" = tsec,
@@ -193,7 +195,7 @@
   
   ## Then drop any cols that were not explicitely requested but that may have
   ## been appended to make a joind (like TXID)
-  res <- res[,.reverseColAbbreviations(x,cols),drop=FALSE]
+  res <- res[,.reverseColAbbreviations(x,cnames),drop=FALSE]
 
   ## Then sort rows and cols and drop the filtered rows etc. using .resort
   ## from AnnoationDbi
@@ -460,3 +462,7 @@ setMethod("keytypes", "TranscriptDb",
 ## limit 10;
 
 
+## This tests the "gse"
+## library(TxDb.Hsapiens.UCSC.hg19.knownGene);txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene; foo = select(txdb, keys=head(keys(txdb)) , cols=c("EXONSTART","GENEID","EXONRANK"),keytype="GENEID")
+## This tests whether or not I get the keytype back with select...
+## foo = select(txdb, keys=head(keys(txdb)) , cols=c("EXONSTART","EXONRANK"),keytype="GENEID")
