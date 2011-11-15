@@ -377,6 +377,20 @@ compareTranscriptDbs <- function(txdb1, txdb2)
     identical(txdump1, txdump2)
 }
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Coercion
+###
+
+setMethod("asBED", "TranscriptDb", function(x) {
+  exons_tx <- exonsBy(x)
+  cds_tx <- range(cdsBy(x))
+  exons_tx <- exons_tx[names(cds_tx)]
+  bed <- asBED(exons_tx)
+  values(bed)$thick <- unlist(ranges(cds_tx), use.names=FALSE)
+  bed
+})
+
+setMethod(rtracklayer:::bestFileFormat, "TranscriptDb", function(x) "bed")
 
 ### =========================================================================
 ### Setters and getters for isActiveSeq

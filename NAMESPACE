@@ -23,7 +23,7 @@ importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
            useDataset, useMart)
 
 importFrom(rtracklayer, browserSession, ucscTableQuery,
-           tableNames, getTable, trackNames, ucscSchema)
+           tableNames, getTable, trackNames, ucscSchema, asBED)
 
 importFrom(RCurl, getURL)
 
