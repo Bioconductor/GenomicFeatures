@@ -184,10 +184,19 @@
   cnames <- unique(c(cols, keytype))
   tKey <- .makeTableKey(x,cnames)
   ## message(paste("keytype generated:",tKey))
+
+  ## the following just gets the major join and then modifies it ONLY if the
+  ## keytype is a GENEID
+  majorJoin <- .makeJoinSQL(x, cnames)
+  if(keytype=="GENEID"){
+    majorJoin <- sub("FROM transcript LEFT JOIN gene",
+                     "FROM transcript INNER JOIN gene",majorJoin)
+  }
+  
   sql <- paste("SELECT DISTINCT",
                .makeSelectList(x, cnames, abbrev=FALSE),
                "FROM",
-               .makeJoinSQL(x, cnames),
+               majorJoin,
                "WHERE",
                .makeKeyList(x, keys, keytype, abbrev=FALSE))
   res <- AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x), sql)
@@ -463,6 +472,21 @@ setMethod("keytypes", "TranscriptDb",
 
 
 ## This tests the "gse"
-## library(TxDb.Hsapiens.UCSC.hg19.knownGene);txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene; foo = select(txdb, keys=head(keys(txdb)) , cols=c("EXONSTART","GENEID","EXONRANK"),keytype="GENEID")
+## library(TxDb.Hsapiens.UCSC.hg19.knownGene);x <- txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene; foo = select(txdb, keys=head(keys(txdb)) , cols=c("EXONSTART","GENEID","EXONRANK"),keytype="GENEID")
 ## This tests whether or not I get the keytype back with select...
 ## foo = select(txdb, keys=head(keys(txdb)) , cols=c("EXONSTART","EXONRANK"),keytype="GENEID")
+
+
+
+
+
+
+
+
+
+
+
+
+## NEW STRESS TEST (big join with A LOT OF gene_id keys
+## library(TxDb.Hsapiens.UCSC.hg19.knownGene);x <- txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene;  cols = c("GENEID","CDSSTART"); keys = keys(x, "GENEID"); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
+
