@@ -52,13 +52,15 @@ cds(x, ...)
     Must be \code{NULL} or a character vector with values in the
     above list of valid names. With the following restrictions:
     \itemize{
-    \item \code{"tx_chrom"} and \code{"tx_strand"} are not allowed
-          for \code{transcripts}.
-    \item \code{"exon_chrom"} and \code{"exon_strand"} are not allowed
-          for \code{exons}.
-    \item \code{"cds_chrom"} and \code{"cds_strand"} are not allowed
-          for \code{cds}.
+      \item \code{"tx_chrom"} and \code{"tx_strand"} are not allowed
+      for \code{transcripts}.
+      \item \code{"exon_chrom"} and \code{"exon_strand"} are not allowed
+      for \code{exons}.
+      \item \code{"cds_chrom"} and \code{"cds_strand"} are not allowed
+      for \code{cds}.
     }
+    If the vector is named, those names are used for the corresponding
+    column in the element metadata of the returned object.    
   }
 }
 

@@ -384,7 +384,9 @@
     seqlevels(ans) <- names(isActSeq)[isActSeq]
 
     ans_values <- c(DataFrame(root_data[root_columns]), child_data)
-    values(ans) <- ans_values[columns]
+    if (is.null(names(columns)))
+      names(columns) <- columns
+    values(ans)[names(columns)] <- ans_values[columns]
     ans <- .assignMetadataList(ans, txdb)
     ans
 }
