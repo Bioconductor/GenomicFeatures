@@ -23,7 +23,7 @@ importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
            useDataset, useMart)
 
 importFrom(rtracklayer, browserSession, ucscTableQuery,
-           tableNames, getTable, trackNames, ucscSchema, asBED)
+           tableNames, getTable, trackNames, ucscSchema, asBED, asGFF)
 
 importFrom(RCurl, getURL)
 
@@ -90,5 +90,6 @@ exportMethods(
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
   isActiveSeq,
-  "isActiveSeq<-"
+  "isActiveSeq<-",
+  asBED, asGFF
 )
