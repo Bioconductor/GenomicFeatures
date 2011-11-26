@@ -13,8 +13,8 @@ Description: A set of tools and methods for making and manipulating transcript
         between transcripts, exons, cds and genes. Flexible methods are
         provided for extracting the desired features in a convenient format.
 Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
-Depends: BiocGenerics (>= 0.1.0), IRanges (>= 1.13.4), GenomicRanges (>= 1.7.3),
-         AnnotationDbi (>= 1.15.39)
+Depends: BiocGenerics (>= 0.1.0), IRanges (>= 1.13.10),
+         GenomicRanges (>= 1.7.3), AnnotationDbi (>= 1.15.39)
 Imports: methods, DBI (>= 0.2-5), RSQLite (>= 0.8-1),
          BiocGenerics, IRanges, GenomicRanges,
          Biostrings (>= 2.23.2), rtracklayer (>= 1.15.1), biomaRt, RCurl,
