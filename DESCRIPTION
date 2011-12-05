@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.7.5
+Version: 1.7.6
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -28,6 +28,7 @@ Suggests: rtracklayer, biomaRt,
 Collate: AllClasses.R
          AllGenerics.R
          utils.R
+         Ensembl.utils.R
          TranscriptDb-class.R
          FeatureDb-class.R
          makeTranscriptDb.R
@@ -40,7 +41,7 @@ Collate: AllClasses.R
          regions.R
          features.R
          extractTranscriptsFromGenome.R
-	 makeTxDbPackage.R
-	 methods-select.R
+         makeTxDbPackage.R
+         methods-select.R
          test_GenomicFeatures_package.R
 biocViews: Genetics, Infrastructure, Annotation, HighThroughputSequencing
