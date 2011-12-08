@@ -174,7 +174,10 @@
     names_as_int[match("M", ans$name)] <- nb_ints + 3L
     names_as_int[match("MT", ans$name)] <- nb_ints + 4L
     names_as_int[match(extra_seqnames, ans$name)] <- .Machine$integer.max
+    prev_locale <- Sys.getlocale("LC_COLLATE")
+    Sys.setlocale("LC_COLLATE", "C")
     oo <- order(ans$coord_system_rank, names_as_int, ans$name)
+    Sys.setlocale("LC_COLLATE", prev_locale)
     ans <- ans[oo, , drop=FALSE]
 
     ## 3rd filtering: There can be more than one row per sequence name, but
