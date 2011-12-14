@@ -11,6 +11,7 @@ importMethodsFrom(DBI, dbCommit, dbConnect,
 importFrom(RSQLite, SQLite, sqliteCopyDatabase, SQLITE_RO, sqliteQuickSQL)
 importMethodsFrom(RSQLite, dbBeginTransaction, dbGetPreparedQuery)
 
+import(BiocGenerics)
 import(IRanges)
 
 importFrom(GenomicRanges, GRanges, Seqinfo, seqinfo, genome, "genome<-")

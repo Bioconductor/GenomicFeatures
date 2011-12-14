@@ -51,9 +51,10 @@
   res <- sTNames[match(prefSort, sTNames)]
   paste(res[!is.na(res)], collapse="")
 }
+
 .makeTableKey <- function(x,cnames){
   sTNames <- substr(.getSimpleTableNames(x, cnames),1,1)
-  .encodeSortedTableKey(sTNames)    
+  .encodeSortedTableKey(sTNames)
 }
 
 ## for unlikely table combos 
