@@ -14,12 +14,19 @@
 }
 \usage{
 getChromInfoFromBiomart(biomart="ensembl",
-                        dataset="hsapiens_gene_ensembl")
+                        dataset="hsapiens_gene_ensembl",
+                        id_prefix,
+                        host="www.biomart.org",
+                        port=80)
 
 makeTranscriptDbFromBiomart(biomart="ensembl",
                             dataset="hsapiens_gene_ensembl",
                             transcript_ids=NULL,
-                            circ_seqs=DEFAULT_CIRC_SEQS)
+                            circ_seqs=DEFAULT_CIRC_SEQS,
+                            filters="",
+                            id_prefix="ensembl_",
+                            host="www.biomart.org",
+                            port=80)
 }
 \arguments{
   \item{biomart}{which BioMart database to use.
@@ -40,6 +47,14 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
     Otherwise it will say 'Full dataset: yes'.}
   \item{circ_seqs}{a character vector to list out which chromosomes
     should be marked as circular.}
+  \item{filters}{Additional filters to use in the BioMart query. Must be
+    a named list. An example is \code{filters=as.list(c(source="entrez"))}}
+  \item{host}{The host URL of the BioMart. Defaults to www.biomart.org.}
+  \item{port}{The port to use in the HTTP communication with the host.}
+  \item{id_prefix}{Specifies the prefix used in BioMart attributes. For
+    example, some BioMarts may have an attribute specified as
+    \code{"ensembl_transcript_id"} whereas others have the same attribute
+    specified as \code{"transcript_id"}. Defaults to \code{"ensembl_"}.}
 }
 
 \details{
