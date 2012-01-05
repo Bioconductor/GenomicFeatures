@@ -21,7 +21,7 @@
 
 % select and select related methods
 \alias{cols,TranscriptDb-method}
-\alias{keytypes,TrabscriptDb-method}
+\alias{keytypes,TranscriptDb-method}
 \alias{keys,TranscriptDb-method}
 \alias{select,TranscriptDb-method}
 
