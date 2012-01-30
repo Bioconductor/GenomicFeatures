@@ -63,8 +63,13 @@ sortExonsByRank(x, decreasing.rank.on.minus.strand=FALSE)
     object.
   }
   \item{decreasing.rank.on.minus.strand}{
-    \code{TRUE} or \code{FALSE}. Are the exons in a transcript on the minus
-    strand ordered by increasing or decreasing rank?
+    \code{TRUE} or \code{FALSE}.
+    Describes the order of exons in transcripts located on the minus strand:
+    are they ordered by increasing (default) or decreasing rank?
+    For all the functions described in this man page (except
+    \code{sortExonsByRank}), this argument describes the input.
+    For \code{sortExonsByRank}, it describes how exons should be ordered in
+    the output.
   }
   \item{use.names}{
     \code{TRUE} or \code{FALSE}. Ignored if \code{txdb} is not
@@ -240,7 +245,7 @@ stopifnot(complement(chrII)[ref_locs[[2]]] == tx_seqs[[2]])
 ## ---------------------------------------------------------------------
 ## E. sortExonsByRank()
 ## ---------------------------------------------------------------------
-## Typically used to reorder by decreasing rank the exons of transcripts
+## Typically used to reorder by decreasing rank the exons in transcripts
 ## located on the minus strand:
 exbytx3 <- sortExonsByRank(exbytx, decreasing.rank.on.minus.strand=TRUE)
 exbytx3
