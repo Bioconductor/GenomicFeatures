@@ -15,7 +15,7 @@
 \usage{
 getChromInfoFromBiomart(biomart="ensembl",
                         dataset="hsapiens_gene_ensembl",
-                        id_prefix,
+                        id_prefix="ensembl_",
                         host="www.biomart.org",
                         port=80)
 

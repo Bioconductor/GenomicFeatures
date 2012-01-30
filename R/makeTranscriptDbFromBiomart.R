@@ -209,14 +209,17 @@
 
 getChromInfoFromBiomart <- function(biomart="ensembl",
                                     dataset="hsapiens_gene_ensembl",
-                                    id_prefix,
+                                    id_prefix="ensembl_",
                                     host="www.biomart.org",
                                     port=80)
 {
     biomartAttribGroups <- .getBiomartAttribGroups(id_prefix)
 
     mart <- .parseBMMartParams(biomart=biomart,
-                               dataset=dataset)
+                               dataset=dataset,
+                               host=host,
+                               port=port)
+
     filters <- .parseBMFiltersParams(transcript_ids=NULL, id_prefix)
     values <- .parseBMValuesParams(transcript_ids=NULL)
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
@@ -225,7 +228,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                                            id_prefix)
     chrominfo <- .makeBiomartChrominfo(mart,
                                        extra_seqnames=transcripts$tx_chrom,
-                                       host, port)
+                                       host=host, port=port)
     chrominfo[,1:2]
 }
 
