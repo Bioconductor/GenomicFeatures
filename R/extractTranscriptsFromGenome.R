@@ -44,7 +44,7 @@ transcriptWidths <- function(exonStarts=list(), exonEnds=list())
 
 transcriptLocs2refLocs <- function(tlocs, exonStarts=list(), exonEnds=list(),
                                    strand=character(0),
-                                   reorder.exons.on.minus.strand=FALSE)
+                                   decreasing.rank.on.minus.strand=FALSE)
 {
     if (!is.list(tlocs)) {
         if (!is(tlocs, "IntegerList"))
@@ -70,11 +70,11 @@ transcriptLocs2refLocs <- function(tlocs, exonStarts=list(), exonEnds=list(),
      || length(exonEnds) != length(strand))
         stop("'tlocs', 'exonStarts', 'exonEnds' and 'strand' ",
              "must have the same length")
-    if (!isTRUEorFALSE(reorder.exons.on.minus.strand))
-        stop("'reorder.exons.on.minus.strand' must be TRUE or FALSE")
+    if (!isTRUEorFALSE(decreasing.rank.on.minus.strand))
+        stop("'decreasing.rank.on.minus.strand' must be TRUE or FALSE")
     GenomicRanges:::unsafe.transcriptLocs2refLocs(tlocs,
                             exonStarts, exonEnds, strand,
-                            reorder.exons.on.minus.strand)
+                            decreasing.rank.on.minus.strand)
 }
 
 
@@ -84,7 +84,7 @@ transcriptLocs2refLocs <- function(tlocs, exonStarts=list(), exonEnds=list(),
 
 extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
                                strand=character(0),
-                               reorder.exons.on.minus.strand=FALSE)
+                               decreasing.rank.on.minus.strand=FALSE)
 {
     if (!is(x, "DNAString")) {
         if (!is(x, "MaskedDNAString"))
@@ -107,12 +107,12 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
     if (length(exonStarts) != length(strand)
      || length(exonEnds) != length(strand))
         stop("'exonStarts', 'exonEnds' and 'strand' must have the same length")
-    if (!isTRUEorFALSE(reorder.exons.on.minus.strand))
-        stop("'reorder.exons.on.minus.strand' must be TRUE or FALSE")
+    if (!isTRUEorFALSE(decreasing.rank.on.minus.strand))
+        stop("'decreasing.rank.on.minus.strand' must be TRUE or FALSE")
     lkup <- Biostrings:::getDNAComplementLookup()
     GenomicRanges:::unsafe.extractTranscripts("DNAStringSet", x,
                             exonStarts, exonEnds, strand,
-                            reorder.exons.on.minus.strand, lkup)
+                            decreasing.rank.on.minus.strand, lkup)
 }
 
 
@@ -158,7 +158,8 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
 ###                 'exonEnds[[i]]' is made of the ends of 'x[[i]]',
 ###                 eventually ordered according to the exon rank information
 ###                 found in 'x[[i]]'.
-.makeUCSCTxListFromGRangesList <- function(x, reorder.exons.on.minus.strand=TRUE)
+.makeUCSCTxListFromGRangesList <- function(x,
+                                      decreasing.rank.on.minus.strand=FALSE)
 {
     f <- rep.int(seq_len(length(x)), elementLengths(x))
     ## Note that 'x@unlistData' is 50000x faster than
@@ -183,7 +184,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
     exon_rank <- elementMetadata(x@unlistData)$exon_rank
     if (is.null(exon_rank)) {
         warning("GRangesList object has no \"exon_rank\" column --> ",
-                "inferring rank from exon position within GRanges")
+                "inferring rank from exon position within each GRanges")
     } else {
         if (!is.numeric(exon_rank))
             stop("\"exon_rank\" column in GRangesList object is not numeric")
@@ -195,7 +196,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
     }
     exonStarts <- unname(split(start(x@unlistData), f))
     exonEnds <- unname(split(end(x@unlistData), f))
-    if (!is.null(exon_rank) || reorder.exons.on.minus.strand) {
+    if (!is.null(exon_rank) || decreasing.rank.on.minus.strand) {
         exonStarts <- lapply(seq_len(length(x)),
             function(i) {
                 y <- exonStarts[[i]]
@@ -209,7 +210,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
                         perm <- perm - shift
                     y[perm] <- y
                 }
-                if (reorder.exons.on.minus.strand && strand[i] == "-")
+                if (decreasing.rank.on.minus.strand && strand[i] == "-")
                     y <- rev(y)
                 y
             })
@@ -223,7 +224,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
                         perm <- perm - shift
                     y[perm] <- y
                 }
-                if (reorder.exons.on.minus.strand && strand[i] == "-")
+                if (decreasing.rank.on.minus.strand && strand[i] == "-")
                     y <- rev(y)
                 y
             })
@@ -236,7 +237,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
 }
 
 .extractTranscriptsFromGenomeAndUCSCTxList <- function(genome, ucsc_txlist,
-                                                  reorder.exons.on.minus.strand)
+                                                decreasing.rank.on.minus.strand)
 {
     ## The 3 lists below have identical shapes and names (names are the
     ## REFSEQnames).
@@ -259,7 +260,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
         strand <- strand_list[[REFSEQname]]
         extractTranscripts(subject,
             exonStarts, exonEnds, strand,
-            reorder.exons.on.minus.strand=reorder.exons.on.minus.strand)
+            decreasing.rank.on.minus.strand=decreasing.rank.on.minus.strand)
     }
     ## Loop over the names of the reference sequences and extract the
     ## transcripts.
@@ -270,23 +271,62 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
     ans
 }
 
-extractTranscriptsFromGenome <- function(genome, txdb, use.names=TRUE)
+extractTranscriptsFromGenome <- function(genome, txdb,
+                                         decreasing.rank.on.minus.strand=FALSE,
+                                         use.names=TRUE)
 {
     if (!is(genome, "BSgenome"))
         stop("'genome' must be a BSgenome object")
+    if (!isTRUEorFALSE(decreasing.rank.on.minus.strand))
+        stop("'decreasing.rank.on.minus.strand' must be TRUE or FALSE")
     if (is.data.frame(txdb)) {
         ucsc_txlist <- .makeUCSCTxListFromUCSCTxTable(txdb)
-        reorder.exons <- TRUE
     } else {
         if (is(txdb, "TranscriptDb")) {
+            if (decreasing.rank.on.minus.strand)
+                stop("'decreasing.rank.on.minus.strand' must be FALSE ",
+                     "when 'txdb' is a TranscriptDb object")
             txdb <- exonsBy(txdb, by="tx", use.names=use.names)
         } else if (!is(txdb, "GRangesList"))
             stop("'txdb' must be a TranscriptDb object, a GRangesList ",
                  "object, or a data frame")
-        ucsc_txlist <- .makeUCSCTxListFromGRangesList(txdb,
-                           reorder.exons.on.minus.strand=FALSE)
-        reorder.exons <- FALSE
+        ucsc_txlist <- .makeUCSCTxListFromGRangesList(txdb)
     }
-    .extractTranscriptsFromGenomeAndUCSCTxList(genome, ucsc_txlist, reorder.exons)
+    .extractTranscriptsFromGenomeAndUCSCTxList(genome, ucsc_txlist,
+                                               decreasing.rank.on.minus.strand)
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### sortExonsByRank()
+###
+### FIXME: Current implementation is a quick-and-dirty one that leverages the
+### work done in .makeUCSCTxListFromGRangesList(). Therefore it looses the
+### elementMetadata. We need something better, faster, and documented (and it
+### should probably go somewhere else).
+### TODO: Also, maybe exonsBy(... , by="tx") should get a
+### 'by.decreasing.rank.on.minus.strand' arg or something like that.
+###
+
+sortExonsByRank <- function(x, decreasing.rank.on.minus.strand=FALSE)
+{
+    if (!is(x, "GRangesList"))
+        stop("'x' must be a GRangesList object, ",
+             "typically coming from exonsBy(... , by=\"tx\")")
+    if (!isTRUEorFALSE(decreasing.rank.on.minus.strand))
+        stop("'decreasing.rank.on.minus.strand' must be TRUE or FALSE")
+    ucsc_txlist <- .makeUCSCTxListFromGRangesList(x,
+        decreasing.rank.on.minus.strand=decreasing.rank.on.minus.strand)
+    nexon <- elementLengths(ucsc_txlist$exonStarts)
+    unlisted_seqnames <- Rle(ucsc_txlist$chrom, nexon)
+    unlisted_strand <- Rle(strand(ucsc_txlist$strand), nexon)
+    unlisted_start <- unlist(ucsc_txlist$exonStarts, use.names=FALSE)
+    unlisted_end <- unlist(ucsc_txlist$exonEnds, use.names=FALSE)
+    unlisted <- GRanges(seqnames=unlisted_seqnames,
+                        ranges=IRanges(unlisted_start, unlisted_end),
+                        strand=unlisted_strand)
+    seqlevels(unlisted) <- seqlevels(x)
+    seqinfo(unlisted) <- seqinfo(x)
+    relist(unlisted, x)
 }
 

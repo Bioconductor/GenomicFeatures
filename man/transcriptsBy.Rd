@@ -120,3 +120,4 @@ threeUTRsByTranscript(x, ...)
   fiveUTRsByTranscript(txdb)
   fiveUTRsByTranscript(txdb, use.names=TRUE)  # more informative group names
 }
+

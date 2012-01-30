@@ -4,6 +4,7 @@
 \alias{transcriptLocs2refLocs}
 \alias{extractTranscripts}
 \alias{extractTranscriptsFromGenome}
+\alias{sortExonsByRank}
 
 \title{Tools for extracting transcript sequences}
 
@@ -25,14 +26,20 @@
   \code{transcriptLocs2refLocs} converts transcript-based
   locations into reference-based (aka chromosome-based or genomic)
   locations.
+
+  \code{sortExonsByRank} orders (or reorders) by rank the exons
+  stored in a \link[GenomicRanges]{GRangesList} object containing
+  exons grouped by transcript.
 }
 
 \usage{
-extractTranscriptsFromGenome(genome, txdb, use.names=TRUE)
+extractTranscriptsFromGenome(genome, txdb,
+                             decreasing.rank.on.minus.strand=FALSE,
+                             use.names=TRUE)
 
 extractTranscripts(x,
         exonStarts=list(), exonEnds=list(), strand=character(0),
-        reorder.exons.on.minus.strand=FALSE)
+        decreasing.rank.on.minus.strand=FALSE)
 
 ## Related utilities:
 
@@ -40,7 +47,9 @@ transcriptWidths(exonStarts=list(), exonEnds=list())
 
 transcriptLocs2refLocs(tlocs,
         exonStarts=list(), exonEnds=list(), strand=character(0),
-        reorder.exons.on.minus.strand=FALSE)
+        decreasing.rank.on.minus.strand=FALSE)
+
+sortExonsByRank(x, decreasing.rank.on.minus.strand=FALSE)
 }
 
 \arguments{
@@ -52,6 +61,10 @@ transcriptLocs2refLocs(tlocs,
   \item{txdb}{
     A \link{TranscriptDb} object or a \link[GenomicRanges]{GRangesList}
     object.
+  }
+  \item{decreasing.rank.on.minus.strand}{
+    \code{TRUE} or \code{FALSE}. Are the exons in a transcript on the minus
+    strand ordered by increasing or decreasing rank?
   }
   \item{use.names}{
     \code{TRUE} or \code{FALSE}. Ignored if \code{txdb} is not
@@ -84,10 +97,6 @@ transcriptLocs2refLocs(tlocs,
     \code{exonEnds} specifying the strand (\code{"+"} or \code{"-"})
     from which the transcript is coming.
   }
-  \item{reorder.exons.on.minus.strand}{
-    \code{TRUE} or \code{FALSE}. Should the order of exons
-    for transcripts coming from the minus strand be reversed?
-  }
   \item{tlocs}{
     A list of integer vectors of the same length as \code{exonStarts}
     and \code{exonEnds}. Each element in \code{tlocs} must contain
@@ -119,99 +128,113 @@ transcriptLocs2refLocs(tlocs,
 \seealso{
   \code{\link[BSgenome]{available.genomes}},
   \link{TranscriptDb-class},
+  \code{\link{exonsBy}},
   \link[GenomicRanges]{GRangesList-class},
   \link[Biostrings]{DNAStringSet-class}
 }
 
 \examples{
-  library(BSgenome.Hsapiens.UCSC.hg18)  # load the genome
+library(BSgenome.Hsapiens.UCSC.hg18)  # load the genome
 
-  ## ---------------------------------------------------------------------
-  ## A. USING extractTranscriptsFromGenome() WITH A TranscriptDb OBJECT
-  ## ---------------------------------------------------------------------
-  txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                           package="GenomicFeatures")
-  txdb <- loadFeatures(txdb_file)
-  txseqs <- extractTranscriptsFromGenome(Hsapiens, txdb)
-  txseqs
+## ---------------------------------------------------------------------
+## A. USING extractTranscriptsFromGenome() WITH A TranscriptDb OBJECT
+## ---------------------------------------------------------------------
+txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                         package="GenomicFeatures")
+txdb <- loadFeatures(txdb_file)
+tx_seqs1 <- extractTranscriptsFromGenome(Hsapiens, txdb)
+tx_seqs1
 
-  ## ---------------------------------------------------------------------
-  ## B. USING extractTranscriptsFromGenome() WITH A GRangesList OBJECT
-  ## ---------------------------------------------------------------------
+## ---------------------------------------------------------------------
+## B. USING extractTranscriptsFromGenome() WITH A GRangesList OBJECT
+## ---------------------------------------------------------------------
 
-  ## A GRangesList object containing exons grouped by transcripts gives
-  ## the same result as above:
-  exbytx <- exonsBy(txdb, by="tx", use.names=TRUE)
-  txseqs2 <- extractTranscriptsFromGenome(Hsapiens, exbytx)
-  ## A sanity check:
-  stopifnot(identical(unname(sapply(width(exbytx), sum)), width(txseqs2)))
+## A GRangesList object containing exons grouped by transcripts gives
+## the same result as above:
+exbytx <- exonsBy(txdb, by="tx", use.names=TRUE)
+tx_seqs2 <- extractTranscriptsFromGenome(Hsapiens, exbytx)
+stopifnot(identical(as.character(tx_seqs2), as.character(tx_seqs1)))
 
-  ## CDSs grouped by transcripts (this extracts only the translated parts
-  ## of the transcripts):
-  cds <- extractTranscriptsFromGenome(Hsapiens, cdsBy(txdb))
+## A sanity check:
+stopifnot(identical(unname(sapply(width(exbytx), sum)), width(tx_seqs2)))
 
-  ## ---------------------------------------------------------------------
-  ## C. GOING FROM TRANSCRIPT-BASED TO REFERENCE-BASED LOCATIONS
-  ## ---------------------------------------------------------------------
-  ## Get the reference-based locations of the first 4 (5' end)
-  ## and last 4 (3' end) nucleotides in each transcript:
-  tlocs <- lapply(width(txseqs2), function(w) c(1:4, (w-3):w))
-  tx_strand <- sapply(strand(exbytx), runValue)
-  ## Note that, because of how we made them, 'tlocs', 'start(exbytx)',
-  ## 'end(exbytx)' and 'tx_strand' have the same length, and, for any
-  ## valid positional index, elements at this position are corresponding
-  ## to each other. This is how transcriptLocs2refLocs() expects them
-  ## to be!
-  rlocs <- transcriptLocs2refLocs(tlocs, start(exbytx), end(exbytx),
-               tx_strand, reorder.exons.on.minus.strand=TRUE)
+## CDSs grouped by transcripts (this extracts only the translated parts
+## of the transcripts):
+cds_seqs <- extractTranscriptsFromGenome(Hsapiens, cdsBy(txdb, by="tx"))
 
-  ## ---------------------------------------------------------------------
-  ## D. EXTRACTING WORM TRANSCRIPTS ZC101.3 AND F37B1.1
-  ## ---------------------------------------------------------------------
+## ---------------------------------------------------------------------
+## C. GOING FROM TRANSCRIPT-BASED TO REFERENCE-BASED LOCATIONS
+## ---------------------------------------------------------------------
+## Get the reference-based locations of the first 4 (5' end)
+## and last 4 (3' end) nucleotides in each transcript:
+tlocs <- lapply(width(tx_seqs2), function(w) c(1:4, (w-3):w))
+tx_strand <- sapply(strand(exbytx), runValue)
+## Note that, because of how we made them, 'tlocs', 'start(exbytx)',
+## 'end(exbytx)' and 'tx_strand' have the same length, and, for any
+## valid positional index, elements at this position are corresponding
+## to each other. This is how transcriptLocs2refLocs() expects them
+## to be!
+rlocs <- transcriptLocs2refLocs(tlocs, start(exbytx), end(exbytx),
+             tx_strand, decreasing.rank.on.minus.strand=TRUE)
 
-  ## Transcript ZC101.3 (is on + strand):
-  ##   Exons starts/ends relative to transcript:
-  rstarts1 <- c(1, 488, 654, 996, 1365, 1712, 2163, 2453)
-  rends1 <- c(137, 578, 889, 1277, 1662, 1870, 2410, 2561)
-  ##   Exons starts/ends relative to chromosome:
-  starts1 <- 14678410 + rstarts1
-  ends1 <- 14678410 + rends1
+## ---------------------------------------------------------------------
+## D. EXTRACTING WORM TRANSCRIPTS ZC101.3 AND F37B1.1
+## ---------------------------------------------------------------------
 
-  ## Transcript F37B1.1 (is on - strand):
-  ##   Exons starts/ends relative to transcript:
-  rstarts2 <- c(1, 325)
-  rends2 <- c(139, 815)
-  ##   Exons starts/ends relative to chromosome:
-  starts2 <- 13611188 - rends2
-  ends2 <- 13611188 - rstarts2
+## Transcript ZC101.3 (is on + strand):
+##   Exons starts/ends relative to transcript:
+rstarts1 <- c(1, 488, 654, 996, 1365, 1712, 2163, 2453)
+rends1 <- c(137, 578, 889, 1277, 1662, 1870, 2410, 2561)
+##   Exons starts/ends relative to chromosome:
+starts1 <- 14678410 + rstarts1
+ends1 <- 14678410 + rends1
 
-  exon_starts <- list(as.integer(starts1), as.integer(starts2))
-  exon_ends <- list(as.integer(ends1), as.integer(ends2))
+## Transcript F37B1.1 (is on - strand):
+##   Exons starts/ends relative to transcript:
+rstarts2 <- c(1, 325)
+rends2 <- c(139, 815)
+##   Exons starts/ends relative to chromosome:
+starts2 <- 13611188 - rends2
+ends2 <- 13611188 - rstarts2
 
-  library(BSgenome.Celegans.UCSC.ce2)
-  ## Both transcripts are on chrII:
-  chrII <- Celegans$chrII
-  transcripts <- extractTranscripts(chrII,
-                                    exonStarts=exon_starts,
-                                    exonEnds=exon_ends,
-                                    strand=c("+","-"))
+exon_starts <- list(as.integer(starts1), as.integer(starts2))
+exon_ends <- list(as.integer(ends1), as.integer(ends2))
 
-  ## Same as 'width(transcripts)':
-  transcriptWidths(exonStarts=exon_starts, exonEnds=exon_ends)
+library(BSgenome.Celegans.UCSC.ce2)
+## Both transcripts are on chrII:
+chrII <- Celegans$chrII
+tx_seqs <- extractTranscripts(chrII,
+                              exonStarts=exon_starts,
+                              exonEnds=exon_ends,
+                              strand=c("+","-"))
 
-  transcriptLocs2refLocs(list(c(1:6, 135:140, 1555:1560),
-                              c(1:6, 137:142, 625:630)),
-                         exonStarts=exon_starts,
-                         exonEnds=exon_ends,
-                         strand=c("+","-"))
+## Same as 'width(tx_seqs)':
+transcriptWidths(exonStarts=exon_starts, exonEnds=exon_ends)
 
-  ## A sanity check:
-  ref_locs <- transcriptLocs2refLocs(list(1:1560, 1:630),
-                                     exonStarts=exon_starts,
-                                     exonEnds=exon_ends,
-                                     strand=c("+","-"))
-  stopifnot(chrII[ref_locs[[1]]] == transcripts[[1]])
-  stopifnot(complement(chrII)[ref_locs[[2]]] == transcripts[[2]])
+transcriptLocs2refLocs(list(c(1:6, 135:140, 1555:1560),
+                            c(1:6, 137:142, 625:630)),
+                       exonStarts=exon_starts,
+                       exonEnds=exon_ends,
+                       strand=c("+","-"))
+
+## A sanity check:
+ref_locs <- transcriptLocs2refLocs(list(1:1560, 1:630),
+                                   exonStarts=exon_starts,
+                                   exonEnds=exon_ends,
+                                   strand=c("+","-"))
+stopifnot(chrII[ref_locs[[1]]] == tx_seqs[[1]])
+stopifnot(complement(chrII)[ref_locs[[2]]] == tx_seqs[[2]])
+
+## ---------------------------------------------------------------------
+## E. sortExonsByRank()
+## ---------------------------------------------------------------------
+## Typically used to reorder by decreasing rank the exons of transcripts
+## located on the minus strand:
+exbytx3 <- sortExonsByRank(exbytx, decreasing.rank.on.minus.strand=TRUE)
+exbytx3
+tx_seqs3 <- extractTranscriptsFromGenome(Hsapiens, exbytx3,
+                                        decreasing.rank.on.minus.strand=TRUE)
+stopifnot(identical(as.character(tx_seqs3), as.character(tx_seqs1)))
 }
 
 \keyword{manip}
