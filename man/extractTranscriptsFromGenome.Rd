@@ -130,7 +130,8 @@ sortExonsByRank(x, decreasing.rank.on.minus.strand=FALSE)
   \link{TranscriptDb-class},
   \code{\link{exonsBy}},
   \link[GenomicRanges]{GRangesList-class},
-  \link[Biostrings]{DNAStringSet-class}
+  \link[Biostrings]{DNAStringSet-class},
+  \code{\link[Biostrings]{translate}}
 }
 
 \examples{
@@ -161,6 +162,7 @@ stopifnot(identical(unname(sapply(width(exbytx), sum)), width(tx_seqs2)))
 ## CDSs grouped by transcripts (this extracts only the translated parts
 ## of the transcripts):
 cds_seqs <- extractTranscriptsFromGenome(Hsapiens, cdsBy(txdb, by="tx"))
+translate(cds_seqs)
 
 ## ---------------------------------------------------------------------
 ## C. GOING FROM TRANSCRIPT-BASED TO REFERENCE-BASED LOCATIONS
