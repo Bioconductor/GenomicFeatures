@@ -77,7 +77,11 @@ sortExonsByRank(x, decreasing.rank.on.minus.strand=FALSE)
     \code{NA}s). A warning is issued when this happens.
   }
   \item{x}{
-    A \link{DNAString} or \link{MaskedDNAString} object.
+    A \link[Biostrings]{DNAString} or \link[Biostrings]{MaskedDNAString}
+    object for \code{extractTranscripts}.
+
+    A \link[GenomicRanges]{GRangesList} object for \code{sortExonsByRank},
+    typically coming from \code{exonsBy(... , by="tx")}.
   }
   \item{exonStarts, exonEnds}{
     The starts and ends of the exons, respectively.
@@ -111,14 +115,20 @@ sortExonsByRank(x, decreasing.rank.on.minus.strand=FALSE)
   in the output align with elements in the input (\code{txdb}), and they
   have the same names.
 
-  For \code{extractTranscripts}: A \link{DNAStringSet} object with one
-  element per transcript.
+  For \code{extractTranscripts}: A \link[Biostrings]{DNAStringSet} object
+  with one element per transcript.
 
   For \code{transcriptWidths}: An integer vector with one element per
   transcript.
 
   For \code{transcriptLocs2refLocs}: A list of integer vectors of the same
   shape as \code{tlocs}.
+
+  For \code{sortExonsByRank}: A \link[GenomicRanges]{GRangesList} object
+  with one top-level element per transcript. More precisely, the returned
+  object has the same "shape" (i.e. same length and same number of elements
+  per top-level element) as the input \link[GenomicRanges]{GRangesList}
+  object \code{x}.
 }
 
 \author{
@@ -235,7 +245,7 @@ stopifnot(complement(chrII)[ref_locs[[2]]] == tx_seqs[[2]])
 exbytx3 <- sortExonsByRank(exbytx, decreasing.rank.on.minus.strand=TRUE)
 exbytx3
 tx_seqs3 <- extractTranscriptsFromGenome(Hsapiens, exbytx3,
-                                        decreasing.rank.on.minus.strand=TRUE)
+                            decreasing.rank.on.minus.strand=TRUE)
 stopifnot(identical(as.character(tx_seqs3), as.character(tx_seqs1)))
 }
 
