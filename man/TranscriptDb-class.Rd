@@ -61,6 +61,9 @@
       \code{seqinfo(x)}:
       Gets the information about the underlying sequences as a
       \link[GenomicRanges]{Seqinfo} object.
+      Note that there is no \code{seqinfo} setter for TranscriptDb
+      objects (this information is stored in the SQLite db, and,
+      in normal use, this db is accessed in read-only mode).
     }
     \item{}{
       \code{as.list(x)}:
@@ -78,7 +81,7 @@
       ignored.  By default, all available sequences will be active.
     }    
     \item{}{
-      \code{isActiveSeq(x) <-}:
+      \code{isActiveSeq(x) <- value}:
       Allows the user to change which sequences will be actively
       accessed by the accessor methods by altering the contents of this
       named logical vector.
