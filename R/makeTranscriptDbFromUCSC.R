@@ -502,18 +502,21 @@ getChromInfoFromUCSC <- function(genome,
 ### Prepare the 'metadata' data frame.
 ###
 
-.prepareUCSCMetadata <- function(genome, tablename, gene_id_type, full_dataset)
+.prepareUCSCMetadata <- function(genome, tablename, gene_id_type, full_dataset,
+                                 miRBaseBuild)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
-    
+    if(is.null(miRBaseBuild)){ miRBaseBuild <- NA }
     metadata <- data.frame(
-        name=c("Data source", "Genome", "Genus and Species", "UCSC Table",
-               "Resource URL", "Type of Gene ID", "Full dataset"),
-        value=c("UCSC", genome, .matchUCSCGenomeToSpecies(genome), tablename,
-                "http://genome.ucsc.edu/", gene_id_type, ifelse(full_dataset, "yes", "no"))
+            name=c("Data source", "Genome", "Genus and Species", "UCSC Table",
+                "Resource URL", "Type of Gene ID", "Full dataset",
+                "miRBase build ID"),
+            value=c("UCSC", genome, .matchUCSCGenomeToSpecies(genome),
+                tablename, "http://genome.ucsc.edu/", gene_id_type,
+                ifelse(full_dataset, "yes", "no"), miRBaseBuild)
     )
-    message("OK")
+    message("metadata: OK")
     metadata
 }
 
@@ -526,7 +529,8 @@ getChromInfoFromUCSC <- function(genome,
         genome, tablename, gene_id_type,
         full_dataset,
         circ_seqs,
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
+        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+        miRBaseBuild=NULL)
 {
     ucsc_txtable <- setDataFrameColClass(ucsc_txtable, .UCSC_TXCOL2CLASS,
                                          drop.extra.cols=TRUE)
@@ -537,7 +541,7 @@ getChromInfoFromUCSC <- function(genome,
     genes <- .makeUCSCGenes(genes, ucsc_txtable)
     chrominfo <- .makeUCSCChrominfo(genome, circ_seqs, goldenPath_url)
     metadata <- .prepareUCSCMetadata(genome, tablename, gene_id_type,
-                                     full_dataset)
+                                     full_dataset, miRBaseBuild)
 
     message("Make the TranscriptDb object ... ", appendLF=FALSE)
     txdb <- makeTranscriptDb(transcripts, splicings, genes=genes,
@@ -559,7 +563,8 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
         transcript_ids=NULL,
         circ_seqs=DEFAULT_CIRC_SEQS,
         url="http://genome.ucsc.edu/cgi-bin/",
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
+        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+        miRBaseBuild=NULL)
 {
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
@@ -621,6 +626,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
                                      txname2geneid$gene_id_type,
                                      full_dataset=is.null(transcript_ids),
                                      circ_seqs=circ_seqs,
-                                     goldenPath_url=goldenPath_url)
+                                     goldenPath_url=goldenPath_url,
+                                     miRBaseBuild=miRBaseBuild)
 }
 

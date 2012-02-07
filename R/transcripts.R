@@ -449,3 +449,59 @@ setMethod("cds", "TranscriptDb",
         }
 )
 
+
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Extractors for features in other databases.
+###
+### This is for extractors that do NOT point to the TranscriptDb proper.
+### Such extractors can point to other databases (mirbase.db) OR they can
+### point to other FeatureDbs within the same package.
+
+## helper for microRNAs
+
+.microRNAs <- function(txdb){
+  ## get the data about whether or not we have any info.
+  con <- AnnotationDbi:::dbConn(txdb)
+  bld <- dbGetQuery(con,
+           "SELECT value FROM metadata WHERE name='miRBase build ID'")
+  ## And if not - bail out with message
+  if(is.na(bld) || dim(bld)[1]==0){
+    stop("This TranscriptDb does not have a miRBase build ID specified")}
+  ## now connect to mirbase
+  require(mirbase.db) ## strictly required
+
+  ## What I need is the join of mirna with mirna_chromosome_build (via _id),
+  ## that is then filtered to only have rows that match the species which goes
+  ## with the build.
+  
+  ## connection
+  mcon <- mirbase_dbconn()
+  ## 1st lets get the organism abbreviation
+  sql <- paste("SELECT organism FROM mirna_species WHERE genome_assembly='",
+               bld,"'",sep="")
+  organism <- dbGetQuery(mcon, sql)
+  ## now get data and make a GRanges from it
+  sql <- paste("SELECT * from mirna_chromosome_build AS csome INNER JOIN ",
+               "(SELECT _id,mirna_id,organism from mirna) AS mirna ",
+               "WHERE mirna._id=csome._id and organism='",
+               organism,"'",sep="")
+  data <- dbGetQuery(mcon, sql)
+  ## So now we have data, but I have to flip the signs of the values on the
+  ## minus strand
+  data$contig_start <- abs(data$contig_start)
+  data$contig_end <- abs(data$contig_end)
+  ## Then build our GRanges object
+  ranges <- IRanges(start=data$contig_start,
+                    end=data$contig_end)
+  ans <- GRanges(seqnames=data$xsome,
+                 ranges=ranges,
+                 strand=data$strand)
+  values(ans) <- data$mirna_id
+  names(values(ans)) <- "mirna_id"
+  ans
+}
+
+## Then set our method
+setMethod("microRNAs", "TranscriptDb", function(x){.microRNAs(x)} )

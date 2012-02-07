@@ -8,6 +8,8 @@
 \alias{exons,TranscriptDb-method}
 \alias{cds}
 \alias{cds,TranscriptDb-method}
+\alias{microRNAs}
+\alias{microRNAs,TranscriptDb-method}
 
 \title{
   Extract genomic features from an object
@@ -27,6 +29,9 @@ exons(x, ...)
 
 cds(x, ...)
 \S4method{cds}{TranscriptDb}(x, vals=NULL, columns="cds_id")
+
+microRNAs(x)
+\S4method{microRNAs}{TranscriptDb}(x)
 }
 
 \arguments{  
@@ -65,8 +70,9 @@ cds(x, ...)
 }
 
 \details{
-  These are the main functions for extracting transcript information from
-  a \link{TranscriptDb} object. They can restrict the output based on
+  These are the main functions for extracting transcript information
+  from a \link{TranscriptDb} object. With the exception of
+  \code{microRNAs}, these methods can restrict the output based on
   categorical information. To restrict the output based on interval
   information, use the \code{\link{transcriptsByOverlaps}},
   \code{\link{exonsByOverlaps}}, and \code{\link{cdsByOverlaps}}
@@ -91,5 +97,6 @@ cds(x, ...)
   vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
   transcripts(txdb, vals)
   exons(txdb, vals=list(exon_id=1), columns=c("exon_id", "tx_name"))
-  exons(txdb, vals=list(tx_name="uc009vip.1"), columns=c("exon_id", "tx_name"))
+  exons(txdb, vals=list(tx_name="uc009vip.1"), columns=c("exon_id",
+  "tx_name"))
 }

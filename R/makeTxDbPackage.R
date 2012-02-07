@@ -63,9 +63,9 @@
 
 makeTxDbPackage <- function(txdb,
                             version,
-			                      maintainer,
+                            maintainer,
                             author,
-  	                        destDir=".",
+                            destDir=".",
                             license="Artistic-2.0"){
    ## every package has a name We will generate this according to a heuristic
    pkgName <- .makePackageName(txdb)
@@ -130,14 +130,16 @@ makeTxDbPackageFromUCSC <- function(
   transcript_ids=NULL,
   circ_seqs=DEFAULT_CIRC_SEQS,
   url="http://genome.ucsc.edu/cgi-bin/",
-  goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath"){
+  goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+  miRBaseBuild=NULL){
     ## Make the DB
     txdb <- makeTranscriptDbFromUCSC(genome=genome,
                                      tablename=tablename,
                                      transcript_ids=transcript_ids,
                                      circ_seqs=circ_seqs,
                                      url=url,
-                                     goldenPath_url=goldenPath_url)
+                                     goldenPath_url=goldenPath_url,
+                                     miRBaseBuild=miRBaseBuild)
     ## Make the Package
     makeTxDbPackage(txdb,
                     version=version,
@@ -157,12 +159,14 @@ makeTxDbPackageFromBiomart <- function(
   biomart="ensembl",
   dataset="hsapiens_gene_ensembl",
   transcript_ids=NULL,
-  circ_seqs=DEFAULT_CIRC_SEQS){
+  circ_seqs=DEFAULT_CIRC_SEQS,
+  miRBaseBuild=NULL){
     ## Make the DB
     txdb <- makeTranscriptDbFromBiomart(biomart=biomart,
                                         dataset=dataset,
                                         transcript_ids=transcript_ids,
-                                        circ_seqs=circ_seqs)
+                                        circ_seqs=circ_seqs,
+                                        miRBaseBuild=miRBaseBuild)
     ## Make the Package
     makeTxDbPackage(txdb,
                     version=version,

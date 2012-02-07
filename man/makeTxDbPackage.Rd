@@ -3,7 +3,7 @@
 \alias{makeTxDbPackage}
 \alias{makeTxDbPackageFromUCSC}
 \alias{makeTxDbPackageFromBiomart}
-
+\alias{supportedMiRBaseBuildValues}
 
 \title{
   Making a TranscriptDb packages from annotations available at the
@@ -34,7 +34,8 @@
     transcript_ids=NULL,
     circ_seqs=DEFAULT_CIRC_SEQS,
     url="http://genome.ucsc.edu/cgi-bin/",
-    goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
+    goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+    miRBaseBuild = NULL)
   
   makeTxDbPackageFromBiomart(
     version,
@@ -45,7 +46,8 @@
     biomart="ensembl",
     dataset="hsapiens_gene_ensembl",
     transcript_ids=NULL,
-    circ_seqs=DEFAULT_CIRC_SEQS)
+    circ_seqs=DEFAULT_CIRC_SEQS,
+    miRBaseBuild = NULL)
 
   makeTxDbPackage(txdb,
                   version,
@@ -53,6 +55,8 @@
                   author,
   	              destDir=".",
                   license="Artistic-2.0")
+
+  supportedMiRBaseBuildValues()
 }
 \arguments{
   \item{version}{What is the version number for this package?}
@@ -92,14 +96,21 @@
     transcript database. This object type is what is returned by 
     \code{makeTranscriptDbFromUCSC}, \code{makeTranscriptDbFromUCSC} or 
     \code{makeTranscriptDb}}
+  \item{miRBaseBuild}{specify the string for the appropriate build
+    Information from mirbase.db to use for microRNAs.  This can be
+    learned by calling \code{supportedMiRBaseBuildValues}.  By default,
+    this value will be NULL, which will inactivate the \code{microRNAs}
+    accessor.}
 }
 \details{
   \code{makeTxDbPackageFromUCSC} is a convenience function that calls
-    both the \code{\link{makeTranscriptDbFromUCSC}} and the             
-    \code{\link{makeTxDbPackage}} functions.  The 
-    \code{makeTxDbPackageFromBiomart} follows a similar pattern and calls the       
-    \code{\link{makeTranscriptDbFromBiomart}} and \code{\link{makeTxDbPackage}} 
-    functions.  
+    both the \code{\link{makeTranscriptDbFromUCSC}} and the
+    \code{\link{makeTxDbPackage}} functions.  The
+    \code{makeTxDbPackageFromBiomart} follows a similar pattern and
+    calls the \code{\link{makeTranscriptDbFromBiomart}} and
+    \code{\link{makeTxDbPackage}} functions.
+  \code{supportedMiRBaseBuildValues} is a convenience function that will
+  list all the possible values for the miRBaseBuild argument.
 }
 
 \value{A \link{TranscriptDb} object.}
@@ -114,13 +125,20 @@
   \code{\link{makeTranscriptDbFromUCSC}},
   \code{\link{makeTranscriptDbFromBiomart}},
   \code{\link{makeTranscriptDb}}
+  \code{\link{supportedUCSCtables}}
+  \code{\link{getChromInfoFromUCSC}}
+  \code{\link{getChromInfoFromBiomart}}
 }
 
 \examples{
-
+## First consider relevant helper/discovery functions:
 ## Display the list of tables supported by makeTxDbPackageFromUCSC():
 supportedUCSCtables()
 
+## Can also list all the possible values for the miRBaseBuild argument:
+supportedMiRBaseBuildValues()
+
+## Next are examples of actually building a package:
 \dontrun{
 ## Makes a transcript package for Yeast from the ensGene table at UCSC:
 makeTxDbPackageFromUCSC(version="0.01", 

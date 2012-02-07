@@ -4,7 +4,7 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Helper functions for makeTranscriptDb().
+### Helper functions for makeTranscriptDb()
 ###
 
 .checkargColnames <- function(arg, required_colnames, optional_colnames,
@@ -600,5 +600,12 @@ makeToyTranscriptDb <- function(splicings, genes=NULL)
     if (!is.data.frame(splicings))
         stop("'splicings' must be a data frame")
     stop("not ready yet, sorry!")
+}
+
+
+## helper to list mirbase.db miRBaseBuild values for species
+supportedMiRBaseBuildValues <- function(){
+  require(mirbase.db)
+  toTable(mirbaseSPECIES)[,c("name","genome_assembly")]
 }
 

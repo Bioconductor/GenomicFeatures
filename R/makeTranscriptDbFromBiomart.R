@@ -410,7 +410,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 ### Prepare the 'metadata' data frame.
 ###
 
-.prepareBiomartMetadata <- function(mart, is_full_dataset, host, port)
+.prepareBiomartMetadata <- function(mart, is_full_dataset, host, port,
+                                    miRBaseBuild)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
@@ -431,26 +432,31 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
     species <- .extractSpeciesFromDatasetDesc(description)
     message("OK")
-    data.frame(
-        name=c("Data source",
-               "Genus and Species",
-               "Resource URL",
-               "BioMart database",
-               "BioMart database version",
-               "BioMart dataset",
-               "BioMart dataset description",
-               "BioMart dataset version",
-               "Full dataset"),
-        value=c("BioMart",
-                species,
-                mart_url,
-                biomart,
-                db_version,
-                dataset,
-                description,
-                dataset_version,
-                ifelse(is_full_dataset, "yes", "no"))
-    )
+    if(is.null(miRBaseBuild)){ miRBaseBuild <- NA }
+    metadata <- data.frame(
+                   name=c("Data source",
+                     "Genus and Species",
+                     "Resource URL",
+                     "BioMart database",
+                     "BioMart database version",
+                     "BioMart dataset",
+                     "BioMart dataset description",
+                     "BioMart dataset version",
+                     "Full dataset",
+                     "miRBase build ID"),
+                   value=c("BioMart",
+                     species,
+                     mart_url,
+                     biomart,
+                     db_version,
+                     dataset,
+                     description,
+                     dataset_version,
+                     ifelse(is_full_dataset, "yes", "no"),
+                     miRBaseBuild)
+                   )
+    message("metadata: OK")
+    metadata
 }
 
 
@@ -537,7 +543,8 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                         filters="",
                                         id_prefix="ensembl_",
                                         host="www.biomart.org",
-                                        port=80)
+                                        port=80,
+                                        miRBaseBuild=NULL)
 {
     ## Could be that the user got the 'biomart' and/or 'dataset' values
     ## programmatically via calls to listMarts() and/or listDatasets().
@@ -604,7 +611,8 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                        id_prefix=id_prefix)
     genes <- .makeBiomartGenes(filters, values, mart, transcripts$tx_name,
                                biomartAttribGroups, id_prefix)
-    metadata <- .prepareBiomartMetadata(mart, is.null(transcript_ids), host, port)
+    metadata <- .prepareBiomartMetadata(mart, is.null(transcript_ids), host,
+                                        port, miRBaseBuild)
 
     message("Make the TranscriptDb object ... ", appendLF=FALSE)
     txdb <- makeTranscriptDb(transcripts, splicings,

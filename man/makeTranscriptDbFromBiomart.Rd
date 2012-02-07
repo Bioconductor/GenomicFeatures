@@ -26,7 +26,8 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
                             filters="",
                             id_prefix="ensembl_",
                             host="www.biomart.org",
-                            port=80)
+                            port=80,
+                            miRBaseBuild = NULL)
 }
 \arguments{
   \item{biomart}{which BioMart database to use.
@@ -55,6 +56,11 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
     example, some BioMarts may have an attribute specified as
     \code{"ensembl_transcript_id"} whereas others have the same attribute
     specified as \code{"transcript_id"}. Defaults to \code{"ensembl_"}.}
+  \item{miRBaseBuild}{specify the string for the appropriate build
+    Information from mirbase.db to use for microRNAs.  This can be
+    learned by calling \code{supportedMiRBaseBuildValues}.  By default,
+    this value will be NULL, which will inactivate the \code{microRNAs}
+    accessor.}
 }
 
 \details{
@@ -90,6 +96,7 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
   \code{\link{DEFAULT_CIRC_SEQS}},
   \code{\link{makeTranscriptDbFromUCSC}},
   \code{\link{makeTranscriptDb}}
+  \code{\link{supportedMiRBaseBuildValues}}
 }
 
 \examples{
