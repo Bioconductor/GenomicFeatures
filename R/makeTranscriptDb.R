@@ -606,6 +606,8 @@ makeToyTranscriptDb <- function(splicings, genes=NULL)
 ## helper to list mirbase.db miRBaseBuild values for species
 supportedMiRBaseBuildValues <- function(){
   require(mirbase.db)
-  toTable(mirbaseSPECIES)[,c("name","genome_assembly")]
+  res <- toTable(mirbaseSPECIES)[,c("name","genome_assembly")]
+  res <- res[!(res$genome_assembly==""),]
+  rownames(res) <- NULL
+  res
 }
-
