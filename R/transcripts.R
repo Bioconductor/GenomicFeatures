@@ -459,13 +459,29 @@ setMethod("cds", "TranscriptDb",
 ### Such extractors can point to other databases (mirbase.db) OR they can
 ### point to other FeatureDbs within the same package.
 
-## helper for microRNAs
+## helpers for microRNAs
 
+## helpers for for translating chromosomes. Now we have to assume a universal
+## translator.  It seems that the chroms are in biomaRt style for mirbase.  So
+## for biomaRt, return them as is, but for UCSC, add "chr" prefix.
+.translateChromsForUCSC <- function(csomes){
+  paste("chr", csomes, sep="")
+}
+
+.translateChromsForBiomaRt <- function(csomes){
+  csomes
+}
+
+
+## main function
 .microRNAs <- function(txdb){
   ## get the data about whether or not we have any info.
   con <- AnnotationDbi:::dbConn(txdb)
   bld <- dbGetQuery(con,
            "SELECT value FROM metadata WHERE name='miRBase build ID'")
+  src <- DBI:::dbGetQuery(con,
+           "SELECT value FROM metadata WHERE name='Data source'")
+
   ## And if not - bail out with message
   if(is.na(bld) || dim(bld)[1]==0){
     stop("This TranscriptDb does not have a miRBase build ID specified")}
@@ -492,16 +508,32 @@ setMethod("cds", "TranscriptDb",
   ## minus strand
   data$contig_start <- abs(data$contig_start)
   data$contig_end <- abs(data$contig_end)
+  ## Convert our chromosomes (if we can)
+  csomes <- data$xsome
+  if(src=="BioMart"){csomes <- .translateChromsForBiomaRt(csomes)}
+  if(src=="UCSC"){csomes <- .translateChromsForUCSC(csomes)}
   ## Then build our GRanges object
   ranges <- IRanges(start=data$contig_start,
                     end=data$contig_end)
-  ans <- GRanges(seqnames=data$xsome,
+  ans <- GRanges(seqnames=csomes,
                  ranges=ranges,
                  strand=data$strand)
+  
+  ## Filter seqinfo
+  isActSeq <- isActiveSeq(txdb)
+  n2oNames <- levels(seqnames(ans))
+  n2o <- match(seqnames(seqinfo(txdb)), n2oNames)
+  seqinfo(ans, new2old=n2o) <- seqinfo(txdb)
+  seqlevels(ans) <- names(isActSeq)[isActSeq]
+
+  ## append values
   values(ans) <- data$mirna_id
   names(values(ans)) <- "mirna_id"
+  
   ans
 }
 
 ## Then set our method
 setMethod("microRNAs", "TranscriptDb", function(x){.microRNAs(x)} )
+
+## TODO: set up seq_lengths for this thing...
