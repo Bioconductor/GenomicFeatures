@@ -248,6 +248,74 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
          "have a numeric type")
 }
 
+.generateBioMartDataAnomalyReport <- function(bm_table, idx, msg)
+{
+    msg[length(msg)] <- paste(msg[length(msg)], ":", sep="")
+    msg1 <- "BioMart data anomaly: in the following transcripts, "
+    msg2 <- paste("  ", msg, sep="")
+    options(width=getOption("width")-4L)
+    msg3 <- capture.output(print(head(bm_table[idx, , drop=FALSE], n=40L)))
+    msg3 <- paste("    ", msg3, sep="")
+    options(width=getOption("width")+4L)
+    msg <- c(msg1, msg2, msg3)
+    paste(msg, collapse="\n")
+}
+
+.stopWithBioMartDataAnomalyReport <- function(bm_table, idx, msg)
+{
+    msg <- .generateBioMartDataAnomalyReport(bm_table, idx, msg)
+    new_length <- nchar(msg) + 5L
+    ## 8170L seems to be the maximum possible value for the 'warning.length'
+    ## option on my machine (R-2.15 r58124, 64-bit Ubuntu).
+    if (new_length > 8170L)
+        new_length <- 8170L
+    if (new_length >= getOption("warning.length")) {
+        old_length <- getOption("warning.length")
+        on.exit(options(warning.length=old_length))
+        options(warning.length=new_length)
+    }
+    stop(msg)
+}
+
+.warningWithBioMartDataAnomalyReport <- function(bm_table, idx, msg)
+{
+    msg <- .generateBioMartDataAnomalyReport(bm_table, idx, msg)
+    new_length <- nchar(msg) + 5L
+    ## 8170L seems to be the maximum possible value for the 'warning.length'
+    ## option on my machine (R-2.15 r58124, 64-bit Ubuntu).
+    if (new_length > 8170L)
+        new_length <- 8170L
+    if (new_length >= getOption("warning.length")) {
+        old_length <- getOption("warning.length")
+        on.exit(options(warning.length=old_length))
+        options(warning.length=new_length)
+    }
+    warning(msg)
+}
+
+.utrIsNa <- function(utr_start, utr_end, exon_start, exon_end,
+                     what_utr, bm_table)
+{
+    is_na <- is.na(utr_start)
+    if (!identical(is_na, is.na(utr_end)))
+        stop("BioMart data anomaly: ",
+             "NAs in \"", what_utr, "_utr_start\" attribute don't match ",
+             "NAs in \"", what_utr, "_utr_end\" attribute")
+    idx <- which(utr_start > utr_end)
+    if (length(idx) != 0L) {
+        msg <- paste("the ", what_utr, "' UTRs ",
+                     "have a start > end", sep="")
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+    }
+    idx <- which(utr_start < exon_start | exon_end < utr_end)
+    if (length(idx) != 0L) {
+        msg <- paste("the ", what_utr, "' UTRs ",
+                     "are not within the exon limits", sep="")
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+    }
+    is_na
+}
+
 .extractCdsRangesFromBiomartTable <- function(bm_table, id_prefix)
 {
     if (nrow(bm_table) == 0L)
@@ -265,59 +333,62 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     if (!is.numeric(exon_start) || !is.numeric(exon_end))
         stop("BioMart data anomaly: exon coordinates don't ",
              "have a numeric type")
-    no_utr5 <- is.na(utr5_start)
-    if (!identical(no_utr5, is.na(utr5_end)))
-        stop("BioMart data anomaly: NAs in \"5_utr_start\" attribute ",
-             "don't match NAs in \"5_utr_end\" attribute")
-    if (!all(utr5_start <= utr5_end, na.rm=TRUE))
-        stop("BioMart data anomaly: some 5' UTR have a start > end")
-    if (!all(utr5_start >= exon_start, na.rm=TRUE)
-     || !all(utr5_end <= exon_end, na.rm=TRUE))
-        stop("BioMart data anomaly: some 5' UTR are not within the exon limits")
-    no_utr3 <- is.na(utr3_start)
-    if (!identical(no_utr3, is.na(utr3_end)))
-        stop("BioMart data anomaly: NAs in \"3_utr_start\" attribute ",
-             "don't match NAs in \"3_utr_end\" attribute")
-    if (!all(utr3_start <= utr3_end, na.rm=TRUE))
-        stop("BioMart data anomaly: some 3' UTR have a start > end")
-    if (!all(utr3_start >= exon_start, na.rm=TRUE)
-     || !all(utr3_end <= exon_end, na.rm=TRUE))
-        stop("BioMart data anomaly: some 3' UTR are not within the exon limits")
+
+    no_utr5 <- .utrIsNa(utr5_start, utr5_end, exon_start, exon_end,
+                        "5", bm_table)
+    no_utr3 <- .utrIsNa(utr3_start, utr3_end, exon_start, exon_end,
+                        "3", bm_table)
 
     idx <- strand == 1 & !no_utr5
-    if (!all(utr5_start[idx] == exon_start[idx]))
-        stop("BioMart data anomaly: some 5' UTR on the plus strand ",
-             "don't start where the exon starts")
+    if (!all(utr5_start[idx] == exon_start[idx])) {
+        msg <- c("located on the plus strand, the 5' UTRs don't start",
+                 "where their corresponding exon starts")
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+    }
     cds_start[idx] <- utr5_end[idx] + 1L
+
     idx <- strand == 1 & !no_utr3
-    if (!all(utr3_end[idx] == exon_end[idx]))
-        stop("BioMart data anomaly: some 3' UTR on the plus strand ",
-             "don't end where the exon ends")
+    if (!all(utr3_end[idx] == exon_end[idx])) {
+        msg <- c("located on the plus strand, the 3' UTRs don't end",
+                 "where their corresponding exon ends")
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+    }
     cds_end[idx] <- utr3_start[idx] - 1L
+
     idx <- strand == -1 & !no_utr3
-    if (!all(utr3_start[idx] == exon_start[idx]))
-        stop("BioMart data anomaly: some 3' UTR on the minus strand ",
-             "don't start where the exon starts")
+    if (!all(utr3_start[idx] == exon_start[idx])) {
+        msg <- c("located on the minus strand, the 3' UTRs don't start",
+                 "where their corresponding exon starts")
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+    }
     cds_start[idx] <- utr3_end[idx] + 1L
+
     idx <- strand == -1 & !no_utr5
-    if (!all(utr5_end[idx] == exon_end[idx]))
-        stop("BioMart data anomaly: some 5' UTR on the minus strand ",
-             "don't end where the exon ends")
+    if (!all(utr5_end[idx] == exon_end[idx])) {
+        msg <- c("located on the minus strand, the 5' UTRs don't end",
+                 "where their corresponding exon ends")
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+    }
     cds_end[idx] <- utr5_start[idx] - 1L
+
     ans <- IRanges(start=cds_start, end=cds_end)
     if (length(ans) != 0L) {
         tx_id_col_name <- paste(id_prefix, "transcript_id", sep='')
         cds_cumlength <-
             sapply(split(width(ans), bm_table[[tx_id_col_name]]), sum)
-        if (!all(cds_cumlength[as.vector(bm_table[[tx_id_col_name]])]
-                 == bm_table$cds_length, na.rm=TRUE))
-            stop("BioMart data anomaly: for some transcripts, the cds ",
-                 "cumulative length inferred from the exon and UTR info ",
-                 "doesn't match the \"cds_length\" attribute from BioMart")
-        #if (!all(cds_cumlength %% 3L == 0L))
-        #    warning("BioMart data anomaly: for some transcripts, the cds ",
-        #            "cumulative length (\"cds_length\" attribute) is not ",
-        #            "a multiple of 3")
+        idx <- which(cds_cumlength[as.vector(bm_table[[tx_id_col_name]])] !=
+                     bm_table$cds_length)
+        if (length(idx) != 0L) {
+            msg <- c("the CDS total length inferred from the exon and UTR info",
+                     "doesn't match the \"cds_length\" attribute from BioMart")
+            .warningWithBioMartDataAnomalyReport(bm_table, idx, msg)
+        }
+        #idx <- which(cds_cumlength %% 3L != 0L)
+        #if (length(idx) != 0L) {
+        #    msg <- c("the CDS total length (\"cds_length\" attribute) is not",
+        #             "a multiple of 3")
+        #    .warningWithBioMartDataAnomalyReport(bm_table, idx, msg)
+        #}
     }
     ans
 }
@@ -332,11 +403,11 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     data.frame(cds_start=cds_start, cds_end=cds_end)
 }
 
-### Ironically the cds_start and cds_end attributes that we get from
+### Surprisingly the cds_start and cds_end attributes that we get from
 ### BioMart are pretty useless because they are relative to the coding
 ### mRNA. However, the utr coordinates are relative to the chromosome so
 ### we use them to infer the cds coordinates. We also retrieve the
-### cds_length attribute as a sanity check.
+### cds_length attribute to do a sanity check.
 .makeBiomartSplicings <- function(filters, values, mart, transcripts_tx_name,
                                   biomartAttribGroups, id_prefix)
 {
@@ -372,7 +443,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
         exon_start=bm_table$exon_chrom_start,
         exon_end=bm_table$exon_chrom_end
     )
-    if (all(biomartAttribGroups[['C']] %in% allattribs) && ("cds_length" %in% allattribs)) {
+    if (all(biomartAttribGroups[['C']] %in% allattribs)
+     && ("cds_length" %in% allattribs)) {
         cds_ranges <- .extractCdsRangesFromBiomartTable(bm_table, id_prefix)
         splicings <- cbind(splicings, .makeCdsDataFrameFromRanges(cds_ranges))
     }
