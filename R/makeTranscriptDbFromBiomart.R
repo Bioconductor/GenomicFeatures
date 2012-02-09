@@ -125,10 +125,10 @@
     ##                      colnames(bm_table))
     ##colnames(bm_table) <- bm_table_names
 
-    tx_id_col_name <- paste(id_prefix, "transcript_id", sep='')
+    tx_id_colname <- paste(id_prefix, "transcript_id", sep="")
 
     if (!is.null(transcript_ids)) {
-        idx <- !(transcript_ids %in% bm_table[[tx_id_col_name]])
+        idx <- !(transcript_ids %in% bm_table[[tx_id_colname]])
         if (any(idx)) {
             bad_ids <- transcript_ids[idx]
             stop("invalid transcript ids: ",
@@ -148,10 +148,10 @@
         return(transcripts0)
     }
     transcripts_tx_id <- seq_len(nrow(bm_table))
-    transcripts_tx_name <- bm_table[[tx_id_col_name]]
+    transcripts_tx_name <- bm_table[[tx_id_colname]]
     ##if (any(duplicated(transcripts_tx_name)))
     ##    stop(paste("the '",
-    ##               tx_id_col_name,
+    ##               tx_id_colname,
     ##               "'transcript_id' attribute contains duplicated values"))
     if (any(duplicated(bm_table)))
       stop("The 'transcripts' data frame from biomart contains duplicated rows.")
@@ -248,22 +248,54 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
          "have a numeric type")
 }
 
-.generateBioMartDataAnomalyReport <- function(bm_table, idx, msg)
+.generateBioMartDataAnomalyReport <- function(bm_table, idx, id_prefix, msg)
 {
-    msg[length(msg)] <- paste(msg[length(msg)], ":", sep="")
-    msg1 <- "BioMart data anomaly: in the following transcripts, "
-    msg2 <- paste("  ", msg, sep="")
-    options(width=getOption("width")-4L)
-    msg3 <- capture.output(print(head(bm_table[idx, , drop=FALSE], n=40L)))
-    msg3 <- paste("    ", msg3, sep="")
-    options(width=getOption("width")+4L)
-    msg <- c(msg1, msg2, msg3)
-    paste(msg, collapse="\n")
+    ## Part 3.
+    tx_id_colname <- paste(id_prefix, "transcript_id", sep="")
+    tx_ids <- bm_table[[tx_id_colname]]
+    first_tx_ids <- unique(tx_ids[idx])
+    total_nb_tx <- length(first_tx_ids)
+    first_six_only <- total_nb_tx > 6L
+    if (first_six_only)
+        first_tx_ids <- first_tx_ids[1:6]
+    bm_table <- bm_table[tx_ids %in% first_tx_ids, , drop=FALSE]
+    bm_table0 <- bm_table[-match(tx_id_colname, names(bm_table))]
+    f <- factor(bm_table[[tx_id_colname]], levels=first_tx_ids)
+    first_tx_tables <- split(bm_table0, f)
+    .DETAILS_INDENT <- "     "
+    options(width=getOption("width")-nchar(.DETAILS_INDENT))
+    part3 <- lapply(seq_len(length(first_tx_tables)),
+                    function(i) {
+                        tx_table <- first_tx_tables[[i]]
+                        row.names(tx_table) <- NULL
+                        subtitle <- paste("  ", i, ". Transcript ",
+                                          names(first_tx_tables)[i],
+                                          ":", sep="")
+                        details <- capture.output(print(tx_table))
+                        c(subtitle, paste(.DETAILS_INDENT, details, sep=""))
+                    })
+    options(width=getOption("width")+nchar(.DETAILS_INDENT))
+    part3 <- unlist(part3, use.names=FALSE)
+    if (first_six_only)
+        part3 <- c(paste("  (Showing only the first 6 out of ",
+                         total_nb_tx,
+                         " transcripts.)", sep=""),
+                   part3)
+
+    ## Part 1.
+    part1 <- "BioMart data anomaly: in the following transcripts, "
+
+    ## Part 2.
+    msg[length(msg)] <- paste(msg[length(msg)], ".", sep="")
+    part2 <- paste("  ", msg, sep="")
+
+    ## Assemble the parts.
+    paste(c(part1, part2, part3), collapse="\n")
 }
 
-.stopWithBioMartDataAnomalyReport <- function(bm_table, idx, msg)
+.stopWithBioMartDataAnomalyReport <- function(bm_table, idx, id_prefix, msg)
 {
-    msg <- .generateBioMartDataAnomalyReport(bm_table, idx, msg)
+    msg <- .generateBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     new_length <- nchar(msg) + 5L
     ## 8170L seems to be the maximum possible value for the 'warning.length'
     ## option on my machine (R-2.15 r58124, 64-bit Ubuntu).
@@ -277,9 +309,9 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     stop(msg)
 }
 
-.warningWithBioMartDataAnomalyReport <- function(bm_table, idx, msg)
+.warningWithBioMartDataAnomalyReport <- function(bm_table, idx, id_prefix, msg)
 {
-    msg <- .generateBioMartDataAnomalyReport(bm_table, idx, msg)
+    msg <- .generateBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     new_length <- nchar(msg) + 5L
     ## 8170L seems to be the maximum possible value for the 'warning.length'
     ## option on my machine (R-2.15 r58124, 64-bit Ubuntu).
@@ -294,7 +326,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 }
 
 .utrIsNa <- function(utr_start, utr_end, exon_start, exon_end,
-                     what_utr, bm_table)
+                     what_utr, bm_table, id_prefix)
 {
     is_na <- is.na(utr_start)
     if (!identical(is_na, is.na(utr_end)))
@@ -305,13 +337,13 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     if (length(idx) != 0L) {
         msg <- paste("the ", what_utr, "' UTRs ",
                      "have a start > end", sep="")
-        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     }
     idx <- which(utr_start < exon_start | exon_end < utr_end)
     if (length(idx) != 0L) {
         msg <- paste("the ", what_utr, "' UTRs ",
                      "are not within the exon limits", sep="")
-        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     }
     is_na
 }
@@ -335,15 +367,15 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
              "have a numeric type")
 
     no_utr5 <- .utrIsNa(utr5_start, utr5_end, exon_start, exon_end,
-                        "5", bm_table)
+                        "5", bm_table, id_prefix)
     no_utr3 <- .utrIsNa(utr3_start, utr3_end, exon_start, exon_end,
-                        "3", bm_table)
+                        "3", bm_table, id_prefix)
 
     idx <- strand == 1 & !no_utr5
     if (!all(utr5_start[idx] == exon_start[idx])) {
         msg <- c("located on the plus strand, the 5' UTRs don't start",
                  "where their corresponding exon starts")
-        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     }
     cds_start[idx] <- utr5_end[idx] + 1L
 
@@ -351,7 +383,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     if (!all(utr3_end[idx] == exon_end[idx])) {
         msg <- c("located on the plus strand, the 3' UTRs don't end",
                  "where their corresponding exon ends")
-        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     }
     cds_end[idx] <- utr3_start[idx] - 1L
 
@@ -359,7 +391,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     if (!all(utr3_start[idx] == exon_start[idx])) {
         msg <- c("located on the minus strand, the 3' UTRs don't start",
                  "where their corresponding exon starts")
-        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     }
     cds_start[idx] <- utr3_end[idx] + 1L
 
@@ -367,27 +399,27 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     if (!all(utr5_end[idx] == exon_end[idx])) {
         msg <- c("located on the minus strand, the 5' UTRs don't end",
                  "where their corresponding exon ends")
-        .stopWithBioMartDataAnomalyReport(bm_table, idx, msg)
+        .stopWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     }
     cds_end[idx] <- utr5_start[idx] - 1L
 
     ans <- IRanges(start=cds_start, end=cds_end)
     if (length(ans) != 0L) {
-        tx_id_col_name <- paste(id_prefix, "transcript_id", sep='')
+        tx_id_colname <- paste(id_prefix, "transcript_id", sep="")
         cds_cumlength <-
-            sapply(split(width(ans), bm_table[[tx_id_col_name]]), sum)
-        idx <- which(cds_cumlength[as.vector(bm_table[[tx_id_col_name]])] !=
+            sapply(split(width(ans), bm_table[[tx_id_colname]]), sum)
+        idx <- which(cds_cumlength[as.vector(bm_table[[tx_id_colname]])] !=
                      bm_table$cds_length)
         if (length(idx) != 0L) {
             msg <- c("the CDS total length inferred from the exon and UTR info",
                      "doesn't match the \"cds_length\" attribute from BioMart")
-            .warningWithBioMartDataAnomalyReport(bm_table, idx, msg)
+            .warningWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
         }
         #idx <- which(cds_cumlength %% 3L != 0L)
         #if (length(idx) != 0L) {
         #    msg <- c("the CDS total length (\"cds_length\" attribute) is not",
         #             "a multiple of 3")
-        #    .warningWithBioMartDataAnomalyReport(bm_table, idx, msg)
+        #    .warningWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
         #}
     }
     ans
@@ -432,8 +464,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     if ("cds_length" %in% allattribs)
         attributes <- c(attributes, "cds_length")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
-    tx_id_col_name <- paste(id_prefix, "transcript_id", sep='')
-    splicings_tx_id <- as.integer(factor(bm_table[[tx_id_col_name]],
+    tx_id_colname <- paste(id_prefix, "transcript_id", sep="")
+    splicings_tx_id <- as.integer(factor(bm_table[[tx_id_colname]],
                                          levels=transcripts_tx_name))
     exon_id_col_name <- paste(id_prefix, "exon_id", sep='')
     splicings <- data.frame(
@@ -466,8 +498,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     attributes <- c(biomartAttribGroups[['G']],
                     paste(id_prefix, "transcript_id", sep=""))
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
-    tx_id_col_name <- paste(id_prefix, "transcript_id", sep='')
-    genes_tx_id <- as.integer(factor(bm_table[[tx_id_col_name]],
+    tx_id_colname <- paste(id_prefix, "transcript_id", sep="")
+    genes_tx_id <- as.integer(factor(bm_table[[tx_id_colname]],
                                      levels=transcripts_tx_name))
     message("OK")
     gene_id_col_name <- paste(id_prefix, "gene_id", sep='')
