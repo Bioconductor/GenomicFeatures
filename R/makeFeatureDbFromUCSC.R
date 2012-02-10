@@ -81,7 +81,7 @@
         "GenomicFeatures version at creation time", thispkg_version,
         "RSQLite version at creation time", rsqlite_version,
         "DBSCHEMAVERSION", DB_SCHEMA_VERSION,
-        "package", "GenomicFeatures"),
+        "Supporting package", "GenomicFeatures"),
         ncol=2, byrow=TRUE
     )
     colnames(mat) <- c("name", "value")
