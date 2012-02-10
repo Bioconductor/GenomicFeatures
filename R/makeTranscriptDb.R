@@ -444,7 +444,8 @@
     thispkg_version <- installed.packages()['GenomicFeatures', 'Version']
     rsqlite_version <- installed.packages()['RSQLite', 'Version']
     mat1 <- matrix(c(
-        DB_TYPE_NAME, DB_TYPE_VALUE),
+        DB_TYPE_NAME, DB_TYPE_VALUE,
+        "Supporting package", "GenomicFeatures"),
         ncol=2, byrow=TRUE
     )
     mat2 <- matrix(c(
@@ -455,8 +456,7 @@
         "Creation time",   svn.time(),
         "GenomicFeatures version at creation time", thispkg_version,
         "RSQLite version at creation time", rsqlite_version,
-        "DBSCHEMAVERSION", DB_SCHEMA_VERSION,
-        "Supporting package", "GenomicFeatures"),    
+        "DBSCHEMAVERSION", DB_SCHEMA_VERSION),
         ncol=2, byrow=TRUE
     )
     colnames(mat1) <- colnames(mat2) <- c("name", "value")
