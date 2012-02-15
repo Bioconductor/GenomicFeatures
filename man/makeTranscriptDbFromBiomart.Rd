@@ -102,7 +102,7 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
 \examples{
 ## Discover which datasets are available in the "ensembl" BioMart
 ## database:
-library(biomaRt)
+library("biomaRt")
 listDatasets(useMart("ensembl"))
 
 ## Retrieving an incomplete transcript dataset for Human from the
@@ -118,4 +118,15 @@ transcript_ids <- c(
 )
 txdb <- makeTranscriptDbFromBiomart(transcript_ids=transcript_ids)
 txdb  # note that these annotations match the GRCh37 genome assembly
+
+## Now what if we want to use another mirror?  We might make use of the
+## new host argument.  But wait!  If we use biomaRt, we can see that
+## this host has named the mart differently!
+listMarts(host="uswest.ensembl.org")
+## Therefore we must also change the name passed into the "mart"
+## argument thusly:
+txdb <- makeTranscriptDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
+                                    transcript_ids=transcript_ids,
+				    host="uswest.ensembl.org")
+txdb
 }
