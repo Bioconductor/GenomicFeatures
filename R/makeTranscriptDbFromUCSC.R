@@ -111,7 +111,8 @@
   "augustusHints",             "Augustus",       "Augustus Hints",
   "augustusXRA",               "Augustus",       "Augustus De Novo",
   "augustusAbinitio",          "Augustus",       "Augustus Ab Initio",
-  "acescan",                   "ACEScan",        NA
+  "acescan",                   "ACEScan",        NA,
+  "lincRNAsTranscripts",       "lincRNAsTranscripts",       NA
 )
 
 supportedUCSCtables <- function()
@@ -211,7 +212,11 @@ supportedUCSCtables <- function()
               Rcolname="transcript")
         ),
         gene_id_type="ID of canonical transcript in cluster"
-    )
+    ),
+    lincRNAsTranscripts=c(
+        colname="name",
+        gene_id_type="Name of gene"
+    )                                    
 )
 
 .howToGetTxName2GeneIdMapping <- function(tablename)
