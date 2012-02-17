@@ -472,6 +472,14 @@ setMethod("cds", "TranscriptDb",
   csomes
 }
 
+.syncSeqlevel <- function(txdb, ans){
+  isActSeq <- isActiveSeq(txdb)
+  n2oNames <- levels(seqnames(ans))
+  n2o <- match(seqnames(seqinfo(txdb)), n2oNames)
+  seqinfo(ans, new2old=n2o) <- seqinfo(txdb)
+  seqlevels(ans, force=TRUE) <- names(isActSeq)[isActSeq]
+  ans
+}
 
 ## main function
 .microRNAs <- function(txdb){
@@ -520,12 +528,8 @@ setMethod("cds", "TranscriptDb",
                  strand=data$strand)
   
   ## Filter seqinfo
-  isActSeq <- isActiveSeq(txdb)
-  n2oNames <- levels(seqnames(ans))
-  n2o <- match(seqnames(seqinfo(txdb)), n2oNames)
-  seqinfo(ans, new2old=n2o) <- seqinfo(txdb)
-  seqlevels(ans) <- names(isActSeq)[isActSeq]
-
+  ans <- .syncSeqlevel(txdb,ans)
+  
   ## append values
   values(ans) <- data$mirna_id
   names(values(ans)) <- "mirna_id"
@@ -550,8 +554,12 @@ setMethod("microRNAs", "TranscriptDb", function(x){.microRNAs(x)} )
   if(!exists(fdbString)){
     stop("there is no tRNA data available for this organism/source")
   }else{
-    features(eval(parse(text=fdbString)))
+    ans <- features(eval(parse(text=fdbString)))
   }
+  ## Now check active seqs and set the seqlevels
+  ans <- .syncSeqlevel(txdb,ans)
+  ## now return
+  ans
 }
 
 ## Then set our method
