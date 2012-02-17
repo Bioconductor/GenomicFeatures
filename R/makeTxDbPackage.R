@@ -80,24 +80,25 @@ makeTxDbPackage <- function(txdb,
                             license="Artistic-2.0"){
    ## every package has a name We will generate this according to a heuristic
    pkgName <- .makePackageName(txdb)
-
+   dbType <- .getMetaDataValue(txdb,'Db type')
+   
    ## there should only be one template
    template_path <- system.file("txdb-template",package="GenomicFeatures")
    ## We need to define some symbols in order to have the 
    ## template filled out correctly.
    symvals <- list(
-    PKGTITLE=paste("Annotation package for the",pkgName,
-      "object"),
-    PKGDESCRIPTION=paste("Contains the",pkgName,"object",
-      "annotation database as generated from",
-      .getMetaDataValue(txdb,'Data source')),
+    PKGTITLE=paste("Annotation package for",dbType,
+      "object(s)"),
+    PKGDESCRIPTION=paste("Exposes an annotation databases generated from",
+      .getMetaDataValue(txdb,'Data source'), "by exposing these as",dbType,
+      "objects"),
     PKGVERSION=version,
     AUTHOR=author,
     MAINTAINER=maintainer,
     GFVERSION=.getMetaDataValue(txdb,
       'GenomicFeatures version at creation time'),
     LIC=license,
-    DBTYPE=.getMetaDataValue(txdb,'Db type'),
+    DBTYPE= dbType,
     ORGANISM=.getMetaDataValue(txdb,'Genus and Species'),
     SPECIES=.getMetaDataValue(txdb,'Genus and Species'),
     PROVIDER=.getMetaDataValue(txdb,'Data source'),

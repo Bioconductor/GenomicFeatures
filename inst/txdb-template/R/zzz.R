@@ -1,15 +1,17 @@
 ###
-### Load the txdb object for them when the package is loaded.
+### Load any db objects whenever the package is loaded.
 ###
 
 .onLoad <- function(libname, pkgname)
 {
-  txdb <- loadDb(system.file("extdata", paste(pkgname,
-    ".sqlite",sep=""), package=pkgname, lib.loc=libname),
-                   packageName=pkgname)
-  objname <- "@TXDBOBJNAME@"
   ns <- asNamespace(pkgname)
-  assign(objname, txdb, envir=ns)
-  namespaceExport(ns, objname)
+  path <- system.file("extdata", package=pkgname, lib.loc=libname)
+  files <- dir(path)
+  for(i in seq_len(length(files))){
+    db <- loadDb(system.file("extdata", files[[i]], package=pkgname, 
+                  lib.loc=libname),packageName=pkgname)
+    objname <- sub(".sqlite$","",files[[i]])
+    assign(objname, db, envir=ns)
+    namespaceExport(ns, objname)
+  }
 }
-

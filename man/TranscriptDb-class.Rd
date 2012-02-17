@@ -144,11 +144,11 @@ names(which(isCircular(txdb)))
 
 ## Examples on how to change which sequences are active
 ## Set chr1 and chr3 to be inactive:
-isActiveSeq(txdb)[c("1", "3")] <- FALSE
+isActiveSeq(txdb) <- c("1"=FALSE, "3"=FALSE)
 ## Set ALL of the chromsomed to be inactive
 isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
 ## Now set only chr1 and chr5 to be active
-isActiveSeq(txdb)[c("1", "4")] <- TRUE
+isActiveSeq(txdb) <- c("1"=TRUE, "5"=TRUE)
 
 ## Use of as.list
 txdump <- as.list(txdb)
