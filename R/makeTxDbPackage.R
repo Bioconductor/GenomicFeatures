@@ -23,21 +23,32 @@
 
 
 ## helper functions
+.choosePrefix <- function(txdb){
+  pkgType <- .getMetaDataValue(txdb,'Db type')
+  if(pkgType == "TranscriptDb"){
+    prefix <- "TxDb"
+  }else if(pkgType == "FeatureDb"){
+    prefix <- "FDb"
+  }
+  prefix
+}
+
 .makePackageName <- function(txdb){
+  prefix <- .choosePrefix(txdb)
   con <- AnnotationDbi:::dbConn(txdb)
   species <- .abbrevSpeciesName(.getMetaDataValue(txdb,'Genus and Species'))  
   type <- .getMetaDataValue(txdb,'Data source')
   if(type=="UCSC"){
     genome <- .getMetaDataValue(txdb,'Genome')
     table <- .getMetaDataValue(txdb,'UCSC Table')
-    pkgName <- paste("TxDb",species,type,genome,table, sep=".")
+    pkgName <- paste(prefix,species,type,genome,table, sep=".")
   }else if(type=="BioMart"){
     db <- .getMetaDataValue(txdb,'BioMart database')
     if(db == "ensembl"){
     dbVer <- .getMetaDataValue(txdb,'BioMart dataset version')      
-      pkgName <- paste("TxDb",species,type,db,dbVer, sep=".")      
+      pkgName <- paste(prefix,species,type,db,dbVer, sep=".")      
     }else{
-      pkgName <- paste("TxDb",species,type,db, sep=".")      
+      pkgName <- paste(prefix,species,type,db, sep=".")      
     }
   }
   gsub("_","",pkgName)  ## R does not allow underscores in package names
@@ -52,7 +63,7 @@
 .getTxDbVersion <- function(txdb){
   type <- .getMetaDataValue(txdb,'Data source')
   if(type=="UCSC"){  
-    version <- paste(.getMetaDataValue(txdb,'Genome'),"genome base on the", 
+    version <- paste(.getMetaDataValue(txdb,'Genome'),"genome based on the", 
       .getMetaDataValue(txdb,'UCSC Table'), "table")
   }else if(type=="BioMart"){
     version <- .getMetaDataValue(txdb,'BioMart database version')   
@@ -75,9 +86,9 @@ makeTxDbPackage <- function(txdb,
    ## We need to define some symbols in order to have the 
    ## template filled out correctly.
    symvals <- list(
-    PKGTITLE=paste("Annotation package for the",.makeObjectName(pkgName),
+    PKGTITLE=paste("Annotation package for the",pkgName,
       "object"),
-    PKGDESCRIPTION=paste("Contains the",.makeObjectName(pkgName),"object",
+    PKGDESCRIPTION=paste("Contains the",pkgName,"object",
       "annotation database as generated from",
       .getMetaDataValue(txdb,'Data source')),
     PKGVERSION=version,
@@ -86,6 +97,7 @@ makeTxDbPackage <- function(txdb,
     GFVERSION=.getMetaDataValue(txdb,
       'GenomicFeatures version at creation time'),
     LIC=license,
+    DBTYPE=.getMetaDataValue(txdb,'Db type'),
     ORGANISM=.getMetaDataValue(txdb,'Genus and Species'),
     SPECIES=.getMetaDataValue(txdb,'Genus and Species'),
     PROVIDER=.getMetaDataValue(txdb,'Data source'),
@@ -169,6 +181,44 @@ makeTxDbPackageFromBiomart <- function(
                                         miRBaseBuild=miRBaseBuild)
     ## Make the Package
     makeTxDbPackage(txdb,
+                    version=version,
+                    maintainer=maintainer,
+                    author=author,
+                    destDir=destDir,
+                    license=license)
+}
+
+
+
+## One for FeatureDB
+makeFDbPackageFromUCSC <- function(
+    version,
+    maintainer,
+    author,
+    destDir=".",
+    license="Artistic-2.0",
+    genome="hg19",
+    track="tRNAs",
+    tablename="tRNAs",
+    columns = UCSCFeatureDbTableSchema(genome, track, tablename),
+    url="http://genome.ucsc.edu/cgi-bin/",
+    goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+    chromCol=NULL,
+    chromStartCol=NULL,
+    chromEndCol=NULL){
+    ## make the fdb
+    fdb <- makeFeatureDbFromUCSC(genome=genome,
+                                 track=track,
+                                 tablename=tablename,
+                                 columns=columns,
+                                 url=url,
+                                 goldenPath_url=goldenPath_url,
+                                 chromCol=chromCol,
+                                 chromStartCol=chromStartCol,
+                                 chromEndCol=chromEndCol)
+  
+    ## Make the Package (recycle functions and templates from txdb)
+    makeTxDbPackage(fdb,
                     version=version,
                     maintainer=maintainer,
                     author=author,

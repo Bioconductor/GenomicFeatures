@@ -11,12 +11,12 @@
 \description{
   @PKGDESCRIPTION@
   
-  This package loads the above mentioned object.  This TranscriptDb object is an 
+  This package loads the above mentioned object.  This @DBTYPE@ object is an 
   R interface to the prefabricated database contained by this package.
 }
 
 \note{
-  This Transcript data package was made from resources at @PROVIDER@ on @RELEASEDATE@ and based on the @PROVIDERVERSION@
+  This data package was made from resources at @PROVIDER@ on @RELEASEDATE@ and based on the @PROVIDERVERSION@
 }
 
 \author{@AUTHOR@}

@@ -2,6 +2,7 @@
 
 \alias{makeTxDbPackage}
 \alias{makeTxDbPackageFromUCSC}
+\alias{makeFDbPackageFromUCSC}
 \alias{makeTxDbPackageFromBiomart}
 \alias{supportedMiRBaseBuildValues}
 
@@ -36,7 +37,23 @@
     url="http://genome.ucsc.edu/cgi-bin/",
     goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
     miRBaseBuild = NULL)
-  
+
+makeFDbPackageFromUCSC(
+    version,
+    maintainer,
+    author,
+    destDir=".",
+    license="Artistic-2.0",
+    genome="hg19",
+    track="tRNAs",
+    tablename="tRNAs",
+    columns = UCSCFeatureDbTableSchema(genome, track, tablename),
+    url="http://genome.ucsc.edu/cgi-bin/",
+    goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+    chromCol=NULL,
+    chromStartCol=NULL,
+    chromEndCol=NULL)
+
   makeTxDbPackageFromBiomart(
     version,
     maintainer,
@@ -51,9 +68,9 @@
 
   makeTxDbPackage(txdb,
                   version,
-  		            maintainer,
+  		  maintainer,
                   author,
-  	              destDir=".",
+  	          destDir=".",
                   license="Artistic-2.0")
 
   supportedMiRBaseBuildValues()
@@ -79,6 +96,9 @@
   \item{genome}{genome abbreviation used by UCSC and obtained by
     \code{\link[rtracklayer]{ucscGenomes}()[ , "db"]}.
     For example: \code{"hg18"}.}
+  \item{track}{name of the UCSC track.  Use
+    \code{supportedUCSCFeatureDbTracks} to get the list of available
+        tracks for a particular genome}
   \item{tablename}{name of the UCSC table containing the transcript
     annotations to retrieve. Use the \code{supportedUCSCtables} utility
     function to get the list of supported tables. Note that not all
@@ -90,8 +110,22 @@
     Otherwise it will say 'Full dataset: yes'.}
   \item{circ_seqs}{a character vector to list out which chromosomes
     should be marked as circular.}
+  \item{columns}{a named character vector to list out the names and
+        types of the other columns that the downloaded track should
+        have.  Use \code{UCSCFeatureDbTableSchema} to retrieve this
+        information for a particular table.}
   \item{url,goldenPath_url}{use to specify the location of an
     alternate UCSC Genome Browser.}
+  \item{chromCol}{If the schema comes back and the 'chrom' column has been
+        labeled something other than 'chrom', use this argument to indicate
+        what that column has been labeled as so we can properly designate it.
+        This could happen (for example) with the knownGene track tables, which
+        has no 'chromStart' or 'chromEnd' columns, but which DOES have columns
+        that could reasonably substitute for these columns under particular
+        circumstances.  Therefore we allow these three columns to have arguments
+        so that their definition can be re-specified}
+  \item{chromStartCol}{Same thing as chromCol, but for renames of 'chromStart'}
+  \item{chromEndCol}{Same thing as chromCol, but for renames of 'chromEnd'}
   \item{txdb}{A \link{TranscriptDb} object that represents a handle to a 
     transcript database. This object type is what is returned by 
     \code{makeTranscriptDbFromUCSC}, \code{makeTranscriptDbFromUCSC} or 

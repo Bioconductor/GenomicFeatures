@@ -59,8 +59,10 @@
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
     metadata <- data.frame(
-        name=c("Data source", "Genome", "UCSC Table"),
-        value=c("UCSC", genome, tablename)
+        name=c("Data source", "Genome", "UCSC Table", "Genus and Species",
+          "Resource URL"),
+        value=c("UCSC", genome, tablename, .matchUCSCGenomeToSpecies(genome),
+          "http://genome.ucsc.edu/")
     )
     message("OK")
     metadata
