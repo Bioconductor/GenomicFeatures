@@ -484,7 +484,7 @@ setMethod("cds", "TranscriptDb",
 
   ## And if not - bail out with message
   if(is.na(bld) || dim(bld)[1]==0){
-    stop("This TranscriptDb does not have a miRBase build ID specified")}
+    stop("this TranscriptDb does not have a miRBase build ID specified")}
   ## now connect to mirbase
   require(mirbase.db) ## strictly required
 
@@ -536,4 +536,27 @@ setMethod("cds", "TranscriptDb",
 ## Then set our method
 setMethod("microRNAs", "TranscriptDb", function(x){.microRNAs(x)} )
 
-## TODO: set up seq_lengths for this thing...
+
+
+## main function
+.tRNAs <- function(txdb){
+  require(FDb.UCSC.tRNAs)
+  ## get the current package name
+  pkgName <- .makePackageName(txdb)
+  ## from here we know what the FDB should MUST look like
+  fdbName <- sub("TxDb","FDb",pkgName)
+  fdbString <- sub("knownGene","tRNAs",fdbName)
+  ## TODO: need more general expression above  :(  
+  if(!exists(fdbString)){
+    stop("there is no tRNA data available for this organism/source")
+  }else{
+    features(eval(parse(text=fdbString)))
+  }
+}
+
+## Then set our method
+setMethod("tRNAs", "TranscriptDb", function(x){.tRNAs(x)} )
+
+
+
+

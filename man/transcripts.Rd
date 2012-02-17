@@ -10,6 +10,8 @@
 \alias{cds,TranscriptDb-method}
 \alias{microRNAs}
 \alias{microRNAs,TranscriptDb-method}
+\alias{tRNAs}
+\alias{tRNAs,TranscriptDb-method}
 
 \title{
   Extract genomic features from an object
@@ -32,6 +34,9 @@ cds(x, ...)
 
 microRNAs(x)
 \S4method{microRNAs}{TranscriptDb}(x)
+
+tRNAs(x)
+\S4method{tRNAs}{TranscriptDb}(x)
 }
 
 \arguments{  

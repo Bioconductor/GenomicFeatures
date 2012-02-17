@@ -19,7 +19,7 @@ for(i in seq_len(length(species))){
                                track="tRNAs",
                                tablename="tRNAs")
   name <- paste("FDb.",species[i],".UCSC.",names(species[i]),
-                ".tRNAs.SQLite",sep="")
+                ".tRNAs.sqlite",sep="")
   saveDb(fdb, file=paste(path,name,sep=""))
 }
 
@@ -38,6 +38,12 @@ lns <- readLines(fl)
 lns <- gsub("FDb.Hsapiens.UCSC.hg19.tRNAs","FDb.UCSC.tRNAs",lns)
 ## except for the last one which should always be on line 41
 lns[[41]] <-  sub("FDb.UCSC.tRNAs","FDb.Hsapiens.UCSC.hg19.tRNAs",lns[[41]])
+lns <- c(lns[1:6],
+         "\\alias{FDb.Hsapiens.UCSC.hg19.tRNAs}",
+         "\\alias{FDb.Hsapiens.UCSC.hg18.tRNAs}",
+         "\\alias{FDb.Mmusculus.UCSC.mm9.tRNAs}",
+         "\\alias{FDb.Rnorvegicus.UCSC.rn4.tRNAs}",
+         lns[7:length(lns)])
 writeLines(lns, con = fl)
 
 

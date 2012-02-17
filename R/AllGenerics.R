@@ -7,6 +7,8 @@ setGeneric("cds", function(x, ...) standardGeneric("cds"))
 
 setGeneric("microRNAs", function(x) standardGeneric("microRNAs"))
 
+setGeneric("tRNAs", function(x) standardGeneric("tRNAs"))
+
 setGeneric("transcriptsBy", signature="x",
     function(x, by=c("gene", "exon", "cds"), ...)
         standardGeneric("transcriptsBy")
