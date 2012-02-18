@@ -549,8 +549,9 @@ setMethod("microRNAs", "TranscriptDb", function(x){.microRNAs(x)} )
   pkgName <- .makePackageName(txdb)
   ## from here we know what the FDB should MUST look like
   fdbName <- sub("TxDb","FDb",pkgName)
-  fdbString <- sub("knownGene","tRNAs",fdbName)
-  ## TODO: need more general expression above  :(  
+  fdbName <- unlist(strsplit(fdbName,"\\."))
+  fdbName[5] <- "tRNAs"
+  fdbString <- paste(fdbName,collapse=".")
   if(!exists(fdbString)){
     stop("there is no tRNA data available for this organism/source")
   }else{
