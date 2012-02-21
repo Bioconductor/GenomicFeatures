@@ -527,13 +527,13 @@ setMethod("cds", "TranscriptDb",
                  ranges=ranges,
                  strand=data$strand)
   
-  ## Filter seqinfo
-  ans <- .syncSeqlevel(txdb,ans)
-  
   ## append values
   values(ans) <- data$mirna_id
   names(values(ans)) <- "mirna_id"
-  
+
+  ## Filter seqinfo
+  ans <- .syncSeqlevel(txdb,ans)
+
   ans
 }
 
