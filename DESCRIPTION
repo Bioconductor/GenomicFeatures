@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.7.26
+Version: 1.7.27
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -46,4 +46,6 @@ Collate: AllClasses.R
          makeTxDbPackage.R
          methods-select.R
          test_GenomicFeatures_package.R
+         spliceGraph_utils.R
+         spliceGraph.R
 biocViews: Genetics, Infrastructure, Annotation, HighThroughputSequencing

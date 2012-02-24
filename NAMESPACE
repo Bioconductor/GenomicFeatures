@@ -99,5 +99,5 @@ exportMethods(
   threeUTRsByTranscript,
   isActiveSeq,
   "isActiveSeq<-",
-  asBED, asGFF
+  asBED, asGFF, spliceGraph
 )
