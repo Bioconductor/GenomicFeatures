@@ -125,8 +125,11 @@ txdb  # note that these annotations match the GRCh37 genome assembly
 listMarts(host="uswest.ensembl.org")
 ## Therefore we must also change the name passed into the "mart"
 ## argument thusly:
-txdb <- makeTranscriptDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
-                                    transcript_ids=transcript_ids,
-				    host="uswest.ensembl.org")
+try(
+	txdb <- makeTranscriptDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
+                                            transcript_ids=transcript_ids,
+		      		      	    host="uswest.ensembl.org")	    
+)
 txdb
+
 }
