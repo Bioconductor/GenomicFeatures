@@ -1,4 +1,4 @@
-%\VignetteIndexEntry{Making and Utilizing TranscriptDb Objects}
+%\VignetteIndexEntry{Representing Transcripts as Splice Graphs}
 %\VignetteKeywords{annotation}
 %\VignettePackage{GenomicFeatures}
 \documentclass[11pt]{article}
