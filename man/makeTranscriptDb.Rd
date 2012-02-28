@@ -55,7 +55,7 @@
   Other columns, if any, are ignored (with a warning).
 
   \code{splicings} must have N rows per transcript, where N is the nb
-  of exons in the transcript. Each row describes an exon plus eventually
+  of exons in the transcript. Each row describes an exon plus, optionally,
   the cds contained in this exon. Its columns must be:
   \itemize{
   \item \code{tx_id}: Foreign key that links each row in the \code{splicings}
