@@ -9,6 +9,7 @@ author = "Marc Carlson"
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
+			destDir=outDir,
                         genome="hg18",
                         tablename="knownGene")
 
@@ -16,6 +17,7 @@ makeTxDbPackageFromUCSC(version=version,
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
+			destDir=outDir,
                         genome="hg19",
                         tablename="knownGene",
                         miRBaseBuild="GRCh37")
@@ -24,6 +26,7 @@ makeTxDbPackageFromUCSC(version=version,
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
+			destDir=outDir,
                         genome="mm9",
                         tablename="knownGene")
 
@@ -33,6 +36,7 @@ makeTxDbPackageFromUCSC(version=version,
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
+			destDir=outDir,
                         genome="ce6",
                         tablename="ensGene")
                         
@@ -40,6 +44,7 @@ makeTxDbPackageFromUCSC(version=version,
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
+			destDir=outDir,
                         genome="dm3",
                         tablename="ensGene")
                         
@@ -47,6 +52,7 @@ makeTxDbPackageFromUCSC(version=version,
 makeTxDbPackageFromBiomart(version=version,
                           maintainer=maintainer,
                           author=author,
+		 	  destDir=outDir,
                           biomart="plants_mart_10",
                           dataset="athaliana_eg_gene")
                                          
@@ -55,6 +61,7 @@ makeTxDbPackageFromBiomart(version=version,
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
+			destDir=outDir,
                         genome="rn4",
                         tablename="ensGene")
 
@@ -65,12 +72,14 @@ makeTxDbPackageFromUCSC(version=version,
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
+			destDir=outDir,
                         genome="sacCer2",
                         tablename="sgdGene")
 
 ## makeTxDbPackageFromUCSC(version=version,
 ##                         maintainer=maintainer,
 ##                         author=author,
+##			   destDir=outDir,
 ##                         genome="sacCer2",
 ##                         tablename="ensGene")
 
@@ -91,6 +100,7 @@ makeTxDbPackageFromUCSC(version=version,
 ## makeTxDbPackageFromBiomart(version=version,
 ##                            maintainer=maintainer,
 ##                            author=author,
+## 			      destDir=outDir,
 ##                            biomart="ensembl",
 ##                            dataset="hsapiens_gene_ensembl",
 ##                            transcript_ids=transcript_ids,
