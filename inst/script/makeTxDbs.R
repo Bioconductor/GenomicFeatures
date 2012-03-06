@@ -53,7 +53,7 @@ makeTxDbPackageFromBiomart(version=version,
                           maintainer=maintainer,
                           author=author,
 		 	  destDir=outDir,
-                          biomart="plants_mart_10",
+                          biomart="plants_mart_12",
                           dataset="athaliana_eg_gene")
                                          
 
