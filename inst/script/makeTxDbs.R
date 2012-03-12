@@ -32,6 +32,14 @@ makeTxDbPackageFromUCSC(version=version,
                         genome="mm9",
                         tablename="knownGene")
 
+## Mouse mm10
+makeTxDbPackageFromUCSC(version=version,
+                        maintainer=maintainer,
+                        author=author,
+			destDir=TxDbOutDir,
+                        genome="mm10",
+                        tablename="ensGene")
+
 
 
 ## c elegans enseble trac
@@ -55,7 +63,7 @@ makeTxDbPackageFromBiomart(version=version,
                           maintainer=maintainer,
                           author=author,
 		 	  destDir=TxDbOutDir,
-                          biomart="plants_mart_12",
+                          biomart="plants_mart_13",
                           dataset="athaliana_eg_gene")
                                          
 
