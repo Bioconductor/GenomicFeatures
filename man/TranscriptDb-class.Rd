@@ -13,11 +13,17 @@
 \alias{seqinfo,TranscriptDb-method}
 \alias{show,TranscriptDb-method}
 \alias{show,FeatureDb-method}
-\alias{as.list,TranscriptDb-method}
 \alias{isActiveSeq}
 \alias{isActiveSeq<-}
 \alias{isActiveSeq,TranscriptDb-method}
 \alias{isActiveSeq<-,TranscriptDb-method}
+
+
+% coercion
+\alias{as.list,TranscriptDb-method}
+\alias{asGFF,TranscriptDb-method}
+\alias{asBED,TranscriptDb-method}
+
 
 % select and select related methods
 \alias{cols,TranscriptDb-method}
@@ -72,6 +78,16 @@
       again with no loss of information.
       Note that the transcripts are dumped in the same order in all the
       data frames.
+    }
+    \item{}{
+      \code{asGFF(x)}:
+      Dumps the transcript information from the db into a GRanges
+      object formatted like a GFF file.
+    }
+    \item{}{
+      \code{asBED(x)}:
+      Dumps the transcript information from the db into a GRanges
+      object formatted like a bed file.
     }
     \item{}{
       \code{isActiveSeq(x)}:

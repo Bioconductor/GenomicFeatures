@@ -7,7 +7,7 @@ test_makeTranscriptDbFromBiomart <- function()
                       "extdata",
                       "Biomart_Ensembl_sample.sqlite",
                       package="GenomicFeatures")
-    txdb0 <- loadFeatures(txdb0_file)
+    txdb0 <- loadDb(txdb0_file)
 
     ## get
     transcript_ids <- c(
@@ -15,7 +15,6 @@ test_makeTranscriptDbFromBiomart <- function()
         "ENST00000313243",
         "ENST00000341724",
         "ENST00000400839",
-        "ENST00000400840",
         "ENST00000435657",
         "ENST00000478783"
     )

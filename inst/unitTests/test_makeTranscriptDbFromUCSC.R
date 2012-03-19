@@ -8,7 +8,7 @@ test_makeTranscriptDbFromUCSCTxTable <- function()
                       "UCSC_knownGene_sample.sqlite",
                       package="GenomicFeatures"
                   )
-    txdb0 <- loadFeatures(txdb0_file)
+    txdb0 <- loadDb(txdb0_file)
 
     ## get
     knownGene_sample_file <- system.file(

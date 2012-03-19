@@ -52,7 +52,7 @@ test_makeTranscriptDb <- function()
                       "extdata",
                       "Biomart_Ensembl_sample.sqlite",
                       package="GenomicFeatures")
-    txdb0 <- loadFeatures(txdb0_file)
+    txdb0 <- loadDb(txdb0_file)
 
     ## get
     txdb1 <- do.call(makeTranscriptDb, as.list(txdb0))
