@@ -111,11 +111,11 @@
                 "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) )")
   
   sql <- switch(EXPR = tName,
-                "g" = "gene",
-                "t" = "transcript",
-                "s" = "splicing",
-                "e" = "exon",
-                "c" = "cds",
+                "g" = gt, ## becomes gt b/c we always need chr info
+                "t" = "transcript", ##OK
+                "s" = tse, ## becomes tse b/c we always require chr info
+                "e" = "exon", ## OK thanks to exception in .makeActiveChrList()
+                "c" = "cds", ## OK thanks to exception in .makeActiveChrList()
                 "gt" = gt,
                 "gts" = gts,
                 "gtse" = gtse,
@@ -164,12 +164,22 @@
   .tableJoinSelector(tKey)  
 }
 
-
 .makeKeyList <- function(x, keys, keytype, abbrev=TRUE){
   #colType <- .reverseColAbbreviations(x, keytype)
   colType <- .makeSelectList(x, keytype, abbrev)
   keys <- paste(paste("'",keys,"'",sep=""),collapse=",")
   paste(colType, "IN (", keys,")")
+}
+
+## helper for generating where clause based on activeSeqs
+.makeActiveChrList <- function(x, tKey){
+  sqlCol <- switch(tKey,
+                   "e" = "exon.exon_chrom",
+                   "c" = "cds.cds_chrom",
+                   "transcript.tx_chrom")
+  chrStrings <- names(isActiveSeq(x))[isActiveSeq(x)]
+  chrs <- paste(paste("'",chrStrings,"'",sep=""),collapse=",")
+  paste(sqlCol, "IN (", chrs,")")
 }
 
 .select <- function(x, keys, cols, keytype){
@@ -193,13 +203,27 @@
     majorJoin <- sub("FROM transcript LEFT JOIN gene",
                      "FROM transcript INNER JOIN gene",majorJoin)
   }
+
+  ## This is where/how we respect isActiveSeq()
+  if(FALSE %in% isActiveSeq(x)){ 
+  ## Then we have to append a where clause to majorJoin
+    if(tKey %in% c("t","e","c")){
+      majorJoin <- paste("( SELECT * FROM", majorJoin,
+                         paste("WHERE", .makeActiveChrList(x, tKey)), ")")
+    }else{
+      majorJoin <- sub(") )",
+                       paste(") WHERE", .makeActiveChrList(x, tKey), ")")
+                       ,majorJoin)
+    }
+  }## otherwise we can just leave it alone.
+
+    sql <- paste("SELECT DISTINCT",
+                 .makeSelectList(x, cnames, abbrev=FALSE),
+                 "FROM",
+                 majorJoin,
+                 "WHERE",
+                 .makeKeyList(x, keys, keytype, abbrev=FALSE))  
   
-  sql <- paste("SELECT DISTINCT",
-               .makeSelectList(x, cnames, abbrev=FALSE),
-               "FROM",
-               majorJoin,
-               "WHERE",
-               .makeKeyList(x, keys, keytype, abbrev=FALSE))
   res <- AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x), sql)
 
   
@@ -375,7 +399,7 @@ setMethod("keytypes", "TranscriptDb",
 ##  cols = c("GENEID", "EXONSTART","TXNAME"); k = head(keys(txdb, "TXNAME")); foo = select(txdb, k, cols = cols, keytype="TXNAME"); head(foo)
 
 
-## While this fails
+## This works now
 ##  cols = c("GENEID", "CDSID","TXNAME"); k = head(keys(txdb, "TXNAME")); foo = select(txdb, k, cols = cols, keytype="TXNAME"); head(foo)
 
 
@@ -492,3 +516,23 @@ setMethod("keytypes", "TranscriptDb",
 ## NEW STRESS TEST (big join with A LOT OF gene_id keys
 ## library(TxDb.Hsapiens.UCSC.hg19.knownGene);x <- txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene;  cols = c("GENEID","CDSSTART"); keys = keys(x, "GENEID"); foo = select(x, keys, cols = cols, keytype="GENEID");head(foo)
 
+
+
+
+## library(TxDb.Hsapiens.UCSC.hg19.knownGene);x <- TxDb.Hsapiens.UCSC.hg19.knownGene; cols = c("GENEID","CDSSTART", "CDSCHROM");keys = head(keys(x, "GENEID"));
+## select(x, keys, cols = cols, keytype="GENEID");
+## isActiveSeq(x)[seqlevels(x)] <- FALSE;
+## isActiveSeq(x) <- c("chr1"=TRUE)
+## select(x, keys, cols = cols, keytype="GENEID");
+
+##  debug(GenomicFeatures:::.select)
+
+
+## cols = c("TXNAME"   ,  "TXCHROM" ,   "TXSTRAND")
+## k = head(keys(x,keytype="TXNAME"))
+## select(x, k, cols = cols, keytype="TXNAME");
+
+
+
+##
+## So I think I have this fixed now.  But I still need to add unit tests.

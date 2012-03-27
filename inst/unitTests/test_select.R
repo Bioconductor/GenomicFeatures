@@ -72,9 +72,9 @@ test_missingTableInterpolator <- function(){
 }
 
 test_tableJoinSelector <- function(){
-  tName <- "g"
+  tName <- "t"
   res <- GenomicFeatures:::.tableJoinSelector(tName)
-  checkIdentical(res,"gene")
+  checkIdentical(res,"transcript")
   tName <- "gt"
   res <- GenomicFeatures:::.tableJoinSelector(tName)
   checkIdentical(res, "(SELECT * FROM transcript LEFT JOIN gene  ON (transcript._tx_id = gene._tx_id) )")
@@ -240,6 +240,33 @@ test_select <- function(){
   checkTrue(dim(res)[2]==length(cols))
   checkIdentical(c("GENEID","CDSSTART"), colnames(res))
     
+}
+
+test_select_isActiveSeq <- function(){
+  ## set isActiveSeq to only watch chr1
+  isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
+  isActiveSeq(txdb) <- c("chr1"=TRUE)
+  
+  ## then use select
+  keys <- head(keys(txdb, "GENEID"))
+  cols <- c("GENEID","CDSSTART", "CDSCHROM")
+  res <- select(txdb, keys, cols = cols, keytype="GENEID")
+  checkTrue(dim(res)[1]>0)
+  checkTrue(dim(res)[2]==length(cols))
+  checkIdentical(c("GENEID","CDSCHROM","CDSSTART"), colnames(res))
+  uniqChrs <- unique(res$CDSCHROM)[!is.na(unique(res$CDSCHROM))]
+  checkIdentical(c("chr1"),uniqChrs)
+
+  ## keys must contain keys that match to more than one thing
+  keys <- c(head(keys(txdb,keytype="TXNAME")),
+            tail(keys(txdb,keytype="TXNAME")))
+  cols <- c("TXNAME","TXCHROM","TXSTRAND")
+  res <- select(txdb, keys, cols = cols, keytype="TXNAME")
+  checkTrue(dim(res)[1]>0)
+  checkTrue(dim(res)[2]==length(cols))
+  checkIdentical(c("TXNAME","TXCHROM","TXSTRAND"), colnames(res))
+  uniqChrs <- unique(res$TXCHROM)[!is.na(unique(res$TXCHROM))]
+  checkIdentical(c("chr1"),uniqChrs)  
 }
 
 
