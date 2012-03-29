@@ -408,22 +408,31 @@ setMethod("asGFF", "TranscriptDb", function(x) {
   tx_gene <- transcriptsBy(x)
   gene <- unlist(range(tx_gene))
   values(gene)$Parent <- CharacterList(character())
-  values(gene)$ID <- names(gene)
+  addPrefix <- function(ids, prefix) {
+    if (is(ids, "List"))
+      ids <- as(ids, "CharacterList")
+    prefix <- paste(prefix, ":", sep = "")
+    sub(paste("^|^", prefix, sep = ""), prefix, ids)
+  }
+  values(gene)$ID <- addPrefix(names(gene), "GeneID")
   values(gene)$Name <- names(gene)
   values(gene)$type <- "gene"
   tx <- transcripts(x, columns = c(Parent = "gene_id", ID = "tx_id",
                          Name = "tx_name"))
+  values(tx)$Parent <- addPrefix(values(tx)$Parent, "GeneID")
+  values(tx)$ID <- addPrefix(values(tx)$ID, "TxID")
   values(tx)$type <- "mRNA"
   exon <- exons(x, columns = c(Parent = "tx_id"))
+  values(exon)$Parent <- addPrefix(values(exon)$Parent, "TxID")
   values(exon)$ID <- NA
   values(exon)$Name <- NA
   values(exon)$type <- "exon"
   values(exon)$Parent <- as(values(exon)$Parent, "CharacterList")
   cds <- cds(x, columns = c(Parent = "tx_id"))
+  values(cds)$Parent <- addPrefix(values(cds)$Parent, "TxID")
   values(cds)$ID <- NA
   values(cds)$Name <- NA
   values(cds)$type <- "CDS"
-  values(cds)$Parent <- as(values(cds)$Parent, "CharacterList")
   gff <- c(gene, tx, exon, cds)
   names(gff) <- NULL
   gff
