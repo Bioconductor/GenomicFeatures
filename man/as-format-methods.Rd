@@ -8,8 +8,9 @@
   \code{\link[GenomicRanges:GRanges-class]{GRanges}} object with
   \code{values} columns encoding transcript structures according to the
   model of a standard file format. Currently, BED and GFF models are
-  supported. The returned \code{GRanges} might then be exported in that
-  format using \code{\link[rtracklayer]{export}}.
+  supported. If a \code{TranscriptDb} is passed to
+  \code{\link[rtracklayer]{export}}, when targeting a BED or GFF file,
+  this coercion occurs automatically.
 }
 \usage{
 \S4method{asBED}{TranscriptDb}(x)
