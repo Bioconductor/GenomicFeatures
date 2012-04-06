@@ -1,5 +1,5 @@
 setMethod("spliceGraph", signature(txdb="TranscriptDb"),
-    function(txdb, genes=getGH(txdb), ...)
+    function(txdb, getEvents=TRUE, genes=getGH(txdb), ...)
     {
         ## Get transcripts per gene
         txsByGene <- transcriptsBy(txdb, "gene")
@@ -87,22 +87,57 @@ setMethod("spliceGraph", signature(txdb="TranscriptDb"),
         ## Create the vertices of the graph (data.frame)
         vertices <- vertex(dJExsByTxs[as.character(txId)],
                            txsByGene, siteMap)
-        
+
+
+        ## create original vertices before dissjoining to
+        ## carry forward the original gene model information
+        vertices.orig <- vertex(exsByTxs, txsByGene,
+                                siteMap, exID="exon_id")
+
+
+        ## get original vertices to identify alternative
+        ## acceptor and donor sites this is éssential to differentiate
+        ## between exon skips and alternative donor sites later on
+        code.orig <- paste(vertices.orig$Pos, vertices.orig$Gn,
+                           vertices.orig$Tx, sep=":")
+
+        code.dj <- paste(vertices$Pos, vertices$Gn, vertices$Tx,
+                         sep=":")
+
+        vertices$origType <- ifelse(code.dj %in% code.orig,
+                                    as.character(vertices$Type),
+                                    paste(vertices$Type, ":", sep=""))
         
         ## create the edges data frame of the splicing graph
-        edges <- edge(vertices)
-        
+        edgesPrelim <- edge(vertices)
+
+        ## remove duplicated edges
+        etscript <- getEtscript(edgesPrelim)
+        edges <- rmDupEdges(edgesPrelim)
+       
+        rownames(vertices) <- vertices$order
+
         
         ## compute in and out degree of the individual vertices
-        verticesIod <- iodeg(vertices, edges)
+        verticesIod <-
+          iodeg(vertices, edges[, c("Eid", "From", "To", "of", "ot")])
         
         ## collapse the edges, to only keep those where at least one
         ## associated vertex has outdegree or indegree not equal to 1
         cEdges <- collapseEdge(verticesIod, edges)
+
+        ## get transcripts associated with each vertex
+        vtscript <- vertexTranscripts(vertices)
+
+        ## transcripts associated with the collapsed edges
+        cEtscript <- edgeTranscripts(vtscript, edges, cEdges)
         
         ## collapse the vertices, we keep only those which have
         ## outdegree or indegree not equal to 1
         cVertices <- collapseVertex(verticesIod)
+
+        ## transcripts associated with the collapses vertices 
+        cVtscript <- vtscript[as.character(cVertices$Vid)]
         
         ## retrieve all exons per edges
         eexons <- collapseEdgeExons(verticesIod, edges)
@@ -120,7 +155,40 @@ setMethod("spliceGraph", signature(txdb="TranscriptDb"),
         ## assign gene names to the individual edges
         values(exsByEdges)[["gene_id"]] <-
           as.character(edgeToGene[names(exsByEdges), ]$Gene)
+
+        if(getEvents) {
+            allBubbles <- bubbles(cEtscript, cVertices, cEdges,
+                                  cVtscript, vertices,
+                                  origVids=FALSE )
+            
+            sc <- spliceCodeCharacterList(allBubbles)
+            
+            strRes <- spliceCodeToString(sc)
+            
+            ## get the event description
+            fn <- system.file("extdata", "events.Rda",
+                                  package="GenomicFeatures")
+
+            load(fn)
+
+            l <- collapseEdgeX(verticesIod, edges)
+            
+            values(exsByEdges)[["bubble_ids"]] <-
+              CharacterList(edgeToBubble(allBubbles, l)[names(exsByEdges)])
+
+            values(exsByEdges)[["bubblePart_ids"]] <-
+              CharacterList(edgeToBubblePart(allBubbles, l)[names(exsByEdges)])
+
+            df <- DataFrame(bubbleCode=names(sc),
+                            code=sc,
+                            eventType=unname(events[strRes]),
+                            gn=elementMetadata(sc)$Gn,
+                            bubbleNr=as.integer(elementMetadata(sc)$bubble)
+                            )
+       
+            metadata(exsByEdges) <- list(spliceEvents=df)
+        }
         
-        exsByEdges
+        exsByEdges    
   }
 )
