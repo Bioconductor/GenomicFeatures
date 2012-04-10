@@ -149,14 +149,14 @@ it is not possible to serialize a \Rclass{TranscriptDb} object using
 \R's \Rfunction{save} function.
 
 <<saveFeatures 1, eval=FALSE>>=
-saveFeatures(mm9KG, file="fileName.sqlite")
+saveDb(mm9KG, file="fileName.sqlite")
 @
 
 A \Rclass{TranscriptDb} object can be initialized from a file using
-\Rfunction{loadFeatures}.
+\Rfunction{loadDb}.
 
 <<loadFeatures-1, eval=FALSE>>=
-mm9KG <- loadFeatures("fileName.sqlite")
+mm9KG <- loadDb("fileName.sqlite")
 @
 
 \section{Retrieving Transcript, Exon, and Coding Sequence Ranges}
@@ -172,7 +172,7 @@ demonstrate and test the functionality of the
 <<transcripts0>>=
 samplefile <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
                           package="GenomicFeatures")
-txdb <- loadFeatures(samplefile)
+txdb <- loadDb(samplefile)
 txdb
 @
 
