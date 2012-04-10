@@ -41,5 +41,5 @@ setMethod("features", "FeatureDb",
 
 ## test code:
 ## library(GenomicFeatures)
-## fdb <- loadFeatures("FeatureDb.sqlite")
+## fdb <- loadDb("FeatureDb.sqlite")
 ## features(fdb)

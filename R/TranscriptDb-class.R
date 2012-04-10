@@ -192,7 +192,8 @@ TranscriptDb <- function(conn)
 
 setMethod("saveFeatures", "TranscriptDb",
           function(x, file)
-          {
+          {	      
+	    .Deprecated(new="saveDb", package="AnnotationDbi")
             saveDb(x, file)
           }
 )
@@ -203,6 +204,7 @@ setMethod("saveFeatures", "TranscriptDb",
 ## current users too unhappy.
 loadFeatures <- function(file)
 {
+    .Deprecated(new="loadDb", package="AnnotationDbi")
     loadDb(file)
 }
 
