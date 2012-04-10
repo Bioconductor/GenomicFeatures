@@ -29,8 +29,10 @@
   \link{TranscriptDb}
 }
 \examples{
+\dontrun{
   txdb <- 
     loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                              package = "GenomicFeatures"))
   txdb
+}
 }

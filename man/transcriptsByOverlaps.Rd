@@ -68,7 +68,7 @@ cdsByOverlaps(x, ranges,
   \link{TranscriptDb}, \code{\link{transcripts}}
 }
 \examples{
-  txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+  txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                    package="GenomicFeatures"))
   gr <- GRanges(seqnames = rep("chr1",2),
                 ranges = IRanges(start=c(500,10500), end=c(10000,30000)),

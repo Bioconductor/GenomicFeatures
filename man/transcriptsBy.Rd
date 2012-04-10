@@ -97,7 +97,7 @@ threeUTRsByTranscript(x, ...)
 \examples{
   txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
                            package="GenomicFeatures")
-  txdb <- loadFeatures(txdb_file)
+  txdb <- loadDb(txdb_file)
 
   ## Get the transcripts grouped by gene:
   transcriptsBy(txdb, "gene")

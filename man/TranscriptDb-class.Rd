@@ -139,7 +139,6 @@
   \link[GenomicRanges]{Seqinfo-class},
   \code{\link{makeTranscriptDbFromUCSC}},
   \code{\link{makeTranscriptDbFromBiomart}},
-  \code{\link{loadFeatures}},
   \code{\link{transcripts}},
   \code{\link{transcriptsByOverlaps}},
   \code{\link{id2name}}, \code{\link{transcriptsBy}}
@@ -148,7 +147,7 @@
 \examples{
 txdb_file <- system.file("extdata", "Biomart_Ensembl_sample.sqlite",
                          package="GenomicFeatures")
-txdb <- loadFeatures(txdb_file)
+txdb <- loadDb(txdb_file)
 txdb
 
 ## Use of seqinfo

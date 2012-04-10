@@ -34,7 +34,7 @@ features(x)
 }
 
 \examples{
-  fdb <- loadFeatures(system.file("extdata", "FeatureDb.sqlite",
+  fdb <- loadDb(system.file("extdata", "FeatureDb.sqlite",
                                    package="GenomicFeatures"))
   features(fdb)
 }

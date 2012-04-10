@@ -46,14 +46,14 @@ ids and the values the external names.}
 \examples{
   txdb1_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
                             package="GenomicFeatures")
-  txdb1 <- loadFeatures(txdb1_file)
+  txdb1 <- loadDb(txdb1_file)
   id2name(txdb1, feature.type="tx")[1:4]
   id2name(txdb1, feature.type="exon")[1:4]
   id2name(txdb1, feature.type="cds")[1:4]
 
   txdb2_file <- system.file("extdata", "Biomart_Ensembl_sample.sqlite",
                             package="GenomicFeatures")
-  txdb2 <- loadFeatures(txdb2_file)
+  txdb2 <- loadDb(txdb2_file)
   id2name(txdb2, feature.type="tx")[1:4]
   id2name(txdb2, feature.type="exon")[1:4]
   id2name(txdb2, feature.type="cds")[1:4]
