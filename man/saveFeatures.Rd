@@ -1,4 +1,4 @@
-\name{saveFeatures}
+\name{GenomicFeatures-deprecated}
 \alias{saveFeatures}
 \alias{saveFeatures,TranscriptDb-method}
 \alias{saveFeatures,FeatureDb-method}
@@ -9,6 +9,10 @@
 \description{
   These methods provide a way to dump a TranscriptDb object to
   an SQLite file, and to recreate that object the saved file.
+
+ However, these methods are now deprecated and have been replaced by
+  loadDb and saveDb Users are encouraged to switch to those other
+  methods as these methods will soon be unavailable
 }
 \usage{
   saveFeatures(x, file)
