@@ -213,6 +213,7 @@ joinDataFrameWithName2Val <- function(x, join_colname, name2val, vals_colname)
 ### This unambiguously defines 'ids'. In particular, it's not Locale
 ### specific, despite the fact that the current implementation uses a
 ### sorting approach.
+### TODO: Remove! (not used anymore)
 makeIdsForUniqueDataFrameRows <- function(x)
 {
     if (!is.data.frame(x))
@@ -225,6 +226,63 @@ makeIdsForUniqueDataFrameRows <- function(x)
     ## Convert the "provisory" ids into the final ids. The final ids are
     ## *not* Locale specific anymore.
     as.integer(factor(prov_ids, levels=unique(prov_ids)))
+}
+
+### 'chrom_ids' (integer vector, no NAs), 'strand' (character vector, factor,
+### or anything supported by a "strand" method, no NAs), 'start' (integer
+### vector, no NAs), and 'end' (integer vector, no NAs) must have the same
+### length N (number of features).
+### If 'name' is not NULL, it must be character vector or factor of length N,
+### possibly with NAs.
+### Returns an integer vector of length N containing one id per feature.
+makeFeatureIds <- function(chrom_ids, strand, start, end, name=NULL,
+                           same.id.for.dups=FALSE)
+{
+    if (is.factor(strand)) {
+        ## If levels contain "+", "-" and/or "*" in the wrong order then
+        ## we coerce back to character.
+        m <- match(levels(strand), levels(strand()))
+        m <- m[!is.na(m)]
+        if (!all(diff(m) >= 1L))
+            strand <- as.character(strand)
+    }
+    if (!is.factor(strand))
+        strand <- strand(strand)
+    a <- chrom_ids
+    b <- as.integer(strand)
+    c <- start
+    d <- end
+    if (!is.null(name)) {
+        if (!is.factor(name)) {
+            prev_locale <- Sys.getlocale("LC_COLLATE")
+            Sys.setlocale("LC_COLLATE", "C")
+            on.exit(Sys.setlocale("LC_COLLATE", prev_locale))
+            name <- as.factor(name)
+        }
+        a <- 3L * a + b
+        b <- c
+        c <- d
+        d <- as.integer(name)
+        d[is.na(d)] <- 0L
+    }
+    if (!same.id.for.dups) {
+        oo <- IRanges:::orderIntegerQuads(a, b, c, d)
+        ans <- integer(length(oo))
+        ans[oo] <- seq_len(length(oo))
+        return(ans)
+    }
+    ## There should be a better way to do this...
+    is_not_dup <- !IRanges:::duplicatedIntegerQuads(a, b, c ,d)
+    ua <- a[is_not_dup]
+    ub <- b[is_not_dup]
+    uc <- c[is_not_dup]
+    ud <- d[is_not_dup]
+    oo <- IRanges:::orderIntegerQuads(ua, ub, uc, ud)
+    ua <- ua[oo]
+    ub <- ub[oo]
+    uc <- uc[oo]
+    ud <- ud[oo]
+    IRanges:::matchIntegerQuads(a, b, c, d, ua, ub, uc, ud)
 }
 
 

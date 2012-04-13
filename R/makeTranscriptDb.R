@@ -4,8 +4,13 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Helper functions for makeTranscriptDb()
+### 1st group of helper functions for makeTranscriptDb()
 ###
+### 4 functions to check and normalize the input of makeTranscriptDb():
+###   o .normargTranscripts()
+###   o .normargSplicings()
+###   o .normargGenes()
+###   o .normargChrominfo()
 
 .checkargColnames <- function(arg, required_colnames, optional_colnames,
                               argname)
@@ -88,7 +93,7 @@
     transcripts
 }
 
-.normargSplicings <- function(splicings, unique_tx_ids)
+.normargSplicings <- function(splicings, transcripts_tx_id)
 {
     .REQUIRED_COLS <- c("tx_id", "exon_rank", "exon_start", "exon_end")
     .OPTIONAL_COLS <- c("exon_id", "exon_name", "exon_chrom", "exon_strand",
@@ -96,7 +101,7 @@
     .checkargColnames(splicings, .REQUIRED_COLS, .OPTIONAL_COLS, "splicings")
     ## Check 'tx_id'.
     .checkForeignKey(splicings$tx_id, "integer", "splicings$tx_id",
-                     unique_tx_ids, "integer", "transcripts$tx_id")
+                     transcripts_tx_id, "integer", "transcripts$tx_id")
     ## Check 'exon_rank'.
     if (!is.numeric(splicings$exon_rank)
      || any(is.na(splicings$exon_rank)))
@@ -189,13 +194,21 @@
             stop("NAs in 'splicings$cds_name' don't match ",
                  "NAs in 'splicings$cds_start'")
     }
+    if (!hasCol(splicings, "cds_start")) {
+        splicings$cds_start <- rep.int(NA_integer_, nrow(splicings))
+        splicings$cds_end <- splicings$cds_start
+    }
     splicings
 }
 
-.normargGenes <- function(genes, unique_tx_ids)
+.normargGenes <- function(genes, transcripts_tx_id)
 {
-    if (is.null(genes))
-        return(data.frame(tx_id=unique_tx_ids[FALSE], gene_id=character(0)))
+    if (is.null(genes)) {
+        genes <- data.frame(tx_id=transcripts_tx_id[FALSE],
+                            gene_id=character(0),
+                            check.names=FALSE, stringsAsFactors=FALSE)
+        return(genes)
+    }
     .REQUIRED_COLS <- "gene_id"
     .OPTIONAL_COLS <- c("tx_id", "tx_name")
     .checkargColnames(genes, .REQUIRED_COLS, .OPTIONAL_COLS, "genes")
@@ -210,14 +223,14 @@
              "or a \"tx_name\" col but not both")
     if (!hasCol(genes, "tx_id")) {
         ## Remap 'gene_id' to 'tx_id'.
-        if (is.null(names(unique_tx_ids)))
+        if (is.null(names(transcripts_tx_id)))
             stop("cannot map genes to transcripts, need 'transcripts$tx_name'")
         genes <- joinDataFrameWithName2Val(genes, "tx_name",
-                                           unique_tx_ids, "tx_id")
+                                           transcripts_tx_id, "tx_id")
     } else {
         ## Check 'tx_id'.
         .checkForeignKey(genes$tx_id, "integer", "genes$tx_id",
-                         unique_tx_ids, "integer", "transcripts$tx_id")
+                         transcripts_tx_id, "integer", "transcripts$tx_id")
     }
     genes
 }
@@ -228,12 +241,15 @@
     if (is.null(chrominfo)) {
         warning("chromosome lengths and circularity flags ",
                 "are not available for this TranscriptDb object")
-        feature_chrom <- unique(c(as.character(transcripts_tx_chrom),
-                                  as.character(splicings_exon_chrom)))
+        chrom <- unique(c(as.character(transcripts_tx_chrom),
+                          as.character(splicings_exon_chrom)))
+        chrom_ids <- makeSeqnameIds(chrom)
+        chrom[chrom_ids] <- chrom
         chrominfo <- data.frame(
-            chrom=feature_chrom,
-            length=rep.int(NA_integer_, length(feature_chrom)),
-            is_circular=rep.int(NA, length(feature_chrom))
+            chrom=chrom,
+            length=rep.int(NA_integer_, length(chrom)),
+            is_circular=rep.int(NA, length(chrom)),
+            check.names=FALSE, stringsAsFactors=FALSE
         )
         return(chrominfo)
     }
@@ -245,6 +261,8 @@
      || any(is.na(chrominfo$chrom)))
         stop("'chrominfo$chrom' must be a character vector (or factor) ",
              "with no NAs")
+    if (any(duplicated(chrominfo$chrom)))
+        stop("'chrominfo$chrom' contains duplicated values")
     .checkForeignKey(transcripts_tx_chrom, NA, "transcripts$tx_chrom",
                      chrominfo$chrom, NA, "chrominfo$chrom")
     if (!is.null(splicings_exon_chrom))
@@ -289,24 +307,67 @@
     chrominfo
 }
 
-.makeInternalIdsFromExternalIds <- function(external_id)
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### 2nd group of helper functions for makeTranscriptDb()
+###
+### These functions deal with id assignment and reassignment.
+###
+
+.translateIds <- function(old_ids, new_ids, ids)
 {
-    if (is.integer(external_id))
-        external_id
-    else
-        as.integer(factor(external_id))
+    new_ids[match(ids, old_ids)]
 }
 
-.makeInternalIdsForUniqueLocs <- function(chrom, strand, start, end)
+.makeTranscriptsInternalTxId <- function(transcripts, reassign.ids,
+                                         chrominfo_chrom)
 {
-    not_NA <- !is.na(start)
-    x <- data.frame(chrom, strand, start, end,
-                    stringsAsFactors=FALSE)[not_NA, ]
-    ans <- integer(length(start))
-    ans[not_NA] <- makeIdsForUniqueDataFrameRows(x)
+    if (!reassign.ids)
+        return(transcripts$tx_id)
+    chrom_ids <- match(transcripts$tx_chrom, chrominfo_chrom)
+    makeFeatureIds(chrom_ids, transcripts$tx_strand,
+                   transcripts$tx_start,
+                   transcripts$tx_end,
+                   name=transcripts$tx_name)
+}
+
+.makeSplicingsInternalExonId <- function(splicings, reassign.ids,
+                                         chrominfo_chrom)
+{
+    if (!reassign.ids && hasCol(splicings, "exon_id"))
+        return(splicings$exon_id)
+    chrom_ids <- match(splicings$exon_chrom, chrominfo_chrom)
+    makeFeatureIds(chrom_ids, splicings$exon_strand,
+                   splicings$exon_start,
+                   splicings$exon_end,
+                   name=splicings$exon_name,
+                   same.id.for.dups=TRUE)
+}
+
+.makeSplicingsInternalCDSId <- function(splicings, reassign.ids,
+                                        chrominfo_chrom)
+{
+    if (!reassign.ids && hasCol(splicings, "cds_id"))
+        return(splicings$cds_id)
+    chrom_ids <- match(splicings$exon_chrom, chrominfo_chrom)
+    not_NA <- !is.na(splicings$cds_start)
+    ids <- makeFeatureIds(chrom_ids[not_NA], splicings$exon_strand[not_NA],
+                          splicings$cds_start[not_NA],
+                          splicings$cds_end[not_NA],
+                          name=splicings$cds_name[not_NA],
+                          same.id.for.dups=TRUE)
+    ans <- integer(length(nrow(splicings)))
+    ans[not_NA] <- ids
     ans[!not_NA] <- NA_integer_
     ans
 }
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### 3rd group of helper functions for makeTranscriptDb()
+###
+### These functions deal with writing data to the database.
+###
 
 .writeChrominfoTable <- function(conn, chrominfo)
 {
@@ -315,7 +376,7 @@
         chrom=as.character(chrominfo$chrom),
         length=chrominfo$length,
         is_circular=chrominfo$is_circular,
-        stringsAsFactors=FALSE)
+        check.names=FALSE, stringsAsFactors=FALSE)
     ## Create the 'chrominfo' table.
     sql <- c(
         "CREATE TABLE chrominfo (\n",
@@ -352,7 +413,7 @@
         strand=strand,
         start=start,
         end=end,
-        stringsAsFactors=FALSE)
+        check.names=FALSE, stringsAsFactors=FALSE)
     table <- unique(table)
 
     ## Create the '<tablename>' table.
@@ -384,7 +445,7 @@
         exon_rank=exon_rank,
         internal_exon_id=internal_exon_id,
         internal_cds_id=internal_cds_id,
-        stringsAsFactors=FALSE)
+        check.names=FALSE, stringsAsFactors=FALSE)
     table <- unique(table)
 
     ## Create the 'splicing' table and related indices.
@@ -418,7 +479,7 @@
     table <- data.frame(
         gene_id=gene_id,
         internal_tx_id=internal_tx_id,
-        stringsAsFactors=FALSE)
+        check.names=FALSE, stringsAsFactors=FALSE)
     table <- unique(table)
     table <- table[!is.na(table$gene_id), ]
     ## Create the 'gene' table.
@@ -461,17 +522,12 @@
     )
     colnames(mat1) <- colnames(mat2) <- c("name", "value")
     metadata <- rbind(data.frame(name=mat1[ , "name"], value=mat1[ , "value"],
-                                 stringsAsFactors=FALSE),
+                                 check.names=FALSE, stringsAsFactors=FALSE),
                       metadata,
                       data.frame(name=mat2[ , "name"], value=mat2[ , "value"],
-                                 stringsAsFactors=FALSE))
+                                 check.names=FALSE, stringsAsFactors=FALSE))
     dbWriteTable(conn, "metadata", metadata, row.names=FALSE)
 }
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### makeTranscriptDb().
-###
 
 .importTranscripts <- function(conn, transcripts, internal_tx_id)
 {
@@ -492,71 +548,60 @@
 
 .importCDS <- function(conn, splicings, internal_cds_id)
 {
-    cds_name <- splicings$cds_name[!is.na(internal_cds_id)]
-    cds_chrom <- splicings$exon_chrom[!is.na(internal_cds_id)]
-    cds_strand <- splicings$exon_strand[!is.na(internal_cds_id)]
-    cds_start <- splicings$cds_start[!is.na(internal_cds_id)]
-    cds_end <- splicings$cds_end[!is.na(internal_cds_id)]
+    not_NA <- !is.na(internal_cds_id)
+    internal_cds_id <- internal_cds_id[not_NA]
+    cds_name <- splicings$cds_name[not_NA]
+    cds_chrom <- splicings$exon_chrom[not_NA]
+    cds_strand <- splicings$exon_strand[not_NA]
+    cds_start <- splicings$cds_start[not_NA]
+    cds_end <- splicings$cds_end[not_NA]
     .writeFeatureTable(conn, "cds",
-        internal_cds_id[!is.na(internal_cds_id)], cds_name,
+        internal_cds_id, cds_name,
         cds_chrom, cds_strand,
         cds_start, cds_end)
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### makeTranscriptDb().
+###
+
 makeTranscriptDb <- function(transcripts, splicings,
-                             genes=NULL, chrominfo=NULL, metadata=NULL, ...)
+                             genes=NULL, chrominfo=NULL, metadata=NULL,
+                             reassign.ids=FALSE)
 {
-    if (length(list(...)) != 0L)
-        warning("extra args are ignored for now")
+    if (!isTRUEorFALSE(reassign.ids))
+        stop("'reassign.ids' must be TRUE or FALSE")
     transcripts <- .normargTranscripts(transcripts)
-    unique_tx_ids <- transcripts$tx_id  # guaranteed to be unique
-    names(unique_tx_ids) <- transcripts$tx_name
-    splicings <- .normargSplicings(splicings, unique_tx_ids)
-    genes <- .normargGenes(genes, unique_tx_ids)
+    transcripts_tx_id <- transcripts$tx_id  # guaranteed to be unique
+    names(transcripts_tx_id) <- transcripts$tx_name
+    splicings <- .normargSplicings(splicings, transcripts_tx_id)
+    genes <- .normargGenes(genes, transcripts_tx_id)
     chrominfo <- .normargChrominfo(chrominfo, transcripts$tx_chrom,
                                    splicings$exon_chrom)
-    transcripts_internal_tx_id <- unique_tx_ids
-    splicings_internal_tx_id <- splicings$tx_id
-    genes_internal_tx_id <- genes$tx_id
+    transcripts_internal_tx_id <- .makeTranscriptsInternalTxId(transcripts,
+                                                               reassign.ids,
+                                                               chrominfo$chrom)
+    splicings_internal_tx_id <- .translateIds(transcripts_tx_id,
+                                              transcripts_internal_tx_id,
+                                              splicings$tx_id)
+    genes_internal_tx_id <- .translateIds(transcripts_tx_id,
+                                          transcripts_internal_tx_id,
+                                          genes$tx_id)
     ## Infer 'splicings$exon_chrom' and 'splicings$exon_strand' when missing
     ## and generate internal exon id.
-    splicings2transcripts <- match(splicings_internal_tx_id, unique_tx_ids)
+    splicings2transcripts <- match(splicings_internal_tx_id,
+                                   transcripts_internal_tx_id)
     if (!hasCol(splicings, "exon_chrom"))
         splicings$exon_chrom <- transcripts$tx_chrom[splicings2transcripts]
     if (!hasCol(splicings, "exon_strand"))
         splicings$exon_strand <- transcripts$tx_strand[splicings2transcripts]
-    if (hasCol(splicings, "exon_id")) {
-        splicings_internal_exon_id <- splicings$exon_id
-    } else if (hasCol(splicings, "exon_name")) {
-        splicings_internal_exon_id <-
-            .makeInternalIdsFromExternalIds(splicings$exon_name)
-        #splicings$exon_id <- splicings_internal_exon_id
-    } else {
-        splicings_internal_exon_id <-
-            .makeInternalIdsForUniqueLocs(
-                splicings$exon_chrom, splicings$exon_strand,
-                splicings$exon_start, splicings$exon_end)
-        #splicings$exon_id <- splicings_internal_exon_id
-    }
-    ## Infer 'splicings$cds_start' and 'splicings$cds_end' when missing
-    ## and generate internal cds id.
-    if (!hasCol(splicings, "cds_start")) {
-        splicings$cds_start <- rep.int(NA_integer_, nrow(splicings))
-        splicings$cds_end <- splicings$cds_start
-    }
-    if (hasCol(splicings, "cds_id")) {
-        splicings_internal_cds_id <- splicings$cds_id
-    } else if (hasCol(splicings, "cds_name")) {
-        splicings_internal_cds_id <-
-            .makeInternalIdsFromExternalIds(splicings$cds_name)
-        #splicings$cds_id <- splicings_internal_cds_id
-    } else {
-        splicings_internal_cds_id <-
-            .makeInternalIdsForUniqueLocs(
-                splicings$exon_chrom, splicings$exon_strand,
-                splicings$cds_start, splicings$cds_end)
-        #splicings$cds_id <- splicings_internal_cds_id
-    }
+    splicings_internal_exon_id <- .makeSplicingsInternalExonId(splicings,
+                                                               reassign.ids,
+                                                               chrominfo$chrom)
+    splicings_internal_cds_id <- .makeSplicingsInternalCDSId(splicings,
+                                                             reassign.ids,
+                                                             chrominfo$chrom)
     ## Create the db in a temp file.
     conn <- dbConnect(SQLite(), dbname="")
     .writeChrominfoTable(conn, chrominfo)  # must come first
