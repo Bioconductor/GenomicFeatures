@@ -207,6 +207,24 @@ joinDataFrameWithName2Val <- function(x, join_colname, name2val, vals_colname)
     x
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### ID assignment and/or reassignment (NOT exported).
+###
+
+### Mimicking the interface of chartr().
+### If 'old_ids' and 'ids' are character vectors, then
+### 'translateIds(old_ids, new_ids, ids)' is equivalent to
+### 'names(new_ids) <- old_ids; new_ids[ids]'.
+translateIds <- function(old_ids, new_ids, ids)
+{
+    if (!is.atomic(old_ids) || !is.atomic(new_ids) || !is.atomic(ids))
+        stop("'old_ids', 'new_ids' and 'ids' must be atomic vectors")
+    if (length(old_ids) != length(new_ids))
+        stop("'old_ids' and 'new_ids' must have the same length")
+    new_ids[match(ids, old_ids)]
+}
+
 ### Returns the vector of ids such that 'unique(x)[ids, ]' is identical
 ### to 'x' (in the same way that 'levels(f)[f]' is identical to
 ### 'as.vector(f)' when 'f' is a character factor).

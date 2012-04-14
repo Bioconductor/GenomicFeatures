@@ -2,10 +2,11 @@
 
 test_makeTranscriptDb <- function()
 {
-    ## AN UNREALISTIC EDGE CASE
-    ## ------------------------
+    ## A TOY CASE
+    ## ----------
     transcripts0 <- data.frame(
                         tx_id=c(26L, 5L, 11L),
+                        tx_name=c("A", "B", "C"),
                         tx_chrom=c("chr1", "chr2", "chr2"),
                         tx_strand=c("+", "-", "-"),
                         tx_start=c(1L, 16844685L, 16844685L),
@@ -15,35 +16,54 @@ test_makeTranscriptDb <- function()
                         exon_rank=c(2L, 1L, 1L, 1L),
                         exon_start=c(1L, 16844685L, 1L, 16844685L),
                         exon_end=c(100L, 16844760L, 100L, 16844760L))
-    txdb0 <- makeTranscriptDb(transcripts0, splicings0)
 
+    suppressWarnings(txdb0a <- makeTranscriptDb(transcripts0, splicings0,
+                                                reassign.ids=TRUE))
+    suppressWarnings(txdb0b <- makeTranscriptDb(transcripts0, splicings0))
+
+    ## Check the transcripts.
     transcripts1 <- data.frame(
                         tx_id=transcripts0$tx_id,
-                        tx_name=as.character(c(NA, NA, NA)),
+                        tx_name=as.character(transcripts0$tx_name),
                         tx_chrom=transcripts0$tx_chrom,
                         tx_strand=transcripts0$tx_strand,
                         tx_start=transcripts0$tx_start,
                         tx_end=transcripts0$tx_end,
                         stringsAsFactors=FALSE)
-    checkIdentical(as.list(txdb0)$transcripts, transcripts1)
+    oo <- order(transcripts1$tx_id)
+    transcripts1b <- transcripts1[oo, ]
+    rownames(transcripts1b) <- NULL
+    transcripts1a <- transcripts1
+    transcripts1a$tx_id <- 1:3 
+    checkIdentical(as.list(txdb0a)$transcripts, transcripts1a)
+    checkIdentical(as.list(txdb0b)$transcripts, transcripts1b)
 
-    splicings1 <- splicings0[c(3L, 1L, 2L, 4L), ]
-    splicings1_exons <- data.frame(
-                        exon_id=c(1L, 1L, 2L, 2L),
+    ## Check the splicings.
+    rowmap <- match(splicings0$tx_id, transcripts0$tx_id)
+    splicings1 <- data.frame(
+                        tx_id=splicings0$tx_id,
+                        exon_rank=splicings0$exon_rank,
+                        exon_id=c(1L, 2L, 1L, 2L),
                         exon_name=as.character(c(NA, NA, NA, NA)),
-                        exon_chrom=factor(c("chr1", "chr1", "chr2", "chr2")),
-                        exon_strand=factor(c("+", "+", "-", "-")),
+                        exon_chrom=transcripts0$tx_chrom[rowmap],
+                        exon_strand=transcripts0$tx_strand[rowmap],
+                        exon_start=splicings0$exon_start,
+                        exon_end=splicings0$exon_end,
+                        cds_id=as.integer(c(NA, NA, NA, NA)),
+                        cds_start=as.integer(c(NA, NA, NA, NA)),
+                        cds_end=as.integer(c(NA, NA, NA, NA)),
                         stringsAsFactors=FALSE)
-    splicings1_cds <- data.frame(
-                        cds_id=NA_integer_,
-                        cds_start=NA_integer_,
-                        cds_end=NA_integer_)[rep.int(1L, 4L), ]
-    splicings1 <- cbind(splicings1[1:2],
-                        splicings1_exons,
-                        splicings1[3:4],
-                        splicings1_cds)
-    row.names(splicings1) <- NULL
-    checkIdentical(as.list(txdb0)$splicings, splicings1)
+    splicings1a <- splicings1
+    splicings1a$tx_id <- c(1L, 2L, 1L, 3L)
+    oo <- order(splicings1a$tx_id, splicings1a$exon_rank)
+    splicings1a <- splicings1a[oo, ]
+    rownames(splicings1a) <- NULL
+    splicings1b <- splicings1
+    oo <- order(splicings1b$tx_id, splicings1b$exon_rank)
+    splicings1b <- splicings1b[oo, ]
+    rownames(splicings1b) <- NULL
+    checkIdentical(as.list(txdb0a)$splicings, splicings1a)
+    checkIdentical(as.list(txdb0b)$splicings, splicings1b)
 
     ## WITH REAL DATA
     ## -------------- 

@@ -314,11 +314,6 @@
 ### These functions deal with id assignment and reassignment.
 ###
 
-.translateIds <- function(old_ids, new_ids, ids)
-{
-    new_ids[match(ids, old_ids)]
-}
-
 .makeTranscriptsInternalTxId <- function(transcripts, reassign.ids,
                                          chrominfo_chrom)
 {
@@ -582,12 +577,12 @@ makeTranscriptDb <- function(transcripts, splicings,
     transcripts_internal_tx_id <- .makeTranscriptsInternalTxId(transcripts,
                                                                reassign.ids,
                                                                chrominfo$chrom)
-    splicings_internal_tx_id <- .translateIds(transcripts_tx_id,
-                                              transcripts_internal_tx_id,
-                                              splicings$tx_id)
-    genes_internal_tx_id <- .translateIds(transcripts_tx_id,
-                                          transcripts_internal_tx_id,
-                                          genes$tx_id)
+    splicings_internal_tx_id <- translateIds(transcripts_tx_id,
+                                             transcripts_internal_tx_id,
+                                             splicings$tx_id)
+    genes_internal_tx_id <- translateIds(transcripts_tx_id,
+                                         transcripts_internal_tx_id,
+                                         genes$tx_id)
     ## Infer 'splicings$exon_chrom' and 'splicings$exon_strand' when missing
     ## and generate internal exon id.
     splicings2transcripts <- match(splicings_internal_tx_id,

@@ -90,7 +90,7 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
                 "._tx_id=gene._tx_id)", sep = "")
     }
     whereClause <- "WHERE GROUPBY_id IS NOT NULL"
-    orderByClause <-  "ORDER BY GROUPBY_id"
+    orderByClause <- "ORDER BY GROUPBY_id"
     if (order_by_exon_rank) {
         orderByClause <- paste(orderByClause, ", exon_rank", sep = "")
     } else {
@@ -213,28 +213,11 @@ setMethod("intronsByTranscript", "TranscriptDb",
 ### fiveUTRsByTranscript() and threeUTRsByTranscript().
 ###
 
-.getFullSplicings <- function(txdb, translated.transcripts.only=FALSE)
+.getSplicingsForTranscriptsWithCDSs <- function(txdb)
 {
-    ORDER_BY <- "ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id"
-    sql <- paste(
-        "SELECT transcript._tx_id AS tx_id, exon_rank,",
-        " splicing._exon_id AS exon_id,",
-        " exon_name, exon_chrom, exon_strand, exon_start, exon_end,",
-        " splicing._cds_id AS cds_id,",
-        " cds_start, cds_end",
-        "FROM transcript",
-        " INNER JOIN splicing",
-        "  ON (tx_id=splicing._tx_id)",
-        " INNER JOIN exon",
-        "  ON (exon_id=exon._exon_id)",
-        " LEFT JOIN cds",
-        "  ON (cds_id=cds._cds_id)",
-        ORDER_BY, ", exon_rank")
-    ans <- dbEasyQuery(AnnotationDbi:::dbConn(txdb), sql)
-    if (translated.transcripts.only) {
-        ids <- unique(ans$tx_id[!is.na(ans$cds_id)])
-        ans <- ans[ans$tx_id %in% ids, ]
-    }
+    ans <- getSplicings(txdb)
+    ids <- unique(ans$tx_id[!is.na(ans$cds_id)])
+    ans <- ans[ans$tx_id %in% ids, ]
 
     ## modify results to not respect our activeSeqs mask.
     isActSeq <- isActiveSeq(txdb)
@@ -243,6 +226,50 @@ setMethod("intronsByTranscript", "TranscriptDb",
     ans[!(ans$exon_chrom %in% remove),]
 }
 
+### 'tx_id': character or integer vector with runs of identical elements (one
+### run per transcript, and, within each run, one element per exon).
+### 'exons_with_cds': integer vector containing the indices of the elements
+### in 'tx_id' corresponding to exons with a CDS. The indices must be sorted
+### in ascending order.
+### Returns the indices of the first exon with a CDS for every transcript, plus
+### the indices of the preceding exons in the transcript.
+### Note that, for each transcript, exons that have a 5' UTR are all the exons
+### before the first exon with a CDS, including the first exon with a CDS (even
+### though this one might actually have a 0-width 5' UTR but we will take care
+### of this later).
+.exons_with_5utr <- function(tx_id, exons_with_cds)
+{
+    tx_id_rle <- Rle(tx_id)
+    nexon <- runLength(tx_id_rle)
+    ntx <- length(nexon)
+    pseudo_tx_id <- rep.int(seq_len(ntx), nexon)
+    first_exon_with_cds <- integer(ntx)
+    exons_with_cds <- rev(exons_with_cds)
+    first_exon_with_cds[pseudo_tx_id[exons_with_cds]] <- exons_with_cds
+    offset <- cumsum(c(0L, nexon[-length(nexon)]))
+    lengths <- first_exon_with_cds - offset
+    IRanges:::fancy_mseq(lengths, offset=offset)
+}
+
+### 'tx_id', 'exons_with_cds': same as for .exons_with_5utr().
+### Returns the indices of the last exon with a CDS for every transcript, plus
+### the indices of the following exons in the transcript.
+### Note that, for each transcript, exons that have a 3' UTR are all the exons
+### after the last exon with a CDS, including the last exon with a CDS (even
+### though this one might actually have a 0-width 3' UTR but we will take care
+### of this later).
+.exons_with_3utr <- function(tx_id, exons_with_cds)
+{
+    tx_id_rle <- Rle(tx_id)
+    nexon <- runLength(tx_id_rle)
+    ntx <- length(nexon)
+    pseudo_tx_id <- rep.int(seq_len(ntx), nexon)
+    last_exon_with_cds <- integer(ntx)
+    last_exon_with_cds[pseudo_tx_id[exons_with_cds]] <- exons_with_cds
+    offset <- last_exon_with_cds - 1L
+    lengths <- cumsum(nexon) - offset
+    IRanges:::fancy_mseq(lengths, offset=offset)
+}
 
 .makeUTRsByTranscript <- function(x, splicings, utr_start, utr_end)
 {
@@ -265,22 +292,10 @@ setMethod("intronsByTranscript", "TranscriptDb",
 setMethod("fiveUTRsByTranscript", "TranscriptDb",
     function(x, use.names=FALSE)
     {
-        splicings <- .getFullSplicings(x, translated.transcripts.only=TRUE)
-
-        ## For each transcript, we keep only the first row with a CDS plus all
-        ## previous rows (if any).
-        if (nrow(splicings) != 0L) {
-            cdslist <- split(splicings$cds_id, splicings$tx_id)
-            tmp <- lapply(cdslist,
-                     function(cds_id)
-                     {
-                         W <- which(!is.na(cds_id))
-                         L <- W[1L]
-                         rep.int(c(TRUE, FALSE), c(L, length(cds_id)-L))
-                     })
-            idx <- unsplit(tmp, splicings$tx_id)
-            splicings <- splicings[idx, ]
-        }
+        splicings <- .getSplicingsForTranscriptsWithCDSs(x)
+        exons_with_cds <- which(!is.na(splicings$cds_id))
+        idx <- .exons_with_5utr(splicings$tx_id, exons_with_cds)
+        splicings <- splicings[idx, ]
 
         ## Compute the UTR starts/ends.
         utr_start <- splicings$exon_start
@@ -302,22 +317,10 @@ setMethod("fiveUTRsByTranscript", "TranscriptDb",
 setMethod("threeUTRsByTranscript", "TranscriptDb",
     function(x, use.names=FALSE)
     {
-        splicings <- .getFullSplicings(x, translated.transcripts.only=TRUE)
-
-        ## For each transcript, we keep only the last row with a CDS plus all
-        ## following rows (if any).
-        if (nrow(splicings) != 0L) {
-            cdslist <- split(splicings$cds_id, splicings$tx_id)
-            tmp <- lapply(cdslist,
-                     function(cds_id)
-                     {
-                         W <- which(!is.na(cds_id))
-                         L <- W[length(W)]
-                         rep.int(c(FALSE, TRUE), c(L-1L, length(cds_id)-L+1L))
-                     })
-            idx <- unsplit(tmp, splicings$tx_id)
-            splicings <- splicings[idx, ]
-        }
+        splicings <- .getSplicingsForTranscriptsWithCDSs(x)
+        exons_with_cds <- which(!is.na(splicings$cds_id))
+        idx <- .exons_with_3utr(splicings$tx_id, exons_with_cds)
+        splicings <- splicings[idx, ]
 
         ## Compute the UTR starts/ends.
         utr_start <- splicings$exon_start

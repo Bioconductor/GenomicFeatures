@@ -38,7 +38,7 @@ test_transcripts <- function()
 
     get_grg <- transcripts(txdb, vals=list(gene_id=c("3081", "9501")),
                                  columns=c("tx_id", "tx_name", "gene_id"))
-    tx_id_col <- c(58:60, 83:84)
+    tx_id_col <- c(49:51, 83:84)
     gene_id_col <- CharacterList(as.list(c(rep.int("9501", 3),
                                            rep.int("3081", 2))))
     want_grg <- GRanges(seqnames = factor(c(rep.int("chr17", 3),

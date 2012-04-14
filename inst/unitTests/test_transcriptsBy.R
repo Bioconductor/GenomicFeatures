@@ -1,9 +1,10 @@
 test_transcriptsBy <- function()
 {
-    ## AN UNREALISTIC EDGE CASE
-    ## ------------------------
+    ## A TOY CASE
+    ## ----------
     transcripts0 <- data.frame(
                         tx_id=c(26L, 5L, 11L),
+                        tx_name=c("A", "B", "C"),
                         tx_chrom=c("chr1", "chr2", "chr2"),
                         tx_strand=c("+", "-", "-"),
                         tx_start=c(1L, 16844685L, 16844685L),
@@ -13,23 +14,24 @@ test_transcriptsBy <- function()
                         exon_rank=c(2L, 1L, 1L, 1L),
                         exon_start=c(1L, 16844685L, 1L, 16844685L),
                         exon_end=c(100L, 16844760L, 100L, 16844760L))
-    txdb0 <- suppressWarnings(makeTranscriptDb(transcripts0, splicings0))
+
+    suppressWarnings(txdb0 <- makeTranscriptDb(transcripts0, splicings0))
 
     seqinfo <- seqinfo(txdb0)
     seqlevels <- seqlevels(seqinfo)
 
-    ans <- transcriptsBy(txdb0, "exon")
+    ans <- transcriptsBy(txdb0, by="exon")
     grg1 <- GRanges(seqnames=factor("chr1", levels = seqlevels),
                     ranges=IRanges(start=1, end=100),
                     strand=strand("+"),
                     tx_id=26L,
-                    tx_name=NA_character_)
+                    tx_name="A")
     grg2 <- GRanges(seqnames=factor(c("chr2", "chr2"), levels = seqlevels),
                     ranges=IRanges(start=c(16844685, 16844685),
                                    end=c(16844760,16844760)),
                     strand=strand(c("-", "-")),
                     tx_id=c(5L, 11L),
-                    tx_name=as.character(c(NA, NA)))
+                    tx_name=c("B", "C"))
     want <- GRangesList(`1`=grg1, `2`=grg2)
     seqinfo(want) <- seqinfo
     want <- GenomicFeatures:::.assignMetadataList(want, txdb0)
@@ -59,8 +61,8 @@ test_transcriptsBy <- function()
                                      package="GenomicFeatures"))
 
     checkException(transcriptsBy(data.frame()), silent = TRUE)
-    checkException(transcriptsBy(txdb1, "bad"), silent = TRUE)
-    checkException(transcriptsBy(txdb1, "tx"), silent = TRUE)
+    checkException(transcriptsBy(txdb1, by="bad"), silent = TRUE)
+    checkException(transcriptsBy(txdb1, by="tx"), silent = TRUE)
 
     seqinfo <- seqinfo(txdb1)
     want <- GenomicFeatures:::.assignMetadataList(want, txdb1)
@@ -71,20 +73,20 @@ test_transcriptsBy <- function()
     }
 
     ## transcripts by gene
-    txByGene <- transcriptsBy(txdb1, "gene")
+    txByGene <- transcriptsBy(txdb1, by="gene")
     checkTrue(validObject(txByGene))
     checkIdentical(dupCount(txByGene), 0L)
     want <- GRanges(seqnames = factor("chr21_random", levels=seqlevels),
                     ranges   = IRanges(start=103280, end=164670),
                     strand   = strand("-"),
-                    tx_id    = 120L,
+                    tx_id    = 127L,
                     tx_name  = "uc002zka.1")
     seqinfo(want) <- seqinfo
 #    metadata(want)[[1]] <- DataFrame(metadata(txdb1)) ##WTH?
     checkIdentical(txByGene[[1]], want)
 
     ## transcripts by exon
-    txByExon <- transcriptsBy(txdb1, "exon")
+    txByExon <- transcriptsBy(txdb1, by="exon")
     checkTrue(validObject(txByExon))
     checkIdentical(dupCount(txByExon), 0L)
     want <- GRanges(seqnames = factor(c("chr1", "chr1"), levels=seqlevels),
@@ -97,7 +99,7 @@ test_transcriptsBy <- function()
     checkIdentical(txByExon[[1]], want)
 
     ## transcripts by cds
-    txByCds <- transcriptsBy(txdb1, "cds")
+    txByCds <- transcriptsBy(txdb1, by="cds")
     checkTrue(validObject(txByCds))
     checkIdentical(dupCount(txByCds), 0L)
     want <- GRanges(seqnames = factor("chr2", levels=seqlevels),
@@ -141,7 +143,7 @@ test_exonsBy <- function()
                     ranges = IRanges(start = c(1116,2476),
                                      end = c(2090,4272)),
                     strand = strand(c("+","+")),
-                    exon_id = c(1L,4L),
+                    exon_id = c(1L,3L),
                     exon_name = as.character(c(NA,NA)),
                     exon_rank = 1:2)
     seqinfo(want) <- seqinfo

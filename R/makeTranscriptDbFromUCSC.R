@@ -277,13 +277,19 @@ supportedUCSCtables <- function()
 {
     message("Extract the 'transcripts' data frame ... ",
             appendLF=FALSE)
+    tx_id <- seq_len(nrow(ucsc_txtable))
+    tx_name <- ucsc_txtable$name
+    tx_chrom <- ucsc_txtable$chrom
+    tx_strand <- ucsc_txtable$strand
+    tx_start <- ucsc_txtable$txStart + 1L
+    tx_end <- ucsc_txtable$txEnd
     transcripts <- data.frame(
-        tx_id=seq_len(nrow(ucsc_txtable)),
-        tx_name=ucsc_txtable$name,
-        tx_chrom=ucsc_txtable$chrom,
-        tx_strand=ucsc_txtable$strand,
-        tx_start=ucsc_txtable$txStart + 1L,
-        tx_end=ucsc_txtable$txEnd
+        tx_id=tx_id,
+        tx_name=tx_name,
+        tx_chrom=tx_chrom,
+        tx_strand=tx_strand,
+        tx_start=tx_start,
+        tx_end=tx_end
     )
     message("OK")
     transcripts
@@ -485,6 +491,8 @@ supportedUCSCtables <- function()
         length=ucsc_chrominfotable$size,
         is_circular=matchCircularity(ucsc_chrominfotable$chrom, circ_seqs)
     )
+    chrom_ids <- makeSeqnameIds(chrominfo$chrom)
+    chrominfo <- chrominfo[order(chrom_ids), ]
     message("OK")
     chrominfo
 }
@@ -550,7 +558,8 @@ getChromInfoFromUCSC <- function(genome,
 
     message("Make the TranscriptDb object ... ", appendLF=FALSE)
     txdb <- makeTranscriptDb(transcripts, splicings, genes=genes,
-                             chrominfo=chrominfo, metadata=metadata)
+                             chrominfo=chrominfo, metadata=metadata,
+                             reassign.ids=TRUE)
     message("OK")
     txdb
 }

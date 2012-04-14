@@ -302,6 +302,80 @@ setMethod("seqinfo", "TranscriptDb",function(x){.seqInfo(x)})
 ### Comparing 2 TranscriptDb objects.
 ###
 
+getTranscripts <- function(txdb, set.col.class=FALSE)
+{
+    sql <- paste(
+        "SELECT _tx_id AS tx_id, tx_name,",
+        " tx_chrom, tx_strand, tx_start, tx_end",
+        "FROM transcript",
+        "ORDER BY tx_id")
+    ans <- AnnotationDbi:::dbEasyQuery(AnnotationDbi:::dbConn(txdb), sql)
+    if (!set.col.class)
+        return(ans)
+    COL2CLASS <- c(
+        tx_id="integer",
+        tx_name="character",
+        tx_chrom="factor",
+        tx_strand="factor",
+        tx_start="integer",
+        tx_end="integer"
+    )
+    setDataFrameColClass(ans, COL2CLASS)
+}
+
+getSplicings <- function(txdb, set.col.class=FALSE)
+{
+    sql <- paste(
+        "SELECT _tx_id AS tx_id, exon_rank,",
+        " splicing._exon_id AS exon_id, exon_name,",
+        " exon_chrom, exon_strand, exon_start, exon_end,",
+        #" splicing._cds_id AS cds_id, cds_name,",
+        " splicing._cds_id AS cds_id,",
+        " cds_start, cds_end",
+        "FROM splicing",
+        " INNER JOIN exon",
+        "  ON (exon_id=exon._exon_id)",
+        " LEFT JOIN cds",
+        "  ON (cds_id=cds._cds_id)",
+        "ORDER BY tx_id, exon_rank")
+    ans <- AnnotationDbi:::dbEasyQuery(AnnotationDbi:::dbConn(txdb), sql)
+    if (!set.col.class)
+        return(ans)
+    COL2CLASS <- c(
+        tx_id="integer",
+        exon_rank="integer",
+        exon_id="integer",
+        exon_name="character",
+        exon_chrom="factor",
+        exon_strand="factor",
+        exon_start="integer",
+        exon_end="integer",
+        cds_id="integer",
+        #cds_name="character",
+        cds_start="integer",
+        cds_end="integer"
+    )
+    setDataFrameColClass(ans, COL2CLASS)
+}
+
+getGenes <- function(txdb, set.col.class=FALSE)
+{
+    sql <- paste(
+        "SELECT transcript._tx_id AS tx_id, gene_id",
+        "FROM transcript",
+        " INNER JOIN gene",
+        "  ON (transcript._tx_id=gene._tx_id)",
+        "ORDER BY tx_id, gene_id")
+    ans <- AnnotationDbi:::dbEasyQuery(AnnotationDbi:::dbConn(txdb), sql)
+    if (!set.col.class)
+        return(ans)
+    COL2CLASS <- c(
+        tx_id="integer",
+        gene_id="character"
+    )
+    setDataFrameColClass(ans, COL2CLASS)
+}
+
 ### Dump the entire db into a list of data frames 'txdump' that can be used
 ### in 'do.call(makeTranscriptDb, txdump)' to make the db again with no loss
 ### of information.
@@ -310,74 +384,10 @@ setMethod("seqinfo", "TranscriptDb",function(x){.seqInfo(x)})
 setMethod("as.list", "TranscriptDb",
     function(x, ...)
     {
-        ORDER_BY <- "ORDER BY tx_chrom, tx_strand, tx_start, tx_end, tx_id"
-        ## Retrieve the "transcripts" element.
-        sql <- paste("SELECT transcript._tx_id AS tx_id, tx_name,",
-                     "tx_chrom, tx_strand, tx_start, tx_end FROM transcript",
-                     ORDER_BY)
-        transcripts <- AnnotationDbi:::dbEasyQuery(AnnotationDbi:::dbConn(x),
-                                                   sql)
-        COL2CLASS <- c(
-             tx_id="integer",
-             tx_name="character",
-             tx_chrom="factor",
-             tx_strand="factor",
-             tx_start="integer",
-             tx_end="integer"
-        )
-        transcripts <- setDataFrameColClass(transcripts, COL2CLASS)
-
-        ## Retrieve the "splicings" element.
-        sql <- paste(
-            "SELECT transcript._tx_id AS tx_id, exon_rank,",
-            "exon._exon_id AS exon_id, exon_name,",
-            "exon_chrom, exon_strand, exon_start, exon_end,",
-            #"cds._cds_id AS cds_id, cds_name,",
-            "cds._cds_id AS cds_id,",
-            "cds_start, cds_end",
-            "FROM transcript",
-            "INNER JOIN splicing",
-            "ON (transcript._tx_id=splicing._tx_id)",
-            "INNER JOIN exon",
-            "ON (splicing._exon_id=exon._exon_id)",
-            "LEFT JOIN cds",
-            "ON (splicing._cds_id=cds._cds_id)",
-            ORDER_BY, ", exon_rank")
-        splicings <- AnnotationDbi:::dbEasyQuery(AnnotationDbi:::dbConn(x),
-                                                 sql)
-        COL2CLASS <- c(
-             tx_id="integer",
-             exon_rank="integer",
-             exon_id="integer",
-             exon_name="character",
-             exon_chrom="factor",
-             exon_strand="factor",
-             exon_start="integer",
-             exon_end="integer",
-             cds_id="integer",
-             #cds_name="character",
-             cds_start="integer",
-             cds_end="integer"
-        )
-        splicings <- setDataFrameColClass(splicings, COL2CLASS)
-
-        ## Retrieve the "genes" element.
-        sql <- paste(
-            "SELECT transcript._tx_id AS tx_id, gene_id",
-            "FROM transcript",
-            "INNER JOIN gene",
-            "ON (transcript._tx_id=gene._tx_id)",
-            ORDER_BY, ", gene_id")
-        genes <- AnnotationDbi:::dbEasyQuery(AnnotationDbi:::dbConn(x), sql)
-        COL2CLASS <- c(
-             tx_id="integer",
-             gene_id="character"
-        )
-        genes <- setDataFrameColClass(genes, COL2CLASS)
-
-        ## Retrieve the "chrominfo" element.
+        transcripts <- getTranscripts(x, set.col.class=TRUE)
+        splicings <- getSplicings(x, set.col.class=TRUE)
+        genes <- getGenes(x, set.col.class=TRUE)
         chrominfo <- .getChromInfo(AnnotationDbi:::dbConn(x))
-
         list(transcripts=transcripts, splicings=splicings,
              genes=genes, chrominfo=chrominfo)
     }

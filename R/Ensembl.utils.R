@@ -165,19 +165,9 @@
     j2 <- c("name", "length", "coord_system_rank")
     ans <- ans[i2, j2, drop=FALSE]
 
-    ## Ordering: First by rank, then by name (main chromosomes first, extra
-    ## sequences last).
-    names_as_int <- suppressWarnings(as.integer(ans$name))
-    nb_ints <- sum(!is.na(names_as_int))
-    names_as_int[match("X", ans$name)] <- nb_ints + 1L
-    names_as_int[match("Y", ans$name)] <- nb_ints + 2L
-    names_as_int[match("M", ans$name)] <- nb_ints + 3L
-    names_as_int[match("MT", ans$name)] <- nb_ints + 4L
-    names_as_int[match(extra_seqnames, ans$name)] <- .Machine$integer.max
-    prev_locale <- Sys.getlocale("LC_COLLATE")
-    Sys.setlocale("LC_COLLATE", "C")
-    oo <- order(ans$coord_system_rank, names_as_int, ans$name)
-    Sys.setlocale("LC_COLLATE", prev_locale)
+    ## Ordering: First by rank, then by name.
+    names_as_int <- makeSeqnameIds(ans$name)
+    oo <- order(ans$coord_system_rank, names_as_int)
     ans <- ans[oo, , drop=FALSE]
 
     ## 3rd filtering: There can be more than one row per sequence name, but
