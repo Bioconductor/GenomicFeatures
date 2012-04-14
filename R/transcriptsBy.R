@@ -275,7 +275,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
 {
     seqinfo <- seqinfo(x)
     grg <- GRanges(seqnames=factor(splicings$exon_chrom, 
-			levels=seqlevels(seqinfo)),
+                                   levels=seqlevels(seqinfo)),
                    ranges=IRanges(start=utr_start, end=utr_end),
                    strand=strand(splicings$exon_strand),
                    exon_id=splicings$exon_id,
@@ -289,28 +289,55 @@ setMethod("intronsByTranscript", "TranscriptDb",
     split(grg[idx], splicings$tx_id[idx])
 }
 
+.make5UTRsByTranscript <- function(x, splicings, use.names=FALSE)
+{
+    exons_with_cds <- which(!is.na(splicings$cds_id))
+    idx <- .exons_with_5utr(splicings$tx_id, exons_with_cds)
+    splicings <- splicings[idx, ]
+
+    ## Compute the UTR starts/ends.
+    utr_start <- splicings$exon_start
+    utr_end <- splicings$exon_end
+    idx1 <- !is.na(splicings$cds_id)
+    idx <- idx1 & (splicings$exon_strand == "+")
+    utr_end[idx] <- splicings$cds_start[idx] - 1L
+    idx <- idx1 & (splicings$exon_strand == "-")
+    utr_start[idx] <- splicings$cds_end[idx] + 1L
+
+    ## split by grouping variable
+    ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end)
+    ans <- .set.group.names(ans, use.names, x, "tx")
+    ans <- .assignMetadataList(ans, x)
+    ans
+}
+
+.make3UTRsByTranscript <- function(x, splicings, use.names=FALSE)
+{
+    exons_with_cds <- which(!is.na(splicings$cds_id))
+    idx <- .exons_with_3utr(splicings$tx_id, exons_with_cds)
+    splicings <- splicings[idx, ]
+
+    ## Compute the UTR starts/ends.
+    utr_start <- splicings$exon_start
+    utr_end <- splicings$exon_end
+    idx1 <- !is.na(splicings$cds_id)
+    idx <- idx1 & (splicings$exon_strand == "+")
+    utr_start[idx] <- splicings$cds_end[idx] + 1L
+    idx <- idx1 & (splicings$exon_strand == "-")
+    utr_end[idx] <- splicings$cds_start[idx] - 1L
+
+    ## split by grouping variable
+    ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end)
+    ans <- .set.group.names(ans, use.names, x, "tx")            
+    ans <- .assignMetadataList(ans, x)
+    ans
+}
+
 setMethod("fiveUTRsByTranscript", "TranscriptDb",
     function(x, use.names=FALSE)
     {
         splicings <- .getSplicingsForTranscriptsWithCDSs(x)
-        exons_with_cds <- which(!is.na(splicings$cds_id))
-        idx <- .exons_with_5utr(splicings$tx_id, exons_with_cds)
-        splicings <- splicings[idx, ]
-
-        ## Compute the UTR starts/ends.
-        utr_start <- splicings$exon_start
-        utr_end <- splicings$exon_end
-        idx1 <- !is.na(splicings$cds_id)
-        idx <- idx1 & (splicings$exon_strand == "+")
-        utr_end[idx] <- splicings$cds_start[idx] - 1L
-        idx <- idx1 & (splicings$exon_strand == "-")
-        utr_start[idx] <- splicings$cds_end[idx] + 1L
-
-        ## split by grouping variable
-        ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end)
-        ans <- .set.group.names(ans, use.names, x, "tx")
-        ans <- .assignMetadataList(ans, x)
-	ans
+        .make5UTRsByTranscript(x, splicings, use.names=use.names)
     }
 )
 
@@ -318,23 +345,7 @@ setMethod("threeUTRsByTranscript", "TranscriptDb",
     function(x, use.names=FALSE)
     {
         splicings <- .getSplicingsForTranscriptsWithCDSs(x)
-        exons_with_cds <- which(!is.na(splicings$cds_id))
-        idx <- .exons_with_3utr(splicings$tx_id, exons_with_cds)
-        splicings <- splicings[idx, ]
-
-        ## Compute the UTR starts/ends.
-        utr_start <- splicings$exon_start
-        utr_end <- splicings$exon_end
-        idx1 <- !is.na(splicings$cds_id)
-        idx <- idx1 & (splicings$exon_strand == "+")
-        utr_start[idx] <- splicings$cds_end[idx] + 1L
-        idx <- idx1 & (splicings$exon_strand == "-")
-        utr_end[idx] <- splicings$cds_start[idx] - 1L
-
-        ## split by grouping variable
-        ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end)
-        ans <- .set.group.names(ans, use.names, x, "tx")            
-        ans <- .assignMetadataList(ans, x)
-        ans
+        .make3UTRsByTranscript(x, splicings, use.names=use.names)
     }
 )
+
