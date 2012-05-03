@@ -24,7 +24,7 @@ importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
            useDataset, useMart)
 
 importFrom(rtracklayer, browserSession, ucscTableQuery,
-           tableNames, getTable, trackNames, ucscSchema, asBED, asGFF)
+           tableNames, getTable, trackNames, ucscSchema, asBED, asGFF, import)
 
 importFrom(RCurl, getURL)
 
@@ -47,6 +47,7 @@ export(
   makeTranscriptDbFromUCSC,
   getChromInfoFromBiomart,
   makeTranscriptDbFromBiomart,
+  makeTranscriptDbFromGFF,
   seqinfo,
   transcripts,
   exons,
