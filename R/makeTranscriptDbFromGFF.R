@@ -39,7 +39,7 @@
 ## Helper to deduce the rankings for each set of cds and exons...
 .deduceExonRankings <- function(exs){
   message("Infering Exon Rankings.")
-  print(paste("ncol=",dim(exs)[2],"should be 9"))
+  ## print(paste("ncol=",dim(exs)[2],"should be 9"))
   res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?
   ## split up the data
   es <- split(exs, as.factor(exs$tx_name))
@@ -60,6 +60,55 @@
   res
 }
 
+
+## Helpers to merge two frames together based only on ranges
+## These two helpers stricly require columns:
+## 'exon_chrom','exon_start','exon_end','exon_strand' OR
+## 'cds_chrom','cds_start','cds_end','cds_strand' Along with 'tx_name' and
+## 'exon_rank' (always) for each data.frame of input
+.getUnusedColnames <- function(data){
+  standardNames <- c('exon_chrom','exon_start','exon_end','exon_strand',
+                     'cds_chrom','cds_start','cds_end','cds_strand')
+  actualNames <- colnames(data)
+  actualNames[!(actualNames %in% standardNames)]
+}
+
+## This helper might be generalizable for a common use case where people need
+## to merge a pair of data.frames based on range data.  Though probably a
+## different function that merges based on a pair of granges objects where you
+## also want them to match based on a name (like a tx_name)
+.mergeFramesViaRanges <- function(exs, cds){
+  ##  we have make GRanges objects so that we can range-match this stuff.
+  exsr <- GRanges(seqnames=Rle(exs$exon_chrom),
+                  ranges=IRanges(start=exs$exon_start,end=exs$exon_end),
+                  strand=exs$exon_strand,
+                  exs[,.getUnusedColnames(exs)])
+  cdsr <- GRanges(seqnames=Rle(cds$cds_chrom),
+                  ranges=IRanges(start=cds$cds_start,end=cds$cds_end),
+                  strand=cds$cds_strand,
+                  cds[,.getUnusedColnames(cds)])
+  ## call findOverlaps type='within' and have cdsr be the subject
+  hits <- findOverlaps(query=cdsr,subject=exsr,type='within')
+  if(any(duplicated(queryHits(hits)))){
+    ## Get the names that go with each hit
+    qTx <- values(cdsr[queryHits(hits)])$tx_name
+    sTx <- values(exsr[subjectHits(hits)])$tx_name
+    ## Then subset the hits to effectively filter based on names also matching
+    hits <- hits[qTx == sTx]
+  }
+  
+  ## To reassemble, I need to 1st get the matching bits:
+  cdsExs <- cbind(exs[subjectHits(hits),],cds[queryHits(hits),])
+  
+  ## Finally I need to glue back the exon ranges that didn't have a cds...
+  exsUnMatched <- exs[!(1:dim(exs)[1] %in% subjectHits(hits)),]
+  emptys <- matrix(nrow = dim(exsUnMatched)[1],
+                   ncol=dim(cds)[2]) ## ncol varies
+  exsUn <- cbind(exsUnMatched, data.frame(emptys))
+  names(exsUn) <- c(colnames(exs),colnames(cds))
+  splicings <- rbind(cdsExs, exsUn)
+  splicings ## coarse (contains everything that came in)
+}
 
 
 
@@ -150,40 +199,10 @@
   ## For now lets AlWAYS deduce. TODO: make this optional in the event that
   ## exon_rank is provided by the file..
   ## deduce the exon rankings from the order along the chromosome
-  exs <- .deduceExonRankings(exs)  
-  ##  we have make GRanges objects so that we can range-match this stuff.
-  exsr <- GRanges(seqnames=Rle(exs$exon_chrom),
-                  ranges=IRanges(start=exs$exon_start,end=exs$exon_end),
-                  strand=exs$exon_strand,
-                  exs[,5:9])
-  cdsr <- GRanges(seqnames=Rle(cds$cds_chrom),
-                  ranges=IRanges(start=cds$cds_start,end=cds$cds_end),
-                  strand=cds$cds_strand,
-                  cds[,5:9])
-  ## call findOverlaps type='within' and have cdsr be the subject
-  hits <- findOverlaps(query=cdsr,subject=exsr,type='within')
-  if(any(duplicated(queryHits(hits)))){
-    ## Then we need to do filtering on all duplicated queryhits
-    dupHits <- queryHits(hits[duplicated(queryHits(hits))])
-    ## Get the names that go with each hit
-    qTx <- values(cdsr[queryHits(hits)])$tx_name
-    sTx <- values(exsr[subjectHits(hits)])$tx_name
-    ## Then subset the hits
-    hits <- hits[qTx == sTx]
-  }
+  exs <- .deduceExonRankings(exs)
+  ## Then merge the two frames together based on range information
+  splicings <- .mergeFramesViaRanges(exs, cds)
   
-  ## To reassemble, I need to 1st get the matching bits:
-  cdsExs <- cbind(exs[subjectHits(hits),],cds[queryHits(hits),])
-  ## Now lets drop some of the cols
-  cdsExs <- cdsExs[,c(1:9,11:12,15,18)]
-  ## Finally I need to glue back the exon ranges that didn't have a cds...
-  exsUnMatched <- exs[!(1:dim(exs)[1] %in% subjectHits(hits)),]
-  ## print(paste("ncol=", 4,"should be 4"))
-  emptys <- matrix(nrow = dim(exsUnMatched)[1], ncol=4) ## always 4 here
-  exsUn <- cbind(exsUnMatched, data.frame(emptys))
-  names(exsUn) <- c(names(exsUnMatched),c('cds_start','cds_end','cds_name',
-                                          'cds_id'))
-  splicings <- rbind(cdsExs, exsUn)
   ## now drop things and rename as needed
   splicings <- splicings[,c('exon_rank','exon_id','exon_name','exon_chrom',
                             'exon_strand','exon_start','exon_end','cds_id',
@@ -254,25 +273,6 @@
 }
 
 
-## A faster version of exon/cds merging that takes the two data frames instead
-## of two list objects
-.fastMergeExonsCDSTables <- function(exs, cds){
-  ## take advantage of the fact that we can just make a new ID col for each
-  ## and merge on that...
-  exsm <- data.frame(exs,
-                mergeID=paste(exs$tx_name, exs$exon_rank, sep=""),
-                stringsAsFactors=FALSE)
-  cdsm <- data.frame(cds,
-                mergeID=paste(cds$tx_name, cds$exon_rank, sep=""),
-                stringsAsFactors=TRUE)[,c("cds_start","cds_end","mergeID")]
-  
-  res <- merge(exsm, cdsm, by="mergeID", all=TRUE)
-  res <-res[,c("exon_rank","exon_chrom","exon_strand","exon_start",
-               "exon_end","cds_start","cds_end","tx_name")]
-  res  
-}
-
-
 .prepareGTFTables <- function(gff,gffExonRankAttributeName){
 
   ## Assemble the bits back together.
@@ -288,7 +288,7 @@
     
   tables <- list()
   ## We absolutely require transcripts, genes and exons.
-  txs <- data  
+  txs <- data
   if(length(unique(txs$transcript_id)) < 1){
     stop("No Transcript information present in gtf file")
   }else{
@@ -314,15 +314,14 @@
   names(exs) <- c('tx_name','exon_rank','exon_chrom','exon_strand',
                   'exon_start','exon_end')
   cds <- data[data$type=="CDS",]
-  cds <- cds[,c('transcript_id','exon_rank','start','end')]
-  names(cds) <- c('tx_name','exon_rank','cds_start','cds_end')
+  cds <- cds[,c('transcript_id','exon_rank','seqnames','strand','start','end')]
+  names(cds) <- c('tx_name','exon_rank','cds_chrom','cds_strand','cds_start',
+                  'cds_end')
 
-  ## we need to never do it this way (in case we only have ranks for exons)
-  ## make pre-split versions of each table
-  es <- split(exs, as.factor(exs$tx_name))
-  cs <- split(cds, as.factor(cds$tx_name))
-  ## cdsExs <- .mergeExonsCDSTables(es, cs)
-  cdsExs <- .fastMergeExonsCDSTables(exs, cds)
+  ## no need to depend on having exon rank for cds too when we have this
+  cdsExs <- .mergeFramesViaRanges(exs, cds)
+  cdsExs <- cdsExs[,c("exon_rank","exon_chrom","exon_strand","exon_start",
+                      "exon_end","cds_start","cds_end","tx_name")]
   
   ## now get the tx_ids by merging them in.
   txIds <- unique(txs[,c("tx_id","tx_name")])
@@ -332,6 +331,9 @@
   ## return all tables
   tables
 }
+
+
+
 
 
 ## Helper to prepare the 'metadata' data frame.
@@ -450,6 +452,6 @@ makeTranscriptDbFromGFF <- function(file,
 ## ) fix any TODOs that still lie unanswered in this document.
 
 
-##  library(GenomicFeatures)
+##  library(GenomicFeatures);
 
 ##  example(makeTranscriptDbFromGFF)
