@@ -99,7 +99,7 @@ saveDb(txdb,file="TESTGFF.sqlite")
 ## TESTING GTF
 gtfFile <- system.file("extdata","Aedes_aegypti.partial.gtf",
                        package="GenomicFeatures")
-txdb <- makeTranscriptDbFromGFF(file=gtfFile,
+txdb2 <- makeTranscriptDbFromGFF(file=gtfFile,
          format="gtf",
          dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
                           "release-13/gtf/aedes_aegypti/",sep=""),
@@ -107,7 +107,7 @@ txdb <- makeTranscriptDbFromGFF(file=gtfFile,
          circ_seqs=DEFAULT_CIRC_SEQS,
          miRBaseBuild=NULL)
 if(interactive()) {
-saveDb(txdb,file="TESTGTF.sqlite")
+saveDb(txdb2,file="TESTGTF.sqlite")
 }
 
 }

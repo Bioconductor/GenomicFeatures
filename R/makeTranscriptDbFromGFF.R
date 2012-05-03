@@ -39,7 +39,8 @@
 ## Helper to deduce the rankings for each set of cds and exons...
 .deduceExonRankings <- function(exs){
   message("Infering Exon Rankings.")
-  res <- matrix(nrow = dim(exs)[1], ncol=9) ## all of it?
+  print(paste("ncol=",dim(exs)[2],"should be 9"))
+  res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?
   ## split up the data
   es <- split(exs, as.factor(exs$tx_name))
   ## loop to assemble the result
@@ -177,7 +178,8 @@
   cdsExs <- cdsExs[,c(1:9,11:12,15,18)]
   ## Finally I need to glue back the exon ranges that didn't have a cds...
   exsUnMatched <- exs[!(1:dim(exs)[1] %in% subjectHits(hits)),]
-  emptys <- matrix(nrow = dim(exsUnMatched)[1], ncol=4)
+  ## print(paste("ncol=", 4,"should be 4"))
+  emptys <- matrix(nrow = dim(exsUnMatched)[1], ncol=4) ## always 4 here
   exsUn <- cbind(exsUnMatched, data.frame(emptys))
   names(exsUn) <- c(names(exsUnMatched),c('cds_start','cds_end','cds_name',
                                           'cds_id'))
@@ -227,10 +229,12 @@
   message("Estimating transcript ranges - this might take a minute.")
   ## for each transcript, we have to subset out the records and determine:
   ## start and stop based on strand using max and min.
-  res <- matrix(nrow = length(trns), ncol=6)
   ## pre split the data for a substantial speedup
-  subs <- as.data.frame(data, stringsAsFactors=FALSE)
-  subs <- split(subs, as.factor(subs$transcript_id))
+  sub <- as.data.frame(data, stringsAsFactors=FALSE)
+  subs <- split(sub, as.factor(sub$transcript_id))
+  ## and assign into a pre-allocated matrix
+  ##print(paste("ncol=",6, "should be 6"))
+  res <- matrix(nrow = length(trns), ncol=6) ## always 6
 
   ## loop to assemble the result
   for(i in seq_len(length(trns))){
@@ -304,7 +308,7 @@
   tables[[2]] <- gns
   names(tables)[2] <- "genes"
 
-  message("Generating splicings from GTF file this will take some time.")
+  message("Generating splicings from GTF file.")
   exs <- data[data$type=="exon",]
   exs <- exs[,c('transcript_id','exon_rank','seqnames','strand','start','end')]
   names(exs) <- c('tx_name','exon_rank','exon_chrom','exon_strand',
@@ -313,6 +317,7 @@
   cds <- cds[,c('transcript_id','exon_rank','start','end')]
   names(cds) <- c('tx_name','exon_rank','cds_start','cds_end')
 
+  ## we need to never do it this way (in case we only have ranks for exons)
   ## make pre-split versions of each table
   es <- split(exs, as.factor(exs$tx_name))
   cs <- split(cds, as.factor(cds$tx_name))
@@ -425,7 +430,6 @@ makeTranscriptDbFromGFF <- function(file,
 
 ## ## TESTING GTF
 ## gtfFile=system.file("extdata","Aedes_aegypti.partial.gtf")
-## source("../makeTranscriptDbFromGTF.R")
 ## txdb <- makeTranscriptDbFromGFF(file=gtfFile,
 ##                                 format="gtf",
 ##                                 dataSource="ftp://ftp.ensemblgenomes.org/pub/metazoa/release-13/gtf/aedes_aegypti/",
@@ -444,3 +448,8 @@ makeTranscriptDbFromGFF <- function(file,
 ## ) alter code for gff parsing so that it can work if there is an exon rank supplied and add code to gtf parsing so that it can infer the ranks.  (right now both of these are separated.  Basically, generalize the range matching strategy and use it whenever inference is required, meanwhile whenever ranges are provided, they might only exist for exons, so you should also use the range match strategy to finish in that case as well.  So the question is just one of whether or not we have exons and whether or not we have to call the helpers to infer them (and also standardizing our column names earlier).  This refactor will also reduce the amount of code in this document.
 ## ) Add unit tests
 ## ) fix any TODOs that still lie unanswered in this document.
+
+
+##  library(GenomicFeatures)
+
+##  example(makeTranscriptDbFromGFF)
