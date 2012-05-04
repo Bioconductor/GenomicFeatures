@@ -15,6 +15,7 @@
 makeTranscriptDbFromGFF(file,
                         format=c("gff3","gtf"),
                         gffExonRankAttributeName,
+                        chrominfo,
                         dataSource,
                         species,
                         circ_seqs=DEFAULT_CIRC_SEQS,
@@ -26,11 +27,21 @@ makeTranscriptDbFromGFF(file,
   to process}
   \item{gffExonRankAttributeName}{what is the name (if any) of the
   attribute that defines the exon rank information.}
-  \item{dataSource}{Where did this data file originate? Please be as
+  \item{chrominfo}{data frame containing information about the
+  chromosomes.  This data.frame has 3 columns: 'chrom', 'length' and
+  'is_circular'.  The 'chrom' column contains the character names of the
+  chromosome elements that are present, the 'length' is the integer
+  length for each one and the 'is_circular' contains a logical value to
+  indicate whether that element is a circularized (such as a
+  mitochondria or a chloroplast).  If this argument is left blank then
+  there will not be any length information recorded for the different
+  chromosomes since it is not possible to infer if from the transcript
+  ranges alone.}
+  \item{dataSource}{Where did this data file originate?  Please be as
   specific as possible.}
   \item{species}{What is the Genus and species of this organism. Please
   use proper scientific nomenclature for example: "Homo sapiens" or
-  "Canis familiaris" and not "human" or "fuzzy buddy".  If properly
+  "Canis familiaris" and not "human" or "my fuzzy buddy".  If properly
   written, this information may be used by the software to help you out
   later.}
   \item{circ_seqs}{a character vector to list out which chromosomes
@@ -92,12 +103,16 @@ saveDb(txdb,file="TESTGFF.sqlite")
 }
 
 
-## TESTING GTF
+## TESTING GTF this time specifying the chrominfo
 gtfFile <- system.file("extdata","Aedes_aegypti.partial.gtf",
                        package="GenomicFeatures")
+chrominfo <- data.frame(chrom = c('supercont1.1','supercont1.2'),
+                        length=c(5220442, 5300000),
+                        is_circular=c(FALSE, FALSE))
 txdb2 <- makeTranscriptDbFromGFF(file=gtfFile,
          format="gtf",
          gffExonRankAttributeName="exon_number",
+         chrominfo= chrominfo,
          dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
                           "release-13/gtf/aedes_aegypti/",sep=""),
          species="Aedes aegypti",

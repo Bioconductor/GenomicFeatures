@@ -11,7 +11,7 @@
   startInd
 }
 
-## Helper to assign some rankings to the edge of a single set based on its
+## Helper to assign some rankings to the edge of a single set based on the
 ## strand information.
 ## This helper should look at the strand and then assign ranks one dir or the
 ## other.  If "-" then rank 1 is largest, if "+" then rank 1 is smallest.
@@ -24,14 +24,13 @@
     ord <- order(dat[,start])
     dat <- dat[ord,]
   }
-  ## now that dat will have been sorted (if it was needed), we can proceed to
-  ## know that the 1st start value is the smallest number
+  ## now that dat will have been sorted (if it was needed), we can proceed 
+  ## knowing that the 1st start value is always the smallest number
   if(dat[,c("exon_strand")][[1]]=="+"){ #inference CANNOT HANDLE trans-splicing!
     dat[,c("exon_rank")] <- 1:rowLen
   }else{
     dat[,c("exon_rank")] <- rowLen:1
   }
-  #as.matrix(dat) ## has to be a matrix to assign into one.
   dat
 }
 
@@ -39,7 +38,6 @@
 ## Helper to deduce the rankings for each set of cds and exons...
 .deduceExonRankings <- function(exs){
   warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute for gffExonRankAttributeName")
-  ## print(paste("ncol=",dim(exs)[2],"should be 9"))
   res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?
   ## split up the data
   es <- split(exs, as.factor(exs$tx_name))
@@ -253,8 +251,7 @@
   sub <- as.data.frame(data, stringsAsFactors=FALSE)
   subs <- split(sub, as.factor(sub$transcript_id))
   ## and assign into a pre-allocated matrix
-  ##print(paste("ncol=",6, "should be 6"))
-  res <- matrix(nrow = length(trns), ncol=6) ## always 6
+  res <- matrix(nrow = length(trns), ncol=6) ## always 6 wide
 
   ## loop to assemble the result
   for(i in seq_len(length(trns))){
@@ -379,6 +376,7 @@
 makeTranscriptDbFromGFF <- function(file,
                                     format=c("gff3", "gtf"),
                                     gffExonRankAttributeName,
+                                    chrominfo,
                                     dataSource,
                                     species,
                                     circ_seqs=DEFAULT_CIRC_SEQS,
@@ -406,13 +404,17 @@ makeTranscriptDbFromGFF <- function(file,
       tables <- .prepareGTFTables(gff,gffExonRankAttributeName)
     }
   }
-  ## TODO: add arguments to allow construction of rudimentary metadata
+  ## TODO: verify that I have all I really need for metadata
+  ## build up the metadata
   metadata <- .prepareGFFMetadata(dataSource,species,miRBaseBuild)
 
-  ## BUT if there isn't one, lets make an NA filled chrominfo like this:
-  chroms <- unique(tables[["transcripts"]][["tx_chrom"]])
-  chrominfo <- data.frame(chrom=chroms, length=rep(NA,length(chroms)),
-             is_circular=GenomicFeatures:::matchCircularity(chroms, circ_seqs))
+  ## If there is not chrominfo, then make one up best you can (no lengths)
+  if(missing(chrominfo)){
+    message("Now generating chrominfo from available sequence names. No chromosome length information is available.")
+    chroms <- unique(tables[["transcripts"]][["tx_chrom"]])
+    chrominfo <- data.frame(chrom=chroms, length=rep(NA,length(chroms)),
+      is_circular=GenomicFeatures:::matchCircularity(chroms, circ_seqs))
+  }
   ## call makeTranscriptDb
   txdb <- makeTranscriptDb(transcripts=tables[["transcripts"]],
                            splicings=tables[["splicings"]],
@@ -461,6 +463,7 @@ makeTranscriptDbFromGFF <- function(file,
 
 
 ## TODO 5/3/12:
+## ) Add example chrominfo to at least one of the two examples...
 ## ) Add unit tests
 ## ) fix any TODOs that still lie unanswered in this document.
 ## ) tidy the comments
@@ -469,3 +472,4 @@ makeTranscriptDbFromGFF <- function(file,
 ##  library(GenomicFeatures);
 
 ##  example(makeTranscriptDbFromGFF)
+
