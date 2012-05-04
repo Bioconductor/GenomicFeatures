@@ -115,7 +115,7 @@
 ###   and return named list of tables
 ### 
 
-.prepareGFF3Tables <- function(gff,gffExonRankAttributeName){
+.prepareGFF3Tables  <- function(gff,gffExonRankAttributeName){
   data <- DataFrame(seqnames=seqnames(gff),
                     start=start(gff),
                     end=end(gff),
@@ -175,8 +175,8 @@
   exs <- data[data$type=="exon",]
   if(length(exs) < 1){stop("No exon information present in gff file")
   }else{
-    if(length(exs$ID) != length(unique(exs$ID))){
-      stop("Unexpected exon duplicates")}
+    ## if(length(exs$ID) != length(unique(exs$ID))){
+    ##   stop("Unexpected exon duplicates")}
     exs <- data.frame(exs, data.frame(exon_id=1:dim(exs)[1]),
                       stringsAsFactors=FALSE)
     names(exs) <- c("exon_chrom","exon_start","exon_end","exon_strand","type",
@@ -186,8 +186,8 @@
   cds <- data[data$type=="CDS",]
   if(length(cds) < 1){warning("No CDS information present in gff file")
   }else{
-    if(length(cds$ID) != length(unique(cds$ID))){
-      stop("Unexpected cds duplicates")}
+    ## if(length(cds$ID) != length(unique(cds$ID))){
+    ##   stop("Unexpected cds duplicates")}
     cds <- data.frame(cds, data.frame(cds_id=1:dim(cds)[1]),
                       stringsAsFactors=FALSE)
     names(cds) <- c("cds_chrom","cds_start","cds_end","cds_strand","type",
@@ -473,3 +473,15 @@ makeTranscriptDbFromGFF <- function(file,
 
 ##  example(makeTranscriptDbFromGFF)
 
+
+
+
+
+### Testing flybase file:
+## flyFile = "dmel-4-r5.44.gff"
+## txdb <- makeTranscriptDbFromGFF(file=flyFile,
+##          format="gff3",
+##          dataSource="gff file from flybase",
+##          species="Drosophila melanogaster",
+##          circ_seqs=DEFAULT_CIRC_SEQS,
+##          miRBaseBuild=NULL)
