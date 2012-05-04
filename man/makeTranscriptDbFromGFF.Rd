@@ -57,15 +57,12 @@ makeTranscriptDbFromGFF(file,
   of data, you should really do so.
   
   Some files will have an attribute defined to indicate the exon rank
-  information.  For GTF files this is usually given as "exon_number" and
-  so if you don't specify this and are processing a gtf file, then we
-  will assume that the exon rank information is stored in an attribute
-  called "exon_number".  For gff3 files, we have not seen any examples
-  of this information encoded anywhere and so we will normally try to infer
-  this information from the position along the chromosome.  However, for
-  gff3 files, if you have a file that actually does have an attribute
-  defined for the exon rank, you can use the gffExonRankAttributeName to
-  specify it.
+  information.  For GTF files this is usually given as "exon_number",
+  however you still must specify this argument if you don't want the
+  code to try and infer the exon rank information.  For gff3 files, we
+  have not seen any examples of this information encoded anywhere, but
+  if you have a file with an attribute, you can still specify this to
+  avoid the inference.
 }
 
 \value{A \link{TranscriptDb} object.}
@@ -88,7 +85,6 @@ txdb <- makeTranscriptDbFromGFF(file=gffFile,
          format="gff3",
          dataSource="partial gtf file for Tomatoes for testing",
          species="Solanum lycopersicum",
-         gffExonRankAttributeName = "nb_exon",
          circ_seqs=DEFAULT_CIRC_SEQS,
          miRBaseBuild=NULL)
 if(interactive()) {
@@ -101,6 +97,7 @@ gtfFile <- system.file("extdata","Aedes_aegypti.partial.gtf",
                        package="GenomicFeatures")
 txdb2 <- makeTranscriptDbFromGFF(file=gtfFile,
          format="gtf",
+         gffExonRankAttributeName="exon_number",
          dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
                           "release-13/gtf/aedes_aegypti/",sep=""),
          species="Aedes aegypti",

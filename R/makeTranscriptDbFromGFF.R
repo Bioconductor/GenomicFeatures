@@ -38,7 +38,7 @@
 
 ## Helper to deduce the rankings for each set of cds and exons...
 .deduceExonRankings <- function(exs){
-  message("Infering Exon Rankings.")
+  warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute for gffExonRankAttributeName")
   ## print(paste("ncol=",dim(exs)[2],"should be 9"))
   res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?
   ## split up the data
@@ -118,19 +118,20 @@
 ### 
 
 .prepareGFF3Tables <- function(gff,gffExonRankAttributeName){
-
   data <- DataFrame(seqnames=seqnames(gff),
                     start=start(gff),
                     end=end(gff),
                     strand=strand(gff),
                     type=gff$type,
                     ID=gff$ID,
-                    Parent=gff$Parent,
-                    exon_rank=gff[[gffExonRankAttributeName]])
-  ## Assumption that we can rely on exon_rank being called nb_exon is
-  ## probably FALSE.
-  ## Therefore exon_rank will have to be generalized via argument.
-  
+                    Parent=gff$Parent)
+  ## add ExonRank if there is any
+  if(!is.null(gffExonRankAttributeName)){
+    data <- cbind(data,exon_rank=DataFrame(gff[[gffExonRankAttributeName]]))
+  }else{
+    data <- cbind(data,exon_rank=DataFrame(rep(NA,length(start(gff)))))
+  }
+    
   ## Has a compressed col, so expand as needed.
   data <- expand(data, colnames="Parent", keepEmptyRows=TRUE )
 
@@ -195,11 +196,11 @@
                     "cds_name","tx_name","exon_rank","cds_id")    
   }
   
-
-  ## For now lets AlWAYS deduce. TODO: make this optional in the event that
-  ## exon_rank is provided by the file..
-  ## deduce the exon rankings from the order along the chromosome
-  exs <- .deduceExonRankings(exs)
+  ## if needed (usually needed for gff3), deduce the exon rankings from the
+  ## order along the chromosome
+  if(is.null(gffExonRankAttributeName)){
+    exs <- .deduceExonRankings(exs)
+  }
   ## Then merge the two frames together based on range information
   splicings <- .mergeFramesViaRanges(exs, cds)
   
@@ -245,7 +246,7 @@
   ## which transcripts?
   trns <- unique(data$transcript_id)
 
-  message("Estimating transcript ranges - this might take a minute.")
+  message("Estimating transcript ranges.")
   ## for each transcript, we have to subset out the records and determine:
   ## start and stop based on strand using max and min.
   ## pre split the data for a substantial speedup
@@ -273,19 +274,24 @@
 }
 
 
-.prepareGTFTables <- function(gff,gffExonRankAttributeName){
 
-  ## Assemble the bits back together.
-  data <- data.frame(seqnames=as.character(seqnames(gff)),
-                     start=start(gff),
-                     end=end(gff),
-                     strand=as.character(strand(gff)),
-                     type=as.character(gff$type),
-                     gene_id=as.character(gff$gene_id),
-                     transcript_id=as.character(gff$transcript_id),
-                     exon_rank=gff[[gffExonRankAttributeName]],
-                     stringsAsFactors=FALSE)
-    
+## helper for preparing the GTF tables
+.prepareGTFTables <- function(gff,gffExonRankAttributeName){
+    data <- data.frame(seqnames=as.character(seqnames(gff)),
+                       start=start(gff),
+                       end=end(gff),
+                       strand=as.character(strand(gff)),
+                       type=as.character(gff$type),
+                       gene_id=as.character(gff$gene_id),
+                       transcript_id=as.character(gff$transcript_id),
+                       stringsAsFactors=FALSE)
+  ## add ExonRank if there is any  
+  if(!is.null(gffExonRankAttributeName)){
+    data <- cbind(data,exon_rank=gff[[gffExonRankAttributeName]])
+  }else{
+    data <- cbind(data,exon_rank=rep(NA,length(start(gff))))
+  }
+  
   tables <- list()
   ## We absolutely require transcripts, genes and exons.
   txs <- data
@@ -318,6 +324,11 @@
   names(cds) <- c('tx_name','exon_rank','cds_chrom','cds_strand','cds_start',
                   'cds_end')
 
+  ## if the gffExonRankAttributeName is not available ... then deduce.
+  if(is.null(gffExonRankAttributeName)){
+    exs <- .deduceExonRankings(exs)
+  }
+  
   ## no need to depend on having exon rank for cds too when we have this
   cdsExs <- .mergeFramesViaRanges(exs, cds)
   cdsExs <- cdsExs[,c("exon_rank","exon_chrom","exon_strand","exon_start",
@@ -374,20 +385,23 @@ makeTranscriptDbFromGFF <- function(file,
                                     miRBaseBuild=NULL)
 {
   format <- match.arg(format)
+  ## if the gffExonRankAttributeName is missing, then we need to know that
+  if(missing(gffExonRankAttributeName)){
+    gffExonRankAttributeName <- NULL
+  }  
+  
   ## start by importing the file
   gff <- import(file, format=format)
 
   if(format=="gff3"){
-    ## check that we have ID, Parent and nb_exon???
-    if(all(c("ID","Parent", gffExonRankAttributeName) %in% colnames(gff))){
+    ## check that we have ID, Parent
+    if(all(c("ID","Parent") %in% colnames(gff))){
       tables <- .prepareGFF3Tables(gff, gffExonRankAttributeName)
       ## results come back in list like: tables$transctripts etc.
     }
   }else if(format=="gtf"){
-    if(missing(gffExonRankAttributeName)){
-      gffExonRankAttributeName  <- "exon_number" }
     ## check that we have gene_id and transcript_id
-    if(all(c("gene_id","transcript_id",gffExonRankAttributeName)
+    if(all(c("gene_id","transcript_id")
            %in% colnames(gff))){
       tables <- .prepareGTFTables(gff,gffExonRankAttributeName)
     }
@@ -447,9 +461,9 @@ makeTranscriptDbFromGFF <- function(file,
 
 
 ## TODO 5/3/12:
-## ) alter code for gff parsing so that it can work if there is an exon rank supplied and add code to gtf parsing so that it can infer the ranks.  (right now both of these are separated.  Basically, generalize the range matching strategy and use it whenever inference is required, meanwhile whenever ranges are provided, they might only exist for exons, so you should also use the range match strategy to finish in that case as well.  So the question is just one of whether or not we have exons and whether or not we have to call the helpers to infer them (and also standardizing our column names earlier).  This refactor will also reduce the amount of code in this document.
 ## ) Add unit tests
 ## ) fix any TODOs that still lie unanswered in this document.
+## ) tidy the comments
 
 
 ##  library(GenomicFeatures);
