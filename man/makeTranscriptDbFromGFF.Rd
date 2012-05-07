@@ -14,7 +14,8 @@
 \usage{
 makeTranscriptDbFromGFF(file,
                         format=c("gff3","gtf"),
-                        gffExonRankAttributeName,
+                        exonRankAttributeName,
+                        gffGeneIdAttributeName,
                         chrominfo,
                         dataSource,
                         species,
@@ -25,8 +26,16 @@ makeTranscriptDbFromGFF(file,
   \item{file}{path/file to be processed}
   \item{format}{"gff3" or "gtf" depending on which file format you have
   to process}
-  \item{gffExonRankAttributeName}{what is the name (if any) of the
+  \item{exonRankAttributeName}{what is the name (if any) of the
   attribute that defines the exon rank information.}
+  \item{gffGeneIdAttributeName}{an optional argument that can be used
+  for gff style files ONLY.  If the gff file lacks rows to specify gene
+  IDs but the mRNA rows of the gff file specify the gene IDs via a named
+  attribute,then passing the name of the attribute for this argument can
+  allow the file to still extract gene IDs that map to these
+  transcripts.  If left blank, then the parser will try and extract rows
+  that are named 'gene' for gene to transcript mappings when parsing a
+  gff3 file.  For gtf files this argument is ignored entirely.}
   \item{chrominfo}{data frame containing information about the
   chromosomes.  This data.frame has 3 columns: 'chrom', 'length' and
   'is_circular'.  The 'chrom' column contains the character names of the
@@ -111,7 +120,7 @@ chrominfo <- data.frame(chrom = c('supercont1.1','supercont1.2'),
                         is_circular=c(FALSE, FALSE))
 txdb2 <- makeTranscriptDbFromGFF(file=gtfFile,
          format="gtf",
-         gffExonRankAttributeName="exon_number",
+         exonRankAttributeName="exon_number",
          chrominfo= chrominfo,
          dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
                           "release-13/gtf/aedes_aegypti/",sep=""),

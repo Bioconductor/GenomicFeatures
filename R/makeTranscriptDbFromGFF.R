@@ -2,6 +2,35 @@
 ### makeTranscriptDbFromGFF()
 ### -------------------------------------------------------------------------
 
+## helper to clean up splicings
+.filterDrop <- function(data, field){
+  if(any(is.na(data[[field]]))){
+    data <- data[!names(data) %in%  field]
+  }
+  data
+}
+
+.cleanSplicingsNAs <- function(data){
+## check: exon_name, exon_chrom, exon_strand, cds_name
+  fields <- c('exon_name','exon_chrom','exon_strand','cds_name')
+  for(i in seq_len(length(fields))){
+    if(any(colnames(data) %in% fields[i])){
+      data <- .filterDrop(data, fields[i])
+    }
+  }
+  data
+}
+
+## helper to clean up transcripts
+.cleanTranscriptsNAs <- function(data){
+## check: tx_name
+  if(any(colnames(data) %in% 'tx_name')){
+    data <- .filterDrop(data, 'tx_name')
+  }
+  data
+}
+
+
 ## helper to calc the index
 .computeStartInd <-function(i, res){
   ## The math on which indexes we need to fill with temp...
@@ -37,7 +66,7 @@
 
 ## Helper to deduce the rankings for each set of cds and exons...
 .deduceExonRankings <- function(exs){
-  warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute for gffExonRankAttributeName")
+  warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute for exonRankAttributeName")
   res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?
   ## split up the data
   es <- split(exs, as.factor(exs$tx_name))
@@ -114,8 +143,28 @@
 ### Extract the different data frames from GFF3
 ###   and return named list of tables
 ### 
+.checkExonRank <- function(data, gff, exonRankAttributeName){
+  if(!is.null(exonRankAttributeName)){
+    exon_rank <- DataFrame(gff[[exonRankAttributeName]])
+    data <- cbind(data,exon_rank)
+  }else{
+    exon_rank <- DataFrame(rep(NA,length(start(gff))))
+    data <- cbind(data,exon_rank)
+  }
+  data
+}
 
-.prepareGFF3Tables  <- function(gff,gffExonRankAttributeName){
+.checkGeneIdAttrib <- function(data, gff, gffGeneIdAttributeName){
+  if(!is.null(gffGeneIdAttributeName)){
+    gene_id <- DataFrame(gff[[gffGeneIdAttributeName]])
+    data <- cbind(data,gene_id)
+  }
+  data
+}
+
+
+.prepareGFF3Tables  <- function(gff,exonRankAttributeName,
+                                gffGeneIdAttributeName){
   data <- DataFrame(seqnames=seqnames(gff),
                     start=start(gff),
                     end=end(gff),
@@ -123,13 +172,10 @@
                     type=gff$type,
                     ID=gff$ID,
                     Parent=gff$Parent)
-  ## add ExonRank if there is any
-  if(!is.null(gffExonRankAttributeName)){
-    data <- cbind(data,exon_rank=DataFrame(gff[[gffExonRankAttributeName]]))
-  }else{
-    data <- cbind(data,exon_rank=DataFrame(rep(NA,length(start(gff)))))
-  }
-    
+  ## add ExonRank and geneID info if there is any
+  data <- .checkExonRank(data, gff, exonRankAttributeName)
+  data <- .checkGeneIdAttrib(data, gff, exonRankAttributeName)
+  
   ## Has a compressed col, so expand as needed.
   data <- expand(data, colnames="Parent", keepEmptyRows=TRUE )
 
@@ -143,6 +189,7 @@
   
   tables <- list()
   ## We absolutely require transcripts, genes and exons.
+  message("extracting transcript information")
   txs <- data[data$type=="mRNA",]
   if(dim(txs)[1] < 1){stop("No Transcript information present in gff file")
   }else{
@@ -153,15 +200,39 @@
     txsSub <- txs[,c("tx_id","ID","seqnames","strand","start","end")]
     names(txsSub) <- c("tx_id","tx_name","tx_chrom","tx_strand","tx_start",
                        "tx_end")
+    ## Clean up any NA columns (any that are optional)
+    txsSub <- .cleanTranscriptsNAs(txsSub)  
     tables[[1]] <- as.data.frame(txsSub)
     names(tables)[1] = "transcripts"
   }
 
+  message("Extracting gene IDs")
   gns <- data[data$type=="gene",]
-  if(length(gns) < 1){stop("No gene information present in gff file")
+  if(dim(gns)[1] < 1){
+    ## Then we have to try and infer this from the transcript rows...
+    if(!is.null(gffGeneIdAttributeName)){
+      ## then try to compute gns using this other data...
+      gns <- data.frame(tx_name=as.character(gff$ID),
+                        type=as.character(gff$type),
+                        gene_id=as.character(gff[[gffGeneIdAttributeName]]),
+                        stringsAsFactors=FALSE)
+      gns <- gns[gns$type=="mRNA",]
+      gns <- gns[,c("tx_name","gene_id")]
+      ## Then merge in the more reliable tx_ids
+      gns <- merge(gns, txsSub, by="tx_name")
+      gns <- gns[,c("tx_id","gene_id")]
+      ## now have to merge to get gene_id matched with tx_id (more robust)
+      tables[[2]] <- as.data.frame(gns)
+      names(tables)[2] = "genes"
+    }else{
+      warning("No gene information present in gff file")
+    }
   }else{
     if(length(gns$ID) != length(unique(gns$ID))){
       stop("Unexpected gene duplicates")}
+    ## After testing for genes, I get the actual data from mRNA rows...
+    ## The only difference is that in this more normal case the Parents of
+    ## these rows will be the genes that I detected previously.
     txsGene <- txs[,c("tx_id","Parent")]
     names(txsGene) <- c("tx_id","gene_id")
     ## Then subset by gene_ids
@@ -170,13 +241,14 @@
     names(tables)[2] = "genes"
   }
 
+  
+
   ## TODO, Too much repetition here: not mission critical but it bothers me to
   ## look at it.
+  message("Processing splicing information for gff3 file.")
   exs <- data[data$type=="exon",]
-  if(length(exs) < 1){stop("No exon information present in gff file")
+  if(dim(exs)[1] < 1){stop("No exon information present in gff file")
   }else{
-    ## if(length(exs$ID) != length(unique(exs$ID))){
-    ##   stop("Unexpected exon duplicates")}
     exs <- data.frame(exs, data.frame(exon_id=1:dim(exs)[1]),
                       stringsAsFactors=FALSE)
     names(exs) <- c("exon_chrom","exon_start","exon_end","exon_strand","type",
@@ -184,10 +256,8 @@
   }
   
   cds <- data[data$type=="CDS",]
-  if(length(cds) < 1){warning("No CDS information present in gff file")
+  if(dim(cds)[1] < 1){warning("No CDS information present in gff file")
   }else{
-    ## if(length(cds$ID) != length(unique(cds$ID))){
-    ##   stop("Unexpected cds duplicates")}
     cds <- data.frame(cds, data.frame(cds_id=1:dim(cds)[1]),
                       stringsAsFactors=FALSE)
     names(cds) <- c("cds_chrom","cds_start","cds_end","cds_strand","type",
@@ -196,7 +266,7 @@
   
   ## if needed (usually needed for gff3), deduce the exon rankings from the
   ## order along the chromosome
-  if(is.null(gffExonRankAttributeName)){
+  if(is.null(exonRankAttributeName)){
     exs <- .deduceExonRankings(exs)
   }
   ## Then merge the two frames together based on range information
@@ -207,7 +277,9 @@
                             'exon_strand','exon_start','exon_end','cds_id',
                             'cds_name','cds_start','cds_end','tx_name')]
   txIds <- unique(txsSub[,c("tx_id","tx_name")])
-  splicings <- merge(txIds, splicings, by="tx_name")[,-1]  
+  splicings <- merge(txIds, splicings, by="tx_name")[,-1]
+  ## Clean up any NA columns (any that are optional)
+  splicings <- .cleanSplicingsNAs(splicings)  
   tables[[3]] <- splicings
   names(tables)[3] <- "splicings"
   ## return all tables
@@ -273,7 +345,7 @@
 
 
 ## helper for preparing the GTF tables
-.prepareGTFTables <- function(gff,gffExonRankAttributeName){
+.prepareGTFTables <- function(gff,exonRankAttributeName){
     data <- data.frame(seqnames=as.character(seqnames(gff)),
                        start=start(gff),
                        end=end(gff),
@@ -283,35 +355,39 @@
                        transcript_id=as.character(gff$transcript_id),
                        stringsAsFactors=FALSE)
   ## add ExonRank if there is any  
-  if(!is.null(gffExonRankAttributeName)){
-    data <- cbind(data,exon_rank=gff[[gffExonRankAttributeName]])
+  if(!is.null(exonRankAttributeName)){
+    data <- cbind(data,exon_rank=gff[[exonRankAttributeName]])
   }else{
     data <- cbind(data,exon_rank=rep(NA,length(start(gff))))
   }
   
   tables <- list()
   ## We absolutely require transcripts, genes and exons.
+  message("extracting transcript information")
   txs <- data
   if(length(unique(txs$transcript_id)) < 1){
     stop("No Transcript information present in gtf file")
   }else{
     ## GTF files require that we deduce the range of each transcript
-    system.time(txs <- .deduceTranscriptsFromGTF(txs))
+    txs <- .deduceTranscriptsFromGTF(txs)
   }
 
+  message("Extracting gene IDs")
   gns <- txs[,c("tx_name","gene_id")]
-  if(length(gns) < 1){stop("No gene information present in gtf file")
+  if(dim(gns)[1] < 1){warning("No gene information present in gtf file")
   }else{
     ## proceed to remove gene_ids column from txs (not needed there now)
     txs <- txs[, c("tx_id","tx_name","tx_chrom","tx_strand","tx_start",
                    "tx_end")]
   }
+  ## Clean up any NA columns (any that are optional)
+  txs <- .cleanTranscriptsNAs(txs)  
   tables[[1]] <- txs
   names(tables)[1] <- "transcripts"
   tables[[2]] <- gns
   names(tables)[2] <- "genes"
 
-  message("Generating splicings from GTF file.")
+  message("Processing splicing information for gtf file.")
   exs <- data[data$type=="exon",]
   exs <- exs[,c('transcript_id','exon_rank','seqnames','strand','start','end')]
   names(exs) <- c('tx_name','exon_rank','exon_chrom','exon_strand',
@@ -321,8 +397,8 @@
   names(cds) <- c('tx_name','exon_rank','cds_chrom','cds_strand','cds_start',
                   'cds_end')
 
-  ## if the gffExonRankAttributeName is not available ... then deduce.
-  if(is.null(gffExonRankAttributeName)){
+  ## if the exonRankAttributeName is not available ... then deduce.
+  if(is.null(exonRankAttributeName)){
     exs <- .deduceExonRankings(exs)
   }
   
@@ -334,6 +410,8 @@
   ## now get the tx_ids by merging them in.
   txIds <- unique(txs[,c("tx_id","tx_name")])
   splicings <- merge(txIds, cdsExs, by="tx_name")[,-1]
+  ## Clean up any NA columns (any that are optional)
+  splicings <- .cleanSplicingsNAs(splicings)      
   tables[[3]] <- splicings
   names(tables)[3] <- "splicings"
   ## return all tables
@@ -375,7 +453,8 @@
 
 makeTranscriptDbFromGFF <- function(file,
                                     format=c("gff3", "gtf"),
-                                    gffExonRankAttributeName,
+                                    exonRankAttributeName,
+                                    gffGeneIdAttributeName,
                                     chrominfo,
                                     dataSource,
                                     species,
@@ -383,10 +462,13 @@ makeTranscriptDbFromGFF <- function(file,
                                     miRBaseBuild=NULL)
 {
   format <- match.arg(format)
-  ## if the gffExonRankAttributeName is missing, then we need to know that
-  if(missing(gffExonRankAttributeName)){
-    gffExonRankAttributeName <- NULL
-  }  
+  ## if the exonRankAttributeName is missing, then we need to know that
+  if(missing(exonRankAttributeName)){
+    exonRankAttributeName <- NULL
+  }
+  if(missing(gffGeneIdAttributeName)){
+    gffGeneIdAttributeName <- NULL
+  }
   
   ## start by importing the file
   gff <- import(file, format=format)
@@ -394,14 +476,15 @@ makeTranscriptDbFromGFF <- function(file,
   if(format=="gff3"){
     ## check that we have ID, Parent
     if(all(c("ID","Parent") %in% colnames(gff))){
-      tables <- .prepareGFF3Tables(gff, gffExonRankAttributeName)
+      tables <- .prepareGFF3Tables(gff, exonRankAttributeName,
+                                   gffGeneIdAttributeName)
       ## results come back in list like: tables$transctripts etc.
     }
   }else if(format=="gtf"){
     ## check that we have gene_id and transcript_id
     if(all(c("gene_id","transcript_id")
            %in% colnames(gff))){
-      tables <- .prepareGTFTables(gff,gffExonRankAttributeName)
+      tables <- .prepareGTFTables(gff,exonRankAttributeName)
     }
   }
   ## TODO: verify that I have all I really need for metadata
@@ -432,6 +515,7 @@ makeTranscriptDbFromGFF <- function(file,
 
 
 
+
 ## ## TESTING GFF3
 ## gffFile=system.file("extdata","a.gff3")
 ## txdb <- makeTranscriptDbFromGFF(file=gffFile,
@@ -439,7 +523,7 @@ makeTranscriptDbFromGFF <- function(file,
 ##                                 dataSource="partial gtf file for Tomatoes
 ## donated anonymously for testing",
 ##                                 species="Solanum lycopersicum",
-##                                 gffExonRankAttributeName = "nb_exon",
+##                                 exonRankAttributeName = "nb_exon",
 ##                                 circ_seqs=DEFAULT_CIRC_SEQS,
 ##                                 miRBaseBuild=NULL)
 ## saveDb(txdb,file="TESTGFF.sqlite")
@@ -463,7 +547,7 @@ makeTranscriptDbFromGFF <- function(file,
 
 
 ## TODO 5/3/12:
-## ) Add example chrominfo to at least one of the two examples...
+## )  Add some checks for columns in splicing and also transcripts for missing NA values, and drop if that is allowed
 ## ) Add unit tests
 ## ) fix any TODOs that still lie unanswered in this document.
 ## ) tidy the comments
@@ -479,9 +563,16 @@ makeTranscriptDbFromGFF <- function(file,
 
 ### Testing flybase file:
 ## flyFile = "dmel-4-r5.44.gff"
-## txdb <- makeTranscriptDbFromGFF(file=flyFile,
-##          format="gff3",
-##          dataSource="gff file from flybase",
-##          species="Drosophila melanogaster",
-##          circ_seqs=DEFAULT_CIRC_SEQS,
-##          miRBaseBuild=NULL)
+## txdb3 <- makeTranscriptDbFromGFF(file=flyFile,
+##           format="gff3",
+##           dataSource="gff file from flybase",
+##           gffGeneIdAttributeName = "geneID",
+##           species="Drosophila melanogaster",
+##           circ_seqs=DEFAULT_CIRC_SEQS,
+##           miRBaseBuild=NULL)
+## foo <- transcriptsBy(txdb3, by="gene")
+
+## this file will not have any proper names etc.  Use it for testing.
+## flyFile = "dmel-1000-r5.11.filtered.gff"
+
+ 
