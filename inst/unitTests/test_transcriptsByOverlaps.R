@@ -2,7 +2,7 @@
 
 test_transcriptsByOverlaps <- function()
 {
-    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                      package="GenomicFeatures"))
 
     checkException(transcriptsByOverlaps(txdb), silent = TRUE)
@@ -44,7 +44,7 @@ test_transcriptsByOverlaps <- function()
 
 test_exonsByOverlaps <- function()
 {
-    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                      package="GenomicFeatures"))
 
     checkException(exonsByOverlaps(txdb), silent = TRUE)
@@ -71,7 +71,7 @@ test_exonsByOverlaps <- function()
 
 test_cdsByOverlaps <- function()
 {
-    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                      package="GenomicFeatures"))
 
     checkException(cdsByOverlaps(txdb), silent = TRUE)

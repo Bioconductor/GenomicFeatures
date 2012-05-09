@@ -57,7 +57,7 @@ test_transcriptsBy <- function()
                     
     ## WITH REAL DATA
     ## --------------
-    txdb1 <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+    txdb1 <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
     checkException(transcriptsBy(data.frame()), silent = TRUE)
@@ -120,7 +120,7 @@ test_transcriptsBy <- function()
 
 test_exonsBy <- function()
 {
-    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
     checkException(exonsBy(data.frame()), silent = TRUE)
@@ -158,7 +158,7 @@ test_exonsBy <- function()
 
 test_cdsBy <- function()
 {
-    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
     checkException(cdsBy(data.frame()), silent = TRUE)
@@ -195,7 +195,7 @@ test_cdsBy <- function()
 
 test_intronsByTranscript <- function()
 {
-    txdb <- loadFeatures(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
     seqinfo <- seqinfo(txdb)

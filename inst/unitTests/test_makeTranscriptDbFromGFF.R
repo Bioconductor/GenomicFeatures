@@ -136,13 +136,7 @@ test_prepareGFF3Tables <- function(){
 
 
 
-## test makeTranscriptDbFromGFF
-## run and compare to existing DB (saved)
-## like this
-    ## ## compare
-    ## ok <- GenomicFeatures:::compareTranscriptDbs(txdb1, txdb0)
-    ## checkTrue(ok)
-
+## Test that outputs match what is expected.
 test_makeTranscriptDbFromGFF <- function(){  
   ## wanted
   gffDBFile <- system.file("extdata","TESTGFF.sqlite",
