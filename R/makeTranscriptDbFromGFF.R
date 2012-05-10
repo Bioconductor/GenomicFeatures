@@ -46,20 +46,18 @@
 ## other.  If "-" then rank 1 is largest, if "+" then rank 1 is smallest.
 .assignRankings <- function(dat){ # dat=es[[1]]
   dat <- as.matrix(dat)
-  start <- "exon_start"
-  rowLen <- dim(dat)[1]
-  ## now sort (if needed, b/c I think normally this won't be necessary)
-  if(dim(dat)[1]>1 && dat[,start][1] > dat[,start][rowLen]){
-    ord <- order(dat[,start])
-    dat <- dat[ord,]
+  start <- dat[,"exon_start"]
+  strand <- dat[,"exon_strand"]
+  if(length(unique(strand)) >1 )
+    stop("Inference CANNOT HANDLE trans-splicing.")
+  if (strand[1]=="+") {
+    ord <- order(as.integer(start))
+  } else {
+    ord <- order(as.integer(start), decreasing=TRUE)
   }
-  ## now that dat will have been sorted (if it was needed), we can proceed 
-  ## knowing that the 1st start value is always the smallest number
-  if(dat[,c("exon_strand")][[1]]=="+"){ #inference CANNOT HANDLE trans-splicing!
-    dat[,c("exon_rank")] <- 1:rowLen
-  }else{
-    dat[,c("exon_rank")] <- rowLen:1
-  }
+  ## now sort (needed or not (cheap enough!))
+  dat <- dat[ord,,drop=FALSE]
+  dat[,"exon_rank"] <- seq_len(nrow(dat))
   dat
 }
 
@@ -613,4 +611,4 @@ makeTranscriptDbFromGFF <- function(file,
 ## this file will not have any proper names etc.  Use it for testing.
 ## flyFile = "dmel-1000-r5.11.filtered.gff"
 
- 
+
