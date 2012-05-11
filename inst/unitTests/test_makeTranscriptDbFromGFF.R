@@ -183,27 +183,27 @@ test_makeTranscriptDbFromGFF <- function(){
   checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb2, txdb_gtf))
 
 
-  ## ## wanted
-  ## flyDBFile <- system.file("extdata","TESTFLYGFF3.sqlite",
-  ##                          package="GenomicFeatures")
-  ## txdb_fly <- loadDb(flyDBFile)
+  ## wanted
+  flyDBFile <- system.file("extdata","TESTFLYGFF3.sqlite",
+                           package="GenomicFeatures")
+  txdb_fly <- loadDb(flyDBFile)
 
-  ## suppressWarnings(
-  ## txdb3 <- makeTranscriptDbFromGFF(file=flyFile,
-  ##                                  format="gff3",
-  ##                                  dataSource="gff file from flybase",
-  ##                                  gffGeneIdAttributeName = "geneID",
-  ##                                  species="Drosophila melanogaster",
-  ##                                  circ_seqs=DEFAULT_CIRC_SEQS,
-  ##                                  miRBaseBuild=NULL)
-  ##                  )
+  suppressWarnings(
+  txdb3 <- makeTranscriptDbFromGFF(file=flyFile,
+                                   format="gff3",
+                                   dataSource="gff file from flybase",
+                                   gffGeneIdAttributeName = "geneID",
+                                   species="Drosophila melanogaster",
+                                   circ_seqs=DEFAULT_CIRC_SEQS,
+                                   miRBaseBuild=NULL)
+                   )
   
-  ## ## test
-  ## print(txdb3)
-  ## print(lst1 <- lapply(as.list(txdb3), head))
-  ## print(lst2 <- lapply(as.list(txdb_fly), head))
-  ## print(all.equal(lst1, lst2))
-  ## checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb3, txdb_fly))
+  ## test
+  print(txdb3)
+  print(lst1 <- lapply(as.list(txdb3), head, n=30))
+  print(lst2 <- lapply(as.list(txdb_fly), head, n=30))
+  print(all.equal(lst1, lst2))
+  checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb3, txdb_fly))
 }
 
 
