@@ -199,10 +199,10 @@ test_makeTranscriptDbFromGFF <- function(){
                    )
   
   ## test
-  print(txdb3)
-  print(lst1 <- lapply(as.list(txdb3), head, n=30))
-  print(lst2 <- lapply(as.list(txdb_fly), head, n=30))
-  print(all.equal(lst1, lst2))
+  ## print(txdb3)
+  ## print(lst1 <- lapply(as.list(txdb3), head, n=30))
+  ## print(lst2 <- lapply(as.list(txdb_fly), head, n=30))
+  ## print(all.equal(lst1, lst2))
   checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb3, txdb_fly))
 }
 
