@@ -108,12 +108,23 @@ listDatasets(useMart("ensembl"))
 ## Retrieving an incomplete transcript dataset for Human from the
 ## "ensembl" BioMart database:
 transcript_ids <- c(
-    "ENST00000268655",
-    "ENST00000313243",
-    "ENST00000341724",
-    "ENST00000400839",
-    "ENST00000435657",
-    "ENST00000478783"
+   # "ENST00000268655",
+   # "ENST00000313243",
+   # "ENST00000341724",
+  #  "ENST00000400839",
+  #  "ENST00000435657",
+    "ENST00000478783",
+  # "ENST00000000233",
+#"ENST00000000442",
+#"ENST00000002125",
+#"ENST00000002829",
+#"ENST00000003583",
+#"ENST00000003834",
+#"ENST00000003912",
+"ENST00000005226",
+#"ENST00000005257",
+#"ENST00000005259",
+#"ENST00000005260"
 )
 txdb <- makeTranscriptDbFromBiomart(transcript_ids=transcript_ids)
 txdb  # note that these annotations match the GRCh37 genome assembly
