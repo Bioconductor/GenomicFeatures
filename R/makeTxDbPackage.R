@@ -126,7 +126,7 @@ makeTxDbPackage <- function(txdb,
    ## then copy the contents of the database into the extdata dir
    db_path <- file.path(destDir, pkgName, "inst", "extdata", 
      paste(pkgName,"sqlite",sep="."))
-   saveFeatures(txdb, file=db_path)
+   saveDb(txdb, file=db_path)
 }
 
 
