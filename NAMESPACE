@@ -101,5 +101,6 @@ exportMethods(
   isActiveSeq,
   "isActiveSeq<-",
   asBED, asGFF, spliceGraph,
-  determineDefaultSeqnameStyle
+  determineDefaultSeqnameStyle,
+  seqnameStyle, "seqnameStyle<-"
 )

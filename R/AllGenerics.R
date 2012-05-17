@@ -70,3 +70,11 @@ setGeneric("isActiveSeq<-",function(x, value) standardGeneric("isActiveSeq<-"))
 ## getSpliceGraph.R
 setGeneric("spliceGraph", signature="txdb",
            function(txdb, ...) standardGeneric("spliceGraph"))
+
+## generics for seqnamStyle and friends
+setGeneric("determineDefaultSeqnameStyle",
+           function(x) standardGeneric("determineDefaultSeqnameStyle"))
+setGeneric("seqnameStyle",
+           function(x) standardGeneric("seqnameStyle"))
+setGeneric("seqnameStyle<-", signature="x",
+           function(x, value) standardGeneric("seqnameStyle<-"))

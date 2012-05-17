@@ -10,10 +10,11 @@ gc()
 ### Concrete GenomicFeatures types
 .TranscriptDb <-
     setRefClass("TranscriptDb", contains="AnnotationDb",
-        fields=list(isActiveSeq="logical"),
+        fields=list(isActiveSeq="logical", seqnameStyle="character"),
         methods=list(
           initialize=function(...) {
               callSuper(...)
+              .self$seqnameStyle <- character()
               if (0L == length(dbListTables(conn))) {
                   .self$isActiveSeq <- logical()
               } else {
