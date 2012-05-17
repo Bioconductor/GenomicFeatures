@@ -58,7 +58,7 @@ setMethod("determineDefaultSeqnameStyle", "TranscriptDb",
 ## default using determineDefaultSeqnameStyle(txdb)
 .getseqnameStyle  <- function(x) {
             ## in the event that the slot has not been set yet: set it up
-            if(length(txdb$seqnameStyle)==0){
+            if(length(x$seqnameStyle)==0){
               x$seqnameStyle <- determineDefaultSeqnameStyle(x)
             }
             ## and then return it.
