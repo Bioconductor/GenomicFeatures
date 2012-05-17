@@ -52,16 +52,25 @@ setMethod("determineDefaultSeqnameStyle", "TranscriptDb",
 
 
 
-## seqnameStyle sets and gets the seqnameStyle string in TranscriptDb object.
+## getter
 ## TODO: getter should be smarter.  It should check whether or not
 ## x$seqnameStyle is empty, and if it is, then it should set the value to the
 ## default using determineDefaultSeqnameStyle(txdb)
+.getseqnameStyle  <- function(x) {
+            ## in the event that the slot has not been set yet: set it up
+            if(length(txdb$seqnameStyle)==0){
+              x$seqnameStyle <- determineDefaultSeqnameStyle(x)
+            }
+            ## and then return it.
+            x$seqnameStyle
+          }
+
 setMethod("seqnameStyle", "TranscriptDb",
-          function(x) x$seqnameStyle
+          function(x) .getseqnameStyle(x)
 )
 
-setReplaceMethod("seqnameStyle", "TranscriptDb",
-    function(x, value)
+## setter
+.setseqnameStyle <- function(x, value)
     {
       species <- species(txdb)
         if (!is.null(value) && length(value==1) &&
@@ -72,12 +81,15 @@ setReplaceMethod("seqnameStyle", "TranscriptDb",
         }
         x
     }
+
+setReplaceMethod("seqnameStyle", "TranscriptDb",
+          function(x,value) .setseqnameStyle(x,value)
 )
 
 
 ## Tests:
 ## library(TxDb.Athaliana.BioMart.plantsmart12); txdb = TxDb.Athaliana.BioMart.plantsmart12; seqnameStyle(txdb);
 ## seqnameStyle(txdb) <- "UCSC" ## Should fail;
-## seqnameStyle(txdb) <- "ensembl";
+## seqnameStyle(txdb) <- "NCBI";
 ## seqnameStyle(txdb)
 
