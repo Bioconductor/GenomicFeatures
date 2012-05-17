@@ -11,20 +11,12 @@ setMethod("seqnames", "TranscriptDb",
           }
 )
 
-
 ## testSeqnameStyle helper
 .determineDefaultSeqnameStyle <- function(x){
   ## we will have to extract the organsim name  
-  ## species <-  as.character(AnnotationDbi:::dbEasyQuery(
-  ##               AnnotationDbi:::dbConn(x),
-  ##               "SELECT value FROM metadata WHERE name='Genus and Species'"))
   species <- species(x)
   ## and we have to extract the seqnames (from the TxDb)
-  ## seqnames <- as.character(t(AnnotationDbi:::dbEasyQuery(
-  ##                            AnnotationDbi:::dbConn(x),
-  ##                            "SELECT chrom FROM chrominfo")))
-  
-  seqnames <- seqnames(x)  ## TODO: add a helper like this.
+  seqnames <- seqnames(x)
   ## Then for all the possible styles, pick one that works and return it...
   styles <- supportedSeqnameStyles()[[sub(" ","_",species)]]
   styleIdx <- testSeqnames(styles=styles,seqnames=seqnames,species=species)
@@ -38,8 +30,7 @@ setMethod("seqnames", "TranscriptDb",
   }
 }
 
-## I need a method that allows me to determine what the default SeqnameStyle
-## is for a TranscriptDb..
+## Method gets the default seqnameStyle for a TranscriptDb 
 setMethod("determineDefaultSeqnameStyle", "TranscriptDb",
           function(x) .determineDefaultSeqnameStyle(x)
 )
@@ -53,34 +44,30 @@ setMethod("determineDefaultSeqnameStyle", "TranscriptDb",
 
 
 ## getter
-## TODO: getter should be smarter.  It should check whether or not
-## x$seqnameStyle is empty, and if it is, then it should set the value to the
-## default using determineDefaultSeqnameStyle(txdb)
 .getseqnameStyle  <- function(x) {
-            ## in the event that the slot has not been set yet: set it up
-            if(length(x$seqnameStyle)==0){
-              x$seqnameStyle <- determineDefaultSeqnameStyle(x)
-            }
-            ## and then return it.
-            x$seqnameStyle
-          }
+  ## in the event that the slot has not been set yet: set it up
+  if(length(x$seqnameStyle)==0){
+    return(determineDefaultSeqnameStyle(x))
+  }else{
+    return(x$seqnameStyle)
+  }
+}
 
 setMethod("seqnameStyle", "TranscriptDb",
           function(x) .getseqnameStyle(x)
 )
 
 ## setter
-.setseqnameStyle <- function(x, value)
-    {
-      species <- species(txdb)
-        if (!is.null(value) && length(value==1) &&
-            isSupportedSeqnamesStyle(species, value)) {
-            x$seqnameStyle <- value
-        }else{
-          warning("That value is not a supported seqnameStyle.")
-        }
-        x
-    }
+.setseqnameStyle <- function(x, value){
+  species <- species(txdb)
+  if (!is.null(value) && length(value==1) &&
+      isSupportedSeqnamesStyle(species, value)) {
+    x$seqnameStyle <- value
+  }else{
+    warning("That value is not a supported seqnameStyle.")
+  }
+  x
+}
 
 setReplaceMethod("seqnameStyle", "TranscriptDb",
           function(x,value) .setseqnameStyle(x,value)
