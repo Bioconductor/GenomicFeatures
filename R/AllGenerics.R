@@ -74,7 +74,5 @@ setGeneric("spliceGraph", signature="txdb",
 ## generics for seqnamStyle and friends
 setGeneric("determineDefaultSeqnameStyle",
            function(x) standardGeneric("determineDefaultSeqnameStyle"))
-setGeneric("seqnameStyle",
-           function(x) standardGeneric("seqnameStyle"))
 setGeneric("seqnameStyle<-", signature="x",
            function(x, value) standardGeneric("seqnameStyle<-"))
