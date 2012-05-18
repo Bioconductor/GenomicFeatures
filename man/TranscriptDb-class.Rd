@@ -11,6 +11,11 @@
 \alias{metadata,TranscriptDb-method}
 \alias{metadata,FeatureDb-method}
 \alias{seqinfo,TranscriptDb-method}
+\alias{seqnameStyle<-}
+\alias{seqnameStyle<-,TranscriptDb-method}
+\alias{seqnameStyle,TranscriptDb-method}
+\alias{determineDefaultSeqnameStyle}
+\alias{determineDefaultSeqnameStyle,TranscriptDb-method}
 \alias{show,TranscriptDb-method}
 \alias{show,FeatureDb-method}
 \alias{isActiveSeq}
@@ -68,6 +73,16 @@
       Note that there is no \code{seqinfo} setter for TranscriptDb
       objects (this information is stored in the SQLite db, and,
       in normal use, this db is accessed in read-only mode).
+    }
+    \item{}{
+      \code{seqnameStyle(x)}, \code{seqnameStyle(x) <- value}:
+      The getter returns the matching seqname style for \code{x}.  The
+      setter will check the value to make sure that it is a legitimate
+      style and if so it will set the flag in the object to that style.
+    }
+    \item{}{
+      \code{determineDefaultSeqnameStyle(x)}:
+      Lists the default seqname style for the database in \code{x}.
     }
     \item{}{
       \code{as.list(x)}:

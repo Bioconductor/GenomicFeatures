@@ -75,7 +75,8 @@ export(
   makeTxDbPackageFromBiomart,
   makeFDbPackageFromUCSC,	
   features,
-  supportedMiRBaseBuildValues
+  supportedMiRBaseBuildValues,
+  "seqnameStyle<-" 
 )
 
 exportMethods(
@@ -102,5 +103,5 @@ exportMethods(
   "isActiveSeq<-",
   asBED, asGFF, spliceGraph,
   determineDefaultSeqnameStyle,
-  seqnameStyle, "seqnameStyle<-"
+  seqnameStyle, "seqnameStyle<-" 
 )
