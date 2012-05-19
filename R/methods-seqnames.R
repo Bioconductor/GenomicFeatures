@@ -61,7 +61,7 @@ setMethod("seqnameStyle", "TranscriptDb",
 .setseqnameStyle <- function(x, value){
   species <- species(txdb)
   if (!is.null(value) && length(value==1) &&
-      isSupportedSeqnamesStyle(species, value)) {
+      isSupportedSeqnamesStyle(style=value, species=species)) {
     x$seqnameStyle <- value
   }else{
     warning("That value is not a supported seqnameStyle.")
