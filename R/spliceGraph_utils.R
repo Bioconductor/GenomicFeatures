@@ -560,6 +560,48 @@ edgeToBubble <- function(b, vidToEdge) {
     split(e[uni], v[uni])
 }
 
+collapseBubbleParts <- function(eToBlp) {
+    ## collapse the bubble parts for the edges if they
+    ## are redundant
+    bub <- uunlist(eToBlp)
+    en <- rep(names(eToBlp), elementLengths(eToBlp))
+    
+    
+    temp <-
+      t(simplify2array(strsplit(bub, ":")))[, seq(1,2)]
+    temp <- paste(temp[,1], temp[,2], sep=":")
+    
+    
+    d <- data.frame(cbind(en, bub, temp,
+                          be=paste(temp, en, sep="-")))
+    d <- d[order(d$temp, d$en, d$bub), ]
+    
+    idx <- match(unique(d$be), d$be)
+    
+    bpmap <- setNames(as.character(d$bub[idx]),
+                      as.character(d$be[idx]))
+
+    
+   
+
+    map <- data.frame(nn = as.character(bpmap[as.character(d$be)]),
+                      oo = as.character(d$bub))
+
+    map <- map[as.character(map$nn) != as.character(map$oo),
+               , drop=FALSE]
+
+    map <- setNames(as.character(map$nn), as.character(map$oo))
+    
+    
+
+    repl <- as.character(map[as.character(d$bub)])
+    
+    d$collapse <- ifelse(!is.na(repl), repl, as.character(d$bub) )
+    
+    d <- d[! duplicated(paste(d$en, d$collapse, sep=".")), ]
+    
+    split(d$collapse, d$en)
+}
 
 
 ## assigns the edge ids to the bubble parts
@@ -580,7 +622,7 @@ edgeToBubblePart <- function(b, vidToEdge) {
     ## unify the bubble part to edge mapping
     v <- as.character(uunlist(v))
     uni <- ! duplicated(paste(e, v, sep=":"))
-    split(e[uni], v[uni])
+    collapseBubbleParts(split(e[uni], v[uni]))
 }
 
 
@@ -826,10 +868,10 @@ spliceCodeCharacterList <- function(df.sc) {
     codes <- split(uunlist(perVidCode), names)
     
     cl <- CharacterList(codes)
-    elementMetadata(cl) <-
-      as(df.sc[match(unique(df.sc$bubbleID), df.sc$bubbleID),
+    m <- as(df.sc[match(unique(df.sc$bubbleID), df.sc$bubbleID),
                c("Tx", "Gn", "bubble")], "DataFrame")
-    
+    cl <- cl[paste(m$Gn, m$bubble, sep=":")]
+    elementMetadata(cl) <- m
     cl
 }
 

@@ -725,12 +725,19 @@ genes containing multiple edges.
 
 <<newData,results=hide>>=
 library(DEXSeq)
+cd.tmp <- cD.exByEdge[edgeAnnot$edgeIDs,]
+gn.tmp <- factor(gnToEdge[edgeAnnot$edgeIDs])
+rownames(cd.tmp) <- paste(gn.tmp, rownames(cd.tmp), sep=":")
+ex.tmp <- edgeAnnot$edgeIDs
+names(ex.tmp) <- rownames(cd.tmp)
+names(gn.tmp) <- rownames(cd.tmp)
+rownames(edgeAnnot) <- rownames(cd.tmp)
 
 eData.Edge <- 
-  newExonCountSet(countData = cD.exByEdge[edgeAnnot$edgeIDs,] ,
+  newExonCountSet(countData = cd.tmp ,
                   design = design,
-                  geneIDs = gnToEdge[edgeAnnot$edgeIDs],
-                  exonIDs = edgeAnnot$edgeIDs,
+                  geneIDs = gn.tmp,
+                  exonIDs = ex.tmp,
                   exonIntervals = edgeAnnot)
 idx <- ! gnToEdge[edgeAnnot$edgeIDs] %in% sglEdgeGns
              
@@ -758,12 +765,21 @@ the count table. After creating the \Rclass{ExonCountSet} we subset to
 genes containing multiple exons.
                 
 <<qqq>>=
+cd.tmp <- cD.exsByGenes
+gn.tmp <- factor(gnToEx[rownames(cD.exsByGenes)])
+rownames(cd.tmp) <- paste(gn.tmp, rownames(cd.tmp), sep=":")
+ex.tmp <- rownames(cD.exsByGenes)
+names(ex.tmp) <- rownames(cd.tmp)
+names(gn.tmp) <- rownames(cd.tmp)
+anno.tmp <- exAnnot[rownames(cD.exsByGenes),]
+rownames(anno.tmp) <- rownames(cd.tmp)
+
 eData.Ex <- 
-  newExonCountSet(countData = cD.exsByGenes,
+  newExonCountSet(countData = cd.tmp,
                   design = design,
-                  geneIDs = gnToEx[rownames(cD.exsByGenes)],
-                  exonIDs = rownames(cD.exsByGenes),
-                  exonIntervals=exAnnot[rownames(cD.exsByGenes),])
+                  geneIDs = gn.tmp,
+                  exonIDs = ex.tmp,
+                  exonIntervals=anno.tmp)
 eData.Ex <- 
   eData.Ex[! gnToEx[rownames(cD.exsByGenes)] %in% sglExGns, ]
 @ 
