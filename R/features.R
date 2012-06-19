@@ -27,7 +27,19 @@
                     end = unlist(df["chromEnd"]))
   ans <- GRanges(seqnames = unlist(df["chrom"]),
                  ranges = ranges,
-                 strand = unlist(df["strand"]))
+                 strand = gsub('\\.','*',unlist(df["strand"]))) ## UCSC bug
+
+  ## If names are included, attach them 
+  if('name' %in% colNames) {
+    names(ans) <- df$name
+    colNames <- colNames[ -which(colNames == 'name') ]      
+  }
+
+  ## If a genome is included, attach it 
+  gen <- metadata(db)[ grep('Genome', metadata(db)[,'name']), 'value' ]
+  if(!is.null(gen)) genome(ans) <- gen ## FIXME: add seqinfo(gen) instead
+
+  ## Attach the other columns from the db
   otherVals <- as(df[colNames], "DataFrame")
   values(ans) <- otherVals
   metadata(ans)[[1]] <- DataFrame(metadata(db))

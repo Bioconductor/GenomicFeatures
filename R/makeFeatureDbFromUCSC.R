@@ -69,8 +69,7 @@
 }
 
 ### Some of the metadata is added later.
-.writeMetadataFeatureTable <- function(conn, metadata, tableName)
-{
+.writeMetadataFeatureTable <- function(conn, metadata, tableName) {
     data_nrow <- dbEasyQuery(conn, paste("SELECT COUNT(*) FROM ",tableName,
                                          collapse=""))[[1L]]    
     thispkg_version <- installed.packages()['GenomicFeatures', 'Version']
