@@ -495,7 +495,8 @@ makeTranscriptDbFromGFF <- function(file,
                                     dataSource,
                                     species,
                                     circ_seqs=DEFAULT_CIRC_SEQS,
-                                    miRBaseBuild=NULL)
+                                    miRBaseBuild=NULL,
+                                    feature.type=NULL)
 {
   format <- match.arg(format)
   ## if the exonRankAttributeName is missing, then we need to know that
@@ -507,7 +508,7 @@ makeTranscriptDbFromGFF <- function(file,
   }
   
   ## start by importing the file
-  gff <- import(file, format=format)
+  gff <- import(file, format=format, feature.type=feature.type)
 
   if(format=="gff3"){
     ## check that we have ID, Parent

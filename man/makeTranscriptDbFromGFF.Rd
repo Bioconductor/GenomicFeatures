@@ -20,7 +20,8 @@ makeTranscriptDbFromGFF(file,
                         dataSource,
                         species,
                         circ_seqs=DEFAULT_CIRC_SEQS,
-                        miRBaseBuild = NULL)
+                        miRBaseBuild = NULL,
+                        feature.type = NULL)
 }
 \arguments{
   \item{file}{path/file to be processed}
@@ -60,6 +61,10 @@ makeTranscriptDbFromGFF(file,
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
     this value will be NULL, which will inactivate the \code{microRNAs}
     accessor.}
+  \item{feature.type}{\code{NULL} (the default) or a character vector of
+    valid feature types. If not \code{NULL}, then only the features of the
+    specified type(s) are imported.
+  }
 }
 \details{
   \code{makeTranscriptDbFromGFF} is a convenience function that feeds
