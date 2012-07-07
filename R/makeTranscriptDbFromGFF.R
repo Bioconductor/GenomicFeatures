@@ -65,9 +65,9 @@
 ## Helper to deduce the rankings for each set of cds and exons...
 .deduceExonRankings <- function(exs){
   warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute for exonRankAttributeName")
-  res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?
+  res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?  
   ## split up the data
-  es <- split(exs, as.factor(exs$tx_name))
+  es <- split(exs, as.factor(exs$tx_name)[,drop=TRUE])
   ## loop to assemble the result
   for(i in seq_len(length(es))){
     startInd <- .computeStartInd(i,res)
