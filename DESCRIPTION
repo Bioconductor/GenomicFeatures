@@ -14,11 +14,11 @@ Description: A set of tools and methods for making and manipulating transcript
         provided for extracting the desired features in a convenient format.
 Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
 Depends: BiocGenerics (>= 0.1.0), IRanges (>= 1.13.10),
-         GenomicRanges (>= 1.9.5), AnnotationDbi (>= 1.15.39)
+         GenomicRanges (>= 1.9.30), AnnotationDbi (>= 1.15.39)
 Imports: methods, DBI (>= 0.2-5), RSQLite (>= 0.8-1),
          BiocGenerics, IRanges, GenomicRanges,
          Biostrings (>= 2.23.2), rtracklayer (>= 1.15.1), biomaRt, RCurl,
-         utils, Biobase (>= 2.15.1), Rsamtools (>= 1.9.19)
+         utils, Biobase (>= 2.15.1)
 Suggests: rtracklayer, biomaRt,
           org.Mm.eg.db,
           Biostrings, BSgenome,
@@ -38,7 +38,7 @@ Collate: AllClasses.R
          makeTranscriptDb.R
          makeTranscriptDbFromUCSC.R
          makeTranscriptDbFromBiomart.R
-	 makeTranscriptDbFromGFF.R
+         makeTranscriptDbFromGFF.R
          makeFeatureDbFromUCSC.R
          transcripts.R
          transcriptsByOverlaps.R
@@ -47,11 +47,9 @@ Collate: AllClasses.R
          features.R
          extractTranscriptsFromGenome.R
          makeTxDbPackage.R
-	 methods-seqnames.R
+         methods-seqnames.R
          methods-select.R
          test_GenomicFeatures_package.R
          spliceGraph_utils.R
          spliceGraph.R
-         findSpliceOverlaps-methods.R
-         findSpliceOverlaps-utils.R
 biocViews: Genetics, Infrastructure, Annotation, HighThroughputSequencing

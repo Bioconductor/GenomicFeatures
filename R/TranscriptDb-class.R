@@ -484,3 +484,31 @@ setMethod("isActiveSeq", "TranscriptDb", function(x){x$isActiveSeq})
 ## library(RSQLite)
 ## conn = dbConnect(SQLite(), fl)
 ## bar = TranscriptDb(conn)
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### findSpliceOverlaps methods 
+###
+
+### The generic is in GenomicRanges
+
+setMethod("findSpliceOverlaps", c("GappedAlignments", "TranscriptDb"),
+    function(query, subject, ignore.strand, ...)
+{
+    callGeneric(grglist(query, order.as.in.query=TRUE), subject,
+                ignore.strand, ...)
+})
+
+setMethod("findSpliceOverlaps", c("GappedAlignmentPairs", "TranscriptDb"),
+    function(query, subject, ignore.strand, ...)
+{
+    callGeneric(grglist(query, order.as.in.query=TRUE), subject,
+                ignore.strand, ...)
+})
+
+setMethod("findSpliceOverlaps", c("GRangesList", "TranscriptDb"),
+    function(query, subject, ignore.strand, ...)
+{
+    exbytx <- exonsBy(txdb, "tx")
+    cds <- cdsBy(txdb, "tx")
+    callGeneric(query, exbytx, ignore.strand, ..., cds=cds)
+})

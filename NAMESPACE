@@ -4,8 +4,6 @@ importFrom(utils, download.file, installed.packages, read.table)
 
 importFrom(Biobase, createPackage)
 
-importFrom(Rsamtools, findSpliceOverlaps)
-
 importMethodsFrom(DBI, dbCommit, dbConnect,
                   dbDisconnect, dbExistsTable, dbGetQuery,
                   dbReadTable, dbWriteTable, dbListTables, dbListFields)
@@ -16,8 +14,9 @@ importMethodsFrom(RSQLite, dbBeginTransaction, dbGetPreparedQuery)
 import(BiocGenerics)
 import(IRanges)
 
-importFrom(GenomicRanges, GRanges, Seqinfo, seqinfo, genome, "genome<-")
-importMethodsFrom(GenomicRanges, strand)
+importFrom(GenomicRanges, GRanges, Seqinfo, seqinfo, genome, "genome<-",
+           findSpliceOverlaps)
+importMethodsFrom(GenomicRanges, strand, findSpliceOverlaps)
 
 importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
 importFrom(Biostrings, "masks<-")
@@ -78,8 +77,7 @@ export(
   makeFDbPackageFromUCSC,	
   features,
   supportedMiRBaseBuildValues,
-  "seqnameStyle<-",
-  findSpliceOverlaps 
+  "seqnameStyle<-"
 )
 
 exportMethods(

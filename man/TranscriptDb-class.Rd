@@ -7,7 +7,6 @@
 \alias{class:FeatureDb}
 \alias{FeatureDb}
 
-
 \alias{metadata,TranscriptDb-method}
 \alias{metadata,FeatureDb-method}
 \alias{seqinfo,TranscriptDb-method}
@@ -23,16 +22,20 @@
 \alias{isActiveSeq,TranscriptDb-method}
 \alias{isActiveSeq<-,TranscriptDb-method}
 
-
 % coercion
 \alias{as.list,TranscriptDb-method}
-
 
 % select and select related methods
 \alias{cols,TranscriptDb-method}
 \alias{keytypes,TranscriptDb-method}
 \alias{keys,TranscriptDb-method}
 \alias{select,TranscriptDb-method}
+
+% findSpliceOverlaps 
+\alias{findSpliceOverlaps,GappedAlignments,TranscriptDb-method}
+\alias{findSpliceOverlaps,GappedAlignmentPairs,TranscriptDb-method}
+\alias{findSpliceOverlaps,GRangesList,TranscriptDb-method}
+
 
 \title{TranscriptDb objects}
 
@@ -129,7 +132,14 @@
       parameters for selected \code{keys} and \code{cols} and
       \code{keytype} arguments.
     }
-}
+  }
+  ## findSpliceOverlaps methods
+  \describe{
+    \item{}{
+    See ?\code{findSpliceOverlaps} in \code{GenomicRanges} for usage details 
+    and examples.
+    }
+  }
 
   See \code{?\link{transcripts}}, \code{?\link{transcriptsByOverlaps}},
   \code{?\link{id2name}} and \code{?\link{transcriptsBy}} for other useful
