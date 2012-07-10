@@ -102,7 +102,7 @@ exportMethods(
   threeUTRsByTranscript,
   isActiveSeq,
   "isActiveSeq<-",
-  asBED, asGFF, spliceGraph,
+  asBED, asGFF,
   determineDefaultSeqnameStyle,
   seqnameStyle, "seqnameStyle<-",
   findSpliceOverlaps

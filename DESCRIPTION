@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.9.21
+Version: 1.9.22
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -27,7 +27,6 @@ Suggests: rtracklayer, biomaRt,
           mirbase.db,
           FDb.UCSC.tRNAs,
           TxDb.Hsapiens.UCSC.hg18.knownGene,
-          DEXSeq (>= 1.3.2),
           RUnit
 Collate: AllClasses.R
          AllGenerics.R
@@ -50,6 +49,4 @@ Collate: AllClasses.R
          methods-seqnames.R
          methods-select.R
          test_GenomicFeatures_package.R
-         spliceGraph_utils.R
-         spliceGraph.R
 biocViews: Genetics, Infrastructure, Annotation, HighThroughputSequencing
