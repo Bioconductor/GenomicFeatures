@@ -489,7 +489,8 @@ setMethod("isActiveSeq", "TranscriptDb", function(x){x$isActiveSeq})
 ### findSpliceOverlaps methods 
 ###
 
-### The generic is in GenomicRanges
+### The generic is in GenomicRanges.
+### Methods for query as 'character' and 'BamFile' are in Rsamtools. 
 
 setMethod("findSpliceOverlaps", c("GappedAlignments", "TranscriptDb"),
     function(query, subject, ignore.strand, ...)
