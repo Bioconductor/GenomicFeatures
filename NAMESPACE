@@ -31,6 +31,8 @@ importFrom(RCurl, getURL)
 
 importFrom(AnnotationDbi, loadDb, saveDb)
 
+importMethodsFrom(AnnotationDbi, loadDb, saveDb)
+
 exportClasses(TranscriptDb, FeatureDb)
 
 export(
