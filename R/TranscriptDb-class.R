@@ -509,6 +509,11 @@ setMethod("findSpliceOverlaps", c("GappedAlignmentPairs", "TranscriptDb"),
 setMethod("findSpliceOverlaps", c("GRangesList", "TranscriptDb"),
     function(query, subject, ignore.strand, ...)
 {
+    ## mask chromosomes not in query
+    masks <- isActiveSeq(subject)
+    on.exit(isActiveSeq(subject) <- masks)
+    .setActiveSubjectSeq(query, subject)
+
     exbytx <- exonsBy(txdb, "tx")
     cds <- cdsBy(txdb, "tx")
     callGeneric(query, exbytx, ignore.strand, ..., cds=cds)
