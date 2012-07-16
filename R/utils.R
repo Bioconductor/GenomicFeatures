@@ -353,24 +353,3 @@ makeExonRankCol <- function(exon_count, tx_strand)
     )
     unlist(ans)
 }
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### For findSpliceOverlaps methods 
-###
-
-.setActiveSubjectSeq <-
-    function(query, subject)
-    ## set active state of circular sequences of subject to FALSE;
-    ## warn if query contains circular sequences
-{
-    queryseq <- seqlevels(query)
-    circular <- isCircular(subject)
-    circNames <- intersect(queryseq, names(circular)[circular])
-    if (0L != length(circNames))
-        warning("circular sequence(s) in query '",
-                paste(circNames, sep="' '"), "' ignored")
-
-    isActiveSeq(subject)[] <- FALSE
-    isActiveSeq(subject)[setdiff(queryseq, circNames)] <- TRUE
-}
-

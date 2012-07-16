@@ -31,12 +31,6 @@
 \alias{keys,TranscriptDb-method}
 \alias{select,TranscriptDb-method}
 
-% findSpliceOverlaps 
-\alias{findSpliceOverlaps,GappedAlignments,TranscriptDb-method}
-\alias{findSpliceOverlaps,GappedAlignmentPairs,TranscriptDb-method}
-\alias{findSpliceOverlaps,GRangesList,TranscriptDb-method}
-
-
 \title{TranscriptDb objects}
 
 \description{
@@ -131,13 +125,6 @@
       will retrieve the matching data as a data.frame based on
       parameters for selected \code{keys} and \code{cols} and
       \code{keytype} arguments.
-    }
-  }
-  ## findSpliceOverlaps methods
-  \describe{
-    \item{}{
-    See ?\code{findSpliceOverlaps} in \code{GenomicRanges} for usage details 
-    and examples.
     }
   }
 
