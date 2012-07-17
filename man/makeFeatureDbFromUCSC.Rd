@@ -107,7 +107,7 @@ library(rtracklayer)
 ucscGenomes()[ , "db"]
 
 ## Display the list of Tracks supported by makeFeatureDbFromUCSC():
-supportedUCSCFeatureDbTracks("mm9")
+# supportedUCSCFeatureDbTracks("mm9")
 
 ## Display the list of tables supported by your track:
 supportedUCSCFeatureDbTables(genome="mm9",

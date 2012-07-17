@@ -233,7 +233,7 @@ test_select <- function(){
 
   
   ## stress test (this used to take way too long)
-  keys = keys(txdb, "GENEID")
+  keys = head(keys(txdb, "GENEID"))
   cols = c("GENEID","CDSSTART")
   res <- select(txdb, keys, cols, keytype="GENEID")
   checkTrue(dim(res)[1]>0)
