@@ -15,6 +15,21 @@
 \newcommand{\software}[1]{\textsf{#1}}
 \newcommand{\R}{\software{R}}
 
+%% Question, Exercise, Solution
+\usepackage{theorem}
+\theoremstyle{break}
+\newtheorem{Ext}{Exercise}
+\newtheorem{Question}{Question}
+
+
+\newenvironment{Exercise}{
+  \renewcommand{\labelenumi}{\alph{enumi}.}\begin{Ext}%
+}{\end{Ext}}
+\newenvironment{Solution}{%
+  \noindent\textbf{Solution:}\renewcommand{\labelenumi}{\alph{enumi}.}%
+}{\bigskip}
+
+
 
 \title{Making and Utilizing TranscriptDb Objects}
 \author{Marc Carlson \and
@@ -51,7 +66,7 @@ The \Rpackage{GenomicFeatures} package uses \Rclass{TranscriptDb}
 objects to store transcript metadata. This class maps the 5' and 3'
 untranslated regions (UTRs), protein coding sequences (CDSs) and exons
 for a set of mRNA transcripts to their associated
-genome. \Rclass{TranscriptDb} objects also have accessors functions to
+genome. \Rclass{TranscriptDb} objects have numerous accessors functions to
 allow such features to be retrieved individually or grouped together
 in a way that reflects the underlying biology.
 
@@ -60,125 +75,116 @@ manages genomic locations and the relationships between pre-processed
 mRNA transcripts, exons, protein coding sequences, and their related
 gene identifiers.
 
-\subsection{Creating New \Rclass{TranscriptDb} Objects}
-
-The \Rpackage{GenomicFeatures} package provides functions to create
-\Rclass{TranscriptDb} objects based on data downloaded from UCSC
-Genome Bioinformatics or BioMart. The following subsections
-demonstrate the use of these functions.  There is also support for
-creating \Rclass{TranscriptDb} objects from custom data sources using
-\Rfunction{makeTranscriptDb}; see the help page for this function for
-details.
-
-\subsubsection{Using \Rfunction{makeTranscriptDbFromUCSC}}
-
-The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC
-Genome Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
-\Rcode{"refGene"}, \Rcode{"ensGene"}) for a genome build (e.g.
-\Rcode{"mm9"}, \Rcode{"hg19"}).  Use the
-\Rfunction{supportedUCSCtables} utility function to get the list of
-supported tables.
-%%
-<<supportedUCSCtables>>=
-supportedUCSCtables()[1:4, ]
-@
-<<makeTranscriptDbFromUCSC, eval=FALSE>>=
-mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", tablename = "knownGene")
-@
-
-The function \Rfunction{makeTranscriptDbFromUCSC} also takes an
-important argument called \Robject{circ\_seqs} to label which
-chromosomes are circular.  The argument is a character vector of
-strings that correspond to the circular chromosomes (as labeled by the
-source).  To discover what the source calls their chromosomes, use the
-\Rfunction{getChromInfoFromUCSC} function to list them.  By default,
-there is a supplied character vector that will attempt to label all
-the mitochondrial chromosomes as circular by matching to them.  This
-is the \Robject{DEFAULT\_CIRC\_SEQS} vector.  It contains strings that
-usually correspond to mitochondrial chromosomes.  Once the database
-has been generated with the circular chromosomes tagged in this way,
-all subsequent analysis of these chromosomes will be able to consider
-their circularity for analysis.  So it is important for the user to
-make sure that they pass in the correct strings to the
-\Robject{circ\_seqs} argument to ensure that the correct sequences are
-tagged as circular by the database.
-
-<<discoverChromNames>>=
-head(getChromInfoFromUCSC("hg19"))
-@ 
-
-\subsubsection{Using \Rfunction{makeTranscriptDbFromBiomart}}
-
-Retrieve data from BioMart by specifying the mart and the data set to
-the \Rfunction{makeTranscriptDbFromBiomart} function (not all BioMart
-data sets are currently supported):
-%%
-<<makeTranscriptDbFromBiomart, eval=FALSE>>=
-mmusculusEnsembl <-
-   makeTranscriptDbFromBiomart(biomart = "ensembl",
-                              dataset = "mmusculus_gene_ensembl")
-@
-
-As with the \Rfunction{makeTranscriptDbFromUCSC} function, the
-\Rfunction{makeTranscriptDbFromBiomart} function also has a
-\Robject{circ\_seqs} argument that will default to using the contents
-of the \Robject{DEFAULT\_CIRC\_SEQS} vector.  And just like those UCSC
-sources, there is also a helper function called
-\Rfunction{getChromInfoFromBiomart} that can show what the different
-chromosomes are called for a given source.
-
-Using the \Rfunction{makeTranscriptDbFromBiomart}
-\Rfunction{makeTranscriptDbFromUCSC} functions can take a while and
-may also require some bandwidth as these methods have to download and
-then assemble a database from their respective sources.  It is not
-expected that most users will want to do this step every time.
-Instead, we suggest that you save your annotation objects and label
-them with an appropriate time stamp so as to facilitate reproducible
-research.
 
 
-\subsection{Saving and Loading a \Rclass{TranscriptDb} Object}
+\section{Retrieving range data as GRanges and GRangesList objects}
 
-Once a \Rclass{TranscriptDb} object has been created, it can be saved
-to avoid the time and bandwidth costs of recreating it and to make it
-possible to reproduce results with identical genomic feature data at a
-later date.  Since \Rclass{TranscriptDb} objects are backed by a
-SQLite database, the save format is a SQLite database file (which
-could be accessed from programs other than \R if desired).  Note that
-it is not possible to serialize a \Rclass{TranscriptDb} object using
-\R's \Rfunction{save} function.
+\subsection{Loading data}
 
-<<saveFeatures 1, eval=FALSE>>=
-saveDb(mm9KG, file="fileName.sqlite")
-@
+There are two ways that users can load pre-existing data to generate a
+\Rclass{TranscriptDb} object.  One method is to use the
+\Rmethod{loadDb} method to load the object directly from an
+appropriate .sqlite database file.
 
-A \Rclass{TranscriptDb} object can be initialized from a file using
-\Rfunction{loadDb}.
-
-<<loadFeatures-1, eval=FALSE>>=
-mm9KG <- loadDb("fileName.sqlite")
-@
-
-\section{Retrieving Transcript, Exon, and Coding Sequence Ranges}
-
-\subsection{Loading some sample genomic feature data}
-
-Here was are loading a previously created \Rclass{TranscriptDb} object
+Here we are loading a previously created \Rclass{TranscriptDb} object
 based on UCSC known gene data.  This database only contains a small
 subset of the possible annotations for human and is only included to
 demonstrate and test the functionality of the
-\Rpackage{GenomicFeatures} package.
+\Rpackage{GenomicFeatures} packageas a demonstration.
 
-<<transcripts0>>=
+<<loadDb>>=
 samplefile <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
                           package="GenomicFeatures")
 txdb <- loadDb(samplefile)
 txdb
 @
 
-%%FIXME. Lets do better with the examples
+In this case, the \Rclass{TranscriptDb} object has been returned by
+the \Rmethod{loadDb} method.
 
-\subsection{Working with Basic Features}
+
+More commonly however, we expect that users will just load a
+TranscriptDb annotation package like this:
+
+<<loadPackage>>=
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene #shorthand (for convenience)
+txdb
+@
+
+Loading the package like this will also create a \Rclass{TranscriptDb}
+object, and by default that object will have the same name as the
+package itself.
+
+%% TODO: lets add some exercises to the following descriptions.
+
+%% HINT: the bottom IDs are on chr15.
+w
+
+
+
+
+\section{Retrieving Data from \Rclass{TranscriptDb} objects}
+
+
+\subsection{Pre-filtering data based on Chromosomes}
+It is possible to filter the data that is returned from a
+\Rclass{TranscriptDb} object based on it's chromosome.  This can be a
+useful way to limit the things that are returned if you are only
+interested in studying a handful of chromosomes.
+
+%% TODO: add an example here
+
+To determine which chromosomes are currently active, use the
+\Rmethod{isActiveSeq} method.  For example:
+
+<<isActive>>=
+isActiveSeq(txdb)
+@ 
+
+Will tell you all the chromosomes that are active for the
+TxDb.Hsapiens.UCSC.hg19.knownGene \Rclass{TranscriptDb} object (by
+default it will be all of them).
+
+If you then wanted to only set Chromosome 15 to be active you could do
+it like this:
+<<isActive2>>=
+isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
+isActiveSeq(txdb) <- c("chr15"=TRUE)
+@ 
+
+%% HINT: the bottom IDs are on chr15.
+
+
+\subsection{Retrieving data using the select method}
+
+The \Rclass{TranscriptDb} objects inherit from \Rclass{AnnotationDb}
+objects (just as the \Rclass{ChipDb} and \Rclass{OrgDb} objects do).
+One of the implications of this relationship is that these object
+ought to be used in similar ways to each other.  Therefore we have
+written supporting \Rmethod{cols}, \Rmethod{keytypes}, \Rmethod{keys}
+and \Rmethod{select} methods for \Rclass{TranscriptDb} objects.
+
+These methods can be a useful way of extracting data from a
+\Rclass{TranscriptDb} object.  And they are used in the same way that
+they would be used to extract information about a \Rclass{ChipDb} or
+an \Rclass{OrgDb} object.  Here is a simple example of how to find the
+UCSC transcript names that match with a set of gene IDs.
+
+<<select>>=
+keys <- c("100033416", "100033417", "100033420")
+cols(txdb)
+keytypes(txdb)
+select(txdb, keys = keys, cols="TXNAME", keytype="GENEID")
+@ 
+
+
+%% TODO: Add an exercise
+
+
+
+
+\subsection{Methods for returning \Rclass{GRanges} objects}
 
 The most basic operations on a \Rclass{TranscriptDb} object retrieve
 the genomic coordinates or \textit{ranges} for exons, transcripts or
@@ -301,7 +307,7 @@ important because alternative splicing can mean that the order along
 the transcript can be different from that along the chromosome.
 
 
-\subsection{Prespecfied grouping functions}
+\subsection{Predefined grouping functions}
 
 The \Rfunction{intronsByTranscript}, \Rfunction{fiveUTRsByTranscript}
 and \Rfunction{threeUTRsByTranscript} are convenience functions that
@@ -316,91 +322,258 @@ length(fiveUTRsByTranscript(txdb))
 length(threeUTRsByTranscript(txdb))
 @
 
-\subsection{Convenience functions for computing overlap}
 
-The \Rfunction{transcriptsByOverlaps}, \Rfunction{exonsByOverlaps} and
-\Rfunction{cdsByOverlaps} functions return a \Rclass{GRangesList} object
-containing data about transcripts, exons, or coding sequences that
-overlap genomic coordinates specified by a \Rclass{GRanges}
-object.  So for example, lets just mock up some fake data:
+%% TODO: Remove MOST of this subsection, and just move the definition of gr down below...
+% \subsection{Convenience functions for computing overlap}
 
-<<RNASEQData>>=
-gr <- GRanges(
-    seqnames = rep("chr5",4),
-    ranges = IRanges(start = c(244620, 244670, 245804, 247502),
-                     end = c(244652, 244702, 245836, 247534)),
-    strand = rep("+", 4))
+% The \Rfunction{transcriptsByOverlaps}, \Rfunction{exonsByOverlaps} and
+% \Rfunction{cdsByOverlaps} functions return a \Rclass{GRangesList} object
+% containing data about transcripts, exons, or coding sequences that
+% overlap genomic coordinates specified by a \Rclass{GRanges}
+% object.  So for example, lets just mock up some fake data:
+
+% <<RNASEQData>>=
+% gr <- GRanges(
+%     seqnames = rep("chr5",4),
+%     ranges = IRanges(start = c(244620, 244670, 245804, 247502),
+%                      end = c(244652, 244702, 245836, 247534)),
+%     strand = rep("+", 4))
+% @
+
+% Then we can call the convenience function to see what transcripts
+% overlap with our ranges.
+
+% <<transcriptsByOverlaps>>=
+% transcriptsByOverlaps(txdb, gr)
+% @
+
+% The convenience functions can be a great shortcut, but because they
+% have to make assumptions about how the results are compared and
+% represented, they are ultimately not as flexible as just using the
+% basic and grouping accessors in combination with
+% \Rfunction{findOverlaps}.
+
+
+
+
+%% TODO: 
+%% This "practical" section (below) feels useless and dated.  Remove?  Or just simplify to prose the mentions things like findOverlaps() etc.  Or (most appealing) just mention those functions as the impetus above in the intro to this section???
+
+
+
+
+% \section{A typical example treating \Robject{gr} as RNA-seq data}
+
+% Let's suppose that you have run an experiment. After mapping all your
+% reads to a genome and collapsing them into a set of ranges, you want
+% to find out which genomic features a particular range overlaps with.
+% What would be the usual way to proceed?
+
+% For this example, let's also assume that you are only interested in
+% mapping the ranges that overlap with exons (not introns).  From our
+% \Rclass{TranscriptDb} object, we want to recover the annotations for
+% all of the relevant exons, but grouped according to their transcripts.
+% Therefore, we want to use \Rfunction{exonsby} and group them by
+% transcripts.
+
+
+% <<exonsGroupedByTx>>=
+% annotGr <- exonsBy(txdb, "tx")
+% @
+
+% Then we need to use the \Rfunction{findOverlaps} method to learn which
+% of our data ranges, \Robject{gr}, will overlap with the in exons that
+% we have grouped by transcripts.
+
+% <<findOverlaps>>=
+% gr <- GRanges(
+%     seqnames = rep("chr5",4),
+%     ranges = IRanges(start = c(244620, 244670, 245804, 247502),
+%                      end = c(244652, 244702, 245836, 247534)),
+%     strand = rep("+", 4))
+% OL <- findOverlaps(query = annotGr, subject = gr)
+% @
+
+% Finally, once we have called \Rfunction{findOverlaps} we can subset
+% out the annotations that meet our criteria.  The \Rfunction{queryHits}
+% method will allow us to retrieve only the parts of the query that
+% overlapped from our original \Rfunction{findOverlaps} call. Once we
+% have subsetted out annotations in this way, the length of the
+% resulting \Rclass{GRangesList} object is also the number of
+% transcripts that overlap with our data.
+
+% <<getAnswers>>=
+% tdata <- annotGr[unique(queryHits(OL)),]
+% tdata
+% length(tdata)
+% @
+
+% By using \Rfunction{findOverlaps} along with the different accessors
+% in this way, it is possible to connect any data that has been
+% represented as a \Rclass{GRanges} object with the annotations stored
+% in a \Rclass{TranscriptDb} object.  Calling \Rfunction{findOverlaps}
+% along with the appropriate \Rclass{GRanges} object not only allows
+% users to quickly determine what has overlapped, but also controls what
+% criteria are used for determining whether an overlap has occurred.
+% This can be done by passing in an alternate \Rfunarg{type} parameter
+% to \Rfunction{findOverlaps}.  In addition, because the basic accessors
+% allow for the users to retrieve data grouped in different ways, the
+% user has control over which parts of a transcript or gene are included
+% in the overlap.  For a more complete example of how you could approach
+% RNA-seq analysis, including explanation on methods that will help to
+% tally up the counts etc. please see the \Rpackage{GenomicRanges} Use
+% Cases vignette.
+
+
+
+%% TODO:  Add a section to show how to used translate() etc.
+%% TODO: update all the examples to use a smaller set of examples and annots.
+
+
+\subsection{Getting the actual sequence data}
+
+The \Rpackage{GenomicFeatures} package also provides provides
+functions for converting from ranges to actual sequence (when paired
+with an appropriate \Rpackage{BSgenome} package).
+
+<<extract>>=
+library(BSgenome.Hsapiens.UCSC.hg19)
+tx_seqs1 <- extractTranscriptsFromGenome(Hsapiens, 
+                                         TxDb.Hsapiens.UCSC.hg19.knownGene)
 @
 
-Then we can call the convenience function to see what transcripts
-overlap with our ranges.
+And, once these sequences have been extracted, you can translate them
+into proteins.
 
-<<transcriptsByOverlaps>>=
-transcriptsByOverlaps(txdb, gr)
+<<translate>>=
+translate(tx_seqs1)
+@ 
+
+
+
+
+
+\section{Creating New \Rclass{TranscriptDb} Objects or Packages}
+
+The \Rpackage{GenomicFeatures} package provides functions to create
+\Rclass{TranscriptDb} objects based on data downloaded from UCSC
+Genome Bioinformatics or BioMart. The following subsections
+demonstrate the use of these functions.  There is also support for
+creating \Rclass{TranscriptDb} objects from custom data sources using
+\Rfunction{makeTranscriptDb}; see the help page for this function for
+details.
+
+\subsection{Using \Rfunction{makeTranscriptDbFromUCSC}}
+
+The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC
+Genome Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
+\Rcode{"refGene"}, \Rcode{"ensGene"}) for a genome build (e.g.
+\Rcode{"mm9"}, \Rcode{"hg19"}).  Use the
+\Rfunction{supportedUCSCtables} utility function to get the list of
+supported tables.
+%%
+<<supportedUCSCtables>>=
+supportedUCSCtables()[1:4, ]
+@
+<<makeTranscriptDbFromUCSC, eval=FALSE>>=
+mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", tablename = "knownGene")
 @
 
-The convenience functions can be a great shortcut, but because they
-have to make assumptions about how the results are compared and
-represented, they are ultimately not as flexible as just using the
-basic and grouping accessors in combination with
-\Rfunction{findOverlaps}.
+The function \Rfunction{makeTranscriptDbFromUCSC} also takes an
+important argument called \Robject{circ\_seqs} to label which
+chromosomes are circular.  The argument is a character vector of
+strings that correspond to the circular chromosomes (as labeled by the
+source).  To discover what the source calls their chromosomes, use the
+\Rfunction{getChromInfoFromUCSC} function to list them.  By default,
+there is a supplied character vector that will attempt to label all
+the mitochondrial chromosomes as circular by matching to them.  This
+is the \Robject{DEFAULT\_CIRC\_SEQS} vector.  It contains strings that
+usually correspond to mitochondrial chromosomes.  Once the database
+has been generated with the circular chromosomes tagged in this way,
+all subsequent analysis of these chromosomes will be able to consider
+their circularity for analysis.  So it is important for the user to
+make sure that they pass in the correct strings to the
+\Robject{circ\_seqs} argument to ensure that the correct sequences are
+tagged as circular by the database.
 
+<<discoverChromNames>>=
+head(getChromInfoFromUCSC("hg19"))
+@ 
 
-\section{A typical example treating \Robject{gr} as RNA-seq data}
+\subsection{Using \Rfunction{makeTranscriptDbFromBiomart}}
 
-Let's suppose that you have run an experiment. After mapping all your
-reads to a genome and collapsing them into a set of ranges, you want
-to find out which genomic features a particular range overlaps with.
-What would be the usual way to proceed?
-
-For this example, let's also assume that you are only interested in
-mapping the ranges that overlap with exons (not introns).  From our
-\Rclass{TranscriptDb} object, we want to recover the annotations for
-all of the relevant exons, but grouped according to their transcripts.
-Therefore, we want to use \Rfunction{exonsby} and group them by
-transcripts.
-
-<<exonsGroupedByTx>>=
-annotGr <- exonsBy(txdb, "tx")
+Retrieve data from BioMart by specifying the mart and the data set to
+the \Rfunction{makeTranscriptDbFromBiomart} function (not all BioMart
+data sets are currently supported):
+%%
+<<makeTranscriptDbFromBiomart, eval=FALSE>>=
+mmusculusEnsembl <-
+   makeTranscriptDbFromBiomart(biomart = "ensembl",
+                              dataset = "mmusculus_gene_ensembl")
 @
 
-Then we need to use the \Rfunction{findOverlaps} method to learn which
-of our data ranges, \Robject{gr}, will overlap with the in exons that
-we have grouped by transcripts.
+As with the \Rfunction{makeTranscriptDbFromUCSC} function, the
+\Rfunction{makeTranscriptDbFromBiomart} function also has a
+\Robject{circ\_seqs} argument that will default to using the contents
+of the \Robject{DEFAULT\_CIRC\_SEQS} vector.  And just like those UCSC
+sources, there is also a helper function called
+\Rfunction{getChromInfoFromBiomart} that can show what the different
+chromosomes are called for a given source.
 
-<<findOverlaps>>=
-OL <- findOverlaps(query = annotGr, subject = gr)
+Using the \Rfunction{makeTranscriptDbFromBiomart}
+\Rfunction{makeTranscriptDbFromUCSC} functions can take a while and
+may also require some bandwidth as these methods have to download and
+then assemble a database from their respective sources.  It is not
+expected that most users will want to do this step every time.
+Instead, we suggest that you save your annotation objects and label
+them with an appropriate time stamp so as to facilitate reproducible
+research.
+
+
+\subsection{Using \Rfunction{makeTranscriptDbFromGFF}}
+
+You can also extract transcript information from either GFF3 or GTF
+files by using the \Rfunction{makeTranscriptDbFromGFF} function.
+Usage is similar to \Rfunction{makeTranscriptDbFromBiomart} and
+\Rfunction{makeTranscriptDbFromUCSC}.  
+
+
+\subsection{Saving and Loading a \Rclass{TranscriptDb} Object}
+
+Once a \Rclass{TranscriptDb} object has been created, it can be saved
+to avoid the time and bandwidth costs of recreating it and to make it
+possible to reproduce results with identical genomic feature data at a
+later date.  Since \Rclass{TranscriptDb} objects are backed by a
+SQLite database, the save format is a SQLite database file (which
+could be accessed from programs other than \R if desired).  Note that
+it is not possible to serialize a \Rclass{TranscriptDb} object using
+\R's \Rfunction{save} function.
+
+<<saveFeatures 1, eval=FALSE>>=
+saveDb(mm9KG, file="fileName.sqlite")
 @
 
-Finally, once we have called \Rfunction{findOverlaps} we can subset
-out the annotations that meet our criteria.  The \Rfunction{queryHits}
-method will allow us to retrieve only the parts of the query that
-overlapped from our original \Rfunction{findOverlaps} call. Once we
-have subsetted out annotations in this way, the length of the
-resulting \Rclass{GRangesList} object is also the number of
-transcripts that overlap with our data.
+And as was mentioned earlier, a saved \Rclass{TranscriptDb} object can
+be initialized from a .sqlite file by simply using \Rfunction{loadDb}.
 
-<<getAnswers>>=
-tdata <- annotGr[unique(queryHits(OL)),]
-tdata
-length(tdata)
+<<loadFeatures-1, eval=FALSE>>=
+mm9KG <- loadDb("fileName.sqlite")
 @
 
-By using \Rfunction{findOverlaps} along with the different accessors
-in this way, it is possible to connect any data that has been
-represented as a \Rclass{GRanges} object with the annotations stored
-in a \Rclass{TranscriptDb} object.  Calling \Rfunction{findOverlaps}
-along with the appropriate \Rclass{GRanges} object not only allows
-users to quickly determine what has overlapped, but also controls what
-criteria are used for determining whether an overlap has occurred.
-This can be done by passing in an alternate \Rfunarg{type} parameter
-to \Rfunction{findOverlaps}.  In addition, because the basic accessors
-allow for the users to retrieve data grouped in different ways, the
-user has control over which parts of a transcript or gene are included
-in the overlap.  For a more complete example of how you could approach
-RNA-seq analysis, including explanation on methods that will help to
-tally up the counts etc. please see the \Rpackage{GenomicRanges} Use
-Cases vignette.
+
+\subsection{Using \Rfunction{makeTxDbPackageFromUCSC} and \Rfunction{makeTxDbPackageFromBiomart}}
+
+It is often much more convenient to just make an annotation package
+out of your annotations.  If you are finding that this is the case,
+then you should consider the convenience functions:
+\Rfunction{makeTxDbPackageFromUCSC} and
+\Rfunction{makeTxDbPackageFromBiomart}.  These functions are similar
+to \Rfunction{makeTranscriptDbFromUCSC} and
+\Rfunction{makeTranscriptDbFromBiomart} except that they will take the
+extra step of actually wrapping the database up into an annotation
+package for you.  This package can then be installed and used as of
+the standard TranscriptDb packages found on in the Bioconductor
+repository.
 
 
 \section{Session Information}
