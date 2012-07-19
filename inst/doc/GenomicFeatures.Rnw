@@ -29,7 +29,7 @@
   \noindent\textbf{Solution:}\renewcommand{\labelenumi}{\alph{enumi}.}%
 }{\bigskip}
 
-%% TODO: clean up all examples and make it so that I don't use so many different values for txdb etc.
+
 
 \title{Making and Utilizing TranscriptDb Objects}
 \author{Marc Carlson \and
@@ -116,10 +116,6 @@ Loading the package like this will also create a \Rclass{TranscriptDb}
 object, and by default that object will have the same name as the
 package itself.
 
-%% TODO: lets add some exercises to the following descriptions.
-
-%% HINT: the bottom IDs are on chr15.
-
 
 
 
@@ -138,22 +134,35 @@ To determine which chromosomes are currently active, use the
 \Rmethod{isActiveSeq} method.  For example:
 
 <<isActive>>=
-isActiveSeq(txdb)
+head(isActiveSeq(txdb))
 @ 
 
 Will tell you all the chromosomes that are active for the
 TxDb.Hsapiens.UCSC.hg19.knownGene \Rclass{TranscriptDb} object (by
 default it will be all of them).
 
-If you then wanted to only set Chromosome 15 to be active you could do
+If you then wanted to only set Chromosome 1 to be active you could do
 it like this:
 <<isActive2>>=
 isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
-isActiveSeq(txdb) <- c("chr15"=TRUE)
+isActiveSeq(txdb) <- c("chr1"=TRUE)
 @ 
 
-So from now on in this vignette, all answers should be limited to
-chromosome 15.
+So if you ran this, then from this point on in your R session only
+chromosome 1 would be consulted when you call the various retrieval
+methods..
+
+\begin{Exercise}
+Use \Rmethod{isActiveSeq} to set only chromsome 15 to be active.  BTW,
+the rest of this vignette will assume you have succeeded at this.
+\end{Exercise}
+\begin{Solution}
+<<isActive3>>=
+isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
+isActiveSeq(txdb) <- c("chr15"=TRUE)
+@
+\end{Solution}
+
 
 
 \subsection{Retrieving data using the select method}
@@ -240,6 +249,21 @@ The \Rfunction{exons} and \Rfunction{cds} functions can also be used
 in a similar fashion to retrive genomic coordinates for exons and
 coding sequences.
 
+\begin{Exercise}
+Use \Rfunction{exons} to retrieve all the exons from chromosome 15.
+How does the length of this compare to the value returned by
+\Rfunction{transcripts}?
+\end{Exercise}
+\begin{Solution}
+<<exonsExer1>>=
+EX <- exons(txdb)
+EX[1:4]
+length(EX)
+length(GR)
+@
+\end{Solution}
+
+
 \subsection{Working with Grouped Features}
 
 Often one is interested in how particular genomic features relate to
@@ -298,20 +322,23 @@ label will be a synthetic ID created by \Rpackage{GenomicFeatures} to
 keep the relations between features consistent in the database this
 was the case in the 2nd example.  Even though the results will
 sometimes have to come back to you as synthetic IDs, you can still
-always retrieve the original IDs.  In the following example, we will
-find the original transcript names stored in the database for each ID
-by calling the \Rfunction{transcripts} function.
+always retrieve the original IDs.  
 
 
-%% FIXME: add example on how to map from internal ID to common ID
-%% using the exons grouped by tx created above.
-
+\begin{Exercise}
+Starting with the tx\_ids that are the names of the GRList object we
+just made, use \Rmethod{select} to retrieve that matching transcript
+names.  Remember that the list used a \Rfunarg{by} argument = "tx", so
+the list is grouped by transcript IDs.
+\end{Exercise}
+\begin{Solution}
 <<internalID>>=
+GRList <- exonsBy(txdb, by = "tx")
 tx_ids <- names(GRList)
-vals <- list(tx_id=tx_ids)
-txs <- transcripts(txdb, vals, columns = c("tx_id", "tx_name"))
-head(values(txs))
+head(select(txdb, keys=tx_ids, cols="TXNAME", keytype="TXID"))
 @ 
+\end{Solution}
+
 
 Finally, the order of the results in a \Rclass{GRangesList} object can
 vary with the way in which things were grouped. In most cases the
@@ -330,7 +357,7 @@ and \Rfunction{threeUTRsByTranscript} are convenience functions that
 provide behavior equivalent to the grouping functions, but in
 prespecified form. These functions return a \Rclass{GRangesList}
 object grouped by transcript for introns, 5' UTR's, and 3' UTR's,
-respectively.
+respectively.  Below are examples of how you can call these methods.
 
 <<introns-UTRs>>=
 length(intronsByTranscript(txdb))
@@ -348,7 +375,7 @@ The \Rpackage{GenomicFeatures} package also provides provides
 functions for converting from ranges to actual sequence (when paired
 with an appropriate \Rpackage{BSgenome} package).
 
-%% TODO: call cdsBy 1st to get the ranges we really want.
+
 <<extract>>=
 library(BSgenome.Hsapiens.UCSC.hg19)
 tx_seqs1 <- extractTranscriptsFromGenome(Hsapiens, 
