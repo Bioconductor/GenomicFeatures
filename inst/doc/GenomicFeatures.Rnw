@@ -29,7 +29,7 @@
   \noindent\textbf{Solution:}\renewcommand{\labelenumi}{\alph{enumi}.}%
 }{\bigskip}
 
-
+%% TODO: clean up all examples and make it so that I don't use so many different values for txdb etc.
 
 \title{Making and Utilizing TranscriptDb Objects}
 \author{Marc Carlson \and
@@ -119,7 +119,7 @@ package itself.
 %% TODO: lets add some exercises to the following descriptions.
 
 %% HINT: the bottom IDs are on chr15.
-w
+
 
 
 
@@ -133,7 +133,6 @@ It is possible to filter the data that is returned from a
 useful way to limit the things that are returned if you are only
 interested in studying a handful of chromosomes.
 
-%% TODO: add an example here
 
 To determine which chromosomes are currently active, use the
 \Rmethod{isActiveSeq} method.  For example:
@@ -153,7 +152,8 @@ isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
 isActiveSeq(txdb) <- c("chr15"=TRUE)
 @ 
 
-%% HINT: the bottom IDs are on chr15.
+So from now on in this vignette, all answers should be limited to
+chromosome 15.
 
 
 \subsection{Retrieving data using the select method}
@@ -171,28 +171,44 @@ they would be used to extract information about a \Rclass{ChipDb} or
 an \Rclass{OrgDb} object.  Here is a simple example of how to find the
 UCSC transcript names that match with a set of gene IDs.
 
-<<select>>=
+<<selectExample>>=
 keys <- c("100033416", "100033417", "100033420")
 cols(txdb)
 keytypes(txdb)
 select(txdb, keys = keys, cols="TXNAME", keytype="GENEID")
 @ 
 
+\begin{Exercise}
+For the genes in the example above, find the chromosome and strand
+information that will go with each of the transcript names.
+\end{Exercise}
+\begin{Solution}
+<<selectExercise>>=
+cols(txdb)
+cols <- c("TXNAME", "TXSTRAND", "TXCHROM")
+select(txdb, keys=keys, cols=cols, keytype="GENEID")
+@
+\end{Solution}
 
-%% TODO: Add an exercise
 
 
-
+%% TODO: add exercises to the sections that follow
 
 \subsection{Methods for returning \Rclass{GRanges} objects}
 
-The most basic operations on a \Rclass{TranscriptDb} object retrieve
-the genomic coordinates or \textit{ranges} for exons, transcripts or
-coding sequences.  The functions \Rfunction{transcripts},
-\Rfunction{exons}, and \Rfunction{cds} return the coordinate
-information as a \Rclass{GRanges} object.
+Retrieving data with select is useful, but sometimes it is more
+convenient to extract the result as \Rclass{GRanges} objects.  This is
+often the case when you are doing counting or specialized overlap
+operations downstream.  For these use cases there is another family of
+methods available.
 
-For example, all transcripts present in a \Rclass{TranscriptDb} object
+Perhaps the most common operations for a \Rclass{TranscriptDb} object
+is to retrieve the genomic coordinates or \textit{ranges} for exons,
+transcripts or coding sequences.  The functions
+\Rfunction{transcripts}, \Rfunction{exons}, and \Rfunction{cds} return
+the coordinate information as a \Rclass{GRanges} object.
+
+As an example, all transcripts present in a \Rclass{TranscriptDb} object
 can be obtained as follows:
 
 <<transcripts1>>=
@@ -215,7 +231,7 @@ retrieve a subset of the transcripts available such as those on the
 $+$-strand of chromosome 1.
 
 <<transcripts2>>=
-GR <- transcripts(txdb, vals <- list(tx_chrom = "chr1", tx_strand = "+"))
+GR <- transcripts(txdb, vals <- list(tx_chrom = "chr15", tx_strand = "+"))
 length(GR)
 unique(strand(GR))
 @
@@ -323,106 +339,8 @@ length(threeUTRsByTranscript(txdb))
 @
 
 
-%% TODO: Remove MOST of this subsection, and just move the definition of gr down below...
-% \subsection{Convenience functions for computing overlap}
-
-% The \Rfunction{transcriptsByOverlaps}, \Rfunction{exonsByOverlaps} and
-% \Rfunction{cdsByOverlaps} functions return a \Rclass{GRangesList} object
-% containing data about transcripts, exons, or coding sequences that
-% overlap genomic coordinates specified by a \Rclass{GRanges}
-% object.  So for example, lets just mock up some fake data:
-
-% <<RNASEQData>>=
-% gr <- GRanges(
-%     seqnames = rep("chr5",4),
-%     ranges = IRanges(start = c(244620, 244670, 245804, 247502),
-%                      end = c(244652, 244702, 245836, 247534)),
-%     strand = rep("+", 4))
-% @
-
-% Then we can call the convenience function to see what transcripts
-% overlap with our ranges.
-
-% <<transcriptsByOverlaps>>=
-% transcriptsByOverlaps(txdb, gr)
-% @
-
-% The convenience functions can be a great shortcut, but because they
-% have to make assumptions about how the results are compared and
-% represented, they are ultimately not as flexible as just using the
-% basic and grouping accessors in combination with
-% \Rfunction{findOverlaps}.
 
 
-
-
-%% TODO: 
-%% This "practical" section (below) feels useless and dated.  Remove?  Or just simplify to prose the mentions things like findOverlaps() etc.  Or (most appealing) just mention those functions as the impetus above in the intro to this section???
-
-
-
-
-% \section{A typical example treating \Robject{gr} as RNA-seq data}
-
-% Let's suppose that you have run an experiment. After mapping all your
-% reads to a genome and collapsing them into a set of ranges, you want
-% to find out which genomic features a particular range overlaps with.
-% What would be the usual way to proceed?
-
-% For this example, let's also assume that you are only interested in
-% mapping the ranges that overlap with exons (not introns).  From our
-% \Rclass{TranscriptDb} object, we want to recover the annotations for
-% all of the relevant exons, but grouped according to their transcripts.
-% Therefore, we want to use \Rfunction{exonsby} and group them by
-% transcripts.
-
-
-% <<exonsGroupedByTx>>=
-% annotGr <- exonsBy(txdb, "tx")
-% @
-
-% Then we need to use the \Rfunction{findOverlaps} method to learn which
-% of our data ranges, \Robject{gr}, will overlap with the in exons that
-% we have grouped by transcripts.
-
-% <<findOverlaps>>=
-% gr <- GRanges(
-%     seqnames = rep("chr5",4),
-%     ranges = IRanges(start = c(244620, 244670, 245804, 247502),
-%                      end = c(244652, 244702, 245836, 247534)),
-%     strand = rep("+", 4))
-% OL <- findOverlaps(query = annotGr, subject = gr)
-% @
-
-% Finally, once we have called \Rfunction{findOverlaps} we can subset
-% out the annotations that meet our criteria.  The \Rfunction{queryHits}
-% method will allow us to retrieve only the parts of the query that
-% overlapped from our original \Rfunction{findOverlaps} call. Once we
-% have subsetted out annotations in this way, the length of the
-% resulting \Rclass{GRangesList} object is also the number of
-% transcripts that overlap with our data.
-
-% <<getAnswers>>=
-% tdata <- annotGr[unique(queryHits(OL)),]
-% tdata
-% length(tdata)
-% @
-
-% By using \Rfunction{findOverlaps} along with the different accessors
-% in this way, it is possible to connect any data that has been
-% represented as a \Rclass{GRanges} object with the annotations stored
-% in a \Rclass{TranscriptDb} object.  Calling \Rfunction{findOverlaps}
-% along with the appropriate \Rclass{GRanges} object not only allows
-% users to quickly determine what has overlapped, but also controls what
-% criteria are used for determining whether an overlap has occurred.
-% This can be done by passing in an alternate \Rfunarg{type} parameter
-% to \Rfunction{findOverlaps}.  In addition, because the basic accessors
-% allow for the users to retrieve data grouped in different ways, the
-% user has control over which parts of a transcript or gene are included
-% in the overlap.  For a more complete example of how you could approach
-% RNA-seq analysis, including explanation on methods that will help to
-% tally up the counts etc. please see the \Rpackage{GenomicRanges} Use
-% Cases vignette.
 
 
 
@@ -436,6 +354,7 @@ The \Rpackage{GenomicFeatures} package also provides provides
 functions for converting from ranges to actual sequence (when paired
 with an appropriate \Rpackage{BSgenome} package).
 
+%% TODO: call cdsBy 1st to get the ranges we really want.
 <<extract>>=
 library(BSgenome.Hsapiens.UCSC.hg19)
 tx_seqs1 <- extractTranscriptsFromGenome(Hsapiens, 
@@ -443,11 +362,27 @@ tx_seqs1 <- extractTranscriptsFromGenome(Hsapiens,
 @
 
 And, once these sequences have been extracted, you can translate them
-into proteins.
+into proteins with \Rfunction{translate}:
 
 <<translate>>=
 translate(tx_seqs1)
 @ 
+
+\begin{Exercise}
+But of course this is not a meaningful translation, because the call
+to \Rfunction{extractTranscriptsFromGenome} will have extracted all
+the transcribed regions of the genome regardless of whether or not
+they are translated. look at the manual page for
+\Rfunction{extractTranscriptsFromGenome} and see how you can use cdsBy
+to only translate only the coding regions.
+\end{Exercise}
+\begin{Solution}
+<<betterTranslation>>=
+cds_seqs <- extractTranscriptsFromGenome(Hsapiens, cdsBy(txdb, by="tx"))
+translate(cds_seqs)
+@ 
+\end{Solution}
+
 
 
 
