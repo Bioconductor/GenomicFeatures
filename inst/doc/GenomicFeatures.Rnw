@@ -58,9 +58,8 @@ library("GenomicFeatures")
 @
 
 
-\section{Transcript Metadata}
 
-\subsection{\Rclass{TranscriptDb} Objects}
+\section{\Rclass{TranscriptDb} Objects}
 
 The \Rpackage{GenomicFeatures} package uses \Rclass{TranscriptDb}
 objects to store transcript metadata. This class maps the 5' and 3'
@@ -76,10 +75,10 @@ mRNA transcripts, exons, protein coding sequences, and their related
 gene identifiers.
 
 
+\section{Retrieving Data from \Rclass{TranscriptDb} objects}
 
-\section{Retrieving range data as GRanges and GRangesList objects}
 
-\subsection{Loading data}
+\subsection{Loading Transcript Data}
 
 There are two ways that users can load pre-existing data to generate a
 \Rclass{TranscriptDb} object.  One method is to use the
@@ -118,9 +117,6 @@ package itself.
 
 
 
-
-
-\section{Retrieving Data from \Rclass{TranscriptDb} objects}
 
 
 \subsection{Pre-filtering data based on Chromosomes}
