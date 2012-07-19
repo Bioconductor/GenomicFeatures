@@ -342,12 +342,6 @@ length(threeUTRsByTranscript(txdb))
 
 
 
-
-
-%% TODO:  Add a section to show how to used translate() etc.
-%% TODO: update all the examples to use a smaller set of examples and annots.
-
-
 \subsection{Getting the actual sequence data}
 
 The \Rpackage{GenomicFeatures} package also provides provides
