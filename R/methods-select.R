@@ -146,7 +146,7 @@
     tabAbbrevs <- substr(unlist(tNames),1,1)
     names(tabAbbrevs) <- rep(names(tNames),elementLengths(tNames))   
   if(abbrev==TRUE){
-    paste( paste(tabAbbrevs, ".",names(tabAbbrevs), sep=""), collapse=", ")
+    paste(paste0(tabAbbrevs, ".", names(tabAbbrevs)), collapse=", ")
   }else{
     paste(names(tabAbbrevs), collapse=", ")
   }
@@ -167,7 +167,7 @@
 .makeKeyList <- function(x, keys, keytype, abbrev=TRUE){
   #colType <- .reverseColAbbreviations(x, keytype)
   colType <- .makeSelectList(x, keytype, abbrev)
-  keys <- paste(paste("'",keys,"'",sep=""),collapse=",")
+  keys <- paste(paste0("'", keys, "'"), collapse=",")
   paste(colType, "IN (", keys,")")
 }
 
@@ -178,7 +178,7 @@
                    "c" = "cds.cds_chrom",
                    "transcript.tx_chrom")
   chrStrings <- names(isActiveSeq(x))[isActiveSeq(x)]
-  chrs <- paste(paste("'",chrStrings,"'",sep=""),collapse=",")
+  chrs <- paste(paste0("'", chrStrings, "'"), collapse=",")
   paste(sqlCol, "IN (", chrs,")")
 }
 

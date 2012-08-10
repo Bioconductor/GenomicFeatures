@@ -40,8 +40,8 @@
     if (is.na(release))
         pub_subdir <- "current_mysql"
     else
-        pub_subdir <- paste("release-", release, "/mysql", sep="")
-    paste(.ENSEMBL.PUB_FTP_URL, pub_subdir, "/", sep="")
+        pub_subdir <- paste0("release-", release, "/mysql")
+    paste0(.ENSEMBL.PUB_FTP_URL, pub_subdir, "/")
 }
 
 .Ensembl.listMySQLCoreDirs <- function(release=NA, url=NA)
@@ -51,7 +51,7 @@
     core_dirs <- .lsFtpUrl(url)
     pattern <- "_core_"
     if (!is.na(release))
-        pattern <- paste(pattern, release, "_", sep="")
+        pattern <- paste0(pattern, release, "_")
     core_dirs[grep(pattern, core_dirs, fixed=TRUE)]
 }
 
@@ -62,7 +62,7 @@
     core_dirs <- .Ensembl.listMySQLCoreDirs(release=release, url=url)
     shortnames <- sapply(strsplit(core_dirs, "_", fixed=TRUE),
                          function(x)
-                           paste(substr(x[1L], 1L, 1L), x[2L], sep=""))
+                           paste0(substr(x[1L], 1L, 1L), x[2L]))
     shortname0 <- strsplit(dataset, "_", fixed=TRUE)[[1L]][1L]
     core_dir <- core_dirs[shortnames == shortname0]
     if (length(core_dir) != 1L)
@@ -77,12 +77,12 @@
     if (is.na(url))
         url <- .Ensembl.getFtpUrlToMySQL(release)
     core_dir <- .Ensembl.getMySQLCoreDir(dataset, release=release, url=url)
-    paste(url, core_dir, "/", sep="")
+    paste0(url, core_dir, "/")
 }
 
 .Ensembl.getTable <- function(base_url, tablename, col.names)
 {
-    url <- paste(base_url, tablename, ".txt.gz", sep="")
+    url <- paste0(base_url, tablename, ".txt.gz")
     destfile <- tempfile()
     download.file(url, destfile, quiet=TRUE)
     data <- read.table(destfile, sep="\t", quote="",
@@ -102,7 +102,7 @@
     ## Get 'coord_system' table.
     COLNAMES <- c("coord_system_id", "species_id", "name",
                   "version", "rank", "attrib")
-    COLNAMES[3:6] <- paste("coord_system_", COLNAMES[3:6], sep="")
+    COLNAMES[3:6] <- paste0("coord_system_", COLNAMES[3:6])
     coord_system <- .Ensembl.getTable(core_url, "coord_system", COLNAMES)
     left2right <- match(ans[["coord_system_id"]],
                         coord_system[["coord_system_id"]])

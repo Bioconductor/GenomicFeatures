@@ -113,7 +113,7 @@
     sql[length(sql)-1] <- sub(",","",sql[length(sql)-1])
     dbEasyQuery(conn, paste(sql, collapse=""))
     ## Fill the  table.
-    sqlVals <- paste("$", names(columns), ",", sep="")
+    sqlVals <- paste0("$", names(columns), ",")
     sqlVals[length(sqlVals)] <- sub(",","",sqlVals[length(sqlVals)])
     sql <- paste(c("INSERT INTO ",tableName,
                  " VALUES ($chrom,$strand,$chromStart,$chromEnd,",

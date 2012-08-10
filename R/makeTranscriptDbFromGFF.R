@@ -251,7 +251,7 @@
   res <- data[data$type==type,]
   if(dim(res)[1] < 1){stop(paste("No",type,"information present in gff file"))
   }else{
-    name <- paste(tolower(type),"_id",sep="")
+    name <- paste0(tolower(type), "_id")
     res <- data.frame(res, data.frame(name=1:dim(res)[1]),
                       stringsAsFactors=FALSE)
     colnames <- c("XXX_chrom","XXX_start","XXX_end","XXX_strand","type",

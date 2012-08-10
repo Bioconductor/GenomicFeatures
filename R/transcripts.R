@@ -147,7 +147,7 @@
         return()
     if (is.character(columns) && all(columns %in% valid_columns))
         return()
-    valid_columns <- paste("\"", valid_columns, "\"", sep="", collapse = ", ")
+    valid_columns <- paste0("'", valid_columns, "'", collapse = ", ")
     stop("'columns' must be NULL or a character vector ",
          "with values in ", valid_columns)
 }
@@ -228,10 +228,10 @@
       lapply(seq_len(length(vals)), function(i) {
                v <- vals[[i]]
                if (!is.numeric(v))
-                 v <- paste("'", v, "'", sep="")
-               v <- paste("(", paste(v, collapse=","), ")", sep="")
-               v <- paste(names(vals)[i], " IN ", v, sep="")
-               paste("(", v, ")", sep="")
+                 v <- paste0("'", v, "'")
+               v <- paste0("(", paste(v, collapse=","), ")")
+               v <- paste0(names(vals)[i], " IN ", v)
+               paste0("(", v, ")")
             })
     paste("WHERE", paste(unlist(sql), collapse = " AND "))
 }
@@ -269,8 +269,7 @@
     #valid_columns <- setdiff(.ALLCOLS, "exon_rank")
     valid_columns <- .ALLCOLS
     if (!all(ans %in% valid_columns)) {
-        valid_columns <- paste("\"", valid_columns, "\"",
-                               sep="", collapse = ", ")
+        valid_columns <- paste0("'", valid_columns, "'", collapse = ", ")
         stop("'vals' must be NULL or a list with names ",
              "in ", valid_columns)
     }
@@ -294,7 +293,7 @@
                                        child_table, child_columns)
 {
     ans_names <- c(primary_key, child_columns)
-    primary_key <- paste("_", primary_key, sep="")
+    primary_key <- paste0("_", primary_key)
     what_cols <- c(primary_key,
                    .asQualifiedColnames(root_table, child_columns))
     SQL_what <- paste(what_cols, collapse=", ")
@@ -329,9 +328,9 @@
                            col <- split(col0, data0[[1L]])
                            col <- col[as.character(ids)]
                            class0 <- class(col0)
-                           class <- paste(toupper(substr(class0, 1L, 1L)),
-                                          substr(class0, 2L, nchar(class0)),
-                                          "List", sep="")
+                           class <- paste0(toupper(substr(class0, 1L, 1L)),
+                                           substr(class0, 2L, nchar(class0)),
+                                           "List")
                            get(class)(unname(col))
                        })
         data <- DataFrame(data)
@@ -465,7 +464,7 @@ setMethod("cds", "TranscriptDb",
 ## translator.  It seems that the chroms are in biomaRt style for mirbase.  So
 ## for biomaRt, return them as is, but for UCSC, add "chr" prefix.
 .translateChromsForUCSC <- function(csomes){
-  paste("chr", csomes, sep="")
+  paste0("chr", csomes)
 }
 
 .translateChromsForBiomaRt <- function(csomes){
@@ -503,8 +502,8 @@ setMethod("cds", "TranscriptDb",
   ## connection
   mcon <- mirbase_dbconn()
   ## 1st lets get the organism abbreviation
-  sql <- paste("SELECT organism FROM mirna_species WHERE genome_assembly='",
-               bld,"'",sep="")
+  sql <- paste0("SELECT organism FROM mirna_species WHERE genome_assembly='",
+                bld, "'")
   organism <- dbGetQuery(mcon, sql)
   ## now get data and make a GRanges from it
   sql <- paste("SELECT * from mirna_chromosome_build AS csome INNER JOIN ",

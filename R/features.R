@@ -3,7 +3,7 @@
 ## business end of things
 
 .extractDataCols <- function(conn, tableName){
-  SQL <- paste("SELECT * FROM ",tableName,";",sep="")
+  SQL <- paste0("SELECT * FROM ",tableName,";")
   ans <- dbEasyQuery(conn, SQL)
 }
 

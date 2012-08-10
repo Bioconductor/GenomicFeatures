@@ -86,7 +86,7 @@ dbEasyPreparedQuery <- function(conn, SQL, bind.data)
 
 get_dbfile <- function(libname, pkgname)
 {
-    filename <- paste(pkgname, ".sqlite", sep="")
+    filename <- paste0(pkgname, ".sqlite")
     system.file("extdata", filename, package=pkgname, lib.loc=libname)
 }
 

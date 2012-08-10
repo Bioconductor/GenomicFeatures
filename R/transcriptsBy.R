@@ -13,7 +13,7 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
         stop("'txdb' must be a TranscriptDb object")
     feature.type <- match.arg(feature.type)
     tablename <- switch(feature.type, tx="transcript", exon="exon", cds="cds")
-    what_cols <- paste(c("_", ""), feature.type, c("_id", "_name"), sep="")
+    what_cols <- paste0(c("_", ""), feature.type, c("_id", "_name"))
     SQL <- paste("SELECT",
                  paste(what_cols, collapse=", "),
                  "FROM", tablename)
@@ -98,9 +98,9 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
           paste(orderByClause, ", SHORT_chrom, SHORT_strand, ",
                 "SHORT_start, SHORT_end", sep = "")
     }
-    whereSeqsClause <- paste("AND SHORT_chrom IN ('",
-                             paste(.getOnlyActiveSeqs(txdb),collapse="','")
-                             ,"')", sep="")
+    whereSeqsClause <- paste0("AND SHORT_chrom IN ('",
+                              paste(.getOnlyActiveSeqs(txdb), collapse="','")
+                              ,"')")
     
     sql <- paste(selectClause, fromClause, whereClause, whereSeqsClause,
                  orderByClause)
@@ -118,11 +118,11 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
     seqinfo <- seqinfo(txdb)
     grngs <-
       GRanges(seqnames =
-              factor(data[[paste(type, "_chrom", sep="")]],
+              factor(data[[paste0(type, "_chrom")]],
                      levels = seqlevels(seqinfo)),
-              ranges = IRanges(start = data[[paste(type, "_start", sep="")]],
-                               end = data[[paste(type, "_end", sep="")]]),
-              strand = strand(data[[paste(type, "_strand", sep="")]]),
+              ranges = IRanges(start = data[[paste0(type, "_start")]],
+                               end = data[[paste0(type, "_end")]]),
+              strand = strand(data[[paste0(type, "_strand")]]),
               data[cols])
     ## Filter seqinfo
     isActSeq <- isActiveSeq(txdb)
@@ -130,7 +130,7 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
     seqlevels(grngs) <- names(isActSeq)[isActSeq]
 
     ## split by grouping variable
-    ans <- split(grngs, data[[paste(by, "_id", sep="")]])
+    ans <- split(grngs, data[[paste0(by, "_id")]])
     ans <- .set.group.names(ans, use.names, txdb, by)
     ans <- .assignMetadataList(ans, txdb)
     ans

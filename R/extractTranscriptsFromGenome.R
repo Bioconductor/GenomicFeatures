@@ -252,7 +252,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
             subject <- genome[[REFSEQname]]
             masks(subject) <- NULL
         } else {
-            regex <- paste("^", REFSEQname, "$", sep="")
+            regex <- paste0("^", REFSEQname, "$")
             subject <- getSeq(genome, regex, as.character=FALSE)
         }
         exonStarts <- exonStarts_list[[REFSEQname]]

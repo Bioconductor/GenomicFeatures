@@ -7,15 +7,14 @@
 .abbrevSpeciesName <- function(speciesName){
   spc <- unlist(strsplit(speciesName, " "))
   ## this assumes a binomial nomenclature has been maintained.
-  paste( substr(spc[[1]], 1, 1), spc[[2]], sep="")
+  paste0( substr(spc[[1]], 1, 1), spc[[2]])
 }
 
 ## simplify DB retrievals from metadata table
 .getMetaDataValue <- function(txdb, name){
   con <- AnnotationDbi:::dbConn(txdb)
   res <- dbGetQuery(con, 
-    paste("SELECT value FROM metadata WHERE name='",
-      name,"'", sep=""))[[1]]  
+    paste0("SELECT value FROM metadata WHERE name='", name, "'"))[[1]]  
   if(!is.character(res))error("Your metadata table is missing a value for:",
     name,".")
   res

@@ -84,14 +84,14 @@
     ## Therefore, if C is missing, the TranscriptDb object can still be made
     ## but won't have any CDS (no row in the cds table).
     if (.B_ATTRIB %in% attribs$name)
-        attrgroups <- paste(attrgroups, "B", sep="")
+        attrgroups <- paste0(attrgroups, "B")
     if (all(.C_ATTRIBS %in% attribs$name))
-        attrgroups <- paste(attrgroups, "C", sep="")
+        attrgroups <- paste0(attrgroups, "C")
     if (all(.D_ATTRIBS %in% attribs$name))
-        attrgroups <- paste(attrgroups, "D", sep="")
+        attrgroups <- paste0(attrgroups, "D")
     ## Group G: Required attribute.
     if (.G_ATTRIB %in% attribs$name)
-        attrgroups <- paste(attrgroups, "G", sep="")
+        attrgroups <- paste0(attrgroups, "G")
     attrgroups
 }
 
@@ -120,19 +120,19 @@
     bm_table <- getBM(biomartAttribGroups[['A1']], filters=filters,
                       values=values, mart=mart)
     
-    ##bm_table_names <- sub(paste("^", biomartAttribGroups[['id_prefix']], sep=''),
+    ##bm_table_names <- sub(paste0("^", biomartAttribGroups[['id_prefix']]),
     ##                      "",
     ##                      colnames(bm_table))
     ##colnames(bm_table) <- bm_table_names
 
-    tx_id_colname <- paste(id_prefix, "transcript_id", sep="")
+    tx_id_colname <- paste0(id_prefix, "transcript_id")
 
     if (!is.null(transcript_ids)) {
         idx <- !(transcript_ids %in% bm_table[[tx_id_colname]])
         if (any(idx)) {
             bad_ids <- transcript_ids[idx]
             stop("invalid transcript ids: ",
-                 paste(bad_ids, collapse=", "), sep="")
+                 paste0(bad_ids, collapse=", "))
         }
     }
     ## Those are the strictly required fields.
@@ -255,7 +255,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 .generateBioMartDataAnomalyReport <- function(bm_table, idx, id_prefix, msg)
 {
     ## Part 3.
-    tx_id_colname <- paste(id_prefix, "transcript_id", sep="")
+    tx_id_colname <- paste0(id_prefix, "transcript_id")
     tx_ids <- bm_table[[tx_id_colname]]
     first_tx_ids <- unique(tx_ids[idx])
     total_nb_tx <- length(first_tx_ids)
@@ -272,26 +272,26 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                     function(i) {
                         tx_table <- first_tx_tables[[i]]
                         row.names(tx_table) <- NULL
-                        subtitle <- paste("  ", i, ". Transcript ",
-                                          names(first_tx_tables)[i],
-                                          ":", sep="")
+                        subtitle <- paste0("  ", i, ". Transcript ",
+                                           names(first_tx_tables)[i],
+                                           ":")
                         details <- capture.output(print(tx_table))
-                        c(subtitle, paste(.DETAILS_INDENT, details, sep=""))
+                        c(subtitle, paste0(.DETAILS_INDENT, details))
                     })
     options(width=getOption("width")+nchar(.DETAILS_INDENT))
     part3 <- unlist(part3, use.names=FALSE)
     if (first_six_only)
-        part3 <- c(paste("  (Showing only the first 6 out of ",
-                         total_nb_tx,
-                         " transcripts.)", sep=""),
+        part3 <- c(paste("  (Showing only the first 6 out of",
+                          total_nb_tx,
+                          "transcripts.)"),
                    part3)
 
     ## Part 1.
     part1 <- "BioMart data anomaly: in the following transcripts, "
 
     ## Part 2.
-    msg[length(msg)] <- paste(msg[length(msg)], ".", sep="")
-    part2 <- paste("  ", msg, sep="")
+    msg[length(msg)] <- paste0(msg[length(msg)], ".")
+    part2 <- paste0("  ", msg)
 
     ## Assemble the parts.
     paste(c(part1, part2, part3), collapse="\n")
@@ -339,14 +339,13 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
              "NAs in \"", what_utr, "_utr_end\" attribute")
     idx <- which(utr_start > utr_end)
     if (length(idx) != 0L) {
-        msg <- paste("the ", what_utr, "' UTRs ",
-                     "have a start > end", sep="")
+        msg <- paste0("the ", what_utr, "' UTRs have a start > end")
         .stopWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     }
     idx <- which(utr_start < exon_start | exon_end < utr_end)
     if (length(idx) != 0L) {
-        msg <- paste("the ", what_utr, "' UTRs ",
-                     "are not within the exon limits", sep="")
+        msg <- paste0("the ", what_utr, "' UTRs ",
+                      "are not within the exon limits")
         .stopWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     }
     is_na
@@ -409,7 +408,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 
     ans <- IRanges(start=cds_start, end=cds_end)
     if (length(ans) != 0L) {
-        tx_id_colname <- paste(id_prefix, "transcript_id", sep="")
+        tx_id_colname <- paste0(id_prefix, "transcript_id")
         cds_cumlength <-
             sapply(split(width(ans), bm_table[[tx_id_colname]]), sum)
         idx <- which(cds_cumlength[as.vector(bm_table[[tx_id_colname]])] !=
@@ -468,9 +467,9 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     if ("cds_length" %in% allattribs)
         attributes <- c(attributes, "cds_length")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
-    tx_id_colname <- paste(id_prefix, "transcript_id", sep="")
+    tx_id_colname <- paste0(id_prefix, "transcript_id")
     splicings_tx_id <- transcripts_tx_id[bm_table[[tx_id_colname]]]
-    exon_id_col_name <- paste(id_prefix, "exon_id", sep='')
+    exon_id_col_name <- paste0(id_prefix, "exon_id")
     splicings <- data.frame(
         tx_id=splicings_tx_id,
         exon_rank=bm_table$rank,
@@ -499,12 +498,12 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     message("Download and preprocess the 'genes' data frame ... ",
             appendLF=FALSE)
     attributes <- c(biomartAttribGroups[['G']],
-                    paste(id_prefix, "transcript_id", sep=""))
+                    paste0(id_prefix, "transcript_id"))
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart)
-    tx_id_colname <- paste(id_prefix, "transcript_id", sep="")
+    tx_id_colname <- paste0(id_prefix, "transcript_id")
     genes_tx_id <- transcripts_tx_id[bm_table[[tx_id_colname]]]
     message("OK")
-    gene_id_col_name <- paste(id_prefix, "gene_id", sep='')
+    gene_id_col_name <- paste0(id_prefix, "gene_id")
     data.frame(
         tx_id=genes_tx_id,
         gene_id=bm_table[[gene_id_col_name]]
@@ -589,7 +588,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
         filters <- ""
     } else if (is.character(transcript_ids)
             && !any(is.na(transcript_ids))) {
-        filters <- paste(id_prefix, "transcript_id", sep="")
+        filters <- paste0(id_prefix, "transcript_id")
     }
     filters
 }
@@ -779,7 +778,7 @@ scanMart <- function(biomart, version)
         tbl <- table(attrgroups)
         tbl2 <- as.integer(tbl)
         names(tbl2) <- names(tbl)
-        tmp <- paste(names(tbl2), ":", tbl2, sep="", collapse=", ")
+        tmp <- paste0(names(tbl2), ":", tbl2, collapse=", ")
         cat("table of attribute groups: ", tmp, "\n", sep="")
     }
     cat("\n")
@@ -850,19 +849,19 @@ scanMarts <- function(marts=NULL)
 
 .getBiomartAttribGroups <- function(id_prefix) {
   attribs <- list()
-  attribs[['A1']] <- c(paste(id_prefix, "transcript_id", sep=''),
+  attribs[['A1']] <- c(paste0(id_prefix, "transcript_id"),
                        "chromosome_name",
                        "strand",
                        "transcript_start",
                        "transcript_end")
   
-  attribs[['A2']] <- c(paste(id_prefix, "transcript_id", sep=''),
+  attribs[['A2']] <- c(paste0(id_prefix, "transcript_id"),
                        "strand",
                        "rank",
                        "exon_chrom_start",
                        "exon_chrom_end")
   
-  attribs[['B']] <- paste(id_prefix, "exon_id", sep='')
+  attribs[['B']] <- paste0(id_prefix, "exon_id")
   
   attribs[['C']] <- c("5_utr_start",
                       "5_utr_end",
@@ -873,7 +872,7 @@ scanMarts <- function(marts=NULL)
                       "cds_end",
                       "cds_length")
   
-  attribs[['G']] <- paste(id_prefix, "gene_id", sep='')
+  attribs[['G']] <- paste0(id_prefix, "gene_id")
   
   attribs[['id_prefix']] <- id_prefix
   
