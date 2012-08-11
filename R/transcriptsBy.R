@@ -112,28 +112,25 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
     data <- dbEasyQuery(AnnotationDbi:::dbConn(txdb), sql)
 
     ## create the GRanges object
-    cols <- gsub("TYPE", type, c("TYPE_id", "TYPE_name"))
+    cols <- paste0(type, c("_id", "_name"))
     if (order_by_exon_rank)
         cols <- c(cols, "exon_rank")
-    seqinfo <- seqinfo(txdb)
-    grngs <-
-      GRanges(seqnames =
-              factor(data[[paste0(type, "_chrom")]],
-                     levels = seqlevels(seqinfo)),
-              ranges = IRanges(start = data[[paste0(type, "_start")]],
-                               end = data[[paste0(type, "_end")]]),
-              strand = strand(data[[paste0(type, "_strand")]]),
-              data[cols])
-    ## Filter seqinfo
-    isActSeq <- isActiveSeq(txdb)
-    seqinfo(grngs) <- seqinfo
-    seqlevels(grngs) <- names(isActSeq)[isActSeq]
+    activeNames <- names(isActiveSeq(txdb))[isActiveSeq(txdb)]
+    seqinfo <- seqinfo(txdb)[activeNames]
+    grngs <- GRanges(seqnames = factor(
+                       data[[paste0(type, "_chrom")]],
+                       levels = activeNames),
+                     ranges = IRanges(
+                       start = data[[paste0(type, "_start")]],
+                       end = data[[paste0(type, "_end")]]),
+                     strand = strand(data[[paste0(type, "_strand")]]),
+                     data[cols],
+                     seqinfo = seqinfo)
 
     ## split by grouping variable
     ans <- split(grngs, data[[paste0(by, "_id")]])
     ans <- .set.group.names(ans, use.names, txdb, by)
-    ans <- .assignMetadataList(ans, txdb)
-    ans
+    .assignMetadataList(ans, txdb)
 }
 
 ###                    use  splicing      gene
@@ -273,18 +270,16 @@ setMethod("intronsByTranscript", "TranscriptDb",
 
 .makeUTRsByTranscript <- function(x, splicings, utr_start, utr_end)
 {
-    seqinfo <- seqinfo(x)
-    grg <- GRanges(seqnames=factor(splicings$exon_chrom, 
-                                   levels=seqlevels(seqinfo)),
-                   ranges=IRanges(start=utr_start, end=utr_end),
-                   strand=strand(splicings$exon_strand),
-                   exon_id=splicings$exon_id,
-                   exon_name=splicings$exon_name,
-                   exon_rank=splicings$exon_rank)
-    ## Then clean up the seqinfo
-    isActSeq <- isActiveSeq(x)
-    seqinfo(grg) <- seqinfo
-    seqlevels(grg) <- names(isActSeq)[isActSeq]
+    activeNames <- names(isActiveSeq(x))[isActiveSeq(x)]
+    seqinfo <- seqinfo(x)[activeNames]
+    cols <- paste0("exon_", c("id", "name", "rank"))
+    grg <- GRanges(seqnames = factor(
+                     splicings$exon_chrom,
+                     levels =seqlevels(seqinfo)),
+                   ranges = IRanges(start = utr_start, end = utr_end),
+                   strand = strand(splicings$exon_strand),
+                   splicings[cols],
+                   seqinfo = seqinfo)
     idx <- width(grg) != 0L  # drop 0-width UTRs
     split(grg[idx], splicings$tx_id[idx])
 }

@@ -324,9 +324,7 @@ sortExonsByRank <- function(x, decreasing.rank.on.minus.strand=FALSE)
     unlisted_end <- unlist(ucsc_txlist$exonEnds, use.names=FALSE)
     unlisted <- GRanges(seqnames=unlisted_seqnames,
                         ranges=IRanges(unlisted_start, unlisted_end),
-                        strand=unlisted_strand)
-    seqlevels(unlisted) <- seqlevels(x)
-    seqinfo(unlisted) <- seqinfo(x)
+                        strand=unlisted_strand,
+                        seqinfo=seqinfo(x))
     relist(unlisted, x)
 }
-

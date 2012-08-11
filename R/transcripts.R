@@ -374,20 +374,19 @@
     ans_ranges <- IRanges(start=root_data[[CORECOLS["start"]]],
                           end=root_data[[CORECOLS["end"]]])
     ans_strand <- strand(root_data[[CORECOLS["strand"]]])
-    ans <- GRanges(seqnames=ans_seqnames,
-                   ranges=ans_ranges,
-                   strand=ans_strand)
-    ## Filter seqinfo
-    isActSeq <- isActiveSeq(txdb)
-    seqinfo(ans) <- ans_seqinfo
-    seqlevels(ans) <- names(isActSeq)[isActSeq]
+
+    activeNames <- names(isActiveSeq(txdb))[isActiveSeq(txdb)]
+    seqinfo <- seqinfo(txdb)[activeNames]
+    ans <- GRanges(seqnames = ans_seqnames,
+                   ranges = ans_ranges,
+                   strand = ans_strand,
+                   seqinfo = seqinfo)
 
     ans_values <- c(DataFrame(root_data[root_columns]), child_data)
     if (is.null(names(columns)))
       names(columns) <- columns
     values(ans)[names(columns)] <- ans_values[columns]
-    ans <- .assignMetadataList(ans, txdb)
-    ans
+    .assignMetadataList(ans, txdb)
 }
 
 
@@ -487,7 +486,7 @@ setMethod("cds", "TranscriptDb",
   bld <- dbGetQuery(con,
            "SELECT value FROM metadata WHERE name='miRBase build ID'")
   src <- DBI:::dbGetQuery(con,
-           "SELECT value FROM metadata WHERE name='Data source'")
+           "SELECT value FROM metadata WHERE name='Data source'")[[1]]
 
   ## And if not - bail out with message
   if(is.na(bld) || dim(bld)[1]==0){
@@ -504,36 +503,28 @@ setMethod("cds", "TranscriptDb",
   ## 1st lets get the organism abbreviation
   sql <- paste0("SELECT organism FROM mirna_species WHERE genome_assembly='",
                 bld, "'")
-  organism <- dbGetQuery(mcon, sql)
+  organism <- dbGetQuery(mcon, sql)[[1]]
   ## now get data and make a GRanges from it
-  sql <- paste("SELECT * from mirna_chromosome_build AS csome INNER JOIN ",
-               "(SELECT _id,mirna_id,organism from mirna) AS mirna ",
-               "WHERE mirna._id=csome._id and organism='",
-               organism,"'",sep="")
+  sql <- paste0("SELECT * from mirna_chromosome_build AS csome INNER JOIN ",
+                "(SELECT _id,mirna_id,organism from mirna) AS mirna ",
+                "WHERE mirna._id=csome._id AND organism='", organism, "' ")
   data <- dbGetQuery(mcon, sql)
-  ## So now we have data, but I have to flip the signs of the values on the
-  ## minus strand
-  data$contig_start <- abs(data$contig_start)
-  data$contig_end <- abs(data$contig_end)
-  ## Convert our chromosomes (if we can)
-  csomes <- data$xsome
-  if(src=="BioMart"){csomes <- .translateChromsForBiomaRt(csomes)}
-  if(src=="UCSC"){csomes <- .translateChromsForUCSC(csomes)}
-  ## Then build our GRanges object
-  ranges <- IRanges(start=data$contig_start,
-                    end=data$contig_end)
+
+  ## convert chromosomes
+  csomes <- switch(src,
+                   BioMart=.translateChromsForBiomaRt(data$xsome),
+                   UCSC=.translateChromsForUCSC(data$xsome),
+                   data$xsome)
+  ## build GRanges
   ans <- GRanges(seqnames=csomes,
-                 ranges=ranges,
+                 ranges=IRanges( ## sign may be reversed
+                   start=abs(data$contig_start),
+                   end=abs(data$contig_end)),
+                 mirna_id = data$mirna_id,
                  strand=data$strand)
   
-  ## append values
-  values(ans) <- data$mirna_id
-  names(values(ans)) <- "mirna_id"
-
   ## Filter seqinfo
-  ans <- .syncSeqlevel(txdb,ans)
-
-  ans
+  .syncSeqlevel(txdb, ans)
 }
 
 ## Then set our method
@@ -564,7 +555,3 @@ setMethod("microRNAs", "TranscriptDb", function(x){.microRNAs(x)} )
 
 ## Then set our method
 setMethod("tRNAs", "TranscriptDb", function(x){.tRNAs(x)} )
-
-
-
-
