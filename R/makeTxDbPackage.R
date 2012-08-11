@@ -15,8 +15,8 @@
   con <- AnnotationDbi:::dbConn(txdb)
   res <- dbGetQuery(con, 
     paste0("SELECT value FROM metadata WHERE name='", name, "'"))[[1]]  
-  if(!is.character(res))error("Your metadata table is missing a value for:",
-    name,".")
+  if(!is.character(res))
+      stop("metadata table missing a value for '", name, "'")
   res
 }
 

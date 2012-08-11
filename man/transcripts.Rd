@@ -103,5 +103,10 @@ tRNAs(x)
   transcripts(txdb, vals)
   exons(txdb, vals=list(exon_id=1), columns=c("exon_id", "tx_name"))
   exons(txdb, vals=list(tx_name="uc009vip.1"), columns=c("exon_id",
-  "tx_name"))
+      "tx_name"))
+
+\dontrun{library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(mirbase.db)
+microRNAs(TxDb.Hsapiens.UCSC.hg19.knownGene)
+}
 }

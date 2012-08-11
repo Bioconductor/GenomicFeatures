@@ -22,7 +22,7 @@
 
 .getBiomartDbVersion <- function(biomart, host, port)
 {
-    marts <- listMarts(mart=mart, host=host, port=port)
+    marts <- listMarts(mart=biomart, host=host, port=port)
 
     mart_rowidx <- which(as.character(marts$biomart) == biomart)
     ## This should never happen.
