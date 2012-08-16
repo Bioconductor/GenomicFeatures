@@ -69,7 +69,7 @@ test_transcriptsBy <- function()
     seqlevels <- seqlevels(seqinfo)
 
     dupCount <- function(x) {
-        sum(sapply(x, function(y) anyDuplicated(elementMetadata(y)[,"tx_id"])))
+        sum(sapply(x, function(y) anyDuplicated(mcols(y)[,"tx_id"])))
     }
 
     ## transcripts by gene
@@ -132,7 +132,7 @@ test_exonsBy <- function()
     seqlevels <- seqlevels(seqinfo)
 
     dupCount <- function(x) {
-        sum(sapply(x, function(y) anyDuplicated(elementMetadata(y)[,"exon_id"])))
+        sum(sapply(x, function(y) anyDuplicated(mcols(y)[,"exon_id"])))
     }
 
     ## exons by transcript
@@ -170,7 +170,7 @@ test_cdsBy <- function()
     seqlevels <- seqlevels(seqinfo)
 
     dupCount <- function(x) {
-        sum(sapply(x, function(y) anyDuplicated(elementMetadata(y)[,"cds_id"])))
+        sum(sapply(x, function(y) anyDuplicated(mcols(y)[,"cds_id"])))
     }
 
     ## cds by transcript

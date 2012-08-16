@@ -385,7 +385,7 @@
     ans_values <- c(DataFrame(root_data[root_columns]), child_data)
     if (is.null(names(columns)))
       names(columns) <- columns
-    values(ans)[names(columns)] <- ans_values[columns]
+    mcols(ans)[names(columns)] <- ans_values[columns]
     .assignMetadataList(ans, txdb)
 }
 
@@ -403,15 +403,9 @@
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### The top-level extractors.
 ###
-### Note that the current naming of the args is a little bit confusing
-### because we have the 'vals' and 'columns' args and it is the latter that is
-### related to the "values" slot of the returned GRanges object, not the
-### former. More precisely, the user specifies what goes into the "values"
-### slot (aka "elementMetadata" slot) thru the 'columns' arg and not thru the
-### 'vals' arg.
-### TODO:
-###   - Rename the 'vals' arg -> 'filter'.
-###   - Rename the 'columns' arg -> 'colnames'.
+### Proposal:
+###   - rename the 'vals' arg -> 'filter'
+###   - rename the 'columns' arg -> 'colnames'
 ###
 
 setMethod("transcripts", "data.frame",

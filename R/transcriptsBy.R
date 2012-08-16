@@ -199,7 +199,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
     {
         tx <- transcripts(x)
         exn <- exonsBy(x)
-        tx <- tx[match(names(exn), elementMetadata(tx)[,"tx_id"])]
+        tx <- tx[match(names(exn), mcols(tx)[,"tx_id"])]
         ans <- psetdiff(tx, exn)
         .set.group.names(ans, use.names, x, "tx")
     }

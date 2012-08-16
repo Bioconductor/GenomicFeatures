@@ -411,39 +411,39 @@ setMethod("asBED", "TranscriptDb", function(x) {
   cds_tx <- range(cdsBy(x))
   exons_tx <- exons_tx[names(cds_tx)]
   bed <- asBED(exons_tx)
-  values(bed)$thick <- unlist(ranges(cds_tx), use.names=FALSE)
+  mcols(bed)$thick <- unlist(ranges(cds_tx), use.names=FALSE)
   bed
 })
 
 setMethod("asGFF", "TranscriptDb", function(x) {
   tx_gene <- transcriptsBy(x)
   gene <- unlist(range(tx_gene))
-  values(gene)$Parent <- CharacterList(character())
+  mcols(gene)$Parent <- CharacterList(character())
   addPrefix <- function(ids, prefix) {
     if (is(ids, "List"))
       ids <- as(ids, "CharacterList")
     prefix <- paste(prefix, ":", sep = "")
     sub(paste("^|^", prefix, sep = ""), prefix, ids)
   }
-  values(gene)$ID <- addPrefix(names(gene), "GeneID")
-  values(gene)$Name <- names(gene)
-  values(gene)$type <- "gene"
+  mcols(gene)$ID <- addPrefix(names(gene), "GeneID")
+  mcols(gene)$Name <- names(gene)
+  mcols(gene)$type <- "gene"
   tx <- transcripts(x, columns = c(Parent = "gene_id", ID = "tx_id",
                          Name = "tx_name"))
-  values(tx)$Parent <- addPrefix(values(tx)$Parent, "GeneID")
-  values(tx)$ID <- addPrefix(values(tx)$ID, "TxID")
-  values(tx)$type <- "mRNA"
+  mcols(tx)$Parent <- addPrefix(mcols(tx)$Parent, "GeneID")
+  mcols(tx)$ID <- addPrefix(mcols(tx)$ID, "TxID")
+  mcols(tx)$type <- "mRNA"
   exon <- exons(x, columns = c(Parent = "tx_id"))
-  values(exon)$Parent <- addPrefix(values(exon)$Parent, "TxID")
-  values(exon)$ID <- NA
-  values(exon)$Name <- NA
-  values(exon)$type <- "exon"
-  values(exon)$Parent <- as(values(exon)$Parent, "CharacterList")
+  mcols(exon)$Parent <- addPrefix(mcols(exon)$Parent, "TxID")
+  mcols(exon)$ID <- NA
+  mcols(exon)$Name <- NA
+  mcols(exon)$type <- "exon"
+  mcols(exon)$Parent <- as(mcols(exon)$Parent, "CharacterList")
   cds <- cds(x, columns = c(Parent = "tx_id"))
-  values(cds)$Parent <- addPrefix(values(cds)$Parent, "TxID")
-  values(cds)$ID <- NA
-  values(cds)$Name <- NA
-  values(cds)$type <- "CDS"
+  mcols(cds)$Parent <- addPrefix(mcols(cds)$Parent, "TxID")
+  mcols(cds)$ID <- NA
+  mcols(cds)$Name <- NA
+  mcols(cds)$type <- "CDS"
   gff <- c(gene, tx, exon, cds)
   names(gff) <- NULL
   gff

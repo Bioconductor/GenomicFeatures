@@ -116,8 +116,8 @@
   hits <- findOverlaps(query=cdsr,subject=exsr,type='within')
   if(any(duplicated(queryHits(hits)))){
     ## Get the names that go with each hit
-    qTx <- values(cdsr[queryHits(hits)])$tx_name
-    sTx <- values(exsr[subjectHits(hits)])$tx_name
+    qTx <- mcols(cdsr[queryHits(hits)])$tx_name
+    sTx <- mcols(exsr[subjectHits(hits)])$tx_name
     ## Then subset the hits to effectively filter based on names also matching
     hits <- hits[qTx == sTx]
   }

@@ -181,7 +181,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
                      "are not supported yet")
             y[1L]
         })
-    exon_rank <- elementMetadata(x@unlistData)$exon_rank
+    exon_rank <- mcols(x@unlistData)$exon_rank
     if (is.null(exon_rank)) {
         warning("GRangesList object has no \"exon_rank\" column --> ",
                 "inferring rank from exon position within each GRanges")
@@ -302,7 +302,7 @@ extractTranscriptsFromGenome <- function(genome, txdb,
 ###
 ### FIXME: Current implementation is a quick-and-dirty one that leverages the
 ### work done in .makeUCSCTxListFromGRangesList(). Therefore it looses the
-### elementMetadata. We need something better, faster, and documented (and it
+### metadata columns. We need something better, faster, and documented (and it
 ### should probably go somewhere else).
 ### TODO: Also, maybe exonsBy(... , by="tx") should get a
 ### 'by.decreasing.rank.on.minus.strand' arg or something like that.
