@@ -271,6 +271,10 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     part3 <- lapply(seq_len(length(first_tx_tables)),
                     function(i) {
                         tx_table <- first_tx_tables[[i]]
+                        if ("rank" %in% colnames(tx_table)) {
+                            oo <- order(tx_table[["rank"]])
+                            tx_table <- tx_table[oo, , drop=FALSE]
+                        }
                         row.names(tx_table) <- NULL
                         subtitle <- paste0("  ", i, ". Transcript ",
                                            names(first_tx_tables)[i],
@@ -337,7 +341,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
         stop("BioMart data anomaly: ",
              "NAs in \"", what_utr, "_utr_start\" attribute don't match ",
              "NAs in \"", what_utr, "_utr_end\" attribute")
-    idx <- which(utr_start > utr_end)
+    idx <- which(utr_start > utr_end + 1L)
     if (length(idx) != 0L) {
         msg <- paste0("the ", what_utr, "' UTRs have a start > end")
         .stopWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
@@ -348,7 +352,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                       "are not within the exon limits")
         .stopWithBioMartDataAnomalyReport(bm_table, idx, id_prefix, msg)
     }
-    is_na
+    is_na | utr_start == utr_end + 1L
 }
 
 .extractCdsRangesFromBiomartTable <- function(bm_table, id_prefix)
