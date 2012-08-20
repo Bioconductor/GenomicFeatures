@@ -15,7 +15,7 @@ import(BiocGenerics)
 import(IRanges)
 
 importFrom(GenomicRanges, GRanges, Seqinfo, seqinfo, genome, "genome<-",
-           findSpliceOverlaps)
+           findSpliceOverlaps, seqnameStyle)
 importMethodsFrom(GenomicRanges, strand, findSpliceOverlaps)
 
 importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
