@@ -14,14 +14,13 @@
 \usage{
 makeTranscriptDbFromGFF(file,
                         format=c("gff3","gtf"),
-                        exonRankAttributeName,
-                        gffGeneIdAttributeName,
+                        exonRankAttributeName=NULL,
+                        gffGeneIdAttributeName=NULL,
                         chrominfo,
                         dataSource,
                         species,
                         circ_seqs=DEFAULT_CIRC_SEQS,
-                        miRBaseBuild = NULL,
-                        feature.type = NULL)
+                        miRBaseBuild=NULL)
 }
 \arguments{
   \item{file}{path/file to be processed}
@@ -61,10 +60,6 @@ makeTranscriptDbFromGFF(file,
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
     this value will be NULL, which will inactivate the \code{microRNAs}
     accessor.}
-  \item{feature.type}{\code{NULL} (the default) or a character vector of
-    valid feature types. If not \code{NULL}, then only the features of the
-    specified type(s) are imported.
-  }
 }
 \details{
   \code{makeTranscriptDbFromGFF} is a convenience function that feeds
@@ -103,37 +98,30 @@ makeTranscriptDbFromGFF(file,
 }
 
 \examples{
-
 ## TESTING GFF3
 gffFile <- system.file("extdata","a.gff3",package="GenomicFeatures")
 txdb <- makeTranscriptDbFromGFF(file=gffFile,
-         format="gff3",
-         dataSource="partial gtf file for Tomatoes for testing",
-         species="Solanum lycopersicum",
-         circ_seqs=DEFAULT_CIRC_SEQS,
-         miRBaseBuild=NULL)
+            format="gff3",
+            dataSource="partial gtf file for Tomatoes for testing",
+            species="Solanum lycopersicum")
 if(interactive()) {
 saveDb(txdb,file="TESTGFF.sqlite")
 }
 
-
-## TESTING GTF this time specifying the chrominfo
+## TESTING GTF, this time specifying the chrominfo
 gtfFile <- system.file("extdata","Aedes_aegypti.partial.gtf",
                        package="GenomicFeatures")
 chrominfo <- data.frame(chrom = c('supercont1.1','supercont1.2'),
                         length=c(5220442, 5300000),
                         is_circular=c(FALSE, FALSE))
 txdb2 <- makeTranscriptDbFromGFF(file=gtfFile,
-         format="gtf",
-         exonRankAttributeName="exon_number",
-         chrominfo= chrominfo,
-         dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
-                          "release-13/gtf/aedes_aegypti/",sep=""),
-         species="Aedes aegypti",
-         circ_seqs=DEFAULT_CIRC_SEQS,
-         miRBaseBuild=NULL)
+             format="gtf",
+             exonRankAttributeName="exon_number",
+             chrominfo=chrominfo,
+             dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
+                              "release-13/gtf/aedes_aegypti/",sep=""),
+             species="Aedes aegypti")
 if(interactive()) {
-saveDb(txdb2,file="TESTGTF.sqlite")
+    saveDb(txdb2,file="TESTGTF.sqlite")
 }
-
 }

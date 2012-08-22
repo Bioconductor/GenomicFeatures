@@ -489,25 +489,18 @@
 
 makeTranscriptDbFromGFF <- function(file,
                                     format=c("gff3", "gtf"),
-                                    exonRankAttributeName,
-                                    gffGeneIdAttributeName,
+                                    exonRankAttributeName=NULL,
+                                    gffGeneIdAttributeName=NULL,
                                     chrominfo,
                                     dataSource,
                                     species,
                                     circ_seqs=DEFAULT_CIRC_SEQS,
-                                    miRBaseBuild=NULL,
-                                    feature.type=NULL)
+                                    miRBaseBuild=NULL)
 {
   format <- match.arg(format)
-  ## if the exonRankAttributeName is missing, then we need to know that
-  if(missing(exonRankAttributeName)){
-    exonRankAttributeName <- NULL
-  }
-  if(missing(gffGeneIdAttributeName)){
-    gffGeneIdAttributeName <- NULL
-  }
   
-  ## start by importing the file
+  ## start by importing the relevant features from the specified file
+  feature.type <- c("gene", "mRNA", "exon", "CDS")
   gff <- import(file, format=format, feature.type=feature.type)
 
   if(format=="gff3"){
@@ -532,8 +525,9 @@ makeTranscriptDbFromGFF <- function(file,
   if(missing(chrominfo)){
     message("Now generating chrominfo from available sequence names. No chromosome length information is available.")
     chroms <- unique(tables[["transcripts"]][["tx_chrom"]])
-    chrominfo <- data.frame(chrom=chroms, length=rep(NA,length(chroms)),
-      is_circular=GenomicFeatures:::matchCircularity(chroms, circ_seqs))
+    chrominfo <- data.frame(chrom=chroms,
+                            length=rep(NA,length(chroms)),
+                            is_circular=matchCircularity(chroms, circ_seqs))
   }
   ## call makeTranscriptDb
   txdb <- makeTranscriptDb(transcripts=tables[["transcripts"]],
