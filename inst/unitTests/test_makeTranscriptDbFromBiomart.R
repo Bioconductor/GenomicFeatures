@@ -19,6 +19,7 @@ test_makeTranscriptDbFromBiomart <- function()
         "ENST00000478783"
     )
     txdb1 <- makeTranscriptDbFromBiomart(transcript_ids=transcript_ids)
+    checkTrue(validObject(txdb1))
 
     ## compare
     ok <- GenomicFeatures:::compareTranscriptDbs(txdb1, txdb0)
