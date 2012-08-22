@@ -73,3 +73,11 @@ setGeneric("determineDefaultSeqnameStyle",
            function(x) standardGeneric("determineDefaultSeqnameStyle"))
 setGeneric("seqnameStyle<-", signature="x",
            function(x, value) standardGeneric("seqnameStyle<-"))
+
+## promoterRanges
+setGeneric("promoterRanges",
+    signature = "x",
+    function(x, upstream = 500, downstream = 500, ...)
+        standardGeneric("promoterRanges")
+)
+
