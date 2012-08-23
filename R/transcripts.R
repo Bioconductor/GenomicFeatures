@@ -457,11 +457,11 @@ setMethod("promoters", "GenomicRanges",
         if (any(strand(x) == "*"))
             warning("'*' ranges will be treated as '+'")
         if (round(upstream) != upstream) {
-            warning("'upstream' rounded to nearest integer value")
+            warning("'upstream' value rounded to nearest integer")
             upstream <- round(upstream)
         }
         if (round(downstream) != downstream) {
-            warning("'downstream' rounded to nearest integer value")
+            warning("'downstream' value rounded to nearest integer")
             downstream <- round(downstream)
         }
         on_plus <- which(strand(x) == "+" | strand(x) == "*")
