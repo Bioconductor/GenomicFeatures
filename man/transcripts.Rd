@@ -8,6 +8,9 @@
 \alias{exons,TranscriptDb-method}
 \alias{cds}
 \alias{cds,TranscriptDb-method}
+\alias{promoters}
+\alias{promoters,TranscriptDb-method}
+\alias{promoters,GenomicRanges-method}
 \alias{microRNAs}
 \alias{microRNAs,TranscriptDb-method}
 \alias{tRNAs}
@@ -31,6 +34,9 @@ exons(x, ...)
 
 cds(x, ...)
 \S4method{cds}{TranscriptDb}(x, vals=NULL, columns="cds_id")
+
+promoters(x, upstream=2000, downstream=200, ...)
+\S4method{promoters}{TranscriptDb}(x, upstream=2000, downstream=200, ...)
 
 microRNAs(x)
 \S4method{microRNAs}{TranscriptDb}(x)
@@ -70,7 +76,21 @@ tRNAs(x)
       for \code{cds}.
     }
     If the vector is named, those names are used for the corresponding
-    column in the element metadata of the returned object.    
+    column in the element metadata of the returned object. 
+  }
+  \item{upstream}{
+    For \code{promoters()} : An \code{integer} value indicating the
+    number of bases upstream from the transcription start site. The
+    upstream range extends from this value up to, but not including, 
+    the transcription start site. The upstream range is merged with 
+    the downstream range to form the full promoter region.
+  }
+  \item{downstream}{
+    For \code{promoters()} : An \code{integer} value indicating the 
+    number of bases downstream from the transcription start site. The
+    downstream range extends from this value up to, and including, 
+    the transcription start site. The downstream range is merged with 
+    the upstream range to form the full promoter region.
   }
 }
 
@@ -82,6 +102,18 @@ tRNAs(x)
   information, use the \code{\link{transcriptsByOverlaps}},
   \code{\link{exonsByOverlaps}}, and \code{\link{cdsByOverlaps}}
   functions.
+
+  \code{promoters()} returns a \code{GRanges} of promoter ranges
+  defined by the \code{upstream} and \code{downstream} arguments.
+  Note that \code{*} strand ranges are treated as \code{+}. For
+  the \code{promoter,GenomicRanges}-method, it is possible for 
+  the resulting \code{GRanges} to have non-positive start values. 
+  This occurs when the \code{seqlength} values are \code{NA} and
+  (TSS - \code{upstream}) < 1. In the equal but opposite case, the 
+  \code{end} values of the ranges may extend beyond the chromosome 
+  end when (TSS + \code{downstream} + 1) > 'end of chromosome'. When
+  \code{seqlengths} are present this does not occur and the returned
+  ranges are kept within the bounds of the defined \code{seqlengths}.
 }
 
 \value{ a GRanges object }
@@ -97,6 +129,7 @@ tRNAs(x)
 }
 
 \examples{
+## transcripts() and exons() :
   txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
                                    package="GenomicFeatures"))
   vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
@@ -105,8 +138,20 @@ tRNAs(x)
   exons(txdb, vals=list(tx_name="uc009vip.1"), columns=c("exon_id",
       "tx_name"))
 
+## microRNAs() :
 \dontrun{library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(mirbase.db)
 microRNAs(TxDb.Hsapiens.UCSC.hg19.knownGene)
 }
+
+## promoters() :
+head(promoters(txdb, 100, 50))
+ 
+## The promoter regions are defined around the transcription start 
+## sites. On the "+" strand this region surrounds the 'start' 
+## value in a GRanges. On the -" strand this region surrounds 
+## the 'end' value. Note the "*" ranges are treated as "+". 
+gr <- GRanges("chr1", IRanges(rep(10, 3), width=6), c("+", "-", "*"))
+gr
+promoters(gr, 2, 2)
 }

@@ -5,9 +5,14 @@ setGeneric("exons", function(x, ...) standardGeneric("exons"))
 
 setGeneric("cds", function(x, ...) standardGeneric("cds"))
 
+
 setGeneric("microRNAs", function(x) standardGeneric("microRNAs"))
 
 setGeneric("tRNAs", function(x) standardGeneric("tRNAs"))
+
+setGeneric("promoters", signature="x",
+    function(x, upstream=2000, downstream=200, ...)
+        standardGeneric("promoters"))
 
 setGeneric("transcriptsBy", signature="x",
     function(x, by=c("gene", "exon", "cds"), ...)
@@ -73,11 +78,4 @@ setGeneric("determineDefaultSeqnameStyle",
            function(x) standardGeneric("determineDefaultSeqnameStyle"))
 setGeneric("seqnameStyle<-", signature="x",
            function(x, value) standardGeneric("seqnameStyle<-"))
-
-## promoterRanges
-setGeneric("promoterRanges",
-    signature = "x",
-    function(x, upstream = 500, downstream = 500, ...)
-        standardGeneric("promoterRanges")
-)
 

@@ -1,5 +1,5 @@
 ### =========================================================================
-### The transcripts(), exons() and cds() extractors
+### The transcripts(), exons(), cds() and promoters() extractors
 ### -------------------------------------------------------------------------
 
 
@@ -441,8 +441,40 @@ setMethod("cds", "TranscriptDb",
         }
 )
 
+setMethod("promoters", "TranscriptDb",
+    function(x, upstream=2000, downstream=200, ...)
+    {
+        gr <- transcripts(x, ...)
+        promoters(gr, upstream=upstream, downstream=downstream, ...)
+    }
+) 
 
-
+setMethod("promoters", "GenomicRanges",
+    function(x, upstream=2000, downstream=200, ...)
+    {
+        if (upstream < 0 | downstream < 0)
+            stop("'upstream' and 'downstream' must be integers >= 0")
+        if (any(strand(x) == "*"))
+            warning("'*' ranges will be treated as '+'")
+        if (round(upstream) != upstream) {
+            warning("'upstream' rounded to nearest integer value")
+            upstream <- round(upstream)
+        }
+        if (round(downstream) != downstream) {
+            warning("'downstream' rounded to nearest integer value")
+            downstream <- round(downstream)
+        }
+        on_plus <- which(strand(x) == "+" | strand(x) == "*")
+        on_plus_TSS <- start(x)[on_plus]
+        start(x)[on_plus] <- on_plus_TSS - upstream
+        end(x)[on_plus] <- on_plus_TSS + downstream - 1L
+        on_minus <- which(strand(x) == "-")
+        on_minus_TSS <- end(x)[on_minus]
+        end(x)[on_minus] <- on_minus_TSS + upstream
+        start(x)[on_minus] <- on_minus_TSS - downstream + 1L
+        x
+    }
+)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extractors for features in other databases.

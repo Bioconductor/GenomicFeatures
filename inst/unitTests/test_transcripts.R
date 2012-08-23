@@ -121,3 +121,55 @@ test_cds <- function()
     want_grg <- GenomicFeatures:::.assignMetadataList(want_grg, txdb)
     checkIdentical(get_grg, want_grg)
 }
+
+test_promoters <- function()
+{
+    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+                   package="GenomicFeatures"))
+
+    ## empty
+    checkTrue(length(promoters(GRanges())) == 0)
+
+    ## upstream / downstream
+    gr <- GRanges("chr1", IRanges(c(5, 10), width=1), "+")
+    target <- GRanges("chr1", IRanges(c(5, 10), width=0), "+")
+    current <- promoters(gr, 0, 0)
+    checkIdentical(target, current)
+    strand(gr) <- c("+", "-")
+    target <- IRanges(c(3, 11), width=2)
+    current <- ranges(promoters(gr, 2, 0))
+    checkIdentical(target, current)
+    target <- IRanges(c(5, 9), width=2)
+    current <- ranges(promoters(gr, 0, 2))
+    checkIdentical(target, current)
+
+    gr <- GRanges("chr1", IRanges(0, width=6), "+")
+    target <- GRanges("chr1", IRanges(-3, 2), "+")
+    current <- promoters(gr, 3, 3)
+    checkIdentical(target, current)
+    checkTrue(validObject(current) == TRUE)
+    gr <- GRanges("chr1", IRanges(rep(10, 3), width=6), c("+", "-", "*"))
+    target <- GRanges("chr1", IRanges(c(7, 13, 7), c(12, 18, 12)), 
+        c("+", "-", "*"))
+    current <- suppressWarnings(promoters(gr, 3, 3))
+    checkIdentical(target, current)
+
+    ## treat "*" as "+" 
+    gr <- GRanges("chr1", IRanges(5, width=6), "+")
+    target <- GRanges("chr1", IRanges(2, 7), "+")
+    current <- promoters(gr, 3, 3)
+    checkIdentical(target, current)
+    strand(gr) <- "*"
+    strand(target) <- "*"
+    current <- suppressWarnings(promoters(gr, 3, 3))
+    checkIdentical(target, current)
+
+    ## metadata 
+    p <- suppressWarnings(promoters(txdb))
+    checkEquals(c("tx_id", "tx_name"), colnames(mcols(p)))
+    gr <- GRanges("chr1", IRanges(0, width=6), names="A", strand="+", score=99)
+    current <- promoters(gr, 3, 3)
+    checkIdentical(mcols(gr), mcols(current))
+    checkIdentical(names(gr), names(current))
+    checkIdentical(seqinfo(gr), seqinfo(current))
+}

@@ -353,32 +353,3 @@ makeExonRankCol <- function(exon_count, tx_strand)
     )
     unlist(ans)
 }
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### getPromoterRanges
-###
-
-setMethod("promoterRanges", "GRangesList",
-    function(x, upstream = 500, downstream = 500, ...)
-    {
-        gr <- callGeneric(unlist(x, use.names=FALSE), upstream, downstream, ...)
-        grl <- split(gr, togroup(x))
-        names(grl) <- names(x)
-        grl 
-   } 
-)
-
-setMethod("promoterRanges", "GRanges",
-    function(x, upstream = 500, downstream = 500, ...) 
-    {
-        ## FIXME : add check for ranges that extend beyond 0 
-        str <- as.logical(strand(x) == "-") 
-        fix <- rep("start", length(x))
-        fix[str] <- "end"
-        u <- flank(x, upstream, start=!str)
-        d <- resize(x, downstream, fix=fix)
-        punion(u, d)
-    }
-)
-
-
