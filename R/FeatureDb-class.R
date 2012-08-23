@@ -21,7 +21,7 @@
     ## "metadata"
     tablenames <- dbListTables(conn)
     tablename <- tablenames[!tablenames %in% "metadata"]
-    .valid.colnames(conn, tablename, colnames)
+    AnnotationDbi:::.valid.colnames(conn, tablename, colnames)
 }
 
 .valid.feature.table <- function(conn)
@@ -38,7 +38,8 @@
 .valid.FeatureDb <- function(x)
 {
     conn <- AnnotationDbi:::dbConn(x)
-    c(.valid.metadata.table(conn,"FeatureDb"), 
+    c(AnnotationDbi:::.valid.metadata.table(conn, "Db type",
+                                            "FeatureDb"),
       .valid.feature.table(conn))
 }
 

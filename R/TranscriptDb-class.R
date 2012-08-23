@@ -160,7 +160,9 @@ makeFeatureColnames <- function(feature_shortname)
 .valid.TranscriptDb <- function(x)
 {
     conn <- AnnotationDbi:::dbConn(x)
-    c(AnnotationDbi:::.valid.metadata.table(conn, DB_TYPE_VALUE),
+
+    c(AnnotationDbi:::.valid.metadata.table(conn, DB_TYPE_NAME,
+                                            DB_TYPE_VALUE),
       .valid.transcript.table(conn),
       .valid.exon.table(conn),
       .valid.cds.table(conn),
