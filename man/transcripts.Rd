@@ -79,14 +79,14 @@ tRNAs(x)
     column in the element metadata of the returned object. 
   }
   \item{upstream}{
-    For \code{promoters()} : An \code{integer} value indicating the
+    For \code{promoters()} : An \code{integer(1)} value indicating the
     number of bases upstream from the transcription start site. The
     upstream range extends from this value up to, but not including, 
     the transcription start site. The upstream range is merged with 
     the downstream range to form the full promoter region.
   }
   \item{downstream}{
-    For \code{promoters()} : An \code{integer} value indicating the 
+    For \code{promoters()} : An \code{integer(1)} value indicating the 
     number of bases downstream from the transcription start site. The
     downstream range extends from this value up to, and including, 
     the transcription start site. The downstream range is merged with 

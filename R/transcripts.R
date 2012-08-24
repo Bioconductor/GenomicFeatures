@@ -452,18 +452,18 @@ setMethod("promoters", "TranscriptDb",
 setMethod("promoters", "GenomicRanges",
     function(x, upstream=2000, downstream=200, ...)
     {
+        if (!isSingleNumber(upstream))
+            stop("'upstream' must be a single integer")
+        if (!is.integer(upstream))
+            upstream <- as.numeric(upstream)
+        if (!isSingleNumber(downstream))
+            stop("'downstream' must be a single integer")
+        if (!is.integer(downstream))
+            downstream <- as.numeric(downstream)
         if (upstream < 0 | downstream < 0)
             stop("'upstream' and 'downstream' must be integers >= 0")
         if (any(strand(x) == "*"))
             warning("'*' ranges will be treated as '+'")
-        if (round(upstream) != upstream) {
-            warning("'upstream' value rounded to nearest integer")
-            upstream <- round(upstream)
-        }
-        if (round(downstream) != downstream) {
-            warning("'downstream' value rounded to nearest integer")
-            downstream <- round(downstream)
-        }
         on_plus <- which(strand(x) == "+" | strand(x) == "*")
         on_plus_TSS <- start(x)[on_plus]
         start(x)[on_plus] <- on_plus_TSS - upstream
