@@ -463,7 +463,7 @@ setMethod("promoters", "GenomicRanges",
         if (upstream < 0 | downstream < 0)
             stop("'upstream' and 'downstream' must be integers >= 0")
         if (any(strand(x) == "*"))
-            warning("'*' ranges will be treated as '+'")
+            warning("'*' ranges were treated as '+'")
         on_plus <- which(strand(x) == "+" | strand(x) == "*")
         on_plus_TSS <- start(x)[on_plus]
         start(x)[on_plus] <- on_plus_TSS - upstream
