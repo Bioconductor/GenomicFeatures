@@ -45,9 +45,12 @@ tRNAs(x)
 \S4method{tRNAs}{TranscriptDb}(x)
 }
 
-\arguments{  
+\arguments{ 
   \item{x}{
     A \link{TranscriptDb} object.
+
+    For \code{promoters()}, \code{x} can be a \code{TranscriptDb} or 
+    a \code{GRanges} object.
   }
   \item{...}{
     Arguments to be passed to or from methods.
@@ -103,17 +106,22 @@ tRNAs(x)
   \code{\link{exonsByOverlaps}}, and \code{\link{cdsByOverlaps}}
   functions.
 
-  \code{promoters()} returns a \code{GRanges} of promoter ranges
-  defined by the \code{upstream} and \code{downstream} arguments.
-  Note that \code{*} strand ranges are treated as \code{+}. For
-  the \code{promoter,GenomicRanges}-method, it is possible for 
-  the resulting \code{GRanges} to have non-positive start values. 
-  This occurs when the \code{seqlength} values are \code{NA} and
-  (TSS - \code{upstream}) < 1. In the equal but opposite case, the 
-  \code{end} values of the ranges may extend beyond the chromosome 
-  end when (TSS + \code{downstream} + 1) > 'end of chromosome'. When
-  \code{seqlengths} are present this does not occur and the returned
-  ranges are kept within the bounds of the defined \code{seqlengths}.
+  The \code{promoters()} function computes user-defined promoter regions
+  for the transcripts in a \code{TranscriptDb} or \code{GRanges}
+  object. When a \code{TranscriptDb} is supplied the \code{transcripts} 
+  extractor is called; when a \code{GRanges} is supplied it is 
+  expected that these are transcript ranges. The return object is a 
+  \code{GRanges} of promoter regions around the transcription start 
+  site the span of which is defined by \code{upstream} and \code{downstream}.
+  Ranges on the \code{*} strand are treated the same as those on the
+  \code{+} strand. When no seqlengths are present in the \code{TranscriptDb} 
+  or \code{GRanges} (i.e., seqlength is \code{NA}) it is possible to have
+  non-positive start values in the promoter ranges. This occurs when 
+  (TSS - \code{upstream}) < 1. In the equal but opposite case, the \code{end}
+  values of the ranges may extend beyond the chromosome end when 
+  (TSS + \code{downstream} + 1) > 'chromosome end'. When \code{seqlengths} 
+  are not \code{NA} the promoter ranges are kept within the bounds of the 
+  defined \code{seqlengths}.
 }
 
 \value{ a GRanges object }
