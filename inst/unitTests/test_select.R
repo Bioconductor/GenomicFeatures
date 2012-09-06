@@ -124,8 +124,8 @@ test_select <- function(){
   checkTrue(dim(res)[1]>0)
   checkTrue(dim(res)[2]==length(cols))
   checkIdentical(c("GENEID"), colnames(res))
-  #checkTrue(length(res$GENEID)==length(keys))
-  #checkIdentical(res$GENEID, keys)
+  checkTrue(length(res$GENEID)==length(keys))
+  checkIdentical(res$GENEID, keys)
 
   keys = head(keys(txdb, "TXID"))
   cols = c("TXID")
@@ -142,7 +142,7 @@ test_select <- function(){
   checkTrue(dim(res)[1]>0)
   checkTrue(dim(res)[2]==length(cols))
   checkIdentical(c("GENEID","TXID"), colnames(res))
-  #checkTrue(length(unique(res$GENEID))==length(keys))
+  checkTrue(length(unique(res$GENEID))==length(keys))
 
   keys = head(keys(txdb, "GENEID"))
   cols = cols = c("GENEID","TXID", "EXONRANK")
@@ -150,7 +150,7 @@ test_select <- function(){
   checkTrue(dim(res)[1]>0)
   checkTrue(dim(res)[2]==length(cols))
   checkIdentical(c("GENEID","TXID","EXONRANK"), colnames(res))
-  #checkTrue(length(unique(res$GENEID))==length(keys))
+  checkTrue(length(unique(res$GENEID))==length(keys))
 
   keys = head(keys(txdb, "GENEID"))
   cols = c("GENEID","TXID", "EXONRANK","CDSID")
@@ -158,7 +158,7 @@ test_select <- function(){
   checkTrue(dim(res)[1]>0)
   checkTrue(dim(res)[2]==length(cols))
   checkIdentical(c("GENEID","CDSID","TXID","EXONRANK"), colnames(res))
-  #checkTrue(length(unique(res$GENEID))==length(keys))
+  checkTrue(length(unique(res$GENEID))==length(keys))
 
   ## It's really cosmetic but: should the order of the final data.frame match
   ## the order of the cols?
@@ -171,7 +171,7 @@ test_select <- function(){
   checkTrue(dim(res)[1]>0)
   checkTrue(dim(res)[2]==length(cols))
   checkIdentical(c("GENEID","EXONID","TXID","EXONRANK"), colnames(res))
-  #checkTrue(length(unique(res$GENEID))==length(keys))
+  checkTrue(length(unique(res$GENEID))==length(keys))
 
   keys = head(keys(txdb, "GENEID"))
   cols = c("GENEID","TXID", "EXONRANK", "EXONID", "CDSID")
@@ -179,7 +179,7 @@ test_select <- function(){
   checkTrue(dim(res)[1]>0)
   checkTrue(dim(res)[2]==length(cols))
   checkIdentical(c("GENEID","CDSID","EXONID","TXID","EXONRANK"), colnames(res))
-  #checkTrue(length(unique(res$GENEID))==length(keys))
+  checkTrue(length(unique(res$GENEID))==length(keys))
   
   keys = head(keys(txdb, "TXID"))
   cols = c("TXID", "EXONRANK", "EXONID", "CDSID")
@@ -237,7 +237,7 @@ test_select <- function(){
   
   keys = head(keys(txdb, "CDSNAME"))
   cols = c("GENEID","TXNAME", "TXID", "CDSNAME")
-  checkException(res <- select(txdb, keys, cols, keytype="CDSNAME"))
+  checkException(select(txdb, keys, cols, keytype="CDSNAME"), silent=TRUE)
   
   keys = head(keys(txdb, "CDSID"))
   cols = c("GENEID","TXNAME", "TXID", "CDSNAME")
