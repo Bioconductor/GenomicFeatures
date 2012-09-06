@@ -236,7 +236,7 @@
   joinType <- .reverseColAbbreviations(x, keytype)
   if(dim(res)[1]>0){
     res <- AnnotationDbi:::.resort(res, keys, joinType,
-                                   .reverseColAbbreviations(x,cnames))
+                                   .reverseColAbbreviations(x,cnames), x)
   }
   
   ## Then I need to filter out rows of NAs
