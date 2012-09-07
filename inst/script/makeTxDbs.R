@@ -72,7 +72,7 @@ makeTxDbPackageFromBiomart(version=version,
                           maintainer=maintainer,
                           author=author,
 		 	  destDir=TxDbOutDir,
-                          biomart="plants_mart_12",
+                          biomart="plants_mart_14",
                           dataset="athaliana_eg_gene")
                                          
 
@@ -83,6 +83,14 @@ makeTxDbPackageFromUCSC(version=version,
 			destDir=TxDbOutDir,
                         genome="rn4",
                         tablename="ensGene")
+
+## Rat rn5 ensembl track
+makeTxDbPackageFromUCSC(version=version,
+                        maintainer=maintainer,
+                        author=author,
+			destDir=TxDbOutDir,
+                        genome="rn5",
+                        tablename="refGene")
 
 
 
