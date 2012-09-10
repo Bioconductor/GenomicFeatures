@@ -13,4 +13,4 @@ provider: @PROVIDER@
 provider_version: @PROVIDERVERSION@
 release_date: @RELEASEDATE@
 resource_url: @SOURCEURL@
-biocViews: AnnotationData, Genetics, @ORGANISMBIOCVIEW@
+biocViews: AnnotationData, Genetics, TranscriptDb, @ORGANISMBIOCVIEW@
