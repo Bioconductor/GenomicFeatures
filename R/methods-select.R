@@ -188,6 +188,13 @@
     stop(paste("There do not appear to be any keys",
                "for the keytype you have specified."))
     }
+
+  ## keys should NOT be NAs, but if they are, warn and then filter them.
+  if(any(is.na(keys))) {
+    warning(paste("NA keys have been dropped"))
+    keys <- keys[!is.na(keys)]
+  }
+
   ## we used to add TXID to cnames, which forces splicing to always be included
   ## Splicing is a almost always needed, but almost never requested.
   ## cnames <- unique(c(cols, "TXID", keytype))
@@ -236,13 +243,13 @@
   joinType <- .reverseColAbbreviations(x, keytype)
   if(dim(res)[1]>0){
     res <- AnnotationDbi:::.resort(res, keys, joinType,
-                                   .reverseColAbbreviations(x,cnames), x)
+                                   .reverseColAbbreviations(x,cnames))
   }
   
-  ## Then I need to filter out rows of NAs
-  res <- res[!apply(is.na(res),1,all),,drop=FALSE]
-  ## always reset rownames after removing rows
-  rownames(res) <- NULL
+#  ## Then I need to filter out rows of NAs
+#  res <- res[!apply(is.na(res),1,all),,drop=FALSE]
+#  ## always reset rownames after removing rows
+#  rownames(res) <- NULL
   
   ## Then put the user preferred headers onto the table
   fcNames <- .makeColAbbreviations(x)
