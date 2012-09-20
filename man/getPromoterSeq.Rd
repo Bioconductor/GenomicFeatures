@@ -54,9 +54,15 @@
   library(TxDb.Hsapiens.UCSC.hg19.knownGene)
   library(BSgenome.Hsapiens.UCSC.hg19)
  
-  e2f3 <- '1871'  # entrez geneID for a cell cycle control transcription factor
-  transcriptCoordsByGene.GRangesList <- transcriptsBy (TxDb.Hsapiens.UCSC.hg19.knownGene, by = "gene") [e2f3]
-  promoter.seqs <- getPromoterSeq (transcriptCoordsByGene.GRangesList, Hsapiens, upstream=10, downstream=0)
+  e2f3 <- "1871"  # entrez geneID for a cell cycle control transcription
+                  # factor, chr6 on the plus strand
+
+  transcriptCoordsByGene.GRangesList <-
+     transcriptsBy (TxDb.Hsapiens.UCSC.hg19.knownGene, by = "gene") [e2f3]
+    # a GrangesList of length one, describing three transcripts
+
+  promoter.seqs <- getPromoterSeq (transcriptCoordsByGene.GRangesList,
+                                   Hsapiens, upstream=10, downstream=0)
     # DNAStringSetList of length 1
     # [["1871"]] GCTTCCTGGA GCTTCCTGGA CGGAGCCAGG
 
