@@ -2,21 +2,12 @@
 ## The methods in this file are all about using the seqnames.db package in
 ## conjunction with Transcript.Db objects.
 
-## Helper method to allow extraction of seqnames from TranscriptDb
-setMethod("seqnames", "TranscriptDb",
-          function(x){
-            as.character(t(AnnotationDbi:::dbEasyQuery(
-                                               AnnotationDbi:::dbConn(x),
-                                               "SELECT chrom FROM chrominfo")))
-          }
-)
-
 ## testSeqnameStyle helper
 .determineDefaultSeqnameStyle <- function(x){
   ## we will have to extract the organsim name  
   species <- species(x)
   ## and we have to extract the seqnames (from the TxDb)
-  seqnames <- seqnames(x)
+  seqnames <- seqlevels(x)
   ## Then for all the possible styles, pick one that works and return it...
   styles <- supportedSeqnameStyles()[[sub(" ","_",species)]]
   styleIdx <- testSeqnames(styles=styles,seqnames=seqnames,species=species)
@@ -35,29 +26,11 @@ setMethod("determineDefaultSeqnameStyle", "TranscriptDb",
           function(x) .determineDefaultSeqnameStyle(x)
 )
 
-
 ## Tests:
 ## library(TxDb.Athaliana.BioMart.plantsmart12); txdb = TxDb.Athaliana.BioMart.plantsmart12; determineDefaultSeqnameStyle(txdb)
 
 ## library(TxDb.Hsapiens.UCSC.hg19.knownGene); txdb = TxDb.Hsapiens.UCSC.hg19.knownGene; determineDefaultSeqnameStyle(txdb)
 
-
-
-## getter
-.getseqnameStyle  <- function(x) {
-  ## in the event that the slot has not been set yet: set it up
-  if(length(x$seqnameStyle)==0){
-    return(determineDefaultSeqnameStyle(x))
-  }else{
-    return(x$seqnameStyle)
-  }
-}
-
-setMethod("seqnameStyle", "TranscriptDb",
-          function(x) .getseqnameStyle(x)
-)
-
-## setter
 .setseqnameStyle <- function(x, value){
   species <- species(txdb)
   if (!is.null(value) && length(value==1) &&
@@ -69,10 +42,9 @@ setMethod("seqnameStyle", "TranscriptDb",
   x
 }
 
-setReplaceMethod("seqnameStyle", "TranscriptDb",
-          function(x,value) .setseqnameStyle(x,value)
-)
-
+#setReplaceMethod("seqnameStyle", "TranscriptDb",
+#          function(x,value) .setseqnameStyle(x,value)
+#)
 
 ## Tests:
 ## library(TxDb.Athaliana.BioMart.plantsmart12); txdb = TxDb.Athaliana.BioMart.plantsmart12; seqnameStyle(txdb);

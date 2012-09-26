@@ -491,30 +491,10 @@
     dbEasyPreparedQuery(conn, sql, table)
 }
 
-## ## potential testSeqnameStyle helper
-## .determineDefaultSeqnameStyle <- function(conn, metadata){
-##   ## we will have to extract the organsim name
-##   species <-as.character(metadata[metadata$name=="Genus and Species",][2]$value)
-##   ## and we have to extract the seqnames
-##   seqnames <- as.character(t(dbEasyQuery(conn, "select chrom from chrominfo")))
-##   ## Then for all the possible styles, pick one that works and return it...
-##   styles <- supportedSeqnameStyles()[[sub(" ","_",species)]]
-##   styleIdx <- testSeqnames(styles=styles,seqnames=seqnames,species=species)
-##   styles <- styles[styleIdx]
-##   if(length(styles) > 0){
-##     return(styles)[1] ## just return the 1st "true" one
-##     ## If there were multiple matches the distinction would not be relevant
-##   }else{
-##     warning("No styles in the seqnames.db database match what is in this TranscriptDb database.  It might be worthwhile to add a the new style to that database.")
-##     return(NA)
-##   }
-## }
-
 .writeMetadataTable <- function(conn, metadata)
 {
-    ## seqNameStyleDefault <- .determineDefaultSeqnameStyle(conn, metadata)
     transcript_nrow <- dbEasyQuery(conn,
-                           "SELECT COUNT(*) FROM transcript")[[1L]]
+                                   "SELECT COUNT(*) FROM transcript")[[1L]]
     exon_nrow <- dbEasyQuery(conn, "SELECT COUNT(*) FROM exon")[[1L]]
     cds_nrow <- dbEasyQuery(conn, "SELECT COUNT(*) FROM cds")[[1L]]
     thispkg_version <- installed.packages()['GenomicFeatures', 'Version']
@@ -525,7 +505,6 @@
         ncol=2, byrow=TRUE
     )
     mat2 <- matrix(c(
-        ## "seqnameStyleDefault", seqNameStyleDefault,
         "transcript_nrow", transcript_nrow,
         "exon_nrow",       exon_nrow,
         "cds_nrow",        cds_nrow,

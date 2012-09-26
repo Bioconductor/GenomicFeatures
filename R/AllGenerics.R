@@ -76,6 +76,4 @@ setGeneric("isActiveSeq<-",function(x, value) standardGeneric("isActiveSeq<-"))
 ## generics for seqnamStyle and friends
 setGeneric("determineDefaultSeqnameStyle",
            function(x) standardGeneric("determineDefaultSeqnameStyle"))
-setGeneric("seqnameStyle<-", signature="x",
-           function(x, value) standardGeneric("seqnameStyle<-"))
 

@@ -10,9 +10,6 @@
 \alias{metadata,TranscriptDb-method}
 \alias{metadata,FeatureDb-method}
 \alias{seqinfo,TranscriptDb-method}
-\alias{seqnameStyle<-}
-\alias{seqnameStyle<-,TranscriptDb-method}
-\alias{seqnameStyle,TranscriptDb-method}
 \alias{determineDefaultSeqnameStyle}
 \alias{determineDefaultSeqnameStyle,TranscriptDb-method}
 \alias{show,TranscriptDb-method}
@@ -61,25 +58,27 @@
   \describe{
     \item{}{
       \code{metadata(x)}:
-      Returns \code{x}'s metadata in a data frame.
+      Return \code{x}'s metadata in a data frame.
     }
     \item{}{
       \code{seqinfo(x)}:
-      Gets the information about the underlying sequences as a
+      Get the information about the underlying sequences as a
       \link[GenomicRanges]{Seqinfo} object.
       Note that there is no \code{seqinfo} setter for TranscriptDb
       objects (this information is stored in the SQLite db, and,
       in normal use, this db is accessed in read-only mode).
     }
     \item{}{
-      \code{seqnameStyle(x)}, \code{seqnameStyle(x) <- value}:
-      The getter returns the matching seqname style for \code{x}.  The
-      setter will check the value to make sure that it is a legitimate
-      style and if so it will set the flag in the object to that style.
+      \code{seqnameStyle(x)}:
+      List the matching seqname styles for \code{x}.
+      \code{seqnameStyle(x)} is equivalent to \code{seqnameStyle(seqinfo(x))}.
+      Note that this information is not stored in \code{x} but inferred
+      by looking up \code{seqlevels(x)} against a seqname style database
+      stored in the seqnames.db metadata package (required).
     }
     \item{}{
       \code{determineDefaultSeqnameStyle(x)}:
-      Lists the default seqname style for the database in \code{x}.
+      Determine the default seqname style for the database in \code{x}.
     }
     \item{}{
       \code{as.list(x)}:
@@ -91,7 +90,7 @@
     }
     \item{}{
       \code{isActiveSeq(x)}:
-      Returns the currently active sequences for this txdb object as a
+      Return the currently active sequences for this txdb object as a
       named logical vector.  Only active sequences will be tapped when
       using the supplied accessor methods.  Inactive sequences will be
       ignored.  By default, all available sequences will be active.
@@ -109,19 +108,19 @@
     }
     \item{}{
       \code{keys(x, keytype)}:
-      returns keys for the database contained in the \code{TranscriptDb}
+      Return keys for the database contained in the \code{TranscriptDb}
       object .  By default it will return the "TXNAME" keys for the database,
       but if used with the \code{keytype} argument, it will return the keys
       from that keytype.
     }
     \item{}{
       \code{cols(x)}:
-      shows which kinds of data can be returned for the
+      Show which kinds of data can be returned for the
       \code{TranscriptDb} object.
     }
     \item{}{
       \code{select(x, keys, cols, keytype)}:
-      When all the appropriate arguments are specifiedm \code{select}
+      When all the appropriate arguments are specified \code{select}
       will retrieve the matching data as a data.frame based on
       parameters for selected \code{keys} and \code{cols} and
       \code{keytype} arguments.

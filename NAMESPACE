@@ -2,7 +2,9 @@ import(methods)
 
 importFrom(utils, download.file, installed.packages, read.table)
 
-importFrom(Biobase, createPackage)
+import(BiocGenerics)
+import(IRanges)
+import(GenomicRanges)
 
 importMethodsFrom(DBI, dbCommit, dbConnect,
                   dbDisconnect, dbExistsTable, dbGetQuery,
@@ -11,12 +13,9 @@ importMethodsFrom(DBI, dbCommit, dbConnect,
 importFrom(RSQLite, SQLite, sqliteCopyDatabase, SQLITE_RO, sqliteQuickSQL)
 importMethodsFrom(RSQLite, dbBeginTransaction, dbGetPreparedQuery)
 
-import(BiocGenerics)
-import(IRanges)
+importFrom(RCurl, getURL)
 
-importFrom(GenomicRanges, GRanges, Seqinfo, seqinfo, genome, "genome<-",
-           findSpliceOverlaps, seqnameStyle)
-importMethodsFrom(GenomicRanges, strand, findSpliceOverlaps)
+importFrom(Biobase, createPackage)
 
 importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
 importFrom(Biostrings, "masks<-")
@@ -26,8 +25,6 @@ importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
 
 importFrom(rtracklayer, browserSession, ucscTableQuery,
            tableNames, getTable, trackNames, ucscSchema, asBED, asGFF, import)
-
-importFrom(RCurl, getURL)
 
 importFrom(AnnotationDbi, loadDb, saveDb)
 
@@ -49,7 +46,6 @@ export(
   getChromInfoFromBiomart,
   makeTranscriptDbFromBiomart,
   makeTranscriptDbFromGFF,
-  seqinfo,
   transcripts,
   exons,
   cds,
@@ -78,7 +74,6 @@ export(
   makeFDbPackageFromUCSC,	
   features,
   supportedMiRBaseBuildValues,
-  "seqnameStyle<-",
   getPromoterSeq
 )
 
@@ -87,7 +82,7 @@ exportMethods(
   metadata,
   show,
   as.list,
-  seqinfo,
+  seqinfo, "seqinfo<-",
   transcripts,
   exons,
   cds,
@@ -107,7 +102,6 @@ exportMethods(
   "isActiveSeq<-",
   asBED, asGFF,
   determineDefaultSeqnameStyle,
-  seqnameStyle, "seqnameStyle<-",
   findSpliceOverlaps,
   getPromoterSeq
 )
