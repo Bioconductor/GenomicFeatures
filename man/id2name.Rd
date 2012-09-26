@@ -41,7 +41,12 @@ id2name(txdb, feature.type=c("tx", "exon", "cds"))
 ids and the values the external names.}
 \author{H. Pages}
 \seealso{
-  \link{TranscriptDb}, \code{\link{transcripts}}, \code{\link{transcriptsBy}}
+  \itemize{
+    \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
+          and \code{\link{transcriptsByOverlaps}}, for how to extract
+          genomic features from a \link{TranscriptDb} object.
+    \item The \link{TranscriptDb} class.
+  }
 }
 \examples{
   txdb1_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",

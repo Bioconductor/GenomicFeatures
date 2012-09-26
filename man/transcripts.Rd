@@ -131,9 +131,17 @@ tRNAs(x)
 }
 
 \seealso{
-  \link{TranscriptDb},
-  \code{\link{id2name}}, \code{\link{transcriptsBy}},
-  \code{\link{transcriptsByOverlaps}}
+  \itemize{
+    \item \code{\link{transcriptsBy}} and \code{\link{transcriptsByOverlaps}}
+          for more ways to extract genomic features
+          from a \link{TranscriptDb} object.
+    \item \link[GenomicFeatures]{select-methods} for how to use the
+          simple "select" interface to extract information from a
+          \link{TranscriptDb} object.
+    \item \code{\link{id2name}} for mapping \link{TranscriptDb} internal ids
+          to external names for a given feature type.
+    \item The \link{TranscriptDb} class.
+  }
 }
 
 \examples{
@@ -163,3 +171,5 @@ gr <- GRanges("chr1", IRanges(rep(10, 3), width=6), c("+", "-", "*"))
 gr
 promoters(gr, 2, 2)
 }
+
+\keyword{methods}

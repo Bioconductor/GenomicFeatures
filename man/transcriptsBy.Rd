@@ -91,8 +91,17 @@ threeUTRsByTranscript(x, ...)
   M. Carlson, P. Aboyoun and H. Pages
 }
 \seealso{
-  \link{TranscriptDb}, \code{\link{transcripts}}, \code{\link{id2name}},
-  \code{\link{transcriptsByOverlaps}}
+  \itemize{
+    \item \code{\link{transcripts}} and \code{\link{transcriptsByOverlaps}}
+          for more ways to extract genomic features
+          from a \link{TranscriptDb} object.
+    \item \link[GenomicFeatures]{select-methods} for how to use the
+          simple "select" interface to extract information from a
+          \link{TranscriptDb} object.
+    \item \code{\link{id2name}} for mapping \link{TranscriptDb} internal ids
+          to external names for a given feature type.
+    \item The \link{TranscriptDb} class.
+  }
 }
 \examples{
   txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
@@ -121,3 +130,4 @@ threeUTRsByTranscript(x, ...)
   fiveUTRsByTranscript(txdb, use.names=TRUE)  # more informative group names
 }
 
+\keyword{methods}

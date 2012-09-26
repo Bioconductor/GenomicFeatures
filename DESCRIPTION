@@ -52,8 +52,8 @@ Collate: AllClasses.R
          features.R
          extractTranscriptsFromGenome.R
          makeTxDbPackage.R
-         methods-seqnames.R
-         methods-select.R
-         methods-getPromoterSeq.R
+         seqnames-methods.R
+         select-methods.R
+         getPromoterSeq-methods.R
          test_GenomicFeatures_package.R
 biocViews: Genetics, Infrastructure, Annotation, HighThroughputSequencing

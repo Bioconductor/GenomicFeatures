@@ -65,7 +65,17 @@ cdsByOverlaps(x, ranges,
   P. Aboyoun
 }
 \seealso{
-  \link{TranscriptDb}, \code{\link{transcripts}}
+  \itemize{
+    \item \code{\link{transcripts}} and \code{\link{transcriptsBy}}
+          for more ways to extract genomic features
+          from a \link{TranscriptDb} object.
+    \item \link[GenomicFeatures]{select-methods} for how to use the
+          simple "select" interface to extract information from a
+          \link{TranscriptDb} object.
+    \item \code{\link{id2name}} for mapping \link{TranscriptDb} internal ids
+          to external names for a given feature type.
+    \item The \link{TranscriptDb} class.
+  }
 }
 \examples{
   txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
@@ -75,3 +85,5 @@ cdsByOverlaps(x, ranges,
                 strand = strand(rep("-",2)))
   transcriptsByOverlaps(txdb, gr)
 }
+
+\keyword{methods}
