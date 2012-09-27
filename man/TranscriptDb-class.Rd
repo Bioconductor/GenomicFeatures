@@ -104,8 +104,6 @@
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
           TranscriptDb object.
-    \item \code{\link{id2name}} for mapping TranscriptDb internal ids
-          to external names for a given feature type.
     \item The \link[GenomicRanges]{Seqinfo} class in the GenomicRanges package.
   }
 }

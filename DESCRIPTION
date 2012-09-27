@@ -39,12 +39,13 @@ Collate: AllClasses.R
          Ensembl.utils.R
          TranscriptDb-class.R
          FeatureDb-class.R
-         saveFeatures.R
          makeTranscriptDb.R
          makeTranscriptDbFromUCSC.R
          makeTranscriptDbFromBiomart.R
          makeTranscriptDbFromGFF.R
          makeFeatureDbFromUCSC.R
+         saveFeatures.R
+         id2name.R
          transcripts.R
          transcriptsByOverlaps.R
          transcriptsBy.R
