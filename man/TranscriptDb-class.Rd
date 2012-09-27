@@ -3,17 +3,10 @@
 \alias{TranscriptDb-class}
 \alias{class:TranscriptDb}
 \alias{TranscriptDb}
-\alias{FeatureDb-class}
-\alias{class:FeatureDb}
-\alias{FeatureDb}
 
-\alias{metadata,TranscriptDb-method}
-\alias{metadata,FeatureDb-method}
 \alias{seqinfo,TranscriptDb-method}
 \alias{determineDefaultSeqnameStyle}
 \alias{determineDefaultSeqnameStyle,TranscriptDb-method}
-\alias{show,TranscriptDb-method}
-\alias{show,FeatureDb-method}
 \alias{isActiveSeq}
 \alias{isActiveSeq<-}
 \alias{isActiveSeq,TranscriptDb-method}
@@ -26,26 +19,19 @@
 \title{TranscriptDb objects}
 
 \description{
-  The  TranscriptDb class is a container for storing transcript
+  The TranscriptDb class is a container for storing transcript
   annotations.
-  The FeatureDb class is a container for storing more generic
-  GenomicFeature annotations.
+
+  See \code{?\link{FeatureDb}} for a more generic container for storing
+  genomic locations of an arbitrary type of genomic features.
 
   See \code{?\link{makeTranscriptDbFromUCSC}} and
   \code{?\link{makeTranscriptDbFromBiomart}} for making a
   TranscriptDb object from the UCSC or BioMart sources.
-
-  See \code{?\link{makeFeatureDbFromUCSC}} for making a
-  FeatureDb object from the UCSC or BioMart sources.
-  
-  See \code{?\link{saveDb}} and \code{?\link{loadDb}} for
-  saving and loading the database contents of a TranscriptDb or FeatureDb
-  object.
 }
 
 \section{Methods}{
-  In the code snippets below, \code{x} is a TranscriptDb object. For the
-  metadata and show methods, there is also support for FeatureDb objects.
+  In the code snippets below, \code{x} is a TranscriptDb object.
 
   \describe{
     \item{}{
@@ -94,19 +80,19 @@
       named logical vector.
     }
   }
-
-  See \code{?\link{transcripts}}, \code{?\link{transcriptsByOverlaps}},
-  \code{?\link{id2name}} and \code{?\link{transcriptsBy}} for other useful
-  operations on TranscriptDb objects.
 }
 
 \author{H. Pages, Marc Carlson}
 
 \seealso{
   \itemize{
+    \item The \link{FeatureDb} class for storing
+          genomic locations of an arbitrary type of genomic features.
     \item \code{\link{makeTranscriptDbFromUCSC}} and
           \code{\link{makeTranscriptDbFromBiomart}} for convenient ways to
           make TranscriptDb objects from UCSC or Biomart online resources.
+    \item \code{\link{saveDb}} and \code{\link{loadDb}} for
+          saving and loading the database content of a TranscriptDb object.
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
           and \code{\link{transcriptsByOverlaps}},
           for how to extract genomic features from a TranscriptDb object.

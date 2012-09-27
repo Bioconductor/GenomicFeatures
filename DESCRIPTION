@@ -35,11 +35,11 @@ Suggests: rtracklayer, biomaRt,
           pasillaBamSubset (>= 0.0.5),
           RUnit
 Collate: AllClasses.R
-         AllGenerics.R
          utils.R
          Ensembl.utils.R
          TranscriptDb-class.R
          FeatureDb-class.R
+         saveFeatures.R
          makeTranscriptDb.R
          makeTranscriptDbFromUCSC.R
          makeTranscriptDbFromBiomart.R

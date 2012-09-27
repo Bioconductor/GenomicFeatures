@@ -38,7 +38,9 @@
     ans
 }
 
-## method:
+setGeneric("features", signature="x",
+           function(x) standardGeneric("features"))
+
 setMethod("features", "FeatureDb",
           function(x) .extractFeaturesAsGRanges(x))
 

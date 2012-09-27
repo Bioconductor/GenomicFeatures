@@ -60,18 +60,6 @@ FeatureDb <- function(conn)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Saving. 
-###
-
-setMethod("saveFeatures", "FeatureDb",
-          function(x, file)
-          {
-            saveDb(x, file)
-          }
-)
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Accessors.  
 ###
 

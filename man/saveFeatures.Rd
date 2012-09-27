@@ -5,11 +5,13 @@
 \alias{saveFeatures,FeatureDb-method}
 \alias{loadFeatures}
 \title{
-  Methods to save and load the database contents for a Transcript Object.
+  Methods to save and load the database contents for a TranscriptDb
+  or FeatureDb object.
 }
 \description{
-  These methods provide a way to dump a TranscriptDb object to
-  an SQLite file, and to recreate that object the saved file.
+  These methods provide a way to dump a \link{TranscriptDb} or
+  \link{FeatureDb} object to an SQLite file, and to recreate that object
+  from the saved file.
 
   However, these methods are now deprecated and have been replaced by
   \code{\link[AnnotationDbi]{saveDb}} and \code{\link[AnnotationDbi]{loadDb}}.
@@ -22,11 +24,11 @@
   loadFeatures(file)
 }
 \arguments{
-  \item{x}{a transcripts object, which contains a connection to a DB.}
-  \item{file}{A SQLite Database filename.}
+  \item{x}{A \link{TranscriptDb} or \link{FeatureDb} object.}
+  \item{file}{An SQLite Database filename.}
 }
 \value{
-  For \code{loadFeatures} only, a \link{TranscriptDb}
+  For \code{loadFeatures} only, a \link{TranscriptDb} or \link{FeatureDb}
   object is returned.
 }
 \author{
@@ -34,7 +36,8 @@
 }
 \seealso{
   \code{\link[AnnotationDbi]{saveDb}},
-  \link{TranscriptDb}
+  \link{TranscriptDb},
+  \link{FeatureDb}
 }
 \examples{
 \dontrun{

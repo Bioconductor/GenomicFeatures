@@ -408,6 +408,8 @@
 ###   - rename the 'columns' arg -> 'colnames'
 ###
 
+setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
+
 setMethod("transcripts", "data.frame",
     function(x, vals=NULL, columns=c("tx_id", "tx_name"))
         stop("Please use 'transcripts_deprecated' for older ",
@@ -420,6 +422,8 @@ setMethod("transcripts", "TranscriptDb",
         .extractFeatureRowsAsGRanges("transcript", x, vals, columns)
       }
 )
+
+setGeneric("exons", function(x, ...) standardGeneric("exons"))
 
 setMethod("exons", "data.frame",
     function(x, vals=NULL, columns="exon_id")
@@ -434,12 +438,18 @@ setMethod("exons", "TranscriptDb",
         }
 )
 
+setGeneric("cds", function(x, ...) standardGeneric("cds"))
+
 setMethod("cds", "TranscriptDb",
     function(x, vals=NULL, columns="cds_id"){
         vals = c(vals, .makeActiveSeqsList("cds_chrom", x))
         .extractFeatureRowsAsGRanges("cds", x, vals, columns)
         }
 )
+
+setGeneric("promoters", signature="x",
+    function(x, upstream=2000, downstream=200, ...)
+        standardGeneric("promoters"))
 
 setMethod("promoters", "TranscriptDb",
     function(x, upstream=2000, downstream=200, ...)
@@ -553,6 +563,8 @@ setMethod("promoters", "GenomicRanges",
   .syncSeqlevel(txdb, ans)
 }
 
+setGeneric("microRNAs", function(x) standardGeneric("microRNAs"))
+
 ## Then set our method
 setMethod("microRNAs", "TranscriptDb", function(x){.microRNAs(x)} )
 
@@ -579,5 +591,7 @@ setMethod("microRNAs", "TranscriptDb", function(x){.microRNAs(x)} )
   ans
 }
 
-## Then set our method
+setGeneric("tRNAs", function(x) standardGeneric("tRNAs"))
+
 setMethod("tRNAs", "TranscriptDb", function(x){.tRNAs(x)} )
+

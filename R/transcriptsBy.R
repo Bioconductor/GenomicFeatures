@@ -133,6 +133,11 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
     .assignMetadataList(ans, txdb)
 }
 
+setGeneric("transcriptsBy", signature="x",
+    function(x, by=c("gene", "exon", "cds"), ...)
+        standardGeneric("transcriptsBy")
+)
+
 ###                    use  splicing      gene
 ###   type    by  DISTINCT   in JOIN   in JOIN   ORDER BY
 ##    ----  ----  --------  --------  --------  ---------
@@ -159,6 +164,10 @@ setMethod("transcriptsBy", "TranscriptDb",
     }
 )
 
+setGeneric("exonsBy", signature="x",
+    function(x, by=c("tx", "gene"), ...) standardGeneric("exonsBy")
+)
+
 setMethod("exonsBy", "TranscriptDb",
     function(x, by=c("tx", "gene"), use.names=FALSE)
     {
@@ -172,6 +181,10 @@ setMethod("exonsBy", "TranscriptDb",
                     order_by_exon_rank=order_by_exon_rank,
                     use.names=use.names)
     }
+)
+
+setGeneric("cdsBy", signature="x",
+    function(x, by=c("tx", "gene"), ...) standardGeneric("cdsBy")
 )
 
 setMethod("cdsBy", "TranscriptDb",
@@ -193,6 +206,10 @@ setMethod("cdsBy", "TranscriptDb",
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### intronsByTranscript().
 ###
+
+setGeneric("intronsByTranscript",
+    function(x, ...) standardGeneric("intronsByTranscript")
+)
 
 setMethod("intronsByTranscript", "TranscriptDb",
     function(x, use.names=FALSE)
@@ -328,12 +345,20 @@ setMethod("intronsByTranscript", "TranscriptDb",
     ans
 }
 
+setGeneric("fiveUTRsByTranscript",
+    function(x, ...) standardGeneric("fiveUTRsByTranscript")
+)
+
 setMethod("fiveUTRsByTranscript", "TranscriptDb",
     function(x, use.names=FALSE)
     {
         splicings <- .getSplicingsForTranscriptsWithCDSs(x)
         .make5UTRsByTranscript(x, splicings, use.names=use.names)
     }
+)
+
+setGeneric("threeUTRsByTranscript",
+    function(x, ...) standardGeneric("threeUTRsByTranscript")
 )
 
 setMethod("threeUTRsByTranscript", "TranscriptDb",

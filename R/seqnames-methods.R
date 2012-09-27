@@ -21,7 +21,9 @@
   }
 }
 
-## Method gets the default seqnameStyle for a TranscriptDb 
+setGeneric("determineDefaultSeqnameStyle",
+           function(x) standardGeneric("determineDefaultSeqnameStyle"))
+
 setMethod("determineDefaultSeqnameStyle", "TranscriptDb",
           function(x) .determineDefaultSeqnameStyle(x)
 )

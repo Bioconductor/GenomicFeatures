@@ -6,7 +6,7 @@
 \description{
   These functions coerce a \code{\linkS4class{TranscriptDb}} object to a
   \code{\link[GenomicRanges:GRanges-class]{GRanges}} object with
-  \code{values} columns encoding transcript structures according to the
+  metadata columns encoding transcript structures according to the
   model of a standard file format. Currently, BED and GFF models are
   supported. If a \code{TranscriptDb} is passed to
   \code{\link[rtracklayer]{export}}, when targeting a BED or GFF file,

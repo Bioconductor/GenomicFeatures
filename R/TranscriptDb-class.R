@@ -188,53 +188,6 @@ TranscriptDb <- function(conn)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Saving/loading. 
-###
-
-setMethod("saveFeatures", "TranscriptDb",
-          function(x, file)
-          {	      
-	    .Deprecated(new="saveDb")
-            saveDb(x, file)
-          }
-)
-
-
-
-## Old loadFeatures will be deprecated, but for now lets just not make any
-## current users too unhappy.
-loadFeatures <- function(file)
-{
-    .Deprecated(new="loadDb")
-    loadDb(file)
-}
-
-
-
-
-
-.fixOldDbSchema <- function(conn) {
-    db <- dbConnect(SQLite(), dbname = ":memory:")
-    sqliteCopyDatabase(conn, db)
-    dbDisconnect(conn)
-    sql <- "SELECT  * from chrominfo"
-    chromInfo <- dbEasyQuery(db, sql)
-    nr <- nrow(chromInfo)
-    if( !"is_circular" %in% colnames(chromInfo)){
-        is_circular <- rep(NA, nr)
-        sql <- paste("ALTER TABLE chrominfo ADD is_circular", is_circular, "INTEGER", sep = " ")
-        dbEasyQuery(db, sql)
-        sql <- paste("INSERT INTO metadata VALUES('DBSCHEMAVERSION', '",
-                DB_SCHEMA_VERSION,"')", sep = "")
-        dbEasyQuery(db, sql)
-        message("The TranscriptDb object has been updated to the latest schema version 1.0.")
-        message("The updated object can be saved using saveFeatures()")
-    }
-    db
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Accessors.
 ###
 
@@ -471,12 +424,14 @@ setMethod(rtracklayer:::bestFileFormat, "TranscriptDb", function(x) "gff3")
   x
 }
 
-## setter
+setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
+
+setMethod("isActiveSeq", "TranscriptDb", function(x){x$isActiveSeq})
+
+setGeneric("isActiveSeq<-",function(x, value) standardGeneric("isActiveSeq<-"))
+
 setReplaceMethod("isActiveSeq","TranscriptDb",
 	  function(x, value){.setSeqNames(x,value)})
-
-## getter
-setMethod("isActiveSeq", "TranscriptDb", function(x){x$isActiveSeq})
 
 
 ## fl = "UCSC_knownGene_sample.sqlite"

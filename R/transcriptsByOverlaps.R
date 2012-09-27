@@ -1,5 +1,11 @@
 ###
 
+setGeneric("transcriptsByOverlaps", signature="x",
+    function(x, ranges, maxgap = 0L, minoverlap = 1L,
+             type = c("any", "start", "end"), ...)
+        standardGeneric("transcriptsByOverlaps")
+)
+
 setMethod("transcriptsByOverlaps", "TranscriptDb",
     function(x, ranges, maxgap = 0L, minoverlap = 1L,
              type = c("any", "start", "end"),
@@ -7,6 +13,12 @@ setMethod("transcriptsByOverlaps", "TranscriptDb",
         subsetByOverlaps(transcripts(x, columns = columns), ranges,
                          maxgap = maxgap, minoverlap = minoverlap,
                          type = match.arg(type))
+)
+
+setGeneric("exonsByOverlaps", signature="x",
+    function(x, ranges, maxgap = 0L, minoverlap = 1L,
+             type = c("any", "start", "end"), ...)
+        standardGeneric("exonsByOverlaps")
 )
 
 setMethod("exonsByOverlaps", "TranscriptDb",
@@ -18,6 +30,12 @@ setMethod("exonsByOverlaps", "TranscriptDb",
                          type = match.arg(type))
 )
 
+setGeneric("cdsByOverlaps", signature="x",
+    function(x, ranges, maxgap = 0L, minoverlap = 1L,
+             type = c("any", "start", "end"), ...)
+        standardGeneric("cdsByOverlaps")
+)
+
 setMethod("cdsByOverlaps", "TranscriptDb",
     function(x, ranges, maxgap = 0L, minoverlap = 1L,
              type = c("any", "start", "end"),
@@ -26,3 +44,4 @@ setMethod("cdsByOverlaps", "TranscriptDb",
                          maxgap = maxgap, minoverlap = minoverlap,
                          type = match.arg(type))
 )
+
