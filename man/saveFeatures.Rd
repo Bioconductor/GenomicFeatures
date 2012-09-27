@@ -1,4 +1,5 @@
-\name{GenomicFeatures-deprecated}
+\name{saveFeatures}
+
 \alias{saveFeatures}
 \alias{saveFeatures,TranscriptDb-method}
 \alias{saveFeatures,FeatureDb-method}
@@ -10,9 +11,11 @@
   These methods provide a way to dump a TranscriptDb object to
   an SQLite file, and to recreate that object the saved file.
 
- However, these methods are now deprecated and have been replaced by
-  loadDb and saveDb Users are encouraged to switch to those other
-  methods as these methods will soon be unavailable
+  However, these methods are now deprecated and have been replaced by
+  \code{\link[AnnotationDbi]{saveDb}} and \code{\link[AnnotationDbi]{loadDb}}.
+
+  Users are encouraged to switch to those other methods as the methods
+  documented here will soon be defunct.
 }
 \usage{
   saveFeatures(x, file)
@@ -30,6 +33,7 @@
   M. Carlson
 }
 \seealso{
+  \code{\link[AnnotationDbi]{saveDb}},
   \link{TranscriptDb}
 }
 \examples{

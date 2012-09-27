@@ -1,5 +1,5 @@
 \name{regions}
-\Rdversion{1.1}
+
 \alias{transcripts_deprecated}
 \alias{exons_deprecated}
 \alias{introns_deprecated}
@@ -11,7 +11,8 @@
   upstream regions etc, from the genomic locations provided in a
   UCSC-style data frame.
 
-  WARNING: All the functions described in this man page are deprecated.
+  WARNING: All the functions described in this man page are now defunct!
+
   Please use \code{\link{transcripts}}, \code{\link{exons}} or
   \code{\link{intronsByTranscript}} on a \link{TranscriptDb} object instead.
 }
