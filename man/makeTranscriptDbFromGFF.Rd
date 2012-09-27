@@ -3,13 +3,13 @@
 \alias{makeTranscriptDbFromGFF}
 
 \title{
-  Make a TranscriptDb object from annotations available as GFF3 or GTF
-  formatted files
+  Make a TranscriptDb object from annotations available as a
+  GFF3 or GTF file
 }
 \description{
   The \code{makeTranscriptDbFromGFF} function allows the user
   to make a \link{TranscriptDb} object from transcript annotations
-  available as GFF3 or GTF files.
+  available as a GFF3 or GTF file.
 }
 \usage{
 makeTranscriptDbFromGFF(file,
@@ -88,12 +88,14 @@ makeTranscriptDbFromGFF(file,
 \value{A \link{TranscriptDb} object.}
 
 \author{
-  M. Carlson and H. Pages
+  M. Carlson
 }
 
 \seealso{
   \code{\link{DEFAULT_CIRC_SEQS}},
-  \code{\link{makeTranscriptDb}}
+  \code{\link{makeTranscriptDbFromUCSC}},
+  \code{\link{makeTranscriptDbFromBiomart}},
+  \code{\link{makeTranscriptDb}},
   \code{\link{supportedMiRBaseBuildValues}}
 }
 

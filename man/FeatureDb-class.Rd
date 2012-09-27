@@ -13,8 +13,8 @@
   See \code{?\link{TranscriptDb}} for a container for storing transcript
   annotations.
 
-  See \code{?\link{makeFeatureDbFromUCSC}} for making a
-  FeatureDb object from the UCSC or BioMart sources.
+  See \code{?\link{makeFeatureDbFromUCSC}} for a convenient way to
+  make FeatureDb objects from BioMart online resources.
 }
 
 \section{Methods}{

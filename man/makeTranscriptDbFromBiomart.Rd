@@ -4,7 +4,7 @@
 \alias{getChromInfoFromBiomart}
 
 \title{
-  Making a TranscriptDb object from annotations available on a
+  Make a TranscriptDb object from annotations available on a
   BioMart database
 }
 \description{
@@ -95,7 +95,8 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
   \code{\link[biomaRt]{listDatasets}},
   \code{\link{DEFAULT_CIRC_SEQS}},
   \code{\link{makeTranscriptDbFromUCSC}},
-  \code{\link{makeTranscriptDb}}
+  \code{\link{makeTranscriptDbFromGFF}},
+  \code{\link{makeTranscriptDb}},
   \code{\link{supportedMiRBaseBuildValues}}
 }
 

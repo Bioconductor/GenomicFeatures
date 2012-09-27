@@ -145,9 +145,16 @@
 }
 
 \seealso{
-  \code{\link{TranscriptDb}},
-  \code{\link{makeTranscriptDbFromUCSC}},
-  \code{\link{makeTranscriptDbFromBiomart}}
+  \itemize{
+    \item \code{\link{makeTranscriptDbFromUCSC}} and
+          \code{\link{makeTranscriptDbFromBiomart}} for convenient ways to
+          make \link{TranscriptDb} objects from UCSC or BioMart online
+          resources.
+    \item \code{\link{makeTranscriptDbFromGFF}} for making a
+          \link{TranscriptDb} object from annotations available
+          as a GFF3 or GTF file.
+    \item The \link{TranscriptDb} class.
+  }
 }
 
 \examples{

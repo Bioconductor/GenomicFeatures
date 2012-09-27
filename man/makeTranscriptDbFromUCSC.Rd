@@ -5,7 +5,7 @@
 \alias{makeTranscriptDbFromUCSC}
 
 \title{
-  Making a TranscriptDb object from annotations available at the
+  Make a TranscriptDb object from annotations available at the
   UCSC Genome Browser
 }
 \description{
@@ -70,7 +70,8 @@ makeTranscriptDbFromUCSC(
   \code{\link[rtracklayer]{ucscGenomes}},
   \code{\link{DEFAULT_CIRC_SEQS}},
   \code{\link{makeTranscriptDbFromBiomart}},
-  \code{\link{makeTranscriptDb}}
+  \code{\link{makeTranscriptDbFromGFF}},
+  \code{\link{makeTranscriptDb}},
   \code{\link{supportedMiRBaseBuildValues}}
 }
 

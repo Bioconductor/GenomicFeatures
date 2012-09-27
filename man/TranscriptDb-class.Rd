@@ -26,8 +26,11 @@
   genomic locations of an arbitrary type of genomic features.
 
   See \code{?\link{makeTranscriptDbFromUCSC}} and
-  \code{?\link{makeTranscriptDbFromBiomart}} for making a
-  TranscriptDb object from the UCSC or BioMart sources.
+  \code{?\link{makeTranscriptDbFromBiomart}} for convenient ways to
+  make TranscriptDb objects from UCSC or BioMart online resources.
+
+  See \code{?\link{makeTranscriptDbFromGFF}} for making a TranscriptDb
+  object from annotations available as a GFF3 or GTF file.
 }
 
 \section{Methods}{
@@ -90,7 +93,9 @@
           genomic locations of an arbitrary type of genomic features.
     \item \code{\link{makeTranscriptDbFromUCSC}} and
           \code{\link{makeTranscriptDbFromBiomart}} for convenient ways to
-          make TranscriptDb objects from UCSC or Biomart online resources.
+          make TranscriptDb objects from UCSC or BioMart online resources.
+    \item \code{\link{makeTranscriptDbFromGFF}} for making a TranscriptDb
+          object from annotations available as a GFF3 or GTF file.
     \item \code{\link{saveDb}} and \code{\link{loadDb}} for
           saving and loading the database content of a TranscriptDb object.
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
