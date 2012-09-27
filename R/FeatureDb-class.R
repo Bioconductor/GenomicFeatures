@@ -3,6 +3,13 @@
 ### -------------------------------------------------------------------------
 
 
+## This is to try and tidy up before setRefClass()
+gc()
+
+.FeatureDb <-
+    setRefClass("FeatureDb", contains="AnnotationDb")
+
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### A low-level accessor (not exported).
 ###

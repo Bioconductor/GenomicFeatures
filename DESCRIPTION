@@ -34,8 +34,7 @@ Suggests: rtracklayer, biomaRt,
           Rsamtools,
           pasillaBamSubset (>= 0.0.5),
           RUnit
-Collate: AllClasses.R
-         utils.R
+Collate: utils.R
          Ensembl.utils.R
          TranscriptDb-class.R
          FeatureDb-class.R

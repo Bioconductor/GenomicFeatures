@@ -3,10 +3,32 @@
 ### -------------------------------------------------------------------------
 
 
+## This is to try and tidy up before setRefClass()
+gc()
+
+### Concrete GenomicFeatures types
+.TranscriptDb <-
+    setRefClass("TranscriptDb", contains="AnnotationDb",
+        fields=list(isActiveSeq="logical", seqnameStyle="character"),
+        methods=list(
+          initialize=function(...) {
+              callSuper(...)
+              .self$seqnameStyle <- character()
+              if (0L == length(dbListTables(conn))) {
+                  .self$isActiveSeq <- logical()
+              } else {
+                  seqNames <- .getChromInfo(conn)$chrom
+                  .self$isActiveSeq <-
+                      structure(!logical(length(seqNames)), .Names=seqNames)
+              }
+          .self
+      }))
+
 ### Not exported.
 DB_TYPE_NAME <- "Db type"
 DB_TYPE_VALUE <- "TranscriptDb"  # same as the name of the class
 DB_SCHEMA_VERSION <- "1.0"
+
 ### Not exported.
 makeFeatureColnames <- function(feature_shortname)
 {
