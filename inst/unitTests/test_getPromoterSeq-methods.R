@@ -2,7 +2,6 @@ library(BSgenome.Hsapiens.UCSC.hg19)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(BSgenome.Dmelanogaster.UCSC.dm3)
 library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
-library(org.Dm.eg.db)
 library(Rsamtools)
 library(pasillaBamSubset)
 
