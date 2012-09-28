@@ -65,32 +65,3 @@ FeatureDb <- function(conn)
     .FeatureDb$new(conn=conn)
 }
 
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Accessors.  
-###
-
-## setMethod("metadata", "FeatureDb",
-##     function(x) dbReadTable(conn(x), "metadata")
-## )
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### The "show" method for FeatureDb objects.
-###
-
-## setMethod("show", "FeatureDb",
-##     function(object)
-##     {
-##         cat("FeatureDb object:\n")
-##         metadata <- metadata(object)
-##         for (i in seq_len(nrow(metadata))) {
-##             cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
-##                 "\n", sep="")
-##         }
-##     }
-## )
-
-
-
-

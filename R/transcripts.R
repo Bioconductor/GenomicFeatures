@@ -249,7 +249,7 @@
         SQL_orderby <- paste("ORDER BY", paste(orderby_cols, collapse=", "))
     SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from,
                  SQL_where, SQL_orderby)
-    ans <- dbEasyQuery(AnnotationDbi:::dbConn(txdb), SQL)
+    ans <- queryAnnotationDb(txdb, SQL)
     names(ans) <- what_cols
     ans
 }

@@ -13,7 +13,7 @@ id2name <- function(txdb, feature.type=c("tx", "exon", "cds"))
     SQL <- paste("SELECT",
                  paste(what_cols, collapse=", "),
                  "FROM", tablename)
-    data <- dbEasyQuery(AnnotationDbi:::dbConn(txdb), SQL)
+    data <- queryAnnotationDb(txdb, SQL)
     ans <- data[[what_cols[2L]]]
     names(ans) <- as.character(data[[what_cols[1L]]])
     ans

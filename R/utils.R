@@ -119,6 +119,13 @@ get_dbtable <- function(tablename, datacache)
     get(tablename, envir=datacache)
 }
 
+### TODO: Put this in AnnotationDbi.
+queryAnnotationDb <- function(annotationdb, sql)
+{
+    AnnotationDbi:::dbEasyQuery(AnnotationDbi:::dbConn(annotationdb),
+                                paste(sql, collapse="\n"))
+}
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Data frame related (NOT exported).

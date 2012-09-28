@@ -89,7 +89,7 @@
     sql <- gsub("GROUPBY", by, sql)
 
     ## get the data from the database
-    data <- dbEasyQuery(AnnotationDbi:::dbConn(txdb), sql)
+    data <- queryAnnotationDb(txdb, sql)
 
     ## create the GRanges object
     cols <- paste0(type, c("_id", "_name"))
@@ -209,7 +209,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
 
 .getSplicingsForTranscriptsWithCDSs <- function(txdb)
 {
-    ans <- getSplicings(txdb)
+    ans <- load_splicings(txdb)
     ids <- unique(ans$tx_id[!is.na(ans$cds_id)])
     ans <- ans[ans$tx_id %in% ids, ]
 
