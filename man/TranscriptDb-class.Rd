@@ -5,12 +5,13 @@
 \alias{TranscriptDb}
 
 \alias{seqinfo,TranscriptDb-method}
-\alias{determineDefaultSeqnameStyle}
-\alias{determineDefaultSeqnameStyle,TranscriptDb-method}
+\alias{seqinfo<-,TranscriptDb-method}
 \alias{isActiveSeq}
 \alias{isActiveSeq<-}
 \alias{isActiveSeq,TranscriptDb-method}
 \alias{isActiveSeq<-,TranscriptDb-method}
+\alias{determineDefaultSeqnameStyle}
+\alias{determineDefaultSeqnameStyle,TranscriptDb-method}
 
 % coercion
 \alias{as.list,TranscriptDb-method}
@@ -42,12 +43,26 @@
       Return \code{x}'s metadata in a data frame.
     }
     \item{}{
-      \code{seqinfo(x)}:
-      Get the information about the underlying sequences as a
-      \link[GenomicRanges]{Seqinfo} object.
-      Note that there is no \code{seqinfo} setter for TranscriptDb
-      objects (this information is stored in the SQLite db, and,
-      in normal use, this db is accessed in read-only mode).
+      \code{seqinfo(x)}, \code{seqinfo(x) <- value}:
+      Get or set the information about the underlying sequences.
+      Note that, for now, the setter only supports replacement of the
+      sequence names, i.e., except for their sequence names (accessed with
+      \code{seqnames(value)} and \code{seqnames(seqinfo(x))}, respectively),
+      \link[GenomicRanges]{Seqinfo} objects \code{value} (supplied) and
+      \code{seqinfo(x)} (current) must be identical.
+    }
+    \item{}{
+      \code{isActiveSeq(x)}:
+      Return the currently active sequences for this txdb object as a
+      named logical vector.  Only active sequences will be tapped when
+      using the supplied accessor methods.  Inactive sequences will be
+      ignored.  By default, all available sequences will be active.
+    }    
+    \item{}{
+      \code{isActiveSeq(x) <- value}:
+      Allows the user to change which sequences will be actively
+      accessed by the accessor methods by altering the contents of this
+      named logical vector.
     }
     \item{}{
       \code{seqnameStyle(x)}:
@@ -68,19 +83,6 @@
       again with no loss of information.
       Note that the transcripts are dumped in the same order in all the
       data frames.
-    }
-    \item{}{
-      \code{isActiveSeq(x)}:
-      Return the currently active sequences for this txdb object as a
-      named logical vector.  Only active sequences will be tapped when
-      using the supplied accessor methods.  Inactive sequences will be
-      ignored.  By default, all available sequences will be active.
-    }    
-    \item{}{
-      \code{isActiveSeq(x) <- value}:
-      Allows the user to change which sequences will be actively
-      accessed by the accessor methods by altering the contents of this
-      named logical vector.
     }
   }
 }

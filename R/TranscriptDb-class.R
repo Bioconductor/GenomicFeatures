@@ -9,17 +9,17 @@ gc()
 ### Concrete GenomicFeatures types
 .TranscriptDb <-
     setRefClass("TranscriptDb", contains="AnnotationDb",
-        fields=list(isActiveSeq="logical", seqnameStyle="character"),
+        fields=list(.chrom="character",
+                    isActiveSeq="logical",
+                    seqnameStyle="character"),
         methods=list(
           initialize=function(...) {
               callSuper(...)
-              .self$seqnameStyle <- character()
-              if (0L == length(dbListTables(conn))) {
-                  .self$isActiveSeq <- logical()
-              } else {
-                  seqNames <- load_chrominfo(.self, set.col.class=TRUE)$chrom
-                  .self$isActiveSeq <-
-                      structure(!logical(length(seqNames)), .Names=seqNames)
+              if (length(dbListTables(conn) != 0L)) {
+                  chrominfo <- load_chrominfo(.self, set.col.class=TRUE)
+                  .self$.chrom <- chrominfo$chrom
+                  .self$isActiveSeq <- !logical(length(.self$.chrom))
+                  .self$seqnameStyle <- character()
               }
           .self
       }))
@@ -236,7 +236,8 @@ TranscriptDb <- function(conn)
 .seqinfo.TranscriptDb <- function(x)
 {
     data <- load_chrominfo(x, set.col.class=TRUE)
-    ans <- Seqinfo(seqnames=data[["chrom"]],
+    ## We take the seqnames from x's private field '.chrom'.
+    ans <- Seqinfo(seqnames=x$.chrom,
                    seqlengths=data[["length"]],
                    isCircular=data[["is_circular"]])
     ## also get the genome information.
@@ -250,31 +251,87 @@ TranscriptDb <- function(conn)
 
 setMethod("seqinfo", "TranscriptDb", .seqinfo.TranscriptDb)
 
-### Setters and getters for isActiveSeq:
-
-### generic internal setter
-.setSeqNames <- function(x, value){
-  ## Must check to make sure that the values are legitimate
-  seqNames <- seqlevels(x)
-  ## The names must be all containe in seqNames
-  if(length(intersect(names(value),seqNames)) == length(value) &&
-     ##length(value) == length(seqNames) && ## cannot be shorter than seqNames
-     is.logical(value)){ ## and it must be a logical
-    x$isActiveSeq[names(value)] <- value	
-  }else{stop("The replacement value for isActiveSeq must be a logical ",
-             "vector, with names that match the seqlevels of the object")
-  }
-  x
-}
+### This is a restricted "seqinfo<-" method for TranscriptDb objects that
+### only supports replacement of the sequence names, i.e., except for their
+### sequence names, Seqinfo objects 'value' and 'seqinfo(x)' must be identical.
+setReplaceMethod("seqinfo", "TranscriptDb",
+    function(x, new2old=NULL, force=FALSE, value)
+    {
+        if (!is(value, "Seqinfo"))
+            stop("the supplied 'seqinfo' must be a Seqinfo object")
+        IN_THIS_CONTEXT <- paste0("when replacing the 'seqinfo' ",
+                                  "of a TranscriptDb object")
+        if (!identical(force, FALSE))
+            stop("'force' not supported ", IN_THIS_CONTEXT)
+        x_seqinfo <- seqinfo(x)
+        if (is.null(new2old)) {
+            if (!identical(value, x_seqinfo))
+                stop("'new2old' must be specified ", IN_THIS_CONTEXT)
+            return(x)
+        }
+        if (length(value) != length(x_seqinfo))
+            stop("the supplied 'seqinfo' must have the same length ",
+                 "as the current 'seqinfo' ", IN_THIS_CONTEXT)
+        if (!identical(new2old, seq_len(length(value))))
+            stop("'new2old' must be NULL or ",
+                 "equal to 'seq_len(length(value))' ",
+                 IN_THIS_CONTEXT)
+        seqnames(x_seqinfo) <- seqnames(value)
+        if (!identical(value, x_seqinfo))
+            stop("the supplied and current 'seqinfo' can differ only ",
+                 "in their sequence names ", IN_THIS_CONTEXT)
+        x$.chrom <- seqnames(value)
+        x
+    }
+)
 
 setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
 
-setMethod("isActiveSeq", "TranscriptDb", function(x){x$isActiveSeq})
+setMethod("isActiveSeq", "TranscriptDb",
+    function(x)
+    {
+        ans <- x$isActiveSeq
+        names(ans) <- x$.chrom
+        ans
+    }
+)
 
-setGeneric("isActiveSeq<-",function(x, value) standardGeneric("isActiveSeq<-"))
+setGeneric("isActiveSeq<-",
+    function(x, value) standardGeneric("isActiveSeq<-")
+)
+
+.mk_isActiveSeqReplacementValue <- function(x, value)
+{
+    if (!is.logical(value) || any(is.na(value)))
+        stop("the supplied 'isActiveSeq' must be a logical vector with no NAs")
+    x_isActiveSeq <- isActiveSeq(x)
+    current_names <- names(x_isActiveSeq)
+    supplied_names <- names(value)
+    if (is.null(supplied_names)) {
+        if (length(value) != length(x_isActiveSeq))
+            stop("when unnamed, the supplied 'isActiveSeq' must ",
+                 "have the same length as the current 'isActiveSeq'")
+        names(value) <- current_names
+        return(value)
+    }
+    if (any(duplicated(supplied_names)))
+        stop("the supplied 'isActiveSeq' has duplicated names")
+    idx <- match(supplied_names, current_names)
+    if (any(is.na(idx)))
+        stop("the names of the supplied 'isActiveSeq' must ",
+             "match the names of the current 'isActiveSeq'")
+    x_isActiveSeq[idx] <- value
+    x_isActiveSeq
+}
 
 setReplaceMethod("isActiveSeq","TranscriptDb",
-	  function(x, value){.setSeqNames(x,value)})
+    function(x, value)
+    {
+        value <- .mk_isActiveSeqReplacementValue(x, value)
+        x$isActiveSeq <- unname(value)
+        x
+    }
+)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
