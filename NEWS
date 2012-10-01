@@ -1,3 +1,16 @@
+CHANGES IN VERSION 1.10
+-----------------------
+
+NEW FEATURES
+
+    o Added makeTranscriptDbFromGFF().  Users can now use GFF files to
+    make TranscriptDb resources.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Updated vignette.
+
+
 CHANGES IN VERSION 1.8
 -----------------------
 
