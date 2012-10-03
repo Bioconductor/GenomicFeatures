@@ -3,13 +3,38 @@ CHANGES IN VERSION 1.10
 
 NEW FEATURES
 
-    o Added makeTranscriptDbFromGFF().  Users can now use GFF files to
-    make TranscriptDb resources.
+    o Add makeTranscriptDbFromGFF().  Users can now use GFF files to
+      make TranscriptDb resources.
+
+    o Add *restricted* "seqinfo<-" method for TranscriptDb objects. It only
+      supports replacement of the sequence names (for now), i.e., except for
+      their sequence names, Seqinfo objects 'value' (supplied) and 'seqinfo(x)'
+      (current) must be identical.
+
+    o Add promoters() and getPromoterSeq().
+
+    o Add 'reassign.ids' arg (FALSE by default) to makeTranscriptDb().
 
 SIGNIFICANT USER-VISIBLE CHANGES
 
     o Updated vignette.
 
+    o Improve how makeTranscriptDbFromUCSC() and makeTranscriptDbFromBiomart()
+      assign internal ids (see commit 65144 for the details).
+
+    o 2.5x speedup of fiveUTRsByTranscript() and threeUTRsByTranscript().
+
+DEPRECATED AND DEFUNCT
+
+    o Are now defunct: transcripts_deprecated(), exons_deprecated(), and
+      introns_deprecated().
+
+    o Deprecate loadFeatures() and saveFeatures() in favor of loadDb() and
+      saveDb(), respectively.
+
+BUG FIXES
+
+    o Better handling of BioMart data anomalies.
 
 CHANGES IN VERSION 1.8
 -----------------------
