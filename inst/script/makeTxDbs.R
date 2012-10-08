@@ -103,6 +103,13 @@ makeTxDbPackageFromUCSC(version=version,
                         genome="sacCer2",
                         tablename="sgdGene")
 
+makeTxDbPackageFromUCSC(version=version,
+                        maintainer=maintainer,
+                        author=author,
+			destDir=TxDbOutDir,
+                        genome="sacCer3",
+                        tablename="sgdGene")
+
 ## makeTxDbPackageFromUCSC(version=version,
 ##                         maintainer=maintainer,
 ##                         author=author,
