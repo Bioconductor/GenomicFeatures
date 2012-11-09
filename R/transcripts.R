@@ -451,36 +451,9 @@ setMethod("promoters", "TranscriptDb",
     function(x, upstream=2000, downstream=200, ...)
     {
         gr <- transcripts(x, ...)
-        promoters(gr, upstream=upstream, downstream=downstream, ...)
+        promoters(gr, upstream=upstream, downstream=downstream)
     }
 ) 
-
-setMethod("promoters", "GenomicRanges",
-    function(x, upstream=2000, downstream=200, ...)
-    {
-        if (!isSingleNumber(upstream))
-            stop("'upstream' must be a single integer")
-        if (!is.integer(upstream))
-            upstream <- as.numeric(upstream)
-        if (!isSingleNumber(downstream))
-            stop("'downstream' must be a single integer")
-        if (!is.integer(downstream))
-            downstream <- as.numeric(downstream)
-        if (upstream < 0 | downstream < 0)
-            stop("'upstream' and 'downstream' must be integers >= 0")
-        if (any(strand(x) == "*"))
-            warning("'*' ranges were treated as '+'")
-        on_plus <- which(strand(x) == "+" | strand(x) == "*")
-        on_plus_TSS <- start(x)[on_plus]
-        start(x)[on_plus] <- on_plus_TSS - upstream
-        end(x)[on_plus] <- on_plus_TSS + downstream - 1L
-        on_minus <- which(strand(x) == "-")
-        on_minus_TSS <- end(x)[on_minus]
-        end(x)[on_minus] <- on_minus_TSS + upstream
-        start(x)[on_minus] <- on_minus_TSS - downstream + 1L
-        x
-    }
-)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extractors for features in other databases.

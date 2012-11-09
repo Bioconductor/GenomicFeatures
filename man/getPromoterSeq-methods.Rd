@@ -12,10 +12,9 @@
 }
 
 \usage{
-  \S4method{getPromoterSeq}{GRangesList}(query, subject, upstream, downstream,...)
-  \S4method{getPromoterSeq}{GRangesList}(query, subject, upstream, downstream,...)
-  \S4method{getPromoterSeq}{GRanges}(query, subject, upstream, downstream,...)
-  \S4method{getPromoterSeq}{GRanges}(query, subject, upstream, downstream,...)
+  \S4method{getPromoterSeq}{GRangesList}(query, subject, upstream=2000, downstream=200, ...)
+  \S4method{getPromoterSeq}{GRangesList}(query, subject, upstream=2000, downstream=200, ...)
+  \S4method{getPromoterSeq}{GRanges}(query, subject, upstream=2000, downstream=200, ...)
 }
 
 \arguments{
@@ -34,7 +33,12 @@
   which is either a GRanges or a GRangesList.   It is a wrapper for the
   \code{promoters} and \code{getSeq} functions. The 
   purpose is to allow sequence extraction from either a
-  \link[BSgenome]{BSgenome} or \link[Rsamtools]{FaFile}. 
+  \link[BSgenome]{BSgenome} or \link[Rsamtools]{FaFile}.
+
+  Default values for \code{upstream} and \code{downstream} were chosen based
+  on our current understanding of gene regulation. On average, promoter
+  regions in the mammalian genome are 5000 bp upstream and downstream of the
+  transcription start site.
 }
 
 \value{
@@ -46,7 +50,8 @@
 \author{Paul Shannon}
 
 \seealso{
-  \link[GenomicFeatures]{promoters}
+  \link[IRanges]{intra-range-methods}        ## promoters methods for Ranges objects
+  \link[GenomicRanges]{intra-range-methods}  ## promoters methods for GRanges objects
   \link[Biostrings]{getSeq}
 }
 

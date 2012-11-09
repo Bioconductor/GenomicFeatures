@@ -8,9 +8,7 @@
 \alias{exons,TranscriptDb-method}
 \alias{cds}
 \alias{cds,TranscriptDb-method}
-\alias{promoters}
 \alias{promoters,TranscriptDb-method}
-\alias{promoters,GenomicRanges-method}
 \alias{microRNAs}
 \alias{microRNAs,TranscriptDb-method}
 \alias{tRNAs}
@@ -35,7 +33,7 @@ exons(x, ...)
 cds(x, ...)
 \S4method{cds}{TranscriptDb}(x, vals=NULL, columns="cds_id")
 
-promoters(x, upstream=2000, downstream=200, ...)
+#promoters(x, upstream=2000, downstream=200, ...)
 \S4method{promoters}{TranscriptDb}(x, upstream=2000, downstream=200, ...)
 
 microRNAs(x)
@@ -48,9 +46,6 @@ tRNAs(x)
 \arguments{ 
   \item{x}{
     A \link{TranscriptDb} object.
-
-    For \code{promoters()}, \code{x} can be a \code{TranscriptDb} or 
-    a \code{GRanges} object.
   }
   \item{...}{
     Arguments to be passed to or from methods.
@@ -83,17 +78,13 @@ tRNAs(x)
   }
   \item{upstream}{
     For \code{promoters()} : An \code{integer(1)} value indicating the
-    number of bases upstream from the transcription start site. The
-    upstream range extends from this value up to, but not including, 
-    the transcription start site. The upstream range is merged with 
-    the downstream range to form the full promoter region.
+    number of bases upstream from the transcription start site. For
+    additional details see ?\code{'promoters,GRanges-method'}.
   }
   \item{downstream}{
     For \code{promoters()} : An \code{integer(1)} value indicating the 
-    number of bases downstream from the transcription start site. The
-    downstream range extends from this value up to, and including, 
-    the transcription start site. The downstream range is merged with 
-    the upstream range to form the full promoter region.
+    number of bases downstream from the transcription start site. For 
+    additional details see ?\code{'promoters,GRanges-method'}.
   }
 }
 
@@ -107,21 +98,12 @@ tRNAs(x)
   functions.
 
   The \code{promoters()} function computes user-defined promoter regions
-  for the transcripts in a \code{TranscriptDb} or \code{GRanges}
-  object. When a \code{TranscriptDb} is supplied the \code{transcripts} 
-  extractor is called; when a \code{GRanges} is supplied it is 
-  expected that these are transcript ranges. The return object is a 
+  for the transcripts in a \code{TranscriptDb} object. The return object is a 
   \code{GRanges} of promoter regions around the transcription start 
   site the span of which is defined by \code{upstream} and \code{downstream}.
-  Ranges on the \code{*} strand are treated the same as those on the
-  \code{+} strand. When no seqlengths are present in the \code{TranscriptDb} 
-  or \code{GRanges} (i.e., seqlength is \code{NA}) it is possible to have
-  non-positive start values in the promoter ranges. This occurs when 
-  (TSS - \code{upstream}) < 1. In the equal but opposite case, the \code{end}
-  values of the ranges may extend beyond the chromosome end when 
-  (TSS + \code{downstream} + 1) > 'chromosome end'. When \code{seqlengths} 
-  are not \code{NA} the promoter ranges are kept within the bounds of the 
-  defined \code{seqlengths}.
+  For additional details on how the promoter range is computed and the
+  handling of \code{+} and \code{-} strands see 
+  ?\code{'promoters,GRanges-method'}.
 }
 
 \value{ a GRanges object }
@@ -162,14 +144,6 @@ microRNAs(TxDb.Hsapiens.UCSC.hg19.knownGene)
 
 ## promoters() :
 head(promoters(txdb, 100, 50))
- 
-## The promoter regions are defined around the transcription start 
-## sites. On the "+" strand this region surrounds the 'start' 
-## value in a GRanges. On the -" strand this region surrounds 
-## the 'end' value. Note the "*" ranges are treated as "+". 
-gr <- GRanges("chr1", IRanges(rep(10, 3), width=6), c("+", "-", "*"))
-gr
-promoters(gr, 2, 2)
 }
 
 \keyword{methods}

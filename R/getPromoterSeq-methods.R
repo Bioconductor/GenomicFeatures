@@ -1,9 +1,9 @@
 setGeneric("getPromoterSeq", signature="query",
-    function(query, subject, upstream, downstream, ...)
+    function(query, subject, upstream=2000, downstream=200, ...)
         standardGeneric("getPromoterSeq"))
 
 setMethod("getPromoterSeq", "GRanges",
-  function(query, subject, upstream, downstream, ...) {
+  function(query, subject, upstream=2000, downstream=200, ...) {
     promoter.granges <- promoters(query, upstream, downstream)
     result <- getSeq(subject, promoter.granges)
     md <- mcols(query)
@@ -16,7 +16,7 @@ setMethod("getPromoterSeq", "GRanges",
     })
 
 setMethod("getPromoterSeq", "GRangesList",
-  function(query, subject, upstream, downstream, ...) {
+  function(query, subject, upstream=2000, downstream=200, ...) {
     promoter.granges <- promoters(unlist(query), upstream, downstream)
     result <- getSeq(subject, promoter.granges)
     md <- mcols(unlist(query))
