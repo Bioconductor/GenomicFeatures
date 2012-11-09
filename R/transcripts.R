@@ -447,10 +447,6 @@ setMethod("cds", "TranscriptDb",
         }
 )
 
-setGeneric("promoters", signature="x",
-    function(x, upstream=2000, downstream=200, ...)
-        standardGeneric("promoters"))
-
 setMethod("promoters", "TranscriptDb",
     function(x, upstream=2000, downstream=200, ...)
     {
