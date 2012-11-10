@@ -49,7 +49,6 @@ export(
   transcripts,
   exons,
   cds,
-  promoters,
   microRNAs,
   tRNAs,
   transcriptsByOverlaps,
