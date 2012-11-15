@@ -501,7 +501,8 @@ makeTranscriptDbFromGFF <- function(file,
   
   ## start by importing the relevant features from the specified file
   feature.type <- c("gene", "mRNA", "exon", "CDS")
-  gff <- import(file, format=format, feature.type=feature.type)
+  gff <- import(file, format=format, feature.type=feature.type,
+                asRangedData=TRUE)
 
   if(format=="gff3"){
     ## check that we have ID, Parent
