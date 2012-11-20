@@ -62,26 +62,39 @@
 }
 
 
-## Helper to deduce the rankings for each set of cds and exons...
-.deduceExonRankings <- function(exs){
-  warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute for exonRankAttributeName")
-  res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?  
-  ## split up the data
-  es <- split(exs, as.factor(exs$tx_name)[,drop=TRUE])
+.buildRanks <- function(es, res){
   ## loop to assemble the result
   for(i in seq_len(length(es))){
     startInd <- .computeStartInd(i,res)
     endInd <- startInd + dim( es[[i]] )[1] - 1
     res[startInd:endInd,] <- .assignRankings(es[[i]])
   }
+  res
+}
+
+## Helper to deduce the rankings for each set of cds and exons...
+.deduceExonRankings <- function(exs, format="gff"){
+  message("Deducing exon rank from relative coordinates provided")
+  ## And a warning for later (in case they were not watching)
+  warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute for exonRankAttributeName")
+  res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?  
+  ## split up the data
+  es <- split(exs, as.factor(exs$tx_name)[,drop=TRUE])
+  ## loop to assemble the result
+  res <- .buildRanks(es, res)  
   ## then cast result to be data.frame 
   res <- data.frame(res, stringsAsFactors=FALSE)
-  colnames(res) <- c('exon_chrom','exon_start','exon_end','exon_strand','type',
-                     'exon_name','tx_name','exon_rank','exon_id')
+  if(format=="gff"){
+    colnames(res) <- c('exon_chrom','exon_start','exon_end','exon_strand',
+                       'type','exon_name','tx_name','exon_rank','exon_id')
+    res$exon_id <- as.integer(res$exon_id)
+  }else{
+    colnames(res) <- c('tx_name','exon_rank','exon_chrom','exon_strand',
+                       'exon_start','exon_end')
+  }
   res$exon_start <- as.integer(res$exon_start)
   res$exon_end <- as.integer(res$exon_end)
   res$exon_rank <- as.integer(res$exon_rank)
-  res$exon_id <- as.integer(res$exon_id)
   res
 }
 
@@ -285,7 +298,7 @@
   ## if needed (usually needed for gff3), deduce the exon rankings from the
   ## order along the chromosome
   if(is.null(exonRankAttributeName)){
-    exs <- .deduceExonRankings(exs)
+    exs <- .deduceExonRankings(exs, format="gff")
   }
   ## Then merge the two frames together based on range information
   splicings <- .mergeFramesViaRanges(exs, cds)
@@ -372,12 +385,15 @@
                        stringsAsFactors=FALSE)
   ## add ExonRank if there is any  
   if(!is.null(exonRankAttributeName)){
-    data <- cbind(data,exon_rank=gff[[exonRankAttributeName]])
+    gff <- as(gff, "GRanges")
+    data <- cbind(data,exon_rank=mcols(gff)[[exonRankAttributeName]])
   }else{
     data <- cbind(data,exon_rank=rep(NA,length(start(gff))))
   }
   data
 }
+
+## debug(GenomicFeatures:::.prepareGTFdata.frame)
 
 .prepareGTFtranscripts <- function(data){
   ## We absolutely require transcripts, genes and exons.
@@ -436,7 +452,7 @@
   
   ## if the exonRankAttributeName is not available ... then deduce.
   if(is.null(exonRankAttributeName)){
-    exs <- .deduceExonRankings(exs)
+    exs <- .deduceExonRankings(exs,format="gtf")
   }
   
   ## no need to depend on having exon rank for cds too when we have this
@@ -497,6 +513,9 @@ makeTranscriptDbFromGFF <- function(file,
                                     circ_seqs=DEFAULT_CIRC_SEQS,
                                     miRBaseBuild=NULL)
 {
+  ## Some argument checking:
+  if(missing(dataSource)) stop("No Datasource provided")
+  if(missing(species)) stop("No species provided")
   format <- match.arg(format)
   
   ## start by importing the relevant features from the specified file

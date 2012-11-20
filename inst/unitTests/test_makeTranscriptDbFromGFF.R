@@ -11,13 +11,12 @@
 ## GenomicFeatures_x.y.z.tar.gz
 
 gffFile <- system.file("extdata","a.gff3",package="GenomicFeatures")
-gffformat <- "gff3"
-gff3 <- rtracklayer:::import(gffFile, format=gffformat)
+gff3 <- rtracklayer:::import(gffFile, format="gff3")
 
 gtfFile <- system.file("extdata","Aedes_aegypti.partial.gtf",
                        package="GenomicFeatures")
-gtfformat <- "gtf"
-gtf <- rtracklayer:::import(gtfFile, format=gtfformat)
+
+gtf <- rtracklayer:::import(gtfFile, format="gtf")
 
 flyFile <- system.file("extdata","dmel-1000-r5.11.filtered.gff",
                        package="GenomicFeatures")
