@@ -35,7 +35,8 @@
 .computeStartInd <-function(i, res){
   ## The math on which indexes we need to fill with temp...
   if(i!=1){ ## normally we go to the 1st NA and add one
-    startInd <- table(is.na(res[,1]))[["FALSE"]] + 1
+##     startInd <- table(is.na(res[,1]))[["FALSE"]] + 1 ## slower
+    startInd <- tabulate(as.integer(is.na(res[, 1]))+1L)[1]  + 1
   }else{startInd <- 1}
   startInd
 }
