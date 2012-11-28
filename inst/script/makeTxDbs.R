@@ -49,6 +49,13 @@ makeTxDbPackageFromUCSC(version=version,
                         genome="mm10",
                         tablename="ensGene")
 
+## Mouse mm10 knownGene
+makeTxDbPackageFromUCSC(version=version,
+                        maintainer=maintainer,
+                        author=author,
+			destDir=TxDbOutDir,
+                        genome="mm10",
+                        tablename="knownGene")
 
 
 ## c elegans enseble trac
