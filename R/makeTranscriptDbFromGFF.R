@@ -31,15 +31,6 @@
 }
 
 
-## helper to calc the index
-.computeStartInd <-function(i, res){
-  ## The math on which indexes we need to fill with temp...
-  if(i!=1){ ## normally we go to the 1st NA and add one
-##     startInd <- table(is.na(res[,1]))[["FALSE"]] + 1 ## slower
-    startInd <- tabulate(as.integer(is.na(res[, 1]))+1L)[1]  + 1
-  }else{startInd <- 1}
-  startInd
-}
 
 ## Helper to assign some rankings to the edge of a single set based on the
 ## strand information.
@@ -50,7 +41,7 @@
   start <- dat[,"exon_start"]
   strand <- dat[,"exon_strand"]
   if(length(unique(strand)) >1 )
-    stop("Inference CANNOT HANDLE trans-splicing.")
+    stop("Exon rank inference cannot accomodate trans-splicing.")
   if (strand[1]=="+") {
     ord <- order(as.integer(start))
   } else {
@@ -62,16 +53,25 @@
   dat
 }
 
-
+## This fills in the result matrix with appropriate values, and also
+## infers the exon ranking based on position and strand information.
+## It assumes that exon ranks are always presented in order along the
+## chromosome with one order for "+" strands and another for "-"
+## strands.
 .buildRanks <- function(es, res){
-  ## loop to assemble the result
-  for(i in seq_len(length(es))){
-    startInd <- .computeStartInd(i,res)
-    endInd <- startInd + dim( es[[i]] )[1] - 1
-    res[startInd:endInd,] <- .assignRankings(es[[i]])
-  }
-  res
+    ## precompute the starts and ends.
+    el <- elementLengths(es)
+    endInds <- cumsum(el) 
+    startInds <- (endInds - el) + 1  ## The diff, plus one for R based counts)
+    ## loop to assemble the result    
+    for(i in seq_len(length(es))){
+        startInd <- startInds[i]
+        endInd <- endInds[i]
+        res[startInd:endInd,] <- .assignRankings(es[[i]])
+    }
+    res
 }
+
 
 ## Helper to deduce the rankings for each set of cds and exons...
 .deduceExonRankings <- function(exs, format="gff"){
@@ -261,6 +261,7 @@
   as.data.frame(gns)
 }
 
+
 .prepareGFF3Fragments <- function(data, type){
   res <- data[data$type==type,]
   if(dim(res)[1] < 1){stop(paste("No",type,"information present in gff file"))
@@ -373,6 +374,7 @@
   res <- data.frame(data.frame(tx_id=1:dim(res)[1]), res)
   res
 }
+
 
 ## helpers to pre-tidy the data
 .prepareGTFdata.frame <- function(gff,exonRankAttributeName){
