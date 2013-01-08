@@ -32,45 +32,80 @@
 
 
 
-## Helper to assign some rankings to the edge of a single set based on the
-## strand information.
-## This helper should look at the strand and then assign ranks one dir or the
-## other.  If "-" then rank 1 is largest, if "+" then rank 1 is smallest.
-.assignRankings <- function(dat){ # dat=es[[1]]
-  dat <- as.matrix(dat)
-  start <- dat[,"exon_start"]
-  strand <- dat[,"exon_strand"]
-  if(length(unique(strand)) >1 )
+## ## Helper to assign some rankings to the edge of a single set based on the
+## ## strand information.
+## ## This helper should look at the strand and then assign ranks one dir or the
+## ## other.  If "-" then rank 1 is largest, if "+" then rank 1 is smallest.
+## .assignRankings <- function(dat){ # dat=es[[1]]
+##   dat <- as.matrix(dat)
+##   start <- dat[,"exon_start"]
+##   strand <- dat[,"exon_strand"]
+##   if(length(unique(strand)) >1 )
+##     stop("Exon rank inference cannot accomodate trans-splicing.")
+##   if (strand[1]=="+") {
+##     ord <- order(as.integer(start))
+##   } else {
+##     ord <- order(as.integer(start), decreasing=TRUE)
+##   }
+##   ## now sort (needed or not (cheap enough!))
+##   dat <- dat[ord,,drop=FALSE]
+##   dat[,"exon_rank"] <- seq_len(nrow(dat))
+##   dat
+## }
+
+## ## This fills in the result matrix with appropriate values, and also
+## ## infers the exon ranking based on position and strand information.
+## ## It assumes that exon ranks are always presented in order along the
+## ## chromosome with one order for "+" strands and another for "-"
+## ## strands.
+## .buildRanks <- function(es, res){
+##     ## precompute the starts and ends.
+##     el <- elementLengths(es)
+##     endInds <- cumsum(el) 
+##     startInds <- (endInds - el) + 1  ## The diff, plus one for R based counts)
+##     ## loop to assemble the result    
+##     for(i in seq_len(length(es))){
+##         startInd <- startInds[i]
+##         endInd <- endInds[i]
+##         res[startInd:endInd,] <- .assignRankings(es[[i]])
+##     }
+##     res
+## }
+
+
+## New strategy for getting the ranks: Use split on the starts and
+## also on the strand to divide the pieces into chunks that can be
+## computed on by mapply.  Then use mapply and call a function that
+## considers both pieces together to make a decision and call order in
+## the right way.  Then unlist and cbind etc.
+
+## to be called by mapply
+.assignRankings <- function(starts, strands){
+  if(length(unique(strands)) >1 )
     stop("Exon rank inference cannot accomodate trans-splicing.")
-  if (strand[1]=="+") {
-    ord <- order(as.integer(start))
+  if (unique(strands) == "+") { 
+    ord <- order(as.integer(starts))
   } else {
-    ord <- order(as.integer(start), decreasing=TRUE)
+    ord <- order(as.integer(starts), decreasing=TRUE)
   }
-  ## now sort (needed or not (cheap enough!))
-  dat <- dat[ord,,drop=FALSE]
-  dat[,"exon_rank"] <- seq_len(nrow(dat))
-  dat
+  
+  ## This new method will no longer sort the output (I don't expect it
+  ## will matter.  But I will have to check...
+ 
+  ord
 }
 
-## This fills in the result matrix with appropriate values, and also
-## infers the exon ranking based on position and strand information.
-## It assumes that exon ranks are always presented in order along the
-## chromosome with one order for "+" strands and another for "-"
-## strands.
-.buildRanks <- function(es, res){
-    ## precompute the starts and ends.
-    el <- elementLengths(es)
-    endInds <- cumsum(el) 
-    startInds <- (endInds - el) + 1  ## The diff, plus one for R based counts)
-    ## loop to assemble the result    
-    for(i in seq_len(length(es))){
-        startInd <- startInds[i]
-        endInd <- endInds[i]
-        res[startInd:endInd,] <- .assignRankings(es[[i]])
-    }
-    res
+.buildRanks <- function(exs){
+    ## 1st we have to make 100% certain that we are we are sorted by tx_names
+    exs <- exs[order(exs$tx_name),]
+    ## then we can split by name
+    starts <- split(exs[,"exon_start"], as.factor(exs$tx_name)[,drop=TRUE])
+    strands <- split(exs[,"exon_strand"], as.factor(exs$tx_name)[,drop=TRUE])
+    ranks <- unlist(mapply(.assignRankings, starts, strands))
+    exs[,"exon_rank"] <- ranks
+    exs
 }
+
 
 
 ## Helper to deduce the rankings for each set of cds and exons...
@@ -78,11 +113,12 @@
   message("Deducing exon rank from relative coordinates provided")
   ## And a warning for later (in case they were not watching)
   warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute for exonRankAttributeName")
-  res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?  
+##   res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?  
   ## split up the data
-  es <- split(exs, as.factor(exs$tx_name)[,drop=TRUE])
+##   es <- split(exs, as.factor(exs$tx_name)[,drop=TRUE])
   ## loop to assemble the result
-  res <- .buildRanks(es, res)  
+##   res <- .buildRanks(es, res)  
+   res <- .buildRanks(exs)  
   ## then cast result to be data.frame 
   res <- data.frame(res, stringsAsFactors=FALSE)
   if(format=="gff"){

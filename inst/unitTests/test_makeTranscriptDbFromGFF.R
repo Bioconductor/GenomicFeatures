@@ -34,7 +34,7 @@ test_deduceExonRankings <- function(){
   checkTrue(!any(is.na(res$exon_rank))) ## is filled out.
   checkTrue(is.integer(res$exon_rank)) ## is integers
   checkIdentical(res$exon_rank[3:5],1:3)  ## correct val for + strand set
-  checkIdentical(res$exon_rank[10:14],1:5)  ## correct val for - strand set
+  checkIdentical(res$exon_rank[10:14],5:1)  ## correct val for - strand set
 }
 
 
