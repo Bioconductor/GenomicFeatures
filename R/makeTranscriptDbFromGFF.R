@@ -195,7 +195,7 @@
 ## helpers to pre-tidy the data
 .checkExonRank <- function(data, gff, exonRankAttributeName){
   if(!is.null(exonRankAttributeName)){
-    exon_rank <- DataFrame(gff[[exonRankAttributeName]])
+    exon_rank <- DataFrame(mcols(gff)[[exonRankAttributeName]])
     data <- cbind(data,exon_rank)
   }else{
     exon_rank <- DataFrame(rep(NA,length(start(gff))))
@@ -206,7 +206,7 @@
 
 .checkGeneIdAttrib <- function(data, gff, gffGeneIdAttributeName){
   if(!is.null(gffGeneIdAttributeName)){
-    gene_id <- DataFrame(gff[[gffGeneIdAttributeName]])
+    gene_id <- DataFrame(mcols(gff)[[gffGeneIdAttributeName]])
     data <- cbind(data,gene_id)
   }
   data
@@ -218,9 +218,9 @@
                     start=start(gff),
                     end=end(gff),
                     strand=strand(gff),
-                    type=gff$type,
-                    ID=gff$ID,
-                    Parent=gff$Parent)
+                    type=mcols(gff)$type,
+                    ID=mcols(gff)$ID,
+                    Parent=mcols(gff)$Parent)
   ## add ExonRank and geneID info if there is any
   data <- .checkExonRank(data, gff, exonRankAttributeName)
   data <- .checkGeneIdAttrib(data, gff, exonRankAttributeName)
@@ -270,9 +270,9 @@
     ## Then we have to try and infer this from the transcript rows...
     if(!is.null(gffGeneIdAttributeName)){
       ## then try to compute gns using this other data...
-      gns <- data.frame(tx_name=as.character(gff$ID),
-                        type=as.character(gff$type),
-                        gene_id=as.character(gff[[gffGeneIdAttributeName]]),
+      gns <- data.frame(tx_name=as.character(mcols(gff)$ID),
+                        type=as.character(mcols(gff)$type),
+                        gene_id=as.character(mcols(gff)[[gffGeneIdAttributeName]]),
                         stringsAsFactors=FALSE)
       gns <- gns[gns$type=="mRNA",]
       gns <- gns[,c("tx_name","gene_id")]
@@ -418,13 +418,12 @@
                        start=start(gff),
                        end=end(gff),
                        strand=as.character(strand(gff)),
-                       type=as.character(gff$type),
-                       gene_id=as.character(gff$gene_id),
-                       transcript_id=as.character(gff$transcript_id),
+                       type=as.character(mcols(gff)$type),
+                       gene_id=as.character(mcols(gff)$gene_id),
+                       transcript_id=as.character(mcols(gff)$transcript_id),
                        stringsAsFactors=FALSE)
   ## add ExonRank if there is any  
   if(!is.null(exonRankAttributeName)){
-    gff <- as(gff, "GRanges")
     data <- cbind(data,exon_rank=mcols(gff)[[exonRankAttributeName]])
   }else{
     data <- cbind(data,exon_rank=rep(NA,length(start(gff))))
@@ -560,11 +559,11 @@ makeTranscriptDbFromGFF <- function(file,
   ## start by importing the relevant features from the specified file
   feature.type <- c("gene", "mRNA", "exon", "CDS")
   gff <- import(file, format=format, feature.type=feature.type,
-                asRangedData=TRUE)
+                asRangedData=FALSE)
 
   if(format=="gff3"){
     ## check that we have ID, Parent
-    if(all(c("ID","Parent") %in% colnames(gff))){
+    if(all(c("ID","Parent") %in% colnames(mcols(gff)))){
       tables <- .prepareGFF3Tables(gff, exonRankAttributeName,
                                    gffGeneIdAttributeName)
       ## results come back in list like: tables$transctripts etc.
@@ -572,7 +571,7 @@ makeTranscriptDbFromGFF <- function(file,
   }else if(format=="gtf"){
     ## check that we have gene_id and transcript_id
     if(all(c("gene_id","transcript_id")
-           %in% colnames(gff))){
+           %in% colnames(mcols(gff)))){
       tables <- .prepareGTFTables(gff,exonRankAttributeName)
     }
   }
