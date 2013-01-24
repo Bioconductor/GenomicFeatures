@@ -52,8 +52,8 @@ test_mergeFramesViaRanges <- function(){
   ## TESTING
   checkTrue(!any(is.na(res$exon_rank))) ## rank info is filled out.
   expectedCols <- c("exon_chrom","exon_start","exon_end","exon_strand","type",
-    "exon_name","tx_name","exon_rank","exon_id","cds_chrom","cds_start",
-    "cds_end","cds_strand","type","cds_name","tx_name","exon_rank","cds_id")
+    "exon_name","tx_name","exon_rank","cds_chrom","cds_start",
+    "cds_end","cds_strand","type","cds_name","tx_name","exon_rank")
   checkIdentical(expectedCols, colnames(res)) ## expected fields are present
   ## after matching, cds should always be 'within' the exons...
   checkTrue(all(res$exon_start <= res$cds_start, na.rm=TRUE)) 
@@ -130,7 +130,7 @@ test_prepareGFF3Tables <- function(){
   checkTrue(dim(res$genes)[2] == 2)
   checkTrue(class(res$splicings)=="data.frame")
   checkTrue(dim(res$splicings)[1] == 1268)
-  checkTrue(dim(res$splicings)[2] == 11)
+  checkTrue(dim(res$splicings)[2] == 9)
 }
 
 
@@ -147,7 +147,7 @@ test_makeTranscriptDbFromGFF <- function(){
   suppressWarnings(
   txdb <- makeTranscriptDbFromGFF(file=gffFile,
          format="gff3",
-         dataSource="partial gtf file for Tomatoes for testing",
+         dataSource="partial GFF file for Tomatoes for testing",
          species="Solanum lycopersicum",
          circ_seqs=DEFAULT_CIRC_SEQS,
          miRBaseBuild=NULL)

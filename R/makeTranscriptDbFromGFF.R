@@ -123,8 +123,7 @@
   res <- data.frame(res, stringsAsFactors=FALSE)
   if(format=="gff"){
     colnames(res) <- c('exon_chrom','exon_start','exon_end','exon_strand',
-                       'type','exon_name','tx_name','exon_rank','exon_id')
-    res$exon_id <- as.integer(res$exon_id)
+                       'type','exon_name','tx_name','exon_rank')
   }else{
     colnames(res) <- c('tx_name','exon_rank','exon_chrom','exon_strand',
                        'exon_start','exon_end')
@@ -303,10 +302,8 @@
   if(dim(res)[1] < 1){stop(paste("No",type,"information present in gff file"))
   }else{
     name <- paste0(tolower(type), "_id")
-    res <- data.frame(res, data.frame(name=1:dim(res)[1]),
-                      stringsAsFactors=FALSE)
     colnames <- c("XXX_chrom","XXX_start","XXX_end","XXX_strand","type",
-                    "XXX_name","tx_name","exon_rank","XXX_id")
+                    "XXX_name","tx_name","exon_rank")
     names(res) <- sub("XXX", tolower(type), colnames)
   }
   res
@@ -342,8 +339,8 @@
   splicings <- .mergeFramesViaRanges(exs, cds)
   
   ## now drop things and rename as needed
-  splicings <- splicings[,c('exon_rank','exon_id','exon_name','exon_chrom',
-                            'exon_strand','exon_start','exon_end','cds_id',
+  splicings <- splicings[,c('exon_rank','exon_name','exon_chrom',
+                            'exon_strand','exon_start','exon_end',
                             'cds_name','cds_start','cds_end','tx_name')]
   txIds <- unique(transcripts[,c("tx_id","tx_name")])
   splicings <- merge(txIds, splicings, by="tx_name")[,-1]
@@ -592,18 +589,10 @@ makeTranscriptDbFromGFF <- function(file,
                            splicings=tables[["splicings"]],
                            genes=tables[["genes"]],
                            chrominfo=chrominfo,
-                           metadata=metadata)
+                           metadata=metadata,
+                           reassign.ids=TRUE)
   txdb
 }
-
-
-
-
-
-
-
-
-
 
 ## ## TESTING GFF3
 ## gffFile=system.file("extdata","a.gff3")
@@ -617,8 +606,6 @@ makeTranscriptDbFromGFF <- function(file,
 ##                                 miRBaseBuild=NULL)
 ## saveDb(txdb,file="TESTGFF.sqlite")
 
-
-
 ## ## TESTING GTF
 ## gtfFile=system.file("extdata","Aedes_aegypti.partial.gtf")
 ## txdb <- makeTranscriptDbFromGFF(file=gtfFile,
@@ -628,11 +615,6 @@ makeTranscriptDbFromGFF <- function(file,
 ##                                 circ_seqs=DEFAULT_CIRC_SEQS,
 ##                                 miRBaseBuild=NULL)
 ## saveDb(txdb,file="TESTGTF.sqlite")
-
-
-
-
-
 
 
 ## TODO 5/3/12:
@@ -645,9 +627,6 @@ makeTranscriptDbFromGFF <- function(file,
 ##  library(GenomicFeatures);example(makeTranscriptDbFromGFF)
 
 ##  example(makeTranscriptDbFromGFF)
-
-
-
 
 
 ### Testing flybase file:
