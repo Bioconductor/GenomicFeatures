@@ -298,15 +298,14 @@
 
 
 .prepareGFF3Fragments <- function(data, type){
-  res <- data[data$type==type,]
-  if(dim(res)[1] < 1){stop(paste("No",type,"information present in gff file"))
-  }else{
+    res <- data[data$type==type,]
+    if (nrow(res) == 0L && type != "CDS")
+        stop("No ", type, " information present in gff file")
     name <- paste0(tolower(type), "_id")
     colnames <- c("XXX_chrom","XXX_start","XXX_end","XXX_strand","type",
-                    "XXX_name","tx_name","exon_rank")
+                  "XXX_name","tx_name","exon_rank")
     names(res) <- sub("XXX", tolower(type), colnames)
-  }
-  res
+    res
 }
 
 

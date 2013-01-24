@@ -148,29 +148,47 @@
     ## Check 'exon_start <= exon_end'.
     if (any(splicings$exon_start > splicings$exon_end))
         stop("exon starts must be <= exon ends")
-    ## Check 'cds_start', 'cds_end'.
+    ## Check presence of 'cds_start' and 'cds_end'.
     if (hasCol(splicings, "cds_start") != hasCol(splicings, "cds_end"))
         stop("'splicings' has a \"cds_start\" col ",
              "but no \"cds_end\" col, or vice versa")
     if (!hasCol(splicings, "cds_start")) {
         warning("no CDS information for this TranscriptDb object")
     } else {
-        if (!is.numeric(splicings$cds_start))
+        ## Check 'cds_start'.
+        if (!is.vector(splicings$cds_start)
+         || !is.atomic(splicings$cds_start))
             stop("'splicings$cds_start' must be an integer vector")
+        start_is_na <- is.na(splicings$cds_start)
+        if (!is.numeric(splicings$cds_start) && !all(start_is_na))
+            stop("when not an integer (or numeric) vector, ",
+                 "'splicings$cds_start' must be a vector of NAs")
         if (!is.integer(splicings$cds_start))
             splicings$cds_start <- as.integer(splicings$cds_start)
-        if (!is.numeric(splicings$cds_end))
+        ## Check 'cds_end'.
+        if (!is.vector(splicings$cds_end)
+         || !is.atomic(splicings$cds_end))
             stop("'splicings$cds_end' must be an integer vector")
+        end_is_na <- is.na(splicings$cds_end)
+        if (!is.numeric(splicings$cds_end) && !all(end_is_na))
+            stop("when not an integer (or numeric) vector, ",
+                 "'splicings$cds_end' must be a vector of NAs")
         if (!is.integer(splicings$cds_end))
             splicings$cds_end <- as.integer(splicings$cds_end)
-        if (!all(is.na(splicings$cds_end) == is.na(splicings$cds_start)))
-            stop("NAs in 'splicings$cds_end' don't match ",
-                 "NAs in 'splicings$cds_start'")
-        if (any(splicings$cds_start > splicings$cds_end, na.rm=TRUE))
-            stop("cds starts must be <= cds ends")
-        if (any(splicings$cds_start < splicings$exon_start, na.rm=TRUE)
-         || any(splicings$cds_end > splicings$exon_end, na.rm=TRUE))
-            stop("cds starts/ends are incompatible with exon starts/ends")
+        ## Check 'cds_start' and 'cds_end' compatibility.
+        if (!all(start_is_na == end_is_na))
+            stop("NAs in 'splicings$cds_start' don't match ",
+                 "NAs in 'splicings$cds_end'")
+        if (all(start_is_na)) {
+            warning("no CDS information for this TranscriptDb object")
+        } else {
+            if (any(splicings$cds_start > splicings$cds_end, na.rm=TRUE))
+                stop("cds starts must be <= cds ends")
+            ## Check CDS/exon start/end compatibility.
+            if (any(splicings$cds_start < splicings$exon_start, na.rm=TRUE)
+             || any(splicings$cds_end > splicings$exon_end, na.rm=TRUE))
+                stop("cds starts/ends are incompatible with exon starts/ends")
+        }
     }
     ## Check 'cds_id'.
     if (hasCol(splicings, "cds_id")) {
