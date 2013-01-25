@@ -27,7 +27,7 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
                             id_prefix="ensembl_",
                             host="www.biomart.org",
                             port=80,
-                            miRBaseBuild = NULL)
+                            miRBaseBuild=NA)
 }
 \arguments{
   \item{biomart}{which BioMart database to use.
@@ -59,8 +59,8 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
   \item{miRBaseBuild}{specify the string for the appropriate build
     Information from mirbase.db to use for microRNAs.  This can be
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
-    this value will be NULL, which will inactivate the \code{microRNAs}
-    accessor.}
+    this value will be set to \code{NA}, which will inactivate the
+    \code{microRNAs} accessor.}
 }
 
 \details{

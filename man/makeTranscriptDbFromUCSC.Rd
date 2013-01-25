@@ -27,7 +27,7 @@ makeTranscriptDbFromUCSC(
         circ_seqs=DEFAULT_CIRC_SEQS,
         url="http://genome.ucsc.edu/cgi-bin/",
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-        miRBaseBuild = NULL)
+        miRBaseBuild=NA)
 }
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
@@ -49,8 +49,8 @@ makeTranscriptDbFromUCSC(
   \item{miRBaseBuild}{specify the string for the appropriate build
     Information from mirbase.db to use for microRNAs.  This can be
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
-    this value will be NULL, which will inactivate the \code{microRNAs}
-    accessor.}
+    this value will be set to \code{NA}, which will inactivate the
+    \code{microRNAs} accessor.}
 }
 \details{
   \code{makeTranscriptDbFromUCSC} is a convenience function that feeds

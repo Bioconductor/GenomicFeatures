@@ -36,7 +36,7 @@
     circ_seqs=DEFAULT_CIRC_SEQS,
     url="http://genome.ucsc.edu/cgi-bin/",
     goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-    miRBaseBuild = NULL)
+    miRBaseBuild=NA)
 
 makeFDbPackageFromUCSC(
     version,
@@ -64,7 +64,7 @@ makeFDbPackageFromUCSC(
     dataset="hsapiens_gene_ensembl",
     transcript_ids=NULL,
     circ_seqs=DEFAULT_CIRC_SEQS,
-    miRBaseBuild = NULL)
+    miRBaseBuild=NA)
 
   makeTxDbPackage(txdb,
                   version,
@@ -133,8 +133,8 @@ makeFDbPackageFromUCSC(
   \item{miRBaseBuild}{specify the string for the appropriate build
     Information from mirbase.db to use for microRNAs.  This can be
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
-    this value will be NULL, which will inactivate the \code{microRNAs}
-    accessor.}
+    this value will be set to \code{NA}, which will inactivate the
+    \code{microRNAs} accessor.}
 }
 \details{
   \code{makeTxDbPackageFromUCSC} is a convenience function that calls

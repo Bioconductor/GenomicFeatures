@@ -541,32 +541,31 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     description <- as.character(datasets$description)[dataset_rowidx]
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
     organism <- .extractOrganismFromDatasetDesc(description)
+    if (!isSingleStringOrNA(miRBaseBuild))
+        stop("'miRBaseBuild' must be a a single string or NA")
     message("OK")
-    if(is.null(miRBaseBuild)){ miRBaseBuild <- NA }
-    metadata <- data.frame(
-                   name=c("Data source",
-                     "Organism",
-                     "Resource URL",
-                     "BioMart database",
-                     "BioMart database version",
-                     "BioMart dataset",
-                     "BioMart dataset description",
-                     "BioMart dataset version",
-                     "Full dataset",
-                     "miRBase build ID"),
-                   value=c("BioMart",
-                     organism,
-                     mart_url,
-                     biomart,
-                     db_version,
-                     dataset,
-                     description,
-                     dataset_version,
-                     ifelse(is_full_dataset, "yes", "no"),
-                     miRBaseBuild)
-                   )
-    message("metadata: OK")
-    metadata
+    data.frame(
+        name=c("Data source",
+               "Organism",
+               "Resource URL",
+               "BioMart database",
+               "BioMart database version",
+               "BioMart dataset",
+               "BioMart dataset description",
+               "BioMart dataset version",
+               "Full dataset",
+               "miRBase build ID"),
+        value=c("BioMart",
+                organism,
+                mart_url,
+                biomart,
+                db_version,
+                dataset,
+                description,
+                dataset_version,
+                ifelse(is_full_dataset, "yes", "no"),
+                miRBaseBuild)
+    )
 }
 
 
@@ -654,7 +653,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                         id_prefix="ensembl_",
                                         host="www.biomart.org",
                                         port=80,
-                                        miRBaseBuild=NULL)
+                                        miRBaseBuild=NA)
 {
     ## Could be that the user got the 'biomart' and/or 'dataset' values
     ## programmatically via calls to listMarts() and/or listDatasets().

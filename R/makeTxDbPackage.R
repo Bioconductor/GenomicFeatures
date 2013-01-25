@@ -143,7 +143,7 @@ makeTxDbPackageFromUCSC <- function(
   circ_seqs=DEFAULT_CIRC_SEQS,
   url="http://genome.ucsc.edu/cgi-bin/",
   goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-  miRBaseBuild=NULL){
+  miRBaseBuild=NA){
     ## Make the DB
     txdb <- makeTranscriptDbFromUCSC(genome=genome,
                                      tablename=tablename,
@@ -172,7 +172,7 @@ makeTxDbPackageFromBiomart <- function(
   dataset="hsapiens_gene_ensembl",
   transcript_ids=NULL,
   circ_seqs=DEFAULT_CIRC_SEQS,
-  miRBaseBuild=NULL){
+  miRBaseBuild=NA){
     ## Make the DB
     txdb <- makeTranscriptDbFromBiomart(biomart=biomart,
                                         dataset=dataset,

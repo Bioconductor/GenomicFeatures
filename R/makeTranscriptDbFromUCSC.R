@@ -520,16 +520,17 @@ getChromInfoFromUCSC <- function(genome,
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
-    if(is.null(miRBaseBuild)){ miRBaseBuild <- NA }
+    if (!isSingleStringOrNA(miRBaseBuild))
+        stop("'miRBaseBuild' must be a a single string or NA")
     metadata <- data.frame(
-            name=c("Data source", "Genome", "Organism", "UCSC Table",
-                "Resource URL", "Type of Gene ID", "Full dataset",
-                "miRBase build ID"),
-            value=c("UCSC", genome, UCSCGenomeToOrganism(genome),
+        name=c("Data source", "Genome", "Organism", "UCSC Table",
+               "Resource URL", "Type of Gene ID", "Full dataset",
+               "miRBase build ID"),
+        value=c("UCSC", genome, UCSCGenomeToOrganism(genome),
                 tablename, "http://genome.ucsc.edu/", gene_id_type,
                 ifelse(full_dataset, "yes", "no"), miRBaseBuild)
     )
-    message("metadata: OK")
+    message("OK")
     metadata
 }
 
@@ -543,7 +544,7 @@ getChromInfoFromUCSC <- function(genome,
         full_dataset,
         circ_seqs,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-        miRBaseBuild=NULL)
+        miRBaseBuild=NA)
 {
     ucsc_txtable <- setDataFrameColClass(ucsc_txtable, .UCSC_TXCOL2CLASS,
                                          drop.extra.cols=TRUE)
@@ -578,7 +579,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
         circ_seqs=DEFAULT_CIRC_SEQS,
         url="http://genome.ucsc.edu/cgi-bin/",
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-        miRBaseBuild=NULL)
+        miRBaseBuild=NA)
 {
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
