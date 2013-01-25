@@ -583,6 +583,14 @@ makeTranscriptDbFromGFF <- function(file,
   ## build up the metadata
   metadata <- .prepareGFFMetadata(file, dataSource, species, miRBaseBuild)
 
+  ## If there is not chrominfo, then make one up best you can (no lengths)
+  if(is.null(chrominfo)){
+    message("Now generating chrominfo from available sequence names. No chromos ome length information is available.")
+    chroms <- unique(tables[["transcripts"]][["tx_chrom"]])
+    chrominfo <- data.frame(chrom=chroms,
+                            length=rep(NA,length(chroms)),
+                            is_circular=matchCircularity(chroms, circ_seqs))
+  }
   ## call makeTranscriptDb
   txdb <- makeTranscriptDb(transcripts=tables[["transcripts"]],
                            splicings=tables[["splicings"]],
