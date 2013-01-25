@@ -172,7 +172,7 @@ test_makeTranscriptDbFromGFF <- function(){
          chrominfo= chrominfo,
          dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
                           "release-13/gtf/aedes_aegypti/",sep=""),
-         species="Aedes aegypti")
+         species="Aedes aegypti"))
 
   ## test
   checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb2, txdb_gtf))
