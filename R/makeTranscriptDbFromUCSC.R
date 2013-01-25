@@ -3,10 +3,10 @@
 ### -------------------------------------------------------------------------
 
 ## take any of the supported genomes at UCSC, remove the version number, 
-## and then lookup the supported species name.
-.matchUCSCGenomeToSpecies <- function(genome){
+## and then lookup the supported organism name.
+UCSCGenomeToOrganism <- function(genome){
   genome <- gsub("\\d+$","",genome)
-  orgToSpec <- c("hg"="Homo sapiens",
+  genome2org <- c("hg"="Homo sapiens",
                  "felCat"="Felis catus",
                     "galGal"="Gallus gallus",
                     "panTro"="Pan troglodytes",
@@ -59,7 +59,7 @@
                     "priPac"="Pristionchus pacificus",
                     "aplCal"="Aplysia californica",
                     "sacCer"="Saccharomyces cerevisiae")
-  orgToSpec[names(orgToSpec) == genome][[1]]  
+  genome2org[genome]
 }
 
 ### makeTranscriptDbFromUCSC() expects a UCSC transcript table to have at
@@ -522,10 +522,10 @@ getChromInfoFromUCSC <- function(genome,
             appendLF=FALSE)
     if(is.null(miRBaseBuild)){ miRBaseBuild <- NA }
     metadata <- data.frame(
-            name=c("Data source", "Genome", "Genus and Species", "UCSC Table",
+            name=c("Data source", "Genome", "Organism", "UCSC Table",
                 "Resource URL", "Type of Gene ID", "Full dataset",
                 "miRBase build ID"),
-            value=c("UCSC", genome, .matchUCSCGenomeToSpecies(genome),
+            value=c("UCSC", genome, UCSCGenomeToOrganism(genome),
                 tablename, "http://genome.ucsc.edu/", gene_id_type,
                 ifelse(full_dataset, "yes", "no"), miRBaseBuild)
     )

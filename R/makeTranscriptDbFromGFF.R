@@ -533,7 +533,7 @@
     }
     metadata <- data.frame(
                    name=c("Data source",
-                          "Genus and Species",
+                          "Organism",
                           "miRBase build ID"),
                    value=c(dataSource, species, miRBaseBuild)
                    )

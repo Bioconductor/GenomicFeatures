@@ -13,8 +13,9 @@
 ###
 
 
-## helper to extract the Genus and species name from the dataset string.
-.extractSpeciesFromDatasetDesc <- function(description){
+## helper to extract the organism (as Genus and Species) from the dataset
+## string.
+.extractOrganismFromDatasetDesc <- function(description){
   vals <- unlist(strsplit(description, " "))
   paste(vals[[1]], vals[[2]])
 }
@@ -539,12 +540,12 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
              "\" has no (or more than one) \"", dataset, "\" datasets")
     description <- as.character(datasets$description)[dataset_rowidx]
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
-    species <- .extractSpeciesFromDatasetDesc(description)
+    organism <- .extractOrganismFromDatasetDesc(description)
     message("OK")
     if(is.null(miRBaseBuild)){ miRBaseBuild <- NA }
     metadata <- data.frame(
                    name=c("Data source",
-                     "Genus and Species",
+                     "Organism",
                      "Resource URL",
                      "BioMart database",
                      "BioMart database version",
@@ -554,7 +555,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                      "Full dataset",
                      "miRBase build ID"),
                    value=c("BioMart",
-                     species,
+                     organism,
                      mart_url,
                      biomart,
                      db_version,

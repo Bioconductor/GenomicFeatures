@@ -4,8 +4,8 @@
 
 
 ## Separate helper function for abbreviating the genus and species name strings
-.abbrevSpeciesName <- function(speciesName){
-  spc <- unlist(strsplit(speciesName, " "))
+.abbrevOrganismName <- function(organism){
+  spc <- unlist(strsplit(organism, " "))
   ## this assumes a binomial nomenclature has been maintained.
   paste0( substr(spc[[1]], 1, 1), spc[[2]])
 }
@@ -35,7 +35,7 @@
 .makePackageName <- function(txdb){
   prefix <- .choosePrefix(txdb)
   con <- AnnotationDbi:::dbConn(txdb)
-  species <- .abbrevSpeciesName(.getMetaDataValue(txdb,'Genus and Species'))  
+  species <- .abbrevOrganismName(.getMetaDataValue(txdb,'Organism'))  
   type <- .getMetaDataValue(txdb,'Data source')
   if(type=="UCSC"){
     genome <- .getMetaDataValue(txdb,'Genome')
@@ -98,13 +98,13 @@ makeTxDbPackage <- function(txdb,
       'GenomicFeatures version at creation time'),
     LIC=license,
     DBTYPE= dbType,
-    ORGANISM=.getMetaDataValue(txdb,'Genus and Species'),
-    SPECIES=.getMetaDataValue(txdb,'Genus and Species'),
+    ORGANISM=.getMetaDataValue(txdb,'Organism'),
+    SPECIES=.getMetaDataValue(txdb,'Organism'),
     PROVIDER=.getMetaDataValue(txdb,'Data source'),
     PROVIDERVERSION=.getTxDbVersion(txdb),
     RELEASEDATE= .getMetaDataValue(txdb,'Creation time'),
     SOURCEURL= .getMetaDataValue(txdb,'Resource URL'),
-    ORGANISMBIOCVIEW=gsub(" ","_",.getMetaDataValue(txdb,'Genus and Species')),
+    ORGANISMBIOCVIEW=gsub(" ","_",.getMetaDataValue(txdb,'Organism')),
     TXDBOBJNAME=pkgName ## .makeObjectName(pkgName)
    )
    ## Should never happen
