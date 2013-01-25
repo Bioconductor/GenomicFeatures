@@ -148,9 +148,7 @@ test_makeTranscriptDbFromGFF <- function(){
   txdb <- makeTranscriptDbFromGFF(file=gffFile,
          format="gff3",
          dataSource="partial GFF file for Tomatoes for testing",
-         species="Solanum lycopersicum",
-         circ_seqs=DEFAULT_CIRC_SEQS,
-         miRBaseBuild=NULL)
+         species="Solanum lycopersicum")
    )
 
   ## test
@@ -174,9 +172,7 @@ test_makeTranscriptDbFromGFF <- function(){
          chrominfo= chrominfo,
          dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
                           "release-13/gtf/aedes_aegypti/",sep=""),
-         species="Aedes aegypti",
-         circ_seqs=DEFAULT_CIRC_SEQS,
-         miRBaseBuild=NULL))
+         species="Aedes aegypti")
 
   ## test
   checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb2, txdb_gtf))
@@ -192,9 +188,7 @@ test_makeTranscriptDbFromGFF <- function(){
                                    format="gff3",
                                    dataSource="gff file from flybase",
                                    gffGeneIdAttributeName = "geneID",
-                                   species="Drosophila melanogaster",
-                                   circ_seqs=DEFAULT_CIRC_SEQS,
-                                   miRBaseBuild=NULL)
+                                   species="Drosophila melanogaster")
                    )
   
   ## test

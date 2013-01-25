@@ -16,11 +16,11 @@ makeTranscriptDbFromGFF(file,
                         format=c("gff3","gtf"),
                         exonRankAttributeName=NULL,
                         gffGeneIdAttributeName=NULL,
-                        chrominfo,
-                        dataSource,
-                        species,
+                        chrominfo=NULL,
+                        dataSource=NA,
+                        species=NA,
                         circ_seqs=DEFAULT_CIRC_SEQS,
-                        miRBaseBuild=NULL)
+                        miRBaseBuild=NA)
 }
 \arguments{
   \item{file}{path/file to be processed}
@@ -37,15 +37,9 @@ makeTranscriptDbFromGFF(file,
   that are named 'gene' for gene to transcript mappings when parsing a
   gff3 file.  For gtf files this argument is ignored entirely.}
   \item{chrominfo}{data frame containing information about the
-  chromosomes.  This data.frame has 3 columns: 'chrom', 'length' and
-  'is_circular'.  The 'chrom' column contains the character names of the
-  chromosome elements that are present, the 'length' is the integer
-  length for each one and the 'is_circular' contains a logical value to
-  indicate whether that element is a circularized (such as a
-  mitochondria or a chloroplast).  If this argument is left blank then
-  there will not be any length information recorded for the different
-  chromosomes since it is not possible to infer if from the transcript
-  ranges alone.}
+  chromosomes.  Will be passed to the internal call to
+  \code{\link{makeTranscriptDb}}. See \code{?\link{makeTranscriptDb}}
+  for the details.}
   \item{dataSource}{Where did this data file originate?  Please be as
   specific as possible.}
   \item{species}{What is the Genus and species of this organism. Please
@@ -58,8 +52,8 @@ makeTranscriptDbFromGFF(file,
   \item{miRBaseBuild}{specify the string for the appropriate build
     Information from mirbase.db to use for microRNAs.  This can be
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
-    this value will be NULL, which will inactivate the \code{microRNAs}
-    accessor.}
+    this value will be set to \code{NA}, which will inactivate the
+    \code{microRNAs} accessor.}
 }
 \details{
   \code{makeTranscriptDbFromGFF} is a convenience function that feeds

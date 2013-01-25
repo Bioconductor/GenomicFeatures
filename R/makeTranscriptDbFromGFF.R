@@ -512,19 +512,30 @@
 ## Helper to prepare the 'metadata' data frame.
 ## 
 
-.prepareGFFMetadata <- function(dataSource,species,miRBaseBuild)
+.prepareGFFMetadata <- function(file, dataSource=NA, species=NA,
+                                      miRBaseBuild=NA)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
-    if(is.null(miRBaseBuild)){ miRBaseBuild <- NA }
-    if(missing(dataSource)){ miRBaseBuild <- "GFF or GTF file" }
+    if (!isSingleStringOrNA(dataSource))
+        stop("'dataSource' must be a a single string or NA")
+    if (!isSingleStringOrNA(species))
+        stop("'species' must be a a single string or NA")
+    if (!isSingleStringOrNA(miRBaseBuild))
+        stop("'miRBaseBuild' must be a a single string or NA")
+    if (is.na(dataSource)) {
+        if (is.character(file)) {
+            dataSource <- file
+        } else {
+            dataSource <- showConnections(all=TRUE)[as.character(file),
+                                                    "description"]
+        }
+    }
     metadata <- data.frame(
                    name=c("Data source",
-                     "Genus and Species",
-                     "miRBase build ID"),
-                   value=c(dataSource,
-                     species,
-                     miRBaseBuild)
+                          "Genus and Species",
+                          "miRBase build ID"),
+                   value=c(dataSource, species, miRBaseBuild)
                    )
     message("metadata: OK")
     metadata
@@ -541,15 +552,12 @@ makeTranscriptDbFromGFF <- function(file,
                                     format=c("gff3", "gtf"),
                                     exonRankAttributeName=NULL,
                                     gffGeneIdAttributeName=NULL,
-                                    chrominfo,
-                                    dataSource,
-                                    species,
+                                    chrominfo=NULL,
+                                    dataSource=NA,
+                                    species=NA,
                                     circ_seqs=DEFAULT_CIRC_SEQS,
-                                    miRBaseBuild=NULL)
+                                    miRBaseBuild=NA)
 {
-  ## Some argument checking:
-  if(missing(dataSource)) stop("No Datasource provided")
-  if(missing(species)) stop("No species provided")
   format <- match.arg(format)
   
   ## start by importing the relevant features from the specified file
@@ -573,16 +581,8 @@ makeTranscriptDbFromGFF <- function(file,
   }
   ## TODO: verify that I have all I really need for metadata
   ## build up the metadata
-  metadata <- .prepareGFFMetadata(dataSource,species,miRBaseBuild)
+  metadata <- .prepareGFFMetadata(file, dataSource, species, miRBaseBuild)
 
-  ## If there is not chrominfo, then make one up best you can (no lengths)
-  if(missing(chrominfo)){
-    message("Now generating chrominfo from available sequence names. No chromosome length information is available.")
-    chroms <- unique(tables[["transcripts"]][["tx_chrom"]])
-    chrominfo <- data.frame(chrom=chroms,
-                            length=rep(NA,length(chroms)),
-                            is_circular=matchCircularity(chroms, circ_seqs))
-  }
   ## call makeTranscriptDb
   txdb <- makeTranscriptDb(transcripts=tables[["transcripts"]],
                            splicings=tables[["splicings"]],
@@ -600,9 +600,7 @@ makeTranscriptDbFromGFF <- function(file,
 ##                                 dataSource="partial gtf file for Tomatoes
 ## donated anonymously for testing",
 ##                                 species="Solanum lycopersicum",
-##                                 exonRankAttributeName = "nb_exon",
-##                                 circ_seqs=DEFAULT_CIRC_SEQS,
-##                                 miRBaseBuild=NULL)
+##                                 exonRankAttributeName = "nb_exon")
 ## saveDb(txdb,file="TESTGFF.sqlite")
 
 ## ## TESTING GTF
@@ -610,9 +608,7 @@ makeTranscriptDbFromGFF <- function(file,
 ## txdb <- makeTranscriptDbFromGFF(file=gtfFile,
 ##                                 format="gtf",
 ##                                 dataSource="ftp://ftp.ensemblgenomes.org/pub/metazoa/release-13/gtf/aedes_aegypti/",
-##                                 species="Aedes aegypti",
-##                                 circ_seqs=DEFAULT_CIRC_SEQS,
-##                                 miRBaseBuild=NULL)
+##                                 species="Aedes aegypti")
 ## saveDb(txdb,file="TESTGTF.sqlite")
 
 
@@ -634,9 +630,7 @@ makeTranscriptDbFromGFF <- function(file,
 ##           format="gff3",
 ##           dataSource="gff file from flybase",
 ##           gffGeneIdAttributeName = "geneID",
-##           species="Drosophila melanogaster",
-##           circ_seqs=DEFAULT_CIRC_SEQS,
-##           miRBaseBuild=NULL)
+##           species="Drosophila melanogaster")
 ## foo <- transcriptsBy(txdb3, by="gene")
 
 ## this file will not have any proper names etc.  Use it for testing.
