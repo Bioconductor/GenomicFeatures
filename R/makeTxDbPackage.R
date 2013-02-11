@@ -49,6 +49,9 @@
     }else{
       pkgName <- paste(prefix,species,type,db, sep=".")      
     }
+  }else{
+    type <- gsub(" ",".",type)
+    pkgName <- paste(prefix,species, sep=".")      
   }
   gsub("_","",pkgName)  ## R does not allow underscores in package names
 }
@@ -66,8 +69,20 @@
       .getMetaDataValue(txdb,'UCSC Table'), "table")
   }else if(type=="BioMart"){
     version <- .getMetaDataValue(txdb,'BioMart database version')   
+  }else{
+    version <-  .getMetaDataValue(txdb,'Data source')   
   }
   version 
+}
+
+.getResourceURLInfo <- function(txdb){
+    type <- .getMetaDataValue(txdb,'Data source')
+    if(type=="UCSC" || type=="BioMart"){
+        url <- .getMetaDataValue(txdb,'Resource URL')
+    }else{
+        url <- .getMetaDataValue(txdb,'Data source')
+    }
+    url
 }
 
 
@@ -103,7 +118,7 @@ makeTxDbPackage <- function(txdb,
     PROVIDER=.getMetaDataValue(txdb,'Data source'),
     PROVIDERVERSION=.getTxDbVersion(txdb),
     RELEASEDATE= .getMetaDataValue(txdb,'Creation time'),
-    SOURCEURL= .getMetaDataValue(txdb,'Resource URL'),
+    SOURCEURL= .getResourceURLInfo(txdb),
     ORGANISMBIOCVIEW=gsub(" ","_",.getMetaDataValue(txdb,'Organism')),
     TXDBOBJNAME=pkgName ## .makeObjectName(pkgName)
    )
