@@ -55,6 +55,37 @@ test_transcripts <- function()
     seqinfo(want_grg) <- seqinfo
     want_grg <- GenomicFeatures:::.assignMetadataList(want_grg, txdb)
     checkIdentical(get_grg, want_grg)
+
+}
+
+## make sure that seqnameStyle behaves correctly
+test_transcripts_seqnameStyleSwap <- function(){
+    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+                                      package="GenomicFeatures"))
+    ## extra test to make sure that we can change names via seqnameStyle
+    checkTrue(seqnameStyle(txdb) == "UCSC")
+    seqnameStyle(txdb) <- "NCBI"
+    checkTrue(seqnameStyle(txdb) == "NCBI")    
+    get_grg <- transcripts(txdb, vals=list(gene_id=c("3081", "9501")),
+                                 columns=c("tx_id", "tx_name", "gene_id"))
+    checkTrue(as.character(seqnames(get_grg))[1] =="17")
+    tx_id_col <- c(49:51, 83:84)
+    gene_id_col <- CharacterList(as.list(c(rep.int("9501", 3),
+                                           rep.int("3081", 2))))
+    want_grg <- GRanges(seqnames = factor(c(rep.int("17", 3),
+                                            rep.int("chr3_random", 2)),
+                                          levels = seqlevels(seqinfo(txdb))),
+                        ranges = IRanges(
+                                   start=c(rep.int(62294, 3), 18988, 49418),
+                                   end=c(177378, 202576, 202576, 73308, 73308)),
+                        strand = strand(c("-", "-", "-", "+", "+")),
+                        tx_id = tx_id_col,
+                        tx_name = c("uc002frd.1", "uc002fre.1", "uc002frf.1",
+                                    "uc003fzi.1", "uc003fzj.1"),
+                        gene_id = gene_id_col)
+    seqinfo(want_grg) <- seqinfo(txdb)
+    want_grg <- GenomicFeatures:::.assignMetadataList(want_grg, txdb)
+    checkIdentical(get_grg, want_grg)    
 }
 
 test_exons <- function()
