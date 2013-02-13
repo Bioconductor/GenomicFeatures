@@ -356,6 +356,14 @@
     obj
 }
 
+## helper to translate back to what is expected from seqinfo()
+.translateToSeqInfo <- function(txdb, x){
+    tr <- load_chrominfo(txdb, set.col.class=TRUE)$chrom
+    names(tr) <- txdb$.chrom    
+    idx <- match(x, tr)
+    names(tr)[idx]
+}
+
 .extractFeatureRowsAsGRanges <- function(root_table, txdb, vals, columns)
 {
     CORECOLS <- .DBDESC[[root_table]]$CORECOLS
@@ -365,6 +373,9 @@
     root_columns <- assigned_columns[[root_table]]
     ## Extract the data from the db.
     root_data <- .extractRootData(root_table, txdb, vals, root_columns)
+    ## seqnames may be out of sync with expected results.  Massage back.
+    root_data[[CORECOLS["chrom"]]] <- .translateToSeqInfo(txdb, 
+                                          root_data[[CORECOLS["chrom"]]])
     child_data <- .extractChildData(root_table, txdb,
                           root_data[[CORECOLS["id"]]], assigned_columns)
     ## Construct the GRanges object and return it.
@@ -377,7 +388,7 @@
 
     activeNames <- names(isActiveSeq(txdb))[isActiveSeq(txdb)]
     seqinfo <- seqinfo(txdb)[activeNames]
-    ans <- GRanges(seqnames = ans_seqnames,
+    ans <- GRanges(seqnames = ans_seqnames,  
                    ranges = ans_ranges,
                    strand = ans_strand,
                    seqinfo = seqinfo)
@@ -390,9 +401,24 @@
 }
 
 
-## This is used to create a list from the isActiveSeq slot 
-.makeActiveSeqsList <- function(type, txdb){
+
+## this helper is just to get the isActiveSeq vector, but to have it
+## named based on the original database seqnames...
+## This is important for places where isActiveSeq() needs to be used
+## as part of a database query instead of as part of a external
+## representation.
+.baseNamedActiveSeqs <- function(txdb){
+    trueNames <- load_chrominfo(txdb, set.col.class=TRUE)$chrom
     actSqs <- isActiveSeq(txdb)
+    names(actSqs) <- trueNames
+    actSqs
+}
+
+## This is used to create a list from the isActiveSeq slot
+## !!!
+## TODO: I think that this helper is screwing up the vals values in the methods
+.makeActiveSeqsList <- function(type, txdb){
+    actSqs <- .baseNamedActiveSeqs(txdb)
     keepSeqs <- names(actSqs)[actSqs]
     res <- list(keepSeqs)
     names(res) <- type

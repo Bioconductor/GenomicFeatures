@@ -17,8 +17,10 @@
     ans
 }
 
+## !!!
+## TODO: I think that this helper is screwing things up
 .getOnlyActiveSeqs <- function(txdb){
-    actSqs <- isActiveSeq(txdb)
+    actSqs <- .baseNamedActiveSeqs(txdb)
     names(actSqs)[actSqs]
 }
 
@@ -90,6 +92,9 @@
 
     ## get the data from the database
     data <- queryAnnotationDb(txdb, sql)
+    ## seqnames may be out of sync with expected results. Massage back.
+    chromName <- paste0(type,"_chrom")
+    data[[chromName]] <- .translateToSeqInfo(txdb, data[[chromName]])
 
     ## create the GRanges object
     cols <- paste0(type, c("_id", "_name"))
