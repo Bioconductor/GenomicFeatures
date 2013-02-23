@@ -152,7 +152,9 @@
 ## different function that merges based on a pair of granges objects where you
 ## also want them to match based on a name (like a tx_name)
 .mergeFramesViaRanges <- function(exs, cds){
-  ##  we have make GRanges objects so that we can range-match this stuff.
+  ##  we make GRanges objects so that we can range-match this stuff.
+  exs <- exs[,!is.na(colnames(exs))]  
+  cds <- cds[,!is.na(colnames(cds))]
   exsr <- GRanges(seqnames=Rle(exs$exon_chrom),
                   ranges=IRanges(start=exs$exon_start,end=exs$exon_end),
                   strand=exs$exon_strand,
@@ -194,7 +196,8 @@
 ## helpers to pre-tidy the data
 .checkExonRank <- function(data, gff, exonRankAttributeName){
   if(!is.null(exonRankAttributeName)){
-    exon_rank <- DataFrame(mcols(gff)[[exonRankAttributeName]])
+    exon_rank <- DataFrame(exonRankAttributeName=
+                           mcols(gff)[[exonRankAttributeName]])
     data <- cbind(data,exon_rank)
   }else{
     exon_rank <- DataFrame(rep(NA,length(start(gff))))
@@ -205,7 +208,8 @@
 
 .checkGeneIdAttrib <- function(data, gff, gffGeneIdAttributeName){
   if(!is.null(gffGeneIdAttributeName)){
-    gene_id <- DataFrame(mcols(gff)[[gffGeneIdAttributeName]])
+    gene_id <- DataFrame(gffGeneIdAttributeName=
+                         mcols(gff)[[gffGeneIdAttributeName]])
     data <- cbind(data,gene_id)
   }
   data
@@ -222,7 +226,7 @@
                     Parent=mcols(gff)$Parent)
   ## add ExonRank and geneID info if there is any
   data <- .checkExonRank(data, gff, exonRankAttributeName)
-  data <- .checkGeneIdAttrib(data, gff, exonRankAttributeName)
+  data <- .checkGeneIdAttrib(data, gff, gffGeneIdAttributeName)
   
   ## Has a compressed col, so expand as needed.
   data <- expand(data, colnames="Parent", keepEmptyRows=TRUE )
@@ -233,6 +237,12 @@
   data$type <- as.character(data$type)
   data$ID <- as.character(data$ID)
   data$Parent <- as.character(data$Parent)
+  if("exonRankAttributeName" %in% colnames(data)){
+      data$exonRankAttributeName <- as.integer(data$exonRankAttributeName)
+  }
+  if("gffGeneIdAttributeName" %in% colnames(data)){
+      data$gffGeneIdAttributeName <- as.character(data$gffGeneIdAttributeName)
+  }
   as.data.frame(data, stringsAsFactors=FALSE)
 }
 

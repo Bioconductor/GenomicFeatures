@@ -136,7 +136,7 @@ test_prepareGFF3Tables <- function(){
 
 
 
-## Test that outputs match what is expected.
+## Test that outputs match what is expected. ## BOOM
 test_makeTranscriptDbFromGFF <- function(){  
   ## wanted
   gffDBFile <- system.file("extdata","TESTGFF.sqlite",
