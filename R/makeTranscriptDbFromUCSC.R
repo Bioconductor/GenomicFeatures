@@ -58,7 +58,8 @@ UCSCGenomeToOrganism <- function(genome){
                     "caeRem"="Caenorhabditis remanei",
                     "priPac"="Pristionchus pacificus",
                     "aplCal"="Aplysia californica",
-                    "sacCer"="Saccharomyces cerevisiae")
+                    "sacCer"="Saccharomyces cerevisiae",
+                    "papAnu"="Papio anubis")
   genome2org[genome]
 }
 
