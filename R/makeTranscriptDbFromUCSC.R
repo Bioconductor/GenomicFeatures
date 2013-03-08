@@ -37,7 +37,7 @@ UCSCGenomeToOrganism <- function(genome){
                     "danRer"="Danio rerio",
                     "ci"="Ciona intestinalis",
                     "braFlo"="Branchiostoma floridae",
-                    "strPur"="Strongylocentrotus purpuratu",
+                    "strPur"="Strongylocentrotus purpuratus",
                     "apiMel"="Apis mellifera",
                     "anoGam"="Anopheles gambiae",
                     "droAna"="Drosophila ananassae",
