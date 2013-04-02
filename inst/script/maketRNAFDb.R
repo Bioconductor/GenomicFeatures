@@ -12,7 +12,9 @@ path <- "FDb.Hsapiens.UCSC.hg19.tRNAs/inst/extdata/"
 
 species <- c(hg18 = "Hsapiens",
              mm9  = "Mmusculus",
-             rn4  = "Rnorvegicus")
+             mm10  = "Mmusculus",
+             rn4  = "Rnorvegicus",
+             rn5  = "Rnorvegicus")
 
 for(i in seq_len(length(species))){
   fdb <- makeFeatureDbFromUCSC(genome=names(species[i]),
@@ -38,12 +40,14 @@ lns <- readLines(fl)
 lns <- gsub("FDb.Hsapiens.UCSC.hg19.tRNAs","FDb.UCSC.tRNAs",lns)
 ## except for the last one which should always be on line 41
 lns[[41]] <-  sub("FDb.UCSC.tRNAs","FDb.Hsapiens.UCSC.hg19.tRNAs",lns[[41]])
-lns <- c(lns[1:6],
+lns <- c(lns[1:8],
          "\\alias{FDb.Hsapiens.UCSC.hg19.tRNAs}",
          "\\alias{FDb.Hsapiens.UCSC.hg18.tRNAs}",
          "\\alias{FDb.Mmusculus.UCSC.mm9.tRNAs}",
+         "\\alias{FDb.Mmusculus.UCSC.mm10.tRNAs}",
          "\\alias{FDb.Rnorvegicus.UCSC.rn4.tRNAs}",
-         lns[7:length(lns)])
+         "\\alias{FDb.Rnorvegicus.UCSC.rn5.tRNAs}",
+         lns[9:length(lns)])
 writeLines(lns, con = fl)
 
 

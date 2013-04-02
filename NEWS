@@ -1,3 +1,25 @@
+CHANGES IN VERSION 1.12
+-----------------------
+
+NEW FEATURES
+
+    o Support for new UCSC species
+
+    o Better support for GTF and GFF processing into TranscriptDb objects
+
+    o Methods for making TranscriptDb objects from general sources
+    have been made more useful
+
+
+BUG FIXES
+
+    o Updates to allow continued access to ever changing services like UCSC
+
+    o Corrections for seqnameStyle methods
+
+    o Over 10X performance gains for processing of GTF and GFF files
+
+
 CHANGES IN VERSION 1.10
 -----------------------
 
