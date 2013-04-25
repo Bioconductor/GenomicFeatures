@@ -224,15 +224,28 @@
     }
   }## otherwise we can just leave it alone.
 
+
+  if(length(keys) <= 1000){  ##if more than about this, prolly faster to get all
     sql <- paste("SELECT DISTINCT",
                  .makeSelectList(x, cnames, abbrev=FALSE),
                  "FROM",
                  majorJoin,
                  "WHERE",
                  .makeKeyList(x, keys, keytype, abbrev=FALSE))  
+  }else{
+          sql <- paste("SELECT DISTINCT",
+                 .makeSelectList(x, cnames, abbrev=FALSE),
+                 "FROM",
+                 majorJoin)
+  }
   
   res <- AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x), sql)
 
+  if(length(keys) > 1000){ ##Then drop the extras now(in event there are some)
+      ktColId <- GenomicFeatures:::.reverseColAbbreviations(x,keytype)
+      res <-  res[res[[ktColId]] %in% keys,]
+  }
+  
   
   ## Then drop any cols that were not explicitely requested but that may have
   ## been appended to make a joind (like TXID)
