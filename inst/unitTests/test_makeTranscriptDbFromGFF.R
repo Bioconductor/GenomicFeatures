@@ -217,3 +217,52 @@ test_makeTranscriptDbFromGFF <- function(){
 ## badTxname corresponds to tx_id number 2... SO:
 ## lst1 <- as.list(txdb3); foo = lst1$splicings; 
 ## foo[foo$tx_id==2,]
+
+
+
+
+## problem with files from here (Mus musculus/UCSC/mm9)
+## http://tophat.cbcb.umd.edu/igenomes.shtml
+
+## ORI:
+## txdb <- makeTranscriptDbFromGFF(file = annFile, format = "gtf", exonRankAttributeName = "exon_number", chrominfo = chrominfo, dataSource = "UCSC", species = "Mus musculus")
+
+## ## cd ~/TEMP/GenomicFeaturesProblem/UgoGTF
+## library(GenomicFeatures)
+
+## ## lets make a fake one for testing
+## chrominfo<-data.frame(chrom = c(paste("chr",1:22,sep=""),"chrX","chrY","chrM"),
+##                       length=rep(197195432, 25),
+##                       is_circular=c(rep(FALSE, 24),TRUE))
+
+
+## debug(GenomicFeatures:::makeTranscriptDbFromGFF)
+## debug(GenomicFeatures:::.prepareGTFTables)
+## debug(GenomicFeatures:::.prepareGTFdata.frame)
+## debug(GenomicFeatures:::.prepareGTFFragments)
+## debug(GenomicFeatures:::.deduceExonRankings) ## not called here
+
+## debug(GenomicFeatures:::.mergeFramesViaRanges)
+
+## Trouble is happening here:
+##   cdsExs <- .mergeFramesViaRanges(exs, cds) ## BOOM!
+##   cdsExs <- cdsExs[,c("exon_rank","exon_chrom","exon_strand","exon_start",
+##                       "exon_end","cds_start","cds_end","tx_name")]
+
+## .mergeFramesViaRanges creates a data.frame with TWO exon_rank cols,
+## but we want it to only grab the one with no NAs in it and to return
+## that.  OR, I can take another parameter in and use that to make the
+## decision...
+
+## I can make the use of CDS data automatic (when it's available and the exon info isn't).  But I will always give a message whenever that happens.
+
+## ARGH.  There is still a problem!
+## What is happening now?
+
+
+
+## txdb <- makeTranscriptDbFromGFF(file = "genes_small.gtf", format = "gtf", exonRankAttributeName = "phase", chrominfo = chrominfo, dataSource = "ensembl", species = "Mus musculus")
+
+## So 1) find what gets called after .prepareGTFdata.frame() (it's inside of .prepareGTFTables) , and 2) change the code so that users can set a parameter called searchCDSForExonRank = TRUE (false by default). 3) change same section of code for GFF files (.prepareGFF3Tables)
+
+

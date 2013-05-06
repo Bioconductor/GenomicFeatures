@@ -147,6 +147,18 @@
   actualNames[!(actualNames %in% standardNames)]
 }
 
+
+## helper to massage 0 based rankings to be one based
+.massageZeroBasedRankings <- function(splicings){
+    if(any(splicings$exon_rank==0) && !any(splicings$exon_rank<0)){
+        msg <- "Massaging the exon rank information so that it is one based counting instead of zero based."
+        warning(paste(strwrap(msg, exdent=2), collapse="\n"),
+                immediate.=TRUE, call.=FALSE)
+        splicings$exon_rank <- splicings$exon_rank +1
+    }
+    splicings
+}
+
 ## This helper might be generalizable for a common use case where people need
 ## to merge a pair of data.frames based on range data.  Though probably a
 ## different function that merges based on a pair of granges objects where you
@@ -175,6 +187,18 @@
   
   ## To reassemble, I need to 1st get the matching bits:
   cdsExs <- cbind(exs[subjectHits(hits),],cds[queryHits(hits),])
+
+  ## If there is info. for CDS rank and not for exons, then swap that
+  ## over and send the user a message.
+  if(all(is.na(exs$exon_rank)) && !all(is.na(cds$exon_rank))){
+      msg <- "This file does not have information about exon rank, but it does have data for CDS rank.  Therefore we are applying the CDS rank information for the corresponding/overlapping exons.  This also means that any exons that did not have a CDS described will also not be present in the final TranscriptDb object."
+      warning(paste(strwrap(msg, exdent=2), collapse="\n"),
+              immediate.=TRUE, call.=FALSE)
+      cdsExs$exon_rank <- cdsExs[[8]]
+      splicings <- cdsExs
+      splicings <- .massageZeroBasedRankings(splicings)
+      return(splicings)
+  }
   
   ## Finally I need to glue back the exon ranges that didn't have a cds...
   exsUnMatched <- exs[!(1:dim(exs)[1] %in% subjectHits(hits)),]
@@ -183,6 +207,7 @@
   exsUn <- cbind(exsUnMatched, data.frame(emptys))
   names(exsUn) <- c(colnames(exs),colnames(cds))
   splicings <- rbind(cdsExs, exsUn)
+  splicings <- .massageZeroBasedRankings(splicings)
   splicings ## coarse (contains everything that came in)
 }
 
