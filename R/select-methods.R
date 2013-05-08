@@ -298,7 +298,7 @@ setMethod("cols", "TranscriptDb",
 #####################################################################
 ## method for keys()
 ## PHEW, There are a lot of types.  But names are not always available so...
-.makeKeytypeChoiceAndGetKeys <- function(x, keytype){
+.keys <- function(x, keytype){
     switch(EXPR = keytype,
            "GENEID" = AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
              "SELECT DISTINCT gene_id FROM gene", 1L),
@@ -319,13 +319,28 @@ setMethod("cols", "TranscriptDb",
                       "method to identify viable keytypes")))
 }
 
+
 ## Get the list of possible keys, for a given keytype
 setMethod("keys", "TranscriptDb",
-    function(x, keytype){
-      if (missing(keytype)) keytype <- "GENEID"
-      .makeKeytypeChoiceAndGetKeys(x, keytype)
-    }
+          function(x, keytype, ...){
+              if (missing(keytype)) keytype <- "GENEID"
+              AnnotationDbi:::smartKeys(x=x, keytype=keytype, ...,
+                                        FUN=GenomicFeatures:::.keys)
+          }
 )
+
+
+## Examples to test:
+## library(TxDb.Hsapiens.UCSC.hg19.knownGene); txdb=TxDb.Hsapiens.UCSC.hg19.knownGene
+## debug(AnnotationDbi:::smartKeys)
+## head(keys(txdb))
+## head(keys(txdb, keytype="TXNAME"))
+## head(keys(txdb, keytype="TXNAME", pattern=".2$"))
+
+## <BOOM>
+## head(keys(txdb, keytype="TXID", column="GENEID"))
+## head(keys(txdb, keytype="GENEID", pattern=".2$", column="TXNAME"))
+
 
 #####################################################################
 ## method for keytypes()
