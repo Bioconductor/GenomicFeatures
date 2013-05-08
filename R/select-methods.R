@@ -319,28 +319,35 @@ setMethod("cols", "TranscriptDb",
                       "method to identify viable keytypes")))
 }
 
-
-## Get the list of possible keys, for a given keytype
-setMethod("keys", "TranscriptDb",
-          function(x, keytype, ...){
+tmpFun <-           function(x, keytype, ...){
               if (missing(keytype)) keytype <- "GENEID"
               AnnotationDbi:::smartKeys(x=x, keytype=keytype, ...,
                                         FUN=GenomicFeatures:::.keys)
           }
+## Get the list of possible keys, for a given keytype
+setMethod("keys", "TranscriptDb",tmpFun
+
 )
 
 
 ## Examples to test:
 ## library(TxDb.Hsapiens.UCSC.hg19.knownGene); txdb=TxDb.Hsapiens.UCSC.hg19.knownGene
 ## debug(AnnotationDbi:::smartKeys)
+## debug(GenomicFeatures:::tmpFun)
+## debug(GenomicFeatures:::.select)
 ## head(keys(txdb))
 ## head(keys(txdb, keytype="TXNAME"))
 ## head(keys(txdb, keytype="TXNAME", pattern=".2$"))
 
-## <BOOM>
-## head(keys(txdb, keytype="TXID", column="GENEID"))
-## head(keys(txdb, keytype="GENEID", pattern=".2$", column="TXNAME"))
+## <BOOM - problem when I do column selections...
+## BOTH TXID AND GENEID are keytypes AND cols so this should work...
 
+## head(keys(txdb, keytype="TXID", column="GENEID"))
+
+## Good grief it works!
+## head(keys(txdb, keytype="GENEID", pattern=".2$", column="TXNAME"))
+## select(txdb, keys = head(keys(txdb, keytype="GENEID", pattern=".2$", column="TXNAME")), cols=c("GENEID","TXNAME"), keytype="GENEID")
+## select(txdb, keys = head(keys(txdb, keytype="GENEID", pattern=".2$", column="TXNAME", fuzzy=TRUE)), cols=c("GENEID","TXNAME"), keytype="GENEID")
 
 #####################################################################
 ## method for keytypes()
