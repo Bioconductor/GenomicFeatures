@@ -24,11 +24,29 @@
       \code{select} or \code{keys} and the \code{keytype} argument.
     }
     \item{}{
-      \code{keys(x, keytype)}:
-      Return keys for the database contained in the \link{TranscriptDb}
-      object .  By default it will return the "TXNAME" keys for the database,
-      but if used with the \code{keytype} argument, it will return the keys
-      from that keytype.
+      \code{keys(x, keytype, pattern, column, fuzzy)}: Return keys for
+      the database contained in the \link{TranscriptDb} object .
+
+      The \code{keytype} argument specifies the kind of keys that will
+      be returned and is always required. By default \code{keys} will return the
+      "GENEID" keys for the database.  
+
+      If \code{keys} is used with \code{pattern}, it will pattern match
+      on the \code{keytype}.
+
+      But if the \code{column} argument is also provided along with the
+      \code{pattern} argument, then \code{pattern} will be matched
+      against the values in \code{column} instead.
+
+      And if \code{keys} is called with \code{column} and no
+      \code{pattern} argument, then it will return all keys that have
+      corresponding values in the \code{column} argument.
+
+      Thus, the behavior of \code{keys} all depends on how many arguments are
+      specified.
+
+      Use of the \code{fuzzy} argument will toggle fuzzy matching to
+      TRUE or FALSE.  If \code{pattern} is not used, fuzzy is ignored.
     }
     \item{}{
       \code{cols(x)}:
@@ -45,6 +63,8 @@
   }
 
 }
+
+
 
 \author{Marc Carlson}
 
