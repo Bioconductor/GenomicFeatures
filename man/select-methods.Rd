@@ -28,8 +28,8 @@
       the database contained in the \link{TranscriptDb} object .
 
       The \code{keytype} argument specifies the kind of keys that will
-      be returned and is always required. By default \code{keys} will return the
-      "GENEID" keys for the database.  
+      be returned. By default \code{keys} will return the "GENEID" keys
+      for the database.
 
       If \code{keys} is used with \code{pattern}, it will pattern match
       on the \code{keytype}.
@@ -70,6 +70,8 @@
 
 \seealso{
   \itemize{
+    \item \link[AnnotationDbi]{AnnotationDb-class} for more descriptsion
+    of methods \code{select},\code{keytypes},\code{keys} and \code{cols}.
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
           and \code{\link{transcriptsByOverlaps}}, for other ways to
           extract genomic features from a \link{TranscriptDb} object.
