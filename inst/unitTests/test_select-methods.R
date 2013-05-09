@@ -116,6 +116,27 @@ test_keys <- function(){
   checkException(keys(txdb, keytype="CDSCHROM"))
 }
 
+test_keys_advancedArgs <- function(){
+    k1 <- keys(txdb, keytype="TXNAME")
+    checkTrue("uc001aaa.3" %in% k1)
+    
+    k2 <- keys(txdb, keytype="TXNAME", pattern=".2$")
+    checkTrue("uc001aaq.2" %in% k2)
+    checkTrue(!("uc001aaa.3" %in% k2))
+    checkTrue(length(k2) < length(k1))
+
+    l1 <- length(keys(txdb, keytype="TXID", column="GENEID"))
+    l2 <- length(keys(txdb, keytype="TXID"))
+    checkTrue(l1 < l2)
+    
+    k3 <- head(keys(txdb, keytype="GENEID", pattern=".2$",
+                    column="TXNAME", fuzzy=TRUE))
+    res <- suppressWarnings( select(txdb, k3, cols=c("GENEID","TXNAME"),
+                                   keytype="GENEID"))
+    checkTrue(any(grepl(".2$",res$TXNAME)))
+}
+
+
 
 test_select <- function(){
   keys = head(keys(txdb, "GENEID"))

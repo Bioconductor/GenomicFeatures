@@ -349,6 +349,8 @@ setMethod("keys", "TranscriptDb",tmpFun
 ## select(txdb, keys = head(keys(txdb, keytype="GENEID", pattern=".2$", column="TXNAME")), cols=c("GENEID","TXNAME"), keytype="GENEID")
 ## select(txdb, keys = head(keys(txdb, keytype="GENEID", pattern=".2$", column="TXNAME", fuzzy=TRUE)), cols=c("GENEID","TXNAME"), keytype="GENEID")
 
+
+
 #####################################################################
 ## method for keytypes()
 ## Seven! keytypes for TranscriptDb
