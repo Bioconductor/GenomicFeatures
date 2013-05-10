@@ -141,6 +141,48 @@
 ### Some utility functions.
 ###
 
+## For converting user arguments FROM the UC style down to what we use
+## internally
+translateCols <- function(columns, txdb){
+    oriColNames <- names(columns)
+    oriLen <- length(columns) ## not always the same as length(oriCols) (names are optional)
+    ## get the available abbreviations...
+    names <- .makeColAbbreviations(txdb)
+    exp <- sub("^_","", names(names))
+    names(exp) <- names
+    
+    ## then make sure we have not repeated ourselves on the input
+    columns <- unique(columns)
+    ## Then get an index
+    idx <- match(names(exp), columns)
+    idx <- idx[!is.na(idx)]
+    ## and get the results that go into that idx
+    sub <- exp[match(columns,names(exp))]
+    sub <- sub[!is.na(sub)]
+    columns[idx] <- sub
+    columns <- unique(columns)
+    if(length(columns) == oriLen){ ## nothing was thrown out by unique so
+        names(columns) <- oriColNames
+    }else{
+        msg <- paste("Some of your columns represented repeated values.",
+                     "These duplicates have been removed.")
+        if(length(oriColNames)!=0) {
+            msg2 <- paste("Because your columns were redundant we have also had to",
+                          "discard your custom column names.")
+            msg <- paste(msg, msg2)
+        }
+        warning(paste(strwrap(msg, exdent=2), collapse="\n"))
+    }
+    columns
+}
+
+
+## For reversing the conversion back to UC format.
+reverseTranslateCols <- function(columns){
+    toupper(gsub("_","",columns))
+}
+
+
 .checkargColumns <- function(columns, valid_columns)
 {
     if (is.null(columns))
@@ -149,7 +191,7 @@
         return()
     valid_columns <- paste0("'", valid_columns, "'", collapse = ", ")
     stop("'columns' must be NULL or a character vector ",
-         "with values in ", valid_columns)
+         "with values in ", reverseTranslateCols(valid_columns))
 }
 
 .getClosestTable <- function(root_table, colnames)
@@ -366,6 +408,9 @@
 
 .extractFeatureRowsAsGRanges <- function(root_table, txdb, vals, columns)
 {
+    ## 1st translate columns from UC format to LC format
+    columns <- translateCols(columns, txdb)
+    ## Then proceed with checking
     CORECOLS <- .DBDESC[[root_table]]$CORECOLS
     forbidden_columns <- c(CORECOLS["chrom"], CORECOLS["strand"])
     .checkargColumns(columns, setdiff(.ALLCOLS, forbidden_columns))
@@ -443,7 +488,7 @@ setMethod("transcripts", "data.frame",
 )
 
 setMethod("transcripts", "TranscriptDb",
-    function(x, vals=NULL, columns=c("tx_id", "tx_name")){
+    function(x, vals=NULL, columns=c("TXID", "TXNAME")){
         vals = c(vals, .makeActiveSeqsList("tx_chrom", x))
         .extractFeatureRowsAsGRanges("transcript", x, vals, columns)
       }
@@ -458,7 +503,7 @@ setMethod("exons", "data.frame",
 )
 
 setMethod("exons", "TranscriptDb",
-    function(x, vals=NULL, columns="exon_id"){
+    function(x, vals=NULL, columns="EXONID"){
         vals = c(vals, .makeActiveSeqsList("exon_chrom", x))
         .extractFeatureRowsAsGRanges("exon", x, vals, columns)
         }
@@ -467,7 +512,7 @@ setMethod("exons", "TranscriptDb",
 setGeneric("cds", function(x, ...) standardGeneric("cds"))
 
 setMethod("cds", "TranscriptDb",
-    function(x, vals=NULL, columns="cds_id"){
+    function(x, vals=NULL, columns="CDSID"){
         vals = c(vals, .makeActiveSeqsList("cds_chrom", x))
         .extractFeatureRowsAsGRanges("cds", x, vals, columns)
         }

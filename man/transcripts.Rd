@@ -25,13 +25,13 @@
 
 \usage{
 transcripts(x, ...)
-\S4method{transcripts}{TranscriptDb}(x, vals=NULL, columns=c("tx_id", "tx_name"))
+\S4method{transcripts}{TranscriptDb}(x, vals=NULL, columns=c("TXID", "TXNAME"))
 
 exons(x, ...)
-\S4method{exons}{TranscriptDb}(x, vals=NULL, columns="exon_id")
+\S4method{exons}{TranscriptDb}(x, vals=NULL, columns="EXONID")
 
 cds(x, ...)
-\S4method{cds}{TranscriptDb}(x, vals=NULL, columns="cds_id")
+\S4method{cds}{TranscriptDb}(x, vals=NULL, columns="CDSID")
 
 #promoters(x, upstream=2000, downstream=200, ...)
 \S4method{promoters}{TranscriptDb}(x, upstream=2000, downstream=200, ...)
@@ -63,14 +63,14 @@ tRNAs(x)
   }
   \item{columns}{
     Columns to include in the output.
-    Must be \code{NULL} or a character vector with values in the
-    above list of valid names. With the following restrictions:
+    Must be \code{NULL} or a character vector as given by the
+    \code{cols} method. With the following restrictions:
     \itemize{
-      \item \code{"tx_chrom"} and \code{"tx_strand"} are not allowed
+      \item \code{"TXCHROM"} and \code{"TXSTRAND"} are not allowed
       for \code{transcripts}.
-      \item \code{"exon_chrom"} and \code{"exon_strand"} are not allowed
+      \item \code{"EXONCHROM"} and \code{"EXONSTRAND"} are not allowed
       for \code{exons}.
-      \item \code{"cds_chrom"} and \code{"cds_strand"} are not allowed
+      \item \code{"CDSCHROM"} and \code{"CDSSTRAND"} are not allowed
       for \code{cds}.
     }
     If the vector is named, those names are used for the corresponding
@@ -132,9 +132,9 @@ tRNAs(x)
                                    package="GenomicFeatures"))
   vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
   transcripts(txdb, vals)
-  exons(txdb, vals=list(exon_id=1), columns=c("exon_id", "tx_name"))
-  exons(txdb, vals=list(tx_name="uc009vip.1"), columns=c("exon_id",
-      "tx_name"))
+  exons(txdb, vals=list(exon_id=1), columns=c("EXONID", "TXNAME"))
+  exons(txdb, vals=list(tx_name="uc009vip.1"), columns=c("EXONID",
+      "TXNAME"))
 
 ## microRNAs() :
 \dontrun{library(TxDb.Hsapiens.UCSC.hg19.knownGene)
