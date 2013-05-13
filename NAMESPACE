@@ -102,5 +102,6 @@ exportMethods(
   asBED, asGFF,
   determineDefaultSeqnameStyle,
   findSpliceOverlaps,
-  getPromoterSeq
+  getPromoterSeq,
+  distance
 )
