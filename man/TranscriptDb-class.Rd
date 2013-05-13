@@ -16,6 +16,9 @@
 % coercion
 \alias{as.list,TranscriptDb-method}
 
+% distance 
+\alias{distance,GenomicRanges,TranscriptDb-method}
+
 
 \title{TranscriptDb objects}
 
@@ -57,7 +60,7 @@
       named logical vector.  Only active sequences will be tapped when
       using the supplied accessor methods.  Inactive sequences will be
       ignored.  By default, all available sequences will be active.
-    }    
+    } 
     \item{}{
       \code{isActiveSeq(x) <- value}:
       Allows the user to change which sequences will be actively
@@ -83,6 +86,19 @@
       again with no loss of information.
       Note that the transcripts are dumped in the same order in all the
       data frames.
+    }
+  }
+  In this code snippet, \code{x} is a GenomicRanges and \code{y} is a 
+  TranscriptDb object.
+
+  \describe{
+    \item{}{
+      \code{distance(x, y, id, type=c("gene", "tx", "exon", "cds"), 
+                     ignore.strand=FALSE, ...)}:
+      Returns the distance from ranges in \code{x} to ranges in \code{y}.
+      \code{id} is a character vector of identifiers that exist in the
+      TranscriptDb obejct, specifically one of \sQuote{gene}, \sQuote{tx}, 
+      \sQuote{exon} or \sQuote{cds}.
     }
   }
 }
@@ -136,6 +152,15 @@ txdump <- as.list(txdb)
 txdump
 txdb1 <- do.call(makeTranscriptDb, txdump)
 stopifnot(identical(as.list(txdb1), txdump))
+
+## distance() with GRanges and TranscriptDb
+library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
+txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
+gr <- GRanges(c("chr2L", "chr2R"),
+              IRanges(c(100000, 200000),  width=100))
+distance(gr, txdb, id=c("FBgn0259717", "FBgn0261501"), type="gene")
+distance(gr, txdb, id=c("4", "4097"), type="tx")
+distance(gr, txdb, id=c("10000", "23000"), type="cds")
 }
 
 \keyword{methods}
