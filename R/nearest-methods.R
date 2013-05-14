@@ -33,9 +33,11 @@ setMethod("distance", c("GenomicRanges", "TranscriptDb"),
 {
     tx <- transcripts(y, list(gene_id=id), "gene_id")
     nms <- unlist(tx$gene_id, use.names=FALSE)
-    .checkID(nms, id, type)
-    skel <- CharacterList(factor(unlist(tx$gene_id, use.names=FALSE)))
-    unlist(range(relist(tx, skel)), use.names=FALSE)
+    f <- factor(nms)
+    .checkID(levels(f), id, type)
+    ## FIXME: relist?
+    rngs <- unlist(range(split(tx, f)), use.names=FALSE)
+    rngs[match(id, levels(f))]
 }
 
 .checkID <- function(nms, id, type)
