@@ -413,28 +413,3 @@ setMethod("asGFF", "TranscriptDb", function(x) {
 })
 
 setMethod(rtracklayer:::bestFileFormat, "TranscriptDb", function(x) "gff3")
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### distance 
-###
-
-setMethod("distance", c("GenomicRanges", "TranscriptDb"),
-    function(x, y, id, type=c("gene", "tx", "exon", "cds"), 
-             ignore.strand=FALSE, ...)
-    {
-        if (!identical(length(x), length(id)))
-            stop("length(id) must equal length(x)")
-        if (!is.character(id))
-            stop("'id' must be a character")
-        rng <- switch(type,
-                      gene=unlist(range(transcriptsBy(y, "gene"))[id]),
-                      tx=transcripts(y, vals=list(tx_id=id)),
-                      exon=exons(y, vals=list(exon_id=id)),
-                      cds=cds(y, vals=list(cds_id=id)))
-        if (!identical(length(x), length(rng)))
-            stop(paste0(type, " regions in annotation 'y' cannot be collapsed ",
-                        "into a single range"))
-        distance(x, rng, ignore.strand=ignore.strand)
-    }
-)
-
