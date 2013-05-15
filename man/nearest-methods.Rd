@@ -81,8 +81,16 @@
   gr <- GRanges(c("chr2L", "chr2R"),
                 IRanges(c(100000, 200000),  width=100))
   distance(gr, txdb, id=c("FBgn0259717", "FBgn0261501"), type="gene")
-  distance(gr, txdb, id=c("4", "4097"), type="tx")
   distance(gr, txdb, id=c("10000", "23000"), type="cds")
+
+  ## The id's must be in the appropriate order with respect to 'x'.
+  distance(gr, txdb, id=c("4", "4097"), type="tx")
+
+  ## 'id' "4" is on chr2L and "4097" is on chr2R. 
+  transcripts(txdb, list(tx_id=c("4", "4097")))
+
+  ## If we reverse the 'id' the chromosomes are incompatable with gr.
+  distance(gr, txdb, id=c("4097", "4"), type="tx")
 
   ## distance() compares each 'x' to the corresponding 'y'.
   ## If an 'id' is not found in the TranscriptDb 'y' will not 

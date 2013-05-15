@@ -16,12 +16,12 @@ setMethod("distance", c("GenomicRanges", "TranscriptDb"),
         if (!is.character(id))
             stop("'id' must be a character")
         rng <- switch(type,
-                      gene=.extractGenes(y, id, type),
+                      gene=.extractByGeneID(y, id),
                       tx=transcripts(y, list(tx_id=id), "tx_id"),
                       exon=exons(y, list(exon_id=id), "exon_id"),
                       cds=cds(y, list(cds_id=id), "cds_id"))
         if (type != "gene")
-            .checkID(mcols(rng)[[1]], id, type) 
+            rng <- .subsetByID(rng, id)
         if (!identical(length(x), length(rng)))
             stop(paste0(type, " regions in annotation 'y' cannot be collapsed ",
                         "into a single range"))
@@ -29,34 +29,25 @@ setMethod("distance", c("GenomicRanges", "TranscriptDb"),
     }
 )
 
-.extractGenes <- function(y, id, type)
+.extractByGeneID <- function(y, id)
 {
     tx <- transcripts(y, list(gene_id=id), "gene_id")
     nms <- unlist(tx$gene_id, use.names=FALSE)
     f <- factor(nms)
-    .checkID(levels(f), id, type)
+    missing <- !id %in% levels(f) 
+    if (any(missing))
+          stop("'", paste(id[missing], sep=","), "'", " not found in 'y'")
     ## FIXME: relist?
     rngs <- unlist(range(split(tx, f)), use.names=FALSE)
     rngs[match(id, levels(f))]
 }
 
-.checkID <- function(nms, id, type)
+.subsetByID <- function(rng, id)
 {
-    missing <- !id %in% nms 
+    f <- factor(mcols(rng)[,])
+    missing <- !id %in% levels(f) 
     if (any(missing))
           stop("'", paste(id[missing], sep=","), "'", " not found in 'y'")
+    rng[match(id, levels(f))]
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
