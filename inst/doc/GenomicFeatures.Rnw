@@ -167,7 +167,7 @@ The \Rclass{TranscriptDb} objects inherit from \Rclass{AnnotationDb}
 objects (just as the \Rclass{ChipDb} and \Rclass{OrgDb} objects do).
 One of the implications of this relationship is that these object
 ought to be used in similar ways to each other.  Therefore we have
-written supporting \Rmethod{cols}, \Rmethod{keytypes}, \Rmethod{keys}
+written supporting \Rmethod{columns}, \Rmethod{keytypes}, \Rmethod{keys}
 and \Rmethod{select} methods for \Rclass{TranscriptDb} objects.
 
 These methods can be a useful way of extracting data from a
@@ -178,7 +178,7 @@ UCSC transcript names that match with a set of gene IDs.
 
 <<selectExample>>=
 keys <- c("100033416", "100033417", "100033420")
-cols(txdb)
+columns(txdb)
 keytypes(txdb)
 select(txdb, keys = keys, cols="TXNAME", keytype="GENEID")
 @ 
@@ -189,7 +189,7 @@ information that will go with each of the transcript names.
 \end{Exercise}
 \begin{Solution}
 <<selectExercise>>=
-cols(txdb)
+columns(txdb)
 cols <- c("TXNAME", "TXSTRAND", "TXCHROM")
 select(txdb, keys=keys, cols=cols, keytype="GENEID")
 @

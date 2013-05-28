@@ -289,7 +289,7 @@ setMethod("select", "TranscriptDb",
 }
 
 
-setMethod("cols", "TranscriptDb",
+setMethod("columns", "TranscriptDb",
     function(x) .cols(x)
 )
 

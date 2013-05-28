@@ -64,7 +64,7 @@ tRNAs(x)
   \item{columns}{
     Columns to include in the output.
     Must be \code{NULL} or a character vector as given by the
-    \code{cols} method. With the following restrictions:
+    \code{columns} method. With the following restrictions:
     \itemize{
       \item \code{"TXCHROM"} and \code{"TXSTRAND"} are not allowed
       for \code{transcripts}.

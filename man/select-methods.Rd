@@ -2,7 +2,7 @@
 
 \alias{select-methods}
 
-\alias{cols,TranscriptDb-method}
+\alias{columns,TranscriptDb-method}
 \alias{keytypes,TranscriptDb-method}
 \alias{keys,TranscriptDb-method}
 \alias{select,TranscriptDb-method}
@@ -10,7 +10,7 @@
 \title{Using the "select" interface on TranscriptDb objects}
 
 \description{
-  \code{select}, \code{cols} and \code{keys} can be used together to
+  \code{select}, \code{columns} and \code{keys} can be used together to
   extract data from a \link{TranscriptDb} object.
 }
 
@@ -49,7 +49,7 @@
       TRUE or FALSE.  If \code{pattern} is not used, fuzzy is ignored.
     }
     \item{}{
-      \code{cols(x)}:
+      \code{columns(x)}:
       Show which kinds of data can be returned for the
       \link{TranscriptDb} object.
     }
@@ -94,7 +94,7 @@ head(keys(txdb, "TXID"))
 head(keys(txdb, "TXNAME"))
 
 ## list columns that can be returned by select
-cols(txdb)
+columns(txdb)
 
 ## call select
 res <- select(txdb, head(keys(txdb, "GENEID")),
