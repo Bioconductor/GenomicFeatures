@@ -285,6 +285,11 @@ setReplaceMethod("seqinfo", "TranscriptDb",
     }
 )
 
+## Reset seqlevels (seqnames) back to original values.
+setMethod("seqlevels0", "TranscriptDb", 
+    function(x) x$initialize()
+)
+
 setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
 
 setMethod("isActiveSeq", "TranscriptDb",

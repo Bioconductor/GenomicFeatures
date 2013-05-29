@@ -14,7 +14,7 @@ Description: A set of tools and methods for making and manipulating transcript
         provided for extracting the desired features in a convenient format.
 Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
 Depends: BiocGenerics (>= 0.1.0), IRanges (>= 1.17.13),
-         GenomicRanges (>= 1.11.11), AnnotationDbi (>= 1.23.11)
+         GenomicRanges (>= 1.13.16), AnnotationDbi (>= 1.23.11)
 Imports: methods, DBI (>= 0.2-5), RSQLite (>= 0.8-1),
          BiocGenerics, IRanges, GenomicRanges,
          Biostrings (>= 2.23.2), rtracklayer (>= 1.15.1), biomaRt, RCurl,
