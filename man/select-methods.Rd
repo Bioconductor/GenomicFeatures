@@ -54,10 +54,10 @@
       \link{TranscriptDb} object.
     }
     \item{}{
-      \code{select(x, keys, cols, keytype)}:
+      \code{select(x, keys, columns, keytype)}:
       When all the appropriate arguments are specified \code{select}
       will retrieve the matching data as a data.frame based on
-      parameters for selected \code{keys} and \code{cols} and
+      parameters for selected \code{keys} and \code{columns} and
       \code{keytype} arguments.
     }
   }
@@ -71,7 +71,7 @@
 \seealso{
   \itemize{
     \item \link[AnnotationDbi]{AnnotationDb-class} for more descriptsion
-    of methods \code{select},\code{keytypes},\code{keys} and \code{cols}.
+    of methods \code{select},\code{keytypes},\code{keys} and \code{columns}.
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
           and \code{\link{transcriptsByOverlaps}}, for other ways to
           extract genomic features from a \link{TranscriptDb} object.
@@ -98,7 +98,7 @@ columns(txdb)
 
 ## call select
 res <- select(txdb, head(keys(txdb, "GENEID")),
-              cols=c("GENEID","TXNAME"),
+              columns=c("GENEID","TXNAME"),
               keytype="GENEID")
 head(res)
 }

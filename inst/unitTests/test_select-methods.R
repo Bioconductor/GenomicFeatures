@@ -2,7 +2,7 @@
 ## tests for select (generally)
 ## Why test the lower level helpers?  Because that way I will get a failure
 ## point right at the location where the trouble occurs (high resolution for
-## trouble detection).
+## trouble detection)._
 require("TxDb.Hsapiens.UCSC.hg19.knownGene")
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 require("RUnit")
@@ -131,7 +131,7 @@ test_keys_advancedArgs <- function(){
     
     k3 <- head(keys(txdb, keytype="GENEID", pattern=".2$",
                     column="TXNAME", fuzzy=TRUE))
-    res <- suppressWarnings( select(txdb, k3, cols=c("GENEID","TXNAME"),
+    res <- suppressWarnings( select(txdb, k3, columns=c("GENEID","TXNAME"),
                                    keytype="GENEID"))
     checkTrue(any(grepl(".2$",res$TXNAME)))
 }
@@ -166,7 +166,7 @@ test_select <- function(){
   checkTrue(length(unique(res$GENEID))==length(keys))
 
   keys = head(keys(txdb, "GENEID"))
-  cols = cols = c("GENEID","TXID", "EXONRANK")
+  cols = c("GENEID","TXID", "EXONRANK")
   res <- select(txdb, keys, cols, keytype="GENEID")
   checkTrue(dim(res)[1]>0)
   checkTrue(dim(res)[2]==length(cols))
@@ -287,7 +287,7 @@ test_select_isActiveSeq <- function(){
   ## then use select
   keys <- head(keys(txdb, "GENEID"))
   cols <- c("GENEID","CDSSTART", "CDSCHROM")
-  res <- select(txdb, keys, cols = cols, keytype="GENEID")
+  res <- select(txdb, keys, columns = cols, keytype="GENEID")
   checkTrue(dim(res)[1]>0)
   checkTrue(dim(res)[2]==length(cols))
   checkIdentical(c("GENEID","CDSCHROM","CDSSTART"), colnames(res))
@@ -298,7 +298,7 @@ test_select_isActiveSeq <- function(){
   keys <- c(head(keys(txdb,keytype="TXNAME")),
             tail(keys(txdb,keytype="TXNAME")))
   cols <- c("TXNAME","TXCHROM","TXSTRAND")
-  res <- select(txdb, keys, cols = cols, keytype="TXNAME")
+  res <- select(txdb, keys, columns = cols, keytype="TXNAME")
   checkTrue(dim(res)[1]>0)
   checkTrue(dim(res)[2]==length(cols))
   checkIdentical(c("TXNAME","TXCHROM","TXSTRAND"), colnames(res))

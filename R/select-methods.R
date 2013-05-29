@@ -271,9 +271,26 @@
 }
 
 
+##  Remove this select warning function after 2.13 has released
+.selectWarnTxDb <- function(x, keys, columns, keytype, ...){
+    
+    ## remove condition after 2.13
+    extraArgs <- list(...)
+    if("cols" %in% names(extraArgs)){
+        ## warn the user about the old argument
+        AnnotationDbi:::.colsArgumentWarning()
+        ## then call it using cols in place of columns
+        .select(x, keys, extraArgs[["cols"]], keytype)  
+    }else{
+        .select(x, keys, columns, keytype)
+    }
+}
+
+
 setMethod("select", "TranscriptDb",
-    function(x, keys, cols, keytype) {
-          .select(x, keys, cols, keytype)
+    function(x, keys, columns, keytype, ...) {
+          .selectWarnTxDb(x, keys, columns, keytype, ...)
+##           .select(x, keys, columns, keytype)
         }
 )
 

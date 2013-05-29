@@ -180,7 +180,7 @@ UCSC transcript names that match with a set of gene IDs.
 keys <- c("100033416", "100033417", "100033420")
 columns(txdb)
 keytypes(txdb)
-select(txdb, keys = keys, cols="TXNAME", keytype="GENEID")
+select(txdb, keys = keys, columns="TXNAME", keytype="GENEID")
 @ 
 
 \begin{Exercise}
@@ -191,7 +191,7 @@ information that will go with each of the transcript names.
 <<selectExercise>>=
 columns(txdb)
 cols <- c("TXNAME", "TXSTRAND", "TXCHROM")
-select(txdb, keys=keys, cols=cols, keytype="GENEID")
+select(txdb, keys=keys, columns=cols, keytype="GENEID")
 @
 \end{Solution}
 
@@ -331,7 +331,7 @@ the list is grouped by transcript IDs.
 <<internalID>>=
 GRList <- exonsBy(txdb, by = "tx")
 tx_ids <- names(GRList)
-head(select(txdb, keys=tx_ids, cols="TXNAME", keytype="TXID"))
+head(select(txdb, keys=tx_ids, columns="TXNAME", keytype="TXID"))
 @ 
 \end{Solution}
 
