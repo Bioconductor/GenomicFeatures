@@ -104,7 +104,7 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
 ## Discover which datasets are available in the "ensembl" BioMart
 ## database:
 library("biomaRt")
-listDatasets(useMart("ensembl"))
+head(listDatasets(useMart("ensembl")))
 
 ## Retrieving an incomplete transcript dataset for Human from the
 ## "ensembl" BioMart database:
