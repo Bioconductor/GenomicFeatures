@@ -539,7 +539,8 @@ setMethod("promoters", "TranscriptDb",
 ## translator.  It seems that the chroms are in biomaRt style for mirbase.  So
 ## for biomaRt, return them as is, but for UCSC, add "chr" prefix.
 .translateChromsForUCSC <- function(csomes){
-  paste0("chr", csomes)
+  ## paste0("chr", csomes)
+    csomes
 }
 
 .translateChromsForBiomaRt <- function(csomes){
