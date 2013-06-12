@@ -141,38 +141,33 @@
 ### Some utility functions.
 ###
 
+
 ## For converting user arguments FROM the UC style down to what we use
 ## internally
 translateCols <- function(columns, txdb){
+    ## preserve any names
     oriColNames <- names(columns)
-    oriLen <- length(columns) ## not always the same as length(oriCols) (names are optional)
-    ## get the available abbreviations...
+    ## and save the original column strings
+    oriCols <- columns
+    
+    oriLen <- length(columns) ## not always the same as length(oriCols)
+    ## get the available abbreviations as a translation vector (exp)
     names <- .makeColAbbreviations(txdb)
     exp <- sub("^_","", names(names))
     names(exp) <- names
+
+    ## Then replace only those IDs that match the UC names
+    m <- match(oriCols, names(exp))
+    idx = which(!is.na(m))
+    columns[idx] <- exp[m[idx]]
     
-    ## then make sure we have not repeated ourselves on the input
-    columns <- unique(columns)
-    ## Then get an index
-    idx <- match(names(exp), columns)
-    idx <- idx[!is.na(idx)]
-    ## and get the results that go into that idx
-    sub <- exp[match(columns,names(exp))]
-    sub <- sub[!is.na(sub)]
-    columns[idx] <- sub
-    columns <- unique(columns)
-    if(length(columns) == oriLen){ ## nothing was thrown out by unique so
-        names(columns) <- oriColNames
-    }else{
-        msg <- paste("Some of your columns represented repeated values.",
-                     "These duplicates have been removed.")
-        if(length(oriColNames)!=0) {
-            msg2 <- paste("Because your columns were redundant we have also had to",
-                          "discard your custom column names.")
-            msg <- paste(msg, msg2)
-        }
-        warning(paste(strwrap(msg, exdent=2), collapse="\n"))
-    }
+    if(length(columns) == oriLen && is.null(oriColNames)){
+        names(columns) <- oriCols 
+    }else if(length(columns) == oriLen && !is.null(oriColNames)){
+        names(columns) <- oriColNames         
+    }else if(length(columns) != oriLen){
+        stop("names were lost in translateCols() helper")
+    }    
     columns
 }
 
@@ -487,8 +482,10 @@ setMethod("transcripts", "data.frame",
              "data.frame-based transcript metadata.")
 )
 
+## TODOS: change defaults (WILL break many examples!)
+## TODO: change defaults from c("tx_id", "tx_name") to: c("TXID", "TXNAME") 
 setMethod("transcripts", "TranscriptDb",
-    function(x, vals=NULL, columns=c("TXID", "TXNAME")){
+    function(x, vals=NULL, columns=c("tx_id", "tx_name")){
         vals = c(vals, .makeActiveSeqsList("tx_chrom", x))
         .extractFeatureRowsAsGRanges("transcript", x, vals, columns)
       }
@@ -502,8 +499,9 @@ setMethod("exons", "data.frame",
              "data.frame-based transcript metadata.")
 )
 
+## TODO: change defaults from c("exon_id") to: c("EXONID") 
 setMethod("exons", "TranscriptDb",
-    function(x, vals=NULL, columns="EXONID"){
+    function(x, vals=NULL, columns="exon_id"){
         vals = c(vals, .makeActiveSeqsList("exon_chrom", x))
         .extractFeatureRowsAsGRanges("exon", x, vals, columns)
         }
@@ -511,8 +509,9 @@ setMethod("exons", "TranscriptDb",
 
 setGeneric("cds", function(x, ...) standardGeneric("cds"))
 
+## TODO: change defaults from c("cds_id") to: c("CDSID") 
 setMethod("cds", "TranscriptDb",
-    function(x, vals=NULL, columns="CDSID"){
+    function(x, vals=NULL, columns="cds_id"){
         vals = c(vals, .makeActiveSeqsList("cds_chrom", x))
         .extractFeatureRowsAsGRanges("cds", x, vals, columns)
         }

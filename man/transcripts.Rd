@@ -25,13 +25,13 @@
 
 \usage{
 transcripts(x, ...)
-\S4method{transcripts}{TranscriptDb}(x, vals=NULL, columns=c("TXID", "TXNAME"))
+\S4method{transcripts}{TranscriptDb}(x, vals=NULL, columns=c("tx_id", "tx_name"))
 
 exons(x, ...)
-\S4method{exons}{TranscriptDb}(x, vals=NULL, columns="EXONID")
+\S4method{exons}{TranscriptDb}(x, vals=NULL, columns="exon_id")
 
 cds(x, ...)
-\S4method{cds}{TranscriptDb}(x, vals=NULL, columns="CDSID")
+\S4method{cds}{TranscriptDb}(x, vals=NULL, columns="cds_id")
 
 #promoters(x, upstream=2000, downstream=200, ...)
 \S4method{promoters}{TranscriptDb}(x, upstream=2000, downstream=200, ...)

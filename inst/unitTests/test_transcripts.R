@@ -162,3 +162,21 @@ test_promoters <- function()
     checkEquals(c("tx_id", "tx_name"), colnames(mcols(p)))
     checkIdentical(promoters(tx[4:5]), p[4:5])
 }
+
+
+test_translateCols <- function(){
+    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+                   package="GenomicFeatures"))
+    tx1 <- transcripts(txdb, columns = c("tx_id", "tx_name", "cds_id"))
+    checkEquals(colnames(mcols(tx1)), c("tx_id", "tx_name", "cds_id"))
+    tx2 <- transcripts(txdb, columns = c("TXID", "TXNAME", "CDSID"))
+    checkEquals(colnames(mcols(tx2)), c("TXID", "TXNAME", "CDSID"))
+    tx3 <- transcripts(txdb, columns = c(bob="CDSID"))
+    checkEquals(colnames(mcols(tx3)), c("bob"))
+    tx4 <- transcripts(txdb, columns = c(bob="cds_id"))
+    checkEquals(colnames(mcols(tx4)), c("bob"))
+    ## And these two cases should both explode. ;)
+    checkException(transcripts(txdb, columns = c("")))
+    checkException(transcripts(txdb, columns = c("bob")))
+}
+
