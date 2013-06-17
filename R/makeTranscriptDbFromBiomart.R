@@ -12,21 +12,6 @@
 ###       (2) db creation takes about 60-65 sec.
 ###
 
-
-## biomaRt r76821 changed getBM so that names of the return table
-## match the 'description' rather than 'name' component of the
-## attribute; this restores the original behavior
-.getBM <- function(..., mart)
-{
-    result <- getBM(..., mart=mart)
-    att <- listAttributes(mart)
-    idx <- match(names(result), att$description)
-    if (any(is.na(idx)))
-        stop("[internal] attribute name / description mismatch")
-    names(result) <- att$name[idx]
-    result
-}
-
 ## helper to extract the organism (as Genus and Species) from the dataset
 ## string.
 .extractOrganismFromDatasetDesc <- function(description){
@@ -132,8 +117,8 @@
 {
     message("Download and preprocess the 'transcripts' data frame ... ",
             appendLF=FALSE)
-    bm_table <- .getBM(biomartAttribGroups[['A1']], filters=filters,
-                       values=values, mart=mart)
+    bm_table <- getBM(biomartAttribGroups[['A1']], filters=filters,
+                      values=values, mart=mart, bmHeader=FALSE)
     ##bm_table_names <- sub(paste0("^", biomartAttribGroups[['id_prefix']]),
     ##                      "",
     ##                      colnames(bm_table))
@@ -484,7 +469,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
       attributes <- c(attributes, biomartAttribGroups[['C']])
     if ("cds_length" %in% allattribs)
         attributes <- c(attributes, "cds_length")
-    bm_table <- .getBM(attributes, filters=filters, values=values, mart=mart)
+    bm_table <- getBM(attributes, filters=filters, values=values, mart=mart,
+                      bmHeader=FALSE)
     tx_id_colname <- paste0(id_prefix, "transcript_id")
     splicings_tx_id <- transcripts_tx_id[bm_table[[tx_id_colname]]]
     exon_id_col_name <- paste0(id_prefix, "exon_id")
@@ -517,7 +503,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
             appendLF=FALSE)
     attributes <- c(biomartAttribGroups[['G']],
                     paste0(id_prefix, "transcript_id"))
-    bm_table <- .getBM(attributes, filters=filters, values=values, mart=mart)
+    bm_table <- getBM(attributes, filters=filters, values=values, mart=mart,
+                      bmHeader=FALSE)
     tx_id_colname <- paste0(id_prefix, "transcript_id")
     genes_tx_id <- transcripts_tx_id[bm_table[[tx_id_colname]]]
     message("OK")
