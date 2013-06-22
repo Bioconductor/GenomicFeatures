@@ -280,7 +280,11 @@
         ## warn the user about the old argument
         AnnotationDbi:::.colsArgumentWarning()
         ## then call it using cols in place of columns
-        .select(x, keys, extraArgs[["cols"]], keytype)  
+        if(missing(keytype)){
+            .select(x, keys, extraArgs[["cols"]], keytype = columns, ...)
+        }else{
+            .select(x, keys, extraArgs[["cols"]], keytype = keytype, ...)
+        }        
     }else{
         .select(x, keys, columns, keytype)
     }
