@@ -9,6 +9,8 @@
 \alias{cds}
 \alias{cds,TranscriptDb-method}
 \alias{promoters,TranscriptDb-method}
+\alias{disjointExons}
+\alias{disjointExons,TranscriptDb-method}
 \alias{microRNAs}
 \alias{microRNAs,TranscriptDb-method}
 \alias{tRNAs}
@@ -35,6 +37,10 @@ cds(x, ...)
 
 #promoters(x, upstream=2000, downstream=200, ...)
 \S4method{promoters}{TranscriptDb}(x, upstream=2000, downstream=200, ...)
+
+disjointExons(x, ...)
+\S4method{disjointExons}{TranscriptDb}(x, aggregateGenes=FALSE, 
+                                       includeTranscripts=TRUE, ...) 
 
 microRNAs(x)
 \S4method{microRNAs}{TranscriptDb}(x)
@@ -77,14 +83,26 @@ tRNAs(x)
     column in the element metadata of the returned object. 
   }
   \item{upstream}{
-    For \code{promoters()} : An \code{integer(1)} value indicating the
+    For \code{promoters} : An \code{integer(1)} value indicating the
     number of bases upstream from the transcription start site. For
     additional details see ?\code{'promoters,GRanges-method'}.
   }
   \item{downstream}{
-    For \code{promoters()} : An \code{integer(1)} value indicating the 
+    For \code{promoters} : An \code{integer(1)} value indicating the 
     number of bases downstream from the transcription start site. For 
     additional details see ?\code{'promoters,GRanges-method'}.
+  }
+  \item{aggregateGenes}{
+    For \code{disjointExons} : A \code{logical}. When \code{FALSE}
+    (default) exon fragments that overlap multiple genes are dropped.
+    When \code{TRUE}, all fragments are kept and the \code{geneName}
+    metadata column reflects the combination of all genes overlapped.
+  }
+  \item{includeTranscripts}{
+    For \code{disjointExons} : A \code{logical}. When \code{TRUE}
+    (default) the output contains a \code{transcripts} metadata 
+    column that reflects the combination of all transcripts
+    overlapped.
   }
 }
 
@@ -97,19 +115,30 @@ tRNAs(x)
   \code{\link{exonsByOverlaps}}, and \code{\link{cdsByOverlaps}}
   functions.
 
-  The \code{promoters()} function computes user-defined promoter regions
+  The \code{promoters} function computes user-defined promoter regions
   for the transcripts in a \code{TranscriptDb} object. The return object is a 
   \code{GRanges} of promoter regions around the transcription start 
   site the span of which is defined by \code{upstream} and \code{downstream}.
   For additional details on how the promoter range is computed and the
   handling of \code{+} and \code{-} strands see 
   ?\code{'promoters,GRanges-method'}.
+
+  \code{disjointExons} creates a \code{GRanges} of non-overlapping
+  exon parts. Exons parts that overlap more than 1 gene can be
+  dropped with \code{aggregateGenes=FALSE}. When 
+  \code{includeTranscripts=TRUE} the output includes a metadata column 
+  composed of all transcript ids the exon part overlapped. This function 
+  is the same as \code{prepareAnnotationForDEXSeq} in the \code{DEXSeq} 
+  package. The goal of including it in GenomicFeatures was to increase 
+  visability and make it more readily available to packages that do not 
+  depend on \code{DEXSeq}. 
 }
 
-\value{ a GRanges object }
+\value{a GRanges object}
 
 \author{
-  M. Carlson, P. Aboyoun and H. Pages
+  M. Carlson, P. Aboyoun and H. Pages. \code{disjointExons} was contributed
+  by Mike Love and Alejandro Reyes.
 }
 
 \seealso{

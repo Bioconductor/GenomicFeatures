@@ -517,6 +517,7 @@ setMethod("cds", "TranscriptDb",
         }
 )
 
+## generic is in IRanges
 setMethod("promoters", "TranscriptDb",
     function(x, upstream=2000, downstream=200, ...)
     {
@@ -524,6 +525,66 @@ setMethod("promoters", "TranscriptDb",
         promoters(gr, upstream=upstream, downstream=downstream)
     }
 ) 
+
+setGeneric("disjointExons", 
+    function(x, ...) 
+             standardGeneric("disjointExons")
+)
+
+setMethod("disjointExons", "TranscriptDb", 
+    function(x, aggregateGenes=FALSE, includeTranscripts=TRUE, ...) 
+    {
+        exonsByGene <- exonsBy(x, by="gene")
+        exonicParts <- disjoin(unlist(exonsByGene, use.names=FALSE))
+
+        if (aggregateGenes) {
+            foGG <- findOverlaps(exonsByGene, exonsByGene)
+            splitByGene <- split(subjectHits(foGG), queryHits(foGG))
+            aggregateGeneNames <- .aggregateNames(exonsByGene, splitByGene, "+") 
+            foEG <- findOverlaps(exonicParts, exonsByGene, select="first")
+            geneNames <- aggregateGeneNames[foEG]
+        } else {
+            ## exonic parts that ovelap >1 gene are removed
+            overlaps <- findOverlaps(exonicParts, exonsByGene)
+            geneNames <- names(exonsByGene)[subjectHits(overlaps)]
+            aggregateGeneNames <- split(geneNames, queryHits(overlaps))
+            toRemove <- countQueryHits(overlaps) > 1 
+            if (sum(toRemove)) {
+                exonicParts <- exonicParts[!toRemove]
+                geneNames <- aggregateGeneNames[!toRemove]
+            }
+            geneNames <- unlist(geneNames, use.names=FALSE)
+        }
+        values <- DataFrame(geneNames)
+
+        if (includeTranscripts) {
+           exonsByTx <- exonsBy(x, by="tx", use.names=TRUE )
+           foET <- findOverlaps(exonicParts, exonsByTx)
+           splitByExonicPart <- split(subjectHits(foET), queryHits(foET))
+           values$transcripts <- .aggregateNames(exonsByTx,
+                                                 splitByExonicPart, ";") 
+        }
+        mcols(exonicParts) <- values
+        exonicParts <- exonicParts[order(exonicParts$geneNames)]
+        elen <- elementLengths(split(exonicParts$geneNames,
+                                     exonicParts$geneNames))
+        exonic_part_number <- unlist(lapply(elen, seq_len), use.names=FALSE)
+        exonID <- sprintf("E%03.0f", exonic_part_number)
+        mcols(exonicParts) <- DataFrame(mcols(exonicParts),
+                                        exonic_part_number, exonID)
+        exonicParts
+    }
+)
+
+## returns character vector same length as indexList
+.aggregateNames <- function(namesList, indexList, collapse)
+{
+    nm <- names(namesList)[unlist(indexList, use.names=FALSE)]
+    rl <- relist(nm, indexList)
+    el <- elementLengths(indexList) > 1
+    rl[el] <- base::lapply(rl[el], base::paste, collapse=collapse)
+    unlist(rl, use.names=FALSE)
+}
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extractors for features in other databases.
