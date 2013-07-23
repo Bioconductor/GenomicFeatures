@@ -40,7 +40,7 @@ cds(x, ...)
 
 disjointExons(x, ...)
 \S4method{disjointExons}{TranscriptDb}(x, aggregateGenes=FALSE, 
-                                       includeTranscripts=TRUE, ...) 
+              includeTranscripts=TRUE, ...) 
 
 microRNAs(x)
 \S4method{microRNAs}{TranscriptDb}(x)
@@ -125,13 +125,12 @@ tRNAs(x)
 
   \code{disjointExons} creates a \code{GRanges} of non-overlapping
   exon parts. Exons parts that overlap more than 1 gene can be
-  dropped with \code{aggregateGenes=FALSE}. When 
-  \code{includeTranscripts=TRUE} the output includes a metadata column 
-  composed of all transcript ids the exon part overlapped. This function 
-  is the same as \code{prepareAnnotationForDEXSeq} in the \code{DEXSeq} 
-  package. The goal of including it in GenomicFeatures was to increase 
-  visability and make it more readily available to packages that do not 
-  depend on \code{DEXSeq}. 
+  dropped with \code{aggregateGenes=FALSE}. When \code{includeTranscripts=TRUE} 
+  the output includes a metadata column composed of all transcript ids the 
+  exon part overlapped. This function is the same as 
+  \code{prepareAnnotationForDEXSeq} in the \code{DEXSeq} package. The goal of 
+  including it in GenomicFeatures was to increase visability and make it more 
+  readily available to packages that do not depend on \code{DEXSeq}. 
 }
 
 \value{a GRanges object}
