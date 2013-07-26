@@ -395,7 +395,7 @@ reverseTranslateCols <- function(columns){
 
 ## helper to translate back to what is expected from seqinfo()
 .translateToSeqInfo <- function(txdb, x){
-    tr <- load_chrominfo(txdb, set.col.class=TRUE)$chrom
+    tr <- load_chrominfo(txdb, set.col.class=TRUE)$chrom[txdb$new2old]
     names(tr) <- txdb$.chrom    
     idx <- match(x, tr)
     names(tr)[idx]
@@ -450,7 +450,7 @@ reverseTranslateCols <- function(columns){
 .baseNamedActiveSeqs <- function(txdb){
     trueNames <- load_chrominfo(txdb, set.col.class=TRUE)$chrom
     actSqs <- isActiveSeq(txdb)
-    names(actSqs) <- trueNames
+    names(actSqs) <- trueNames[txdb$new2old] ## limit result to these.
     actSqs
 }
 

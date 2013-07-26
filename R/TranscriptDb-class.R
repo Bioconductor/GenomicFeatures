@@ -416,6 +416,10 @@ setMethod("seqinfo", "TranscriptDb", function(x){.seqinfo.TranscriptDb(x)})
     
     ## store the names where we always have
     x$.chrom <- seqnames(value)
+
+    ## and we also need to update the isActiveSeq slot
+    x$isActiveSeq <- isActiveSeq(x)[new2old]
+    names(x$isActiveSeq) <- NULL
     x
 }
 
