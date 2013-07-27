@@ -84,7 +84,7 @@ gc()
 
 ## But we also want to support subsetting:
 ## library(TxDb.Hsapiens.UCSC.hg19.knownGene); txdb=TxDb.Hsapiens.UCSC.hg19.knownGene; seqinfo(txdb)
-## seqlevels(txdb) <- c(chr5 = "5")
+## seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
 
 ### And to reset we do this:
 ## txdb <- restoreSeqlevels(txdb)
@@ -92,16 +92,16 @@ gc()
 
 ## Bugs :
 ## This works:
-## seqlevels(txdb) <- c(chr4 = "4", chr5 = "5", chr6="6")
+## seqlevels(txdb, force=TRUE) <- c(chr4 = "4", chr5 = "5", chr6="6")
 ## But this doesn't: (needs to go based on match internally)
-## seqlevels(txdb) <- c(chr5 = "5", chr6="6", chr4="4")
+## seqlevels(txdb, force=TRUE) <- c(chr5 = "5", chr6="6", chr4="4")
 
 
 
 ## Some unit tests needed for the following:
 
 ## This should fail: add seqlevels (and it does)
-## seqlevels(txdb) <- c(foo = "2")
+## seqlevels(txdb, force=TRUE) <- c(foo = "2")
 ## This throws an error, so that's good
 
 
@@ -404,22 +404,55 @@ setMethod("seqinfo", "TranscriptDb", function(x){.seqinfo.TranscriptDb(x)})
             stop("'new2old' must be specified ", IN_THIS_CONTEXT)
         return(x)
     }
-
-    if(!(length(new2old) <= length(x_seqinfo))){
+    ## length has to be reasonable to move forward
+    if(!is.null(new2old) &&  !(length(new2old) <= length(x_seqinfo))){
         stop("The replacement value must be either a 1 to 1 replacement ",
              "or a subset of the original set ",
                  IN_THIS_CONTEXT)
     }
     
-    ## just always set the new2old value up if it's here.
-    x$new2old <- new2old
+    ## if the new value is smaller, then we need a smaller thing for comparison
+    if(!is.null(new2old) && length(new2old) < length(x_seqinfo)){
+        equiv_seqinfo <- Seqinfo(seqnames=seqnames(value), 
+                   seqlengths=x_seqinfo@seqlengths[new2old],
+                   isCircular=x_seqinfo@is_circular[new2old],
+                   genome=x_seqinfo@genome[new2old])
+    }else{
+        equiv_seqinfo <- x_seqinfo
+    }
+
+    ## no changes to circ allowed
+    if(!identical(value@is_circular, equiv_seqinfo@is_circular)){
+        stop("No changes are allowed to circularity ", IN_THIS_CONTEXT)
+    }
+    
+    ## no changes to genome allowed
+    if(!identical(value@genome, equiv_seqinfo@genome)){
+        stop("No changes are allowed to genome ", IN_THIS_CONTEXT)
+    }
+    
+    ## no changes to lengths allowed
+    if(!identical(value@seqlengths, equiv_seqinfo@seqlengths)){
+        stop("No changes are allowed to seqlengths ", IN_THIS_CONTEXT)
+    }
+    
+    
+    if(force == TRUE && !is.null(new2old)){
+        ## just always set the new2old value up if it's here.
+        x$new2old <- new2old
+        ## and we also need to update the isActiveSeq slot
+        x$isActiveSeq <- isActiveSeq(x)[new2old]
+        names(x$isActiveSeq) <- NULL
+    }
+    if(force != TRUE && !is.null(new2old) &&
+       length(new2old) < length(x_seqinfo)){
+        stop("You need to use force=TRUE if you want to drop seqlevels.")
+    }
     
     ## store the names where we always have
     x$.chrom <- seqnames(value)
 
-    ## and we also need to update the isActiveSeq slot
-    x$isActiveSeq <- isActiveSeq(x)[new2old]
-    names(x$isActiveSeq) <- NULL
+    ## And return
     x
 }
 
