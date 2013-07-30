@@ -18,6 +18,7 @@ grb2 <- "2885"   # human gene on the minus strand, chr17
 
 testGRangesListBSgenomeHumanGetPromoterSeq <- function() {
     genes <- c(e2f3, grb2)
+    TxDb.Hsapiens.UCSC.hg19.knownGene <- restoreSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene)  ## safety net
     transcriptCoordsByGene.GRangesList <-
       transcriptsBy(TxDb.Hsapiens.UCSC.hg19.knownGene, by="gene") [genes]
     checkEquals(names(transcriptCoordsByGene.GRangesList), genes)
@@ -82,6 +83,7 @@ testGRangesListFastaFlyGetPromoterSeq <- function() {
 }
 
 testGRangesBSgenomeHumanGetPromoterSeq <- function() {
+    TxDb.Hsapiens.UCSC.hg19.knownGene <- restoreSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene)  ## safety net
     transcriptCoordsByGene.GRanges <-
       transcriptsBy(TxDb.Hsapiens.UCSC.hg19.knownGene, by="gene") [[e2f3]]
     checkTrue(is(transcriptCoordsByGene.GRanges, "GRanges"))
