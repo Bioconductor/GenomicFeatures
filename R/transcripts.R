@@ -172,22 +172,7 @@ translateCols <- function(columns, txdb){
 }
 
 
-## For reversing the conversion back to UC format.
-reverseTranslateCols <- function(columns){
-    toupper(gsub("_","",columns))
-}
 
-
-.checkargColumns <- function(columns, valid_columns)
-{
-    if (is.null(columns))
-        return()
-    if (is.character(columns) && all(columns %in% valid_columns))
-        return()
-    valid_columns <- paste0("'", valid_columns, "'", collapse = ", ")
-    stop("'columns' must be NULL or a character vector ",
-         "with values in ", reverseTranslateCols(valid_columns))
-}
 
 .getClosestTable <- function(root_table, colnames)
 {
@@ -407,8 +392,6 @@ reverseTranslateCols <- function(columns){
     columns <- translateCols(columns, txdb)
     ## Then proceed with checking
     CORECOLS <- .DBDESC[[root_table]]$CORECOLS
-    forbidden_columns <- c(CORECOLS["chrom"], CORECOLS["strand"])
-    .checkargColumns(columns, setdiff(.ALLCOLS, forbidden_columns))
     assigned_columns <- .assignColToClosestTable(root_table, columns)
     root_columns <- assigned_columns[[root_table]]
     ## Extract the data from the db.

@@ -63,14 +63,19 @@ test_transcripts_accessors <- function(){
     txs2 <- transcripts(txdb)
     checkIdentical(txs1, txs2)
 
-##     txdb <- restoreSeqlevels(txdb)
-##     txs3 <- transcriptsBy(txdb, by="gene")
-##     seqlevels(txs3, force=TRUE) <- c(chr5 = "5")
-##     ## Then change seqlevels for txdb
-##     seqlevels(txdb) <- c(chr5 = "5")
-##     txs4 <- transcriptsBy(txdb, by="gene")
-##     checkIdentical(txs3, txs4)  ## TROUBLE!!
+    ## This one is a "fun" one.
+    ## There are issues because some genes are annotated as being on
+    ## TWO different chromosomes.  Such genes are filtered for txs3,
+    ## but NOT for txs4...   Hmmmm.
+    txdb <- restoreSeqlevels(txdb)
+    txs3 <- transcriptsBy(txdb, by="gene")
+    seqlevels(txs3, force=TRUE) <- c(chr5 = "5")
+    ## Then change seqlevels for txdb
+    seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+    txs4 <- transcriptsBy(txdb, by="gene")
+##    checkIdentical(txs3, txs4)  ## TROUBLE!!
     
 }
 
 
+## What to do about this?  The reason for the difference is because of order of operations.  txs3 gets all the ranges and then removes any that are not kosher (this is correct), txs4 OTOH gets only ranges from chr5 (efficient!), but then fails to filter out things that have hybrid seqnames (as they were pre-filtered).  I think I have to make the query less efficient to fix this, but I want to discuss it with Herve 1st to get a 2nd opinion.
