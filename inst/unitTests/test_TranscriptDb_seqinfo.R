@@ -54,7 +54,7 @@ test_noChange_lengths <- function(){
 }
 
 
-test_transcripts_accessors <- function(){
+test_transcripts_accessor <- function(){
     txdb <- restoreSeqlevels(txdb)
     txs1 <- transcripts(txdb)
     seqlevels(txs1, force=TRUE) <- c(chr5 = "5")
@@ -62,7 +62,40 @@ test_transcripts_accessors <- function(){
     seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
     txs2 <- transcripts(txdb)
     checkIdentical(txs1, txs2)
+}
 
+test_exons_accessor <- function(){
+    txdb <- restoreSeqlevels(txdb)
+    exs1 <- exons(txdb)
+    seqlevels(exs1, force=TRUE) <- c(chr5 = "5")
+    ## Then change seqlevels for txdb
+    seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+    exs2 <- exons(txdb)
+    checkIdentical(exs1, exs2)
+}
+
+test_cds_accessor <- function(){
+    txdb <- restoreSeqlevels(txdb)
+    cds1 <- cds(txdb)
+    seqlevels(cds1, force=TRUE) <- c(chr5 = "5")
+    ## Then change seqlevels for txdb
+    seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+    cds2 <- cds(txdb)
+    checkIdentical(cds1, cds2)
+}
+
+test_promoters_accessor <- function(){
+    txdb <- restoreSeqlevels(txdb)
+    prm1 <- promoters(txdb)
+    seqlevels(prm1, force=TRUE) <- c(chr5 = "5")
+    ## Then change seqlevels for txdb
+    seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+    prm2 <- promoters(txdb)
+    checkIdentical(prm1, prm2)
+}
+
+
+test_transcriptsBy_accessors <- function(){
     ## This one is a "fun" one.
     ## There are issues because some genes are annotated as being on
     ## TWO different chromosomes.  Such genes are filtered for txs3,
