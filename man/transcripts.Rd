@@ -95,14 +95,13 @@ tRNAs(x)
   \item{aggregateGenes}{
     For \code{disjointExons} : A \code{logical}. When \code{FALSE}
     (default) exon fragments that overlap multiple genes are dropped.
-    When \code{TRUE}, all fragments are kept and the \code{geneName}
-    metadata column reflects the combination of all genes overlapped.
+    When \code{TRUE}, all fragments are kept and the \code{gene_id}
+    metadata column includes all gene ids that overlap the exon fragment.
   }
   \item{includeTranscripts}{
     For \code{disjointExons} : A \code{logical}. When \code{TRUE}
-    (default) the output contains a \code{transcripts} metadata 
-    column that reflects the combination of all transcripts
-    overlapped.
+    (default) a \code{tx_name} metadata column is included that 
+    lists all transcript names that overlap the exon fragment. 
   }
 }
 
@@ -124,13 +123,13 @@ tRNAs(x)
   ?\code{'promoters,GRanges-method'}.
 
   \code{disjointExons} creates a \code{GRanges} of non-overlapping
-  exon parts. Exons parts that overlap more than 1 gene can be
-  dropped with \code{aggregateGenes=FALSE}. When \code{includeTranscripts=TRUE} 
-  the output includes a metadata column composed of all transcript ids the 
-  exon part overlapped. This function is the same as 
-  \code{prepareAnnotationForDEXSeq} in the \code{DEXSeq} package. The goal of 
-  including it in GenomicFeatures was to increase visability and make it more 
-  readily available to packages that do not depend on \code{DEXSeq}. 
+  exon parts with metadata columns of gene_id and exonic_part.
+  Exon parts that overlap more than 1 gene can be dropped with 
+  \code{aggregateGenes=FALSE}. When \code{includeTranscripts=TRUE} 
+  a \code{tx_name} metadata column is included that lists all 
+  transcript names that overlap the exon fragment. This function 
+  replaces \code{prepareAnnotationForDEXSeq} in the \code{DEXSeq} 
+  package.
 }
 
 \value{a GRanges object}
