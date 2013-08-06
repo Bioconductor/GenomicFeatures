@@ -369,7 +369,7 @@
                           splicings$cds_end[not_NA],
                           name=splicings$cds_name[not_NA],
                           same.id.for.dups=TRUE)
-    ans <- integer(length(nrow(splicings)))
+    ans <- integer(nrow(splicings))
     ans[not_NA] <- ids
     ans[!not_NA] <- NA_integer_
     ans
