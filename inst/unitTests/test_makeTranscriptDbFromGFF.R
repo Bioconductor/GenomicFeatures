@@ -119,14 +119,11 @@ test_prepareGTFTables <- function(){
 
 ## test  .prepareGFF3Tables
 test_prepareGFF3Tables <- function(){
-  ## .fileEnv <- new.env(parent=emptyenv())
-  ## ## default is set to FALSE
-  ## assign("useGenesAsRNA", FALSE, envir = .fileEnv)
-
   suppressWarnings(
   res <- GenomicFeatures:::.prepareGFF3Tables(gff3,
                                               exonRankAttributeName=NULL,
-                                              gffGeneIdAttributeName=NULL))
+                                              gffGeneIdAttributeName=NULL,
+                                              useGenesAsTranscripts=FALSE))
   ## TESTING
   checkTrue(length(res)==3)
   checkTrue(class(res$transcripts)=="data.frame")
@@ -206,7 +203,9 @@ test_makeTranscriptDbFromGFF <- function(){
   ## print(all.equal(lst1, lst2))
   checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb3, txdb_fly))
 
-  
+
+  ## test for broken NCBI bacterial GFFs (that only seem to have
+  ## reliable gene info and little else)
   chrominfoBac <- data.frame(chrom = c('NC_011025.1'),
                           length=c(830000), ## placeholder = iow it big enough
                           is_circular=c(TRUE))

@@ -1,8 +1,3 @@
-### private env to store local state
-.fileEnv <- new.env(parent=emptyenv())
-## default is set to FALSE
-assign("useGenesAsRNA", FALSE, envir = .fileEnv)
-
 ### =========================================================================
 ### makeTranscriptDbFromGFF()
 ### -------------------------------------------------------------------------
@@ -277,10 +272,10 @@ assign("useGenesAsRNA", FALSE, envir = .fileEnv)
 }
 
 
-.prepareGFF3TXS <- function(data){
+.prepareGFF3TXS <- function(data, useGenesAsTranscripts=FALSE){
   ## We absolutely require transcripts, genes and exons.
   message("extracting transcript information")
-  if(get("useGenesAsRNA", .fileEnv)){
+  if(useGenesAsTranscripts){
       txs <- data[data$type=="gene",]
   }else{
       txs <- data[data$type=="mRNA",]
@@ -296,8 +291,8 @@ assign("useGenesAsRNA", FALSE, envir = .fileEnv)
 }
 
 
-.prepareGFF3transcripts <- function(data){
-  txs <- .prepareGFF3TXS(data)
+.prepareGFF3transcripts <- function(data,useGenesAsTranscripts){
+  txs <- .prepareGFF3TXS(data,useGenesAsTranscripts)
   transcripts <- txs[,c("tx_id","ID","seqnames","strand","start","end")]
   names(transcripts) <- c("tx_id","tx_name","tx_chrom","tx_strand","tx_start",
                      "tx_end")
@@ -306,7 +301,8 @@ assign("useGenesAsRNA", FALSE, envir = .fileEnv)
   as.data.frame(transcripts)
 }
 
-.prepareGFF3genes <- function(data, transcripts, gffGeneIdAttributeName, gff){
+.prepareGFF3genes <- function(data, transcripts, gffGeneIdAttributeName, gff,
+                              useGenesAsTranscripts=FALSE){
   message("Extracting gene IDs")
   gns <- data[data$type=="gene",]
   if(dim(gns)[1] < 1){ ## that means there are no gene rows...
@@ -325,9 +321,11 @@ assign("useGenesAsRNA", FALSE, envir = .fileEnv)
     }else{
       warning("No gene information present in gff file")
     }
-  }else if(get("useGenesAsRNA", .fileEnv)){
+  }else if(useGenesAsTranscripts){
       ## this case is mutually exclusive from the above case
-      txs <- suppressWarnings(.prepareGFF3TXS(data)) ## no need to warn twice.
+      ## no need to warn twice
+      txs <- suppressWarnings(.prepareGFF3TXS(data,
+                                              useGenesAsTranscripts))
       gns <- txs[,c("tx_id","ID")] 
       names(gns) <- c("tx_id","gene_id") ## same as gns but with tx_id in tow.
   }else{
@@ -336,7 +334,7 @@ assign("useGenesAsRNA", FALSE, envir = .fileEnv)
     ## After testing for genes, here I get the actual data from mRNA rows...
     ## The only difference is that in this more normal case the Parents of
     ## these rows will be the genes that I detected previously.
-    txs <- .prepareGFF3TXS(data)
+    txs <- .prepareGFF3TXS(data,useGenesAsTranscripts)
     txsGene <- txs[,c("tx_id","Parent")] 
     names(txsGene) <- c("tx_id","gene_id")
     ## Then subset by gene_ids
@@ -359,18 +357,20 @@ assign("useGenesAsRNA", FALSE, envir = .fileEnv)
 
 
 .prepareGFF3Tables  <- function(gff,exonRankAttributeName,
-                                gffGeneIdAttributeName){
+                                gffGeneIdAttributeName,
+                                useGenesAsTranscripts=FALSE){
   ## pre-clean the data
   data <- .prepareGFF3data.frame(gff,exonRankAttributeName,
                                 gffGeneIdAttributeName)
   tables <- list()
   ## Get transcripts
-  transcripts <- .prepareGFF3transcripts(data)
+  transcripts <- .prepareGFF3transcripts(data, useGenesAsTranscripts)
   tables[[1]] <- transcripts
   names(tables)[1] = "transcripts"
   ## Get genes
   tables[[2]] <- .prepareGFF3genes(data, transcripts,
-                                   gffGeneIdAttributeName, gff)
+                                   gffGeneIdAttributeName, gff,
+                                   useGenesAsTranscripts)
   names(tables)[2] = "genes"
 
   message("Processing splicing information for gff3 file.")
@@ -615,7 +615,6 @@ makeTranscriptDbFromGFF <- function(file,
                                     useGenesAsTranscripts=FALSE)
 {
   format <- match.arg(format)
-  assign("useGenesAsRNA", useGenesAsTranscripts, envir = .fileEnv)
   
   ## start by importing the relevant features from the specified file
   feature.type <- c("gene", "mRNA", "exon", "CDS")
@@ -626,7 +625,8 @@ makeTranscriptDbFromGFF <- function(file,
     ## check that we have ID, Parent
     if(all(c("ID","Parent") %in% colnames(mcols(gff)))){
       tables <- .prepareGFF3Tables(gff, exonRankAttributeName,
-                                   gffGeneIdAttributeName)
+                                   gffGeneIdAttributeName,
+                                   useGenesAsTranscripts)
       ## results come back in list like: tables$transctripts etc.
     }
   }else if(format=="gtf"){
