@@ -20,7 +20,8 @@ makeTranscriptDbFromGFF(file,
                         dataSource=NA,
                         species=NA,
                         circ_seqs=DEFAULT_CIRC_SEQS,
-                        miRBaseBuild=NA)
+                        miRBaseBuild=NA,
+                        useGenesAsTranscripts=FALSE)
 }
 \arguments{
   \item{file}{path/file to be processed}
@@ -55,6 +56,11 @@ makeTranscriptDbFromGFF(file,
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
     this value will be set to \code{NA}, which will inactivate the
     \code{microRNAs} accessor.}
+  \item{useGenesAsTranscripts}{This flag is normally off, but if enabled
+    it will try to salvage a file that has no RNA features by assuming
+    that you can use the ranges available for the Gene features in their
+    place.  Obviously, this is something you won't want to do unless you
+    are dealing with something very simple like a prokaryote.}
 }
 \details{
   \code{makeTranscriptDbFromGFF} is a convenience function that feeds

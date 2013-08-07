@@ -1,3 +1,9 @@
+### private env to store local state
+.fileEnv <- new.env(parent=emptyenv())
+## default values:
+assign("useGenesAsRNA", FALSE, envir = .fileEnv)
+
+
 ### =========================================================================
 ### makeTranscriptDbFromGFF()
 ### -------------------------------------------------------------------------
@@ -275,14 +281,18 @@
 .prepareGFF3TXS <- function(data){
   ## We absolutely require transcripts, genes and exons.
   message("extracting transcript information")
-  txs <- data[data$type=="mRNA",]
-  if(dim(txs)[1] < 1){stop("No Transcript information present in gff file")
+  if(get("useGenesAsRNA", .fileEnv)){
+      txs <- data[data$type=="gene",]
   }else{
-    if(length(txs$ID) != length(unique(txs$ID))){
-      stop("Unexpected transcript duplicates")}
-    txs <- data.frame(txs, data.frame(tx_id=1:dim(txs)[1]),
-                      stringsAsFactors=FALSE)
+      txs <- data[data$type=="mRNA",]
   }
+  if(dim(txs)[1] < 1){
+      stop("No Transcript information found in gff file")
+  }
+  if(length(txs$ID) != length(unique(txs$ID))){
+      stop("Unexpected transcript duplicates")}
+  txs <- data.frame(txs, data.frame(tx_id=1:dim(txs)[1]),
+                    stringsAsFactors=FALSE)
   as.data.frame(txs)
 }
 
@@ -300,7 +310,7 @@
 .prepareGFF3genes <- function(data, transcripts, gffGeneIdAttributeName, gff){
   message("Extracting gene IDs")
   gns <- data[data$type=="gene",]
-  if(dim(gns)[1] < 1){
+  if(dim(gns)[1] < 1){ ## that means there are no gene rows...
     ## Then we have to try and infer this from the transcript rows...
     if(!is.null(gffGeneIdAttributeName)){
       ## then try to compute gns using this other data...
@@ -316,14 +326,19 @@
     }else{
       warning("No gene information present in gff file")
     }
+  }else if(get("useGenesAsRNA", .fileEnv)){
+      ## this case is mutually exclusive from the above case
+      txs <- suppressWarnings(.prepareGFF3TXS(data)) ## no need to warn twice.
+      gns <- txs[,c("tx_id","ID")] 
+      names(gns) <- c("tx_id","gene_id") ## same as gns but with tx_id in tow.
   }else{
     if(length(gns$ID) != length(unique(gns$ID))){
       stop("Unexpected gene duplicates")}
-    ## After testing for genes, I get the actual data from mRNA rows...
+    ## After testing for genes, here I get the actual data from mRNA rows...
     ## The only difference is that in this more normal case the Parents of
     ## these rows will be the genes that I detected previously.
     txs <- .prepareGFF3TXS(data)
-    txsGene <- txs[,c("tx_id","Parent")]
+    txsGene <- txs[,c("tx_id","Parent")] 
     names(txsGene) <- c("tx_id","gene_id")
     ## Then subset by gene_ids
     gns <- txsGene[txsGene$gene_id %in% gns$ID,]
@@ -349,7 +364,6 @@
   ## pre-clean the data
   data <- .prepareGFF3data.frame(gff,exonRankAttributeName,
                                 gffGeneIdAttributeName)
-  
   tables <- list()
   ## Get transcripts
   transcripts <- .prepareGFF3transcripts(data)
@@ -379,7 +393,14 @@
   txIds <- unique(transcripts[,c("tx_id","tx_name")])
   splicings <- merge(txIds, splicings, by="tx_name")[,-1]
   ## Clean up any NA columns (any that are optional)
-  splicings <- .cleanSplicingsNAs(splicings)  
+  splicings <- .cleanSplicingsNAs(splicings)
+  
+  if("cds_name" %in% colnames(splicings)){
+  splicings$cds_name <- as(splicings$cds_name,"character")}
+  if("cds_start" %in% colnames(splicings)){
+      splicings$cds_start <- as(splicings$cds_start,"integer")}
+  if("cds_end" %in% colnames(splicings)){
+  splicings$cds_end <- as(splicings$cds_end,"integer")}
   tables[[3]] <- splicings
   names(tables)[3] <- "splicings"
   ## return all tables
@@ -591,9 +612,12 @@ makeTranscriptDbFromGFF <- function(file,
                                     dataSource=NA,
                                     species=NA,
                                     circ_seqs=DEFAULT_CIRC_SEQS,
-                                    miRBaseBuild=NA)
+                                    miRBaseBuild=NA,
+                                    useGenesAsTranscripts=FALSE)
 {
   format <- match.arg(format)
+  if(useGenesAsTranscripts==TRUE){
+      assign("useGenesAsRNA", TRUE, envir = .fileEnv)}
   
   ## start by importing the relevant features from the specified file
   feature.type <- c("gene", "mRNA", "exon", "CDS")

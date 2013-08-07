@@ -21,6 +21,9 @@ gtf <- rtracklayer:::import(gtfFile, format="gtf", asRangedData=FALSE)
 flyFile <- system.file("extdata","dmel-1000-r5.11.filtered.gff",
                        package="GenomicFeatures")
 
+## bad bacterial GFFs require use of special argument to ignore most of data.
+gffB <- system.file("extdata","NC_011025.gff.txt",package="GenomicFeatures")
+
 
 ## test .deduceExonRankings (usually used by gff) 
 test_deduceExonRankings <- function(){
@@ -129,7 +132,7 @@ test_prepareGFF3Tables <- function(){
   checkTrue(dim(res$genes)[1] == 488)
   checkTrue(dim(res$genes)[2] == 2)
   checkTrue(class(res$splicings)=="data.frame")
-  checkTrue(dim(res$splicings)[1] == 1268)
+  checkTrue(dim(res$splicings)[1] == 1268)       ### TROUBLE HERE!
   checkTrue(dim(res$splicings)[2] == 9)
 }
 
@@ -197,72 +200,22 @@ test_makeTranscriptDbFromGFF <- function(){
   ## print(lst2 <- lapply(as.list(txdb_fly), head, n=30))
   ## print(all.equal(lst1, lst2))
   checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb3, txdb_fly))
+
+  
+  chrominfoBac <- data.frame(chrom = c('NC_011025.1'),
+                          length=c(830000), ## placeholder = iow it big enough
+                          is_circular=c(TRUE))
+
+  ## mostly I want to see if if can run this:
+  txdb_bac <- makeTranscriptDbFromGFF(file = gffB, format = "gff",
+                                      chrominfo = chrominfoBac,
+                                      dataSource = "NCBI",
+                                      species = "Mycoplasma arthritidis",
+                                      useGenesAsTranscripts=TRUE)
+  checkTrue(class(txdb_bac)=="TranscriptDb")
+  checkTrue(length(transcripts(txdb_bac)) > 100)
+
 }
 
-
-## R CMD build --no-examples --no-vignettes GenomicFeatures
-## R CMD check --no-examples --no-vignettes GenomicFeatures_1.9.11.tar.gz
-## options(useFancyQuotes=FALSE, locale="C", language="en")
-
-## What if it just has to do with the order that things get entered into the DB?  Maybe I can "fix" this by simply calling sort on the elements?  Or (better yet since the order does not really matter), maybe my as.list function should be sorting things?
-
-
-
-
-
-## library(GenomicFeatures); debug(GenomicFeatures:::.deduceExonRankings)
-## library(GenomicFeatures); debug(GenomicFeatures:::.assignRankings)
-
-## badTxname = "FBtr0078170"
-## badTxname corresponds to tx_id number 2... SO:
-## lst1 <- as.list(txdb3); foo = lst1$splicings; 
-## foo[foo$tx_id==2,]
-
-
-
-
-## problem with files from here (Mus musculus/UCSC/mm9)
-## http://tophat.cbcb.umd.edu/igenomes.shtml
-
-## ORI:
-## txdb <- makeTranscriptDbFromGFF(file = annFile, format = "gtf", exonRankAttributeName = "exon_number", chrominfo = chrominfo, dataSource = "UCSC", species = "Mus musculus")
-
-## ## cd ~/TEMP/GenomicFeaturesProblem/UgoGTF
-## library(GenomicFeatures)
-
-## ## lets make a fake one for testing
-## chrominfo<-data.frame(chrom = c(paste("chr",1:22,sep=""),"chrX","chrY","chrM"),
-##                       length=rep(197195432, 25),
-##                       is_circular=c(rep(FALSE, 24),TRUE))
-
-
-## debug(GenomicFeatures:::makeTranscriptDbFromGFF)
-## debug(GenomicFeatures:::.prepareGTFTables)
-## debug(GenomicFeatures:::.prepareGTFdata.frame)
-## debug(GenomicFeatures:::.prepareGTFFragments)
-## debug(GenomicFeatures:::.deduceExonRankings) ## not called here
-
-## debug(GenomicFeatures:::.mergeFramesViaRanges)
-
-## Trouble is happening here:
-##   cdsExs <- .mergeFramesViaRanges(exs, cds) ## BOOM!
-##   cdsExs <- cdsExs[,c("exon_rank","exon_chrom","exon_strand","exon_start",
-##                       "exon_end","cds_start","cds_end","tx_name")]
-
-## .mergeFramesViaRanges creates a data.frame with TWO exon_rank cols,
-## but we want it to only grab the one with no NAs in it and to return
-## that.  OR, I can take another parameter in and use that to make the
-## decision...
-
-## I can make the use of CDS data automatic (when it's available and the exon info isn't).  But I will always give a message whenever that happens.
-
-## ARGH.  There is still a problem!
-## What is happening now?
-
-
-
-## txdb <- makeTranscriptDbFromGFF(file = "genes_small.gtf", format = "gtf", exonRankAttributeName = "phase", chrominfo = chrominfo, dataSource = "ensembl", species = "Mus musculus")
-
-## So 1) find what gets called after .prepareGTFdata.frame() (it's inside of .prepareGTFTables) , and 2) change the code so that users can set a parameter called searchCDSForExonRank = TRUE (false by default). 3) change same section of code for GFF files (.prepareGFF3Tables)
 
 
