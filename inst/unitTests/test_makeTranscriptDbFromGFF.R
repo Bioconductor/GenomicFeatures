@@ -9,7 +9,7 @@
 ## 'BiocGenerics:::testPackage(pkgname="GenomicFeatures",
 ## pattern="test_makeTranscriptDbFromGFF")' ...  but NOT for R CMD check
 ## GenomicFeatures_x.y.z.tar.gz
-
+library(GenomicFeatures)
 gffFile <- system.file("extdata","a.gff3",package="GenomicFeatures")
 gff3 <- rtracklayer:::import(gffFile, format="gff3", asRangedData=FALSE)
 
@@ -119,6 +119,10 @@ test_prepareGTFTables <- function(){
 
 ## test  .prepareGFF3Tables
 test_prepareGFF3Tables <- function(){
+  ## .fileEnv <- new.env(parent=emptyenv())
+  ## ## default is set to FALSE
+  ## assign("useGenesAsRNA", FALSE, envir = .fileEnv)
+
   suppressWarnings(
   res <- GenomicFeatures:::.prepareGFF3Tables(gff3,
                                               exonRankAttributeName=NULL,
@@ -132,7 +136,8 @@ test_prepareGFF3Tables <- function(){
   checkTrue(dim(res$genes)[1] == 488)
   checkTrue(dim(res$genes)[2] == 2)
   checkTrue(class(res$splicings)=="data.frame")
-  checkTrue(dim(res$splicings)[1] == 1268)       ### TROUBLE HERE!
+  checkTrue(dim(res$splicings)[1] == 1268)
+  ## only fails when run as a unit test.
   checkTrue(dim(res$splicings)[2] == 9)
 }
 

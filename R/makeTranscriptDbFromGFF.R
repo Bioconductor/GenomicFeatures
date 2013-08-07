@@ -1,8 +1,7 @@
 ### private env to store local state
 .fileEnv <- new.env(parent=emptyenv())
-## default values:
+## default is set to FALSE
 assign("useGenesAsRNA", FALSE, envir = .fileEnv)
-
 
 ### =========================================================================
 ### makeTranscriptDbFromGFF()
@@ -616,8 +615,7 @@ makeTranscriptDbFromGFF <- function(file,
                                     useGenesAsTranscripts=FALSE)
 {
   format <- match.arg(format)
-  if(useGenesAsTranscripts==TRUE){
-      assign("useGenesAsRNA", TRUE, envir = .fileEnv)}
+  assign("useGenesAsRNA", useGenesAsTranscripts, envir = .fileEnv)
   
   ## start by importing the relevant features from the specified file
   feature.type <- c("gene", "mRNA", "exon", "CDS")
