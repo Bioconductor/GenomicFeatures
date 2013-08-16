@@ -32,46 +32,6 @@
 
 
 
-## ## Helper to assign some rankings to the edge of a single set based on the
-## ## strand information.
-## ## This helper should look at the strand and then assign ranks one dir or the
-## ## other.  If "-" then rank 1 is largest, if "+" then rank 1 is smallest.
-## .assignRankings <- function(dat){ # dat=es[[1]]
-##   dat <- as.matrix(dat)
-##   start <- dat[,"exon_start"]
-##   strand <- dat[,"exon_strand"]
-##   if(length(unique(strand)) >1 )
-##     stop("Exon rank inference cannot accomodate trans-splicing.")
-##   if (strand[1]=="+") {
-##     ord <- order(as.integer(start))
-##   } else {
-##     ord <- order(as.integer(start), decreasing=TRUE)
-##   }
-##   ## now sort (needed or not (cheap enough!))
-##   dat <- dat[ord,,drop=FALSE]
-##   dat[,"exon_rank"] <- seq_len(nrow(dat))
-##   dat
-## }
-
-## ## This fills in the result matrix with appropriate values, and also
-## ## infers the exon ranking based on position and strand information.
-## ## It assumes that exon ranks are always presented in order along the
-## ## chromosome with one order for "+" strands and another for "-"
-## ## strands.
-## .buildRanks <- function(es, res){
-##     ## precompute the starts and ends.
-##     el <- elementLengths(es)
-##     endInds <- cumsum(el) 
-##     startInds <- (endInds - el) + 1  ## The diff, plus one for R based counts)
-##     ## loop to assemble the result    
-##     for(i in seq_len(length(es))){
-##         startInd <- startInds[i]
-##         endInd <- endInds[i]
-##         res[startInd:endInd,] <- .assignRankings(es[[i]])
-##     }
-##     res
-## }
-
 
 ## New strategy for getting the ranks: Use split on the starts and
 ## also on the strand to divide the pieces into chunks that can be
@@ -113,11 +73,6 @@
   message("Deducing exon rank from relative coordinates provided")
   ## And a warning for later (in case they were not watching)
   warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute for exonRankAttributeName")
-##   res <- matrix(nrow = dim(exs)[1], ncol=dim(exs)[2]) ## ncol=9?  
-  ## split up the data
-##   es <- split(exs, as.factor(exs$tx_name)[,drop=TRUE])
-  ## loop to assemble the result
-##   res <- .buildRanks(es, res)  
    res <- .buildRanks(exs)  
   ## then cast result to be data.frame 
   res <- data.frame(res, stringsAsFactors=FALSE)
@@ -223,10 +178,10 @@
   if(!is.null(exonRankAttributeName)){
     exon_rank <- DataFrame(exonRankAttributeName=
                            mcols(gff)[[exonRankAttributeName]])
-    data <- cbind(data,exon_rank)
+    data <- cbind(data,exon_rank=exon_rank)
   }else{
     exon_rank <- DataFrame(rep(NA,length(start(gff))))
-    data <- cbind(data,exon_rank)
+    data <- cbind(data,exon_rank=exon_rank)
   }
   data
 }
@@ -235,20 +190,27 @@
   if(!is.null(gffGeneIdAttributeName)){
     gene_id <- DataFrame(gffGeneIdAttributeName=
                          mcols(gff)[[gffGeneIdAttributeName]])
-    data <- cbind(data,gene_id)
+    data <- cbind(data,gene_id=gene_id)
   }
   data
 }
 
 .prepareGFF3data.frame <- function(gff,exonRankAttributeName,
                                 gffGeneIdAttributeName){
-  data <- DataFrame(seqnames=seqnames(gff),
-                    start=start(gff),
-                    end=end(gff),
-                    strand=strand(gff),
-                    type=mcols(gff)$type,
-                    ID=mcols(gff)$ID,
-                    Parent=mcols(gff)$Parent)
+##   data <- DataFrame(seqnames=seqnames(gff),
+##                     start=start(gff),
+##                     end=end(gff),
+##                     strand=strand(gff),
+##                     type=mcols(gff)$type,
+##                     ID=mcols(gff)$ID,
+##                     Parent=mcols(gff)$Parent)
+    
+  dataR <- as(as(gff, "data.frame")[,1:5],"DataFrame")
+  dataM <- as(mcols(gff), "DataFrame")
+  if(dim(dataR)[1] == dim(dataM)[1]){
+      data <- cbind(dataR,dataM) ## these will always be the same height
+  }else{ stop("Error in .prepareGFF3data.frame, dataM and dataR should always match")}
+  
   ## add ExonRank and geneID info if there is any
   data <- .checkExonRank(data, gff, exonRankAttributeName)
   data <- .checkGeneIdAttrib(data, gff, gffGeneIdAttributeName)
@@ -345,7 +307,10 @@
 
 
 .prepareGFF3Fragments <- function(data, type){
-    res <- data[data$type==type,]
+    possibleCols <- c("seqnames","start","end","strand","type","ID","Parent",
+                      "exon_rank","gene_id")
+    expCols <- colnames(data) %in% possibleCols  ## still a bug in here...
+    res <- data[data$type==type,expCols]
     if (nrow(res) == 0L && type != "CDS")
         stop("No ", type, " information present in gff file")
     name <- paste0(tolower(type), "_id")

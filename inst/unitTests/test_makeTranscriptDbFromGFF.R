@@ -216,10 +216,14 @@ test_makeTranscriptDbFromGFF <- function(){
                                       dataSource = "NCBI",
                                       species = "Mycoplasma arthritidis",
                                       useGenesAsTranscripts=TRUE)
+
+  ## Tests
   checkTrue(class(txdb_bac)=="TranscriptDb")
   checkTrue(length(transcripts(txdb_bac)) > 100)
 
 }
 
 
+
+## the gffGeneIdAttributeName argument does not seem to work?  Or how does it work?  TODO: add some tests for this.  Also: it looks like it might be a little different from what I was about to add (which would be values put into the genes row of the genes records (Name or dbxRef)  (this just means that I probably should allow other argument to indicate which type of record to search in).
 
