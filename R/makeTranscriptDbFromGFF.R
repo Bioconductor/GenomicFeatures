@@ -175,22 +175,28 @@
 
 ## helpers to pre-tidy the data
 .checkExonRank <- function(data, gff, exonRankAttributeName){
+  cnames <- colnames(data)
   if(!is.null(exonRankAttributeName)){
     exon_rank <- DataFrame(exonRankAttributeName=
                            mcols(gff)[[exonRankAttributeName]])
-    data <- cbind(data,exon_rank=exon_rank)
+    data <- cbind(data,exon_rank)
+    names(data) <- c(cnames, "exon_rank")
+    
   }else{
     exon_rank <- DataFrame(rep(NA,length(start(gff))))
-    data <- cbind(data,exon_rank=exon_rank)
+    data <- cbind(data,exon_rank)
+    names(data) <- c(cnames, "exon_rank")    
   }
   data
 }
 
 .checkGeneIdAttrib <- function(data, gff, gffGeneIdAttributeName){
   if(!is.null(gffGeneIdAttributeName)){
+    cnames <- colnames(data)
     gene_id <- DataFrame(gffGeneIdAttributeName=
                          mcols(gff)[[gffGeneIdAttributeName]])
-    data <- cbind(data,gene_id=gene_id)
+    data <- cbind(data,gene_id)
+    names(data) <- c(cnames, "gene_id")    
   }
   data
 }
@@ -309,7 +315,7 @@
 .prepareGFF3Fragments <- function(data, type){
     possibleCols <- c("seqnames","start","end","strand","type","ID","Parent",
                       "exon_rank","gene_id")
-    expCols <- colnames(data) %in% possibleCols  ## still a bug in here...
+    expCols <- colnames(data) %in% possibleCols  
     res <- data[data$type==type,expCols]
     if (nrow(res) == 0L && type != "CDS")
         stop("No ", type, " information present in gff file")
