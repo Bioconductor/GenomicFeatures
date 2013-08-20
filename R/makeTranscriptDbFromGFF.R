@@ -274,40 +274,39 @@
                               useGenesAsTranscripts=FALSE){
   message("Extracting gene IDs")
   gns <- data[data$type=="gene",]
-  if(dim(gns)[1] < 1){ ## that means there are no gene rows...
-    ## Then we have to try and infer this from the transcript rows...
-    if(!is.null(gffGeneIdAttributeName)){
+  ## now decide how to get the gene ID names...
+  if(!is.null(gffGeneIdAttributeName)){
       ## then try to compute gns using this other data...
-      gns <- data.frame(tx_name=as.character(mcols(gff)$ID),
-                        type=as.character(mcols(gff)$type),
-                        gene_id=as.character(mcols(gff)[[gffGeneIdAttributeName]]),
-                        stringsAsFactors=FALSE)
-      gns <- gns[gns$type=="mRNA",]
-      gns <- gns[,c("tx_name","gene_id")]
-      ## Then merge in the more reliable tx_ids
+      ## so get these cols
+      gns <- data[,c("ID",gffGeneIdAttributeName,"type")]
+      gns <- gns[gns$type=="mRNA",] ## TODO: allow user to choose this also...
+      gns <- gns[,1:2]
+      colnames(gns) <- c("tx_name","gene_id")
+      ## Then merge in the tx_ids and then keep those
       gns <- merge(gns, transcripts, by="tx_name")
       gns <- gns[,c("tx_id","gene_id")]
-    }else{
-      warning("No gene information present in gff file")
-    }
-  }else if(useGenesAsTranscripts){
-      ## this case is mutually exclusive from the above case
-      ## no need to warn twice
+      ## and since sometimes there may be multiple values.
+      gns$gene_id <- as.character(gns$gene_id)
+  }else if(useGenesAsTranscripts){ 
+      ## this case is mutually exclusive from the above case and will
+      ## therefore OVER-RIDE the above.
+      ## no need to warn twice so we suppres the warnings here.
       txs <- suppressWarnings(.prepareGFF3TXS(data,
                                               useGenesAsTranscripts))
       gns <- txs[,c("tx_id","ID")] 
       names(gns) <- c("tx_id","gene_id") ## same as gns but with tx_id in tow.
-  }else{
-    if(length(gns$ID) != length(unique(gns$ID))){
-      stop("Unexpected gene duplicates")}
-    ## After testing for genes, here I get the actual data from mRNA rows...
-    ## The only difference is that in this more normal case the Parents of
-    ## these rows will be the genes that I detected previously.
-    txs <- .prepareGFF3TXS(data,useGenesAsTranscripts)
-    txsGene <- txs[,c("tx_id","Parent")] 
-    names(txsGene) <- c("tx_id","gene_id")
-    ## Then subset by gene_ids
-    gns <- txsGene[txsGene$gene_id %in% gns$ID,]
+  }else{ ## default case = get our data from transcript rows
+      if(length(gns$ID) != length(unique(gns$ID))){
+          stop("Unexpected gene duplicates")}
+      ## After testing for genes, here I get the actual data from mRNA rows...
+      ## The only difference is that in this more normal case the Parents of
+      ## these rows will be the genes that I detected previously.
+      ## useGenesAsTranscripts is FALSE in this case (so no warning)
+      txs <- .prepareGFF3TXS(data,useGenesAsTranscripts)
+      txsGene <- txs[,c("tx_id","Parent")] 
+      names(txsGene) <- c("tx_id","gene_id")
+      ## Then subset by gene_ids
+      gns <- txsGene[txsGene$gene_id %in% gns$ID,]
   }
   as.data.frame(gns)
 }
