@@ -498,9 +498,12 @@ setMethod("seqlevels0", "TranscriptDb",
 
 setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
 
+## , msg="isActiveSeq is deprecated for Bioc 2.13 and above. Please see help(seqinfo) for an alternative approach."
+
 setMethod("isActiveSeq", "TranscriptDb",
     function(x)
     {
+        .Deprecated("seqinfo", package="GenomicFeatures")
         ans <- x$isActiveSeq
         names(ans) <- x$.chrom
         ans
@@ -538,6 +541,7 @@ setGeneric("isActiveSeq<-",
 setReplaceMethod("isActiveSeq","TranscriptDb",
     function(x, value)
     {
+        .Deprecated("seqinfo", package="GenomicFeatures")
         value <- .mk_isActiveSeqReplacementValue(x, value)
         x$isActiveSeq <- unname(value)
         x

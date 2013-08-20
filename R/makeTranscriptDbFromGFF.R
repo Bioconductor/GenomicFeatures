@@ -269,6 +269,7 @@
   as.data.frame(transcripts)
 }
 
+## This function probably has too many jobs.  Also it will need a refactor
 .prepareGFF3genes <- function(data, transcripts, gffGeneIdAttributeName, gff,
                               useGenesAsTranscripts=FALSE){
   message("Extracting gene IDs")

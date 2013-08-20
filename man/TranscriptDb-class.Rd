@@ -6,10 +6,10 @@
 
 \alias{seqinfo,TranscriptDb-method}
 \alias{seqinfo<-,TranscriptDb-method}
-\alias{isActiveSeq}
-\alias{isActiveSeq<-}
-\alias{isActiveSeq,TranscriptDb-method}
-\alias{isActiveSeq<-,TranscriptDb-method}
+% \alias{isActiveSeq}
+% \alias{isActiveSeq<-}
+% \alias{isActiveSeq,TranscriptDb-method}
+% \alias{isActiveSeq<-,TranscriptDb-method}
 \alias{determineDefaultSeqnameStyle}
 \alias{determineDefaultSeqnameStyle,TranscriptDb-method}
 
