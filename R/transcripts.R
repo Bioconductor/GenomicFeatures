@@ -409,7 +409,7 @@ translateCols <- function(columns, txdb){
                           end=root_data[[CORECOLS["end"]]])
     ans_strand <- strand(root_data[[CORECOLS["strand"]]])
 
-    activeNames <- names(isActiveSeq(txdb))[isActiveSeq(txdb)]
+    activeNames <- names(.isActiveSeq(txdb))[.isActiveSeq(txdb)]
     seqinfo <- seqinfo(txdb)[activeNames]
     ans <- GRanges(seqnames = ans_seqnames,  
                    ranges = ans_ranges,
@@ -425,19 +425,19 @@ translateCols <- function(columns, txdb){
 
 
 
-## this helper is just to get the isActiveSeq vector, but to have it
+## this helper is just to get the .isActiveSeq vector, but to have it
 ## named based on the original database seqnames...
-## This is important for places where isActiveSeq() needs to be used
+## This is important for places where .isActiveSeq() needs to be used
 ## as part of a database query instead of as part of a external
 ## representation.
 .baseNamedActiveSeqs <- function(txdb){
     trueNames <- load_chrominfo(txdb, set.col.class=TRUE)$chrom
-    actSqs <- isActiveSeq(txdb)
+    actSqs <- .isActiveSeq(txdb)
     names(actSqs) <- trueNames[txdb$new2old] ## limit result to these.
     actSqs
 }
 
-## This is used to create a list from the isActiveSeq slot
+## This is used to create a list from the .isActiveSeq slot
 ## !!!
 ## TODO: I think that this helper is screwing up the vals values in the methods
 .makeActiveSeqsList <- function(type, txdb){
@@ -596,7 +596,7 @@ setMethod("disjointExons", "TranscriptDb",
 }
 
 .syncSeqlevel <- function(txdb, ans){
-  isActSeq <- isActiveSeq(txdb)
+  isActSeq <- .isActiveSeq(txdb)
   n2oNames <- levels(seqnames(ans))
   n2o <- match(seqnames(seqinfo(txdb)), n2oNames)
   seqinfo(ans, new2old=n2o) <- seqinfo(txdb)

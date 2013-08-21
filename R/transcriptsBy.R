@@ -100,7 +100,7 @@
     cols <- paste0(type, c("_id", "_name"))
     if (order_by_exon_rank)
         cols <- c(cols, "exon_rank")
-    activeNames <- names(isActiveSeq(txdb))[isActiveSeq(txdb)]
+    activeNames <- names(.isActiveSeq(txdb))[.isActiveSeq(txdb)]
     seqinfo <- seqinfo(txdb)[activeNames]
     grngs <- GRanges(seqnames = factor(
                        data[[paste0(type, "_chrom")]],
@@ -219,7 +219,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
     ans <- ans[ans$tx_id %in% ids, ]
 
     ## modify results to not respect our activeSeqs mask.
-    isActSeq <- isActiveSeq(txdb)
+    isActSeq <- .isActiveSeq(txdb)
     ## remove unwanted stuff from df 
     remove <- names(isActSeq)[isActSeq==FALSE]
     ans[!(ans$exon_chrom %in% remove),]
@@ -272,7 +272,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
 
 .makeUTRsByTranscript <- function(x, splicings, utr_start, utr_end)
 {
-    activeNames <- names(isActiveSeq(x))[isActiveSeq(x)]
+    activeNames <- names(.isActiveSeq(x))[.isActiveSeq(x)]
     seqinfo <- seqinfo(x)[activeNames]
     cols <- paste0("exon_", c("id", "name", "rank"))
     grg <- GRanges(seqnames = factor(

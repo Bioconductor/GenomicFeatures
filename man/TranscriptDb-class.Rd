@@ -50,19 +50,19 @@
       \link[GenomicRanges]{Seqinfo} objects \code{value} (supplied) and
       \code{seqinfo(x)} (current) must be identical.
     }
-    \item{}{
-      \code{isActiveSeq(x)}:
-      Return the currently active sequences for this txdb object as a
-      named logical vector.  Only active sequences will be tapped when
-      using the supplied accessor methods.  Inactive sequences will be
-      ignored.  By default, all available sequences will be active.
-    } 
-    \item{}{
-      \code{isActiveSeq(x) <- value}:
-      Allows the user to change which sequences will be actively
-      accessed by the accessor methods by altering the contents of this
-      named logical vector.
-    }
+%     \item{}{
+%       \code{isActiveSeq(x)}:
+%       Return the currently active sequences for this txdb object as a
+%       named logical vector.  Only active sequences will be tapped when
+%       using the supplied accessor methods.  Inactive sequences will be
+%       ignored.  By default, all available sequences will be active.
+%     } 
+%     \item{}{
+%       \code{isActiveSeq(x) <- value}:
+%       Allows the user to change which sequences will be actively
+%       accessed by the accessor methods by altering the contents of this
+%       named logical vector.
+%     }
     \item{}{
       \code{seqnameStyle(x)}:
       List the matching seqname styles for \code{x}.
@@ -122,13 +122,11 @@ seqlengths(txdb)  # shortcut for 'seqlengths(seqinfo(txdb))'
 isCircular(txdb)  # shortcut for 'isCircular(seqinfo(txdb))'
 names(which(isCircular(txdb)))
 
-## Examples on how to change which sequences are active
-## Set chr1 and chr3 to be inactive:
-isActiveSeq(txdb) <- c("1"=FALSE, "3"=FALSE)
-## Set ALL of the chromsomed to be inactive
-isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
-## Now set only chr1 and chr5 to be active
-isActiveSeq(txdb) <- c("1"=TRUE, "5"=TRUE)
+## Can set txdb so that only chr1 and chr2 are used by using the seqlevels
+seqlevels(txdb, force=TRUE) <- c("1", "2")
+## And then you can restore the default seqlevels
+txdb <- restoreSeqlevels(txdb)
+
 
 ## Use of as.list
 txdump <- as.list(txdb)

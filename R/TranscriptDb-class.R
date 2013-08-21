@@ -400,8 +400,7 @@ setMethod("seqinfo", "TranscriptDb", function(x){.seqinfo.TranscriptDb(x)})
         
     ## make sure new2old is set up
     if (is.null(new2old)) {
-        if (!identical(value, x_seqinfo))
-            stop("'new2old' must be specified ", IN_THIS_CONTEXT)
+        stop("'new2old' must be specified ", IN_THIS_CONTEXT)
         return(x)
     }
     ## length has to be reasonable to move forward
@@ -441,7 +440,7 @@ setMethod("seqinfo", "TranscriptDb", function(x){.seqinfo.TranscriptDb(x)})
         ## just always set the new2old value up if it's here.
         x$new2old <- new2old
         ## and we also need to update the isActiveSeq slot
-        x$isActiveSeq <- isActiveSeq(x)[new2old]
+        x$isActiveSeq <- .isActiveSeq(x)[new2old]
         names(x$isActiveSeq) <- NULL
     }
     if(force != TRUE && !is.null(new2old) &&
@@ -500,15 +499,16 @@ setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
 
 ## , msg="isActiveSeq is deprecated for Bioc 2.13 and above. Please see help(seqinfo) for an alternative approach."
 
+.isActiveSeq <- function(x){
+    ans <- x$isActiveSeq
+    names(ans) <- x$.chrom
+    ans
+}
 setMethod("isActiveSeq", "TranscriptDb",
-    function(x)
-    {
-        .Deprecated("seqinfo", package="GenomicFeatures")
-        ans <- x$isActiveSeq
-        names(ans) <- x$.chrom
-        ans
-    }
-)
+          function(x){
+              .Deprecated("seqinfo", package="GenomicFeatures")
+              .isActiveSeq(x)
+          })
 
 setGeneric("isActiveSeq<-",
     function(x, value) standardGeneric("isActiveSeq<-")
@@ -518,7 +518,7 @@ setGeneric("isActiveSeq<-",
 {
     if (!is.logical(value) || any(is.na(value)))
         stop("the supplied 'isActiveSeq' must be a logical vector with no NAs")
-    x_isActiveSeq <- isActiveSeq(x)
+    x_isActiveSeq <- .isActiveSeq(x)
     current_names <- names(x_isActiveSeq)
     supplied_names <- names(value)
     if (is.null(supplied_names)) {

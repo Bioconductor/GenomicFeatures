@@ -177,7 +177,7 @@
                    "e" = "exon.exon_chrom",
                    "c" = "cds.cds_chrom",
                    "transcript.tx_chrom")
-  chrStrings <- names(isActiveSeq(x))[isActiveSeq(x)]
+  chrStrings <- names(.isActiveSeq(x))[.isActiveSeq(x)]
   chrs <- paste(paste0("'", chrStrings, "'"), collapse=",")
   paste(sqlCol, "IN (", chrs,")")
 }
@@ -212,7 +212,7 @@
   }
 
   ## This is where/how we respect isActiveSeq()
-  if(FALSE %in% isActiveSeq(x)){ 
+  if(FALSE %in% .isActiveSeq(x)){ 
   ## Then we have to append a where clause to majorJoin
     if(tKey %in% c("t","e","c")){
       majorJoin <- paste("( SELECT * FROM", majorJoin,
@@ -586,8 +586,8 @@ setMethod("keytypes", "TranscriptDb",
 
 ## library(TxDb.Hsapiens.UCSC.hg19.knownGene);x <- TxDb.Hsapiens.UCSC.hg19.knownGene; cols = c("GENEID","CDSSTART", "CDSCHROM");keys = head(keys(x, "GENEID"));
 ## select(x, keys, cols = cols, keytype="GENEID");
-## isActiveSeq(x)[seqlevels(x)] <- FALSE;
-## isActiveSeq(x) <- c("chr1"=TRUE)
+## .isActiveSeq(x)[seqlevels(x)] <- FALSE;
+## .isActiveSeq(x) <- c("chr1"=TRUE)
 ## select(x, keys, cols = cols, keytype="GENEID");
 
 ##  debug(GenomicFeatures:::.select)
