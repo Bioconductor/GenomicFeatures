@@ -506,7 +506,7 @@ setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
 }
 setMethod("isActiveSeq", "TranscriptDb",
           function(x){
-              .Deprecated("seqinfo", package="GenomicFeatures")
+              .Deprecated("seqlevels", package="GenomicFeatures")
               .isActiveSeq(x)
           })
 
@@ -541,7 +541,7 @@ setGeneric("isActiveSeq<-",
 setReplaceMethod("isActiveSeq","TranscriptDb",
     function(x, value)
     {
-        .Deprecated("seqinfo", package="GenomicFeatures")
+        .Deprecated("seqlevels", package="GenomicFeatures")
         value <- .mk_isActiveSeqReplacementValue(x, value)
         x$isActiveSeq <- unname(value)
         x
