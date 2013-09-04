@@ -398,7 +398,7 @@ supportedUCSCtables <- function()
     cds_start0[] <- NA_integer_
     cds_end1[] <- NA_integer_
     if (cdsStart0 >= cdsEnd1)
-        return(list(cds_start0, cds_end1))
+        return(list(cds_start0, cds_end1, TRUE))
     first_exon_with_cds <- which(exon_start0 <= cdsStart0
                                  & cdsStart0 < exon_end1)
     if (length(first_exon_with_cds) != 1L)
@@ -419,10 +419,12 @@ supportedUCSCtables <- function()
     cds_end1[exons_with_cds] <- exon_end1[exons_with_cds]
     cds_start0[first_exon_with_cds] <- cdsStart0
     cds_end1[last_exon_with_cds] <- cdsEnd1
-    if (sum(cds_end1 - cds_start0, na.rm=TRUE) %% 3L != 0L)
-        warning("UCSC data anomaly in transcript ", tx_name,
-                ": the cds cumulative length is not a multiple of 3")
-    list(cds_start0, cds_end1)
+    if(!any(is.na(cds_end1),is.na(cds_start0))){
+        bad <- sum(cds_end1 - cds_start0, na.rm=TRUE) %% 3L != 0L
+    }else{
+        bad <- TRUE ## if there are NAs, then we can't say it's %% 3L != 0
+    }
+    list(cds_start0, cds_end1, bad) ## WHY DO I STILL GET NAs????
 }
 
 ### 'exon_locs' must be the list of 2 lists returned by
@@ -436,15 +438,22 @@ supportedUCSCtables <- function()
     cdsStart <- ucsc_txtable$cdsStart
     cdsEnd <- ucsc_txtable$cdsEnd
     cds_start <- cds_end <- vector(mode="list", length=nrow(ucsc_txtable))
-    for (i in seq_len(nrow(ucsc_txtable))) {
-        startend <- .extractUCSCCdsStartEnd(cdsStart[i], cdsEnd[i],
-                                            exon_locs$start[[i]],
-                                            exon_locs$end[[i]],
-                                            ucsc_txtable$name[i])
-        cds_start[[i]] <- startend[[1L]]
-        cds_end[[i]] <- startend[[2L]]
+
+    startend <- Map(.extractUCSCCdsStartEnd, cdsStart, cdsEnd,
+                    exon_locs$start, exon_locs$end, ucsc_txtable$name)
+
+    bad <- sapply(startend, "[[", 3)  
+    if (any(bad)) {
+        bad_cds <- ucsc_txtable$name[bad]
+        msg <- sprintf("UCSC data anomaly in %d transcript(s):
+            the cds cumulative length is not a multiple of 3
+            for transcripts %s", length(bad_cds),
+            paste(sQuote(bad_cds), collapse=" "))
+        warning(paste(strwrap(msg, exdent=2), collapse="\n"))
     }
-    list(start=cds_start, end=cds_end)
+
+    list(start=sapply(startend, "[[", 1),
+         end=sapply(startend, "[[", 2))
 }
 
 .extractSplicingsFromUCSCTxTable <- function(ucsc_txtable, transcripts_tx_id)

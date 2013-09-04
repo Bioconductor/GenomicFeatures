@@ -144,21 +144,70 @@ makeTxDbPackage <- function(txdb,
 }
 
 
-## wrapper functions to make BOTH the transcriptDb AND also package it up
-## One for UCSC
+
+
+## Questions: 1) should I set defaults to NULL or use other strategy?
+## A: use missing()
+
+## AlSO: 1) put herve quotes around the argument names.
+## 2) use IsSingleString (from IRanges) and keep the error IN the
+## function (so context is maintained)
+## To handle 40 of the same warning: withCallingHandlers()
+## elaborate example of how to do a good job of wrangling multiple warnings()
+
+## library(GenomicFeatures);txdb <- makeTxDbPackageFromUCSC(version='1', author="me", maintainer="you',genome = 'mm9', tablename = 'refGene')
+
+## THIS STILL DOESN'T WORK RIGHT!
+## IOW THIS FAILS
+## txdb <- makeTxDbPackageFromUCSC(version="1.0", genome = 'mm9', tablename = 'refGene')
+
 makeTxDbPackageFromUCSC <- function(
-  version,
+  version,   
   maintainer,
   author,
   destDir=".",
   license="Artistic-2.0",
   genome="hg19",
   tablename="knownGene",
-  transcript_ids=NULL,
+  transcript_ids=NULL,    ## optional
   circ_seqs=DEFAULT_CIRC_SEQS,
   url="http://genome.ucsc.edu/cgi-bin/",
   goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
   miRBaseBuild=NA){
+    ## checks
+    if(missing(version) || !isSingleString(version)){
+        stop("'version' must be supplied as a single element",
+             " character vector.")}
+    if(missing(version) || !isSingleString(maintainer)){
+        stop("'maintainer' must be supplied as a single element",
+             " character vector.")}
+    if(missing(version) || !isSingleString(author)){
+        stop("'author' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(destDir)){
+        stop("'destDir' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(license)){
+        stop("'license' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(genome)){
+        stop("'genome' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(tablename)){
+        stop("'tablename' must be supplied as a single element",
+             " character vector.")}
+    if(!is.character(circ_seqs) || length(circ_seqs)<1){
+        stop("'circ_seqs' must be supplied as a named character vector.")}
+    if(!isSingleString(url)){
+        stop("'url' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(goldenPath_url)){
+        stop("'goldenPath_url' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(miRBaseBuild)){
+        stop("'miRBaseBuild' must be supplied as a single element",
+             " character vector.")}
+    
     ## Make the DB
     txdb <- makeTranscriptDbFromUCSC(genome=genome,
                                      tablename=tablename,
@@ -185,9 +234,36 @@ makeTxDbPackageFromBiomart <- function(
   license="Artistic-2.0",
   biomart="ensembl",
   dataset="hsapiens_gene_ensembl",
-  transcript_ids=NULL,
-  circ_seqs=DEFAULT_CIRC_SEQS,
+  transcript_ids=NULL,   ## optional
+  circ_seqs=DEFAULT_CIRC_SEQS, 
   miRBaseBuild=NA){
+    ## checks
+    if(missing(version) || !isSingleString(version)){
+        stop("'version' must be supplied as a single element",
+             " character vector.")}
+    if(missing(maintainer) || !isSingleString(maintainer)){
+        stop("'maintainer' must be supplied as a single element",
+             " character vector.")}
+    if(missing(author) || !isSingleString(author)){
+        stop("'author' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(destDir)){
+        stop("'destDir' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(license)){
+        stop("'license' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(biomart)){
+        stop("'biomart' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(dataset)){
+        stop("'dataset' must be supplied as a single element",
+             " character vector.")}
+    if(!is.character(circ_seqs) || length(circ_seqs)<1){
+        stop("'circ_seqs' must be supplied as a named character vector.")}
+    if(!isSingleString(miRBaseBuild)){
+        stop("'miRBaseBuild' must be supplied as a single element",
+             " character vector.")}
     ## Make the DB
     txdb <- makeTranscriptDbFromBiomart(biomart=biomart,
                                         dataset=dataset,
@@ -215,12 +291,56 @@ makeFDbPackageFromUCSC <- function(
     genome="hg19",
     track="tRNAs",
     tablename="tRNAs",
-    columns = UCSCFeatureDbTableSchema(genome, track, tablename),
+    columns = UCSCFeatureDbTableSchema(genome, track, tablename), 
     url="http://genome.ucsc.edu/cgi-bin/",
     goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
     chromCol=NULL,
     chromStartCol=NULL,
     chromEndCol=NULL){
+    ## checks
+    if(missing(author) || !isSingleString(version)){
+        stop("'version' must be supplied as a single element",
+             " character vector.")}
+    if(missing(author) || !isSingleString(maintainer)){
+        stop("'maintainer' must be supplied as a single element",
+             " character vector.")}
+    if(missing(author) || !isSingleString(author)){
+        stop("'author' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(destDir)){
+        stop("'destDir' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(license)){
+        stop("'license' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(genome)){
+        stop("'genome' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(track)){
+        stop("'track' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(tablename)){
+        stop("'tablename' must be supplied as a single element",
+             " character vector.")}    
+    if(!is.character(columns) || length(columns)<1  ||
+       length(names(columns))==0 ){
+        stop("columns must be supplied as a named character vector.")}
+    if(!isSingleString(url)){
+        stop("'url' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(goldenPath_url)){
+        stop("'goldenPath_url' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(chromCol)){
+        stop("'chromCol' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(chromStartCol)){
+        stop("'chromStartCol' must be supplied as a single element",
+             " character vector.")}
+    if(!isSingleString(chromEndCol)){
+        stop("'chromEndCol' must be supplied as a single element",
+             " character vector.")}
+   
     ## make the fdb
     fdb <- makeFeatureDbFromUCSC(genome=genome,
                                  track=track,
