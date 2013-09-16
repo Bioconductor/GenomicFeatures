@@ -127,10 +127,10 @@ interested in studying a handful of chromosomes.
 
 
 To determine which chromosomes are currently active, use the
-\Rmethod{isActiveSeq} method.  For example:
+\Rmethod{seqlevels} method.  For example:
 
-<<isActive>>=
-head(isActiveSeq(txdb))
+<<seqlevels>>=
+head(seqlevels(txdb))
 @ 
 
 Will tell you all the chromosomes that are active for the
@@ -139,23 +139,26 @@ default it will be all of them).
 
 If you then wanted to only set Chromosome 1 to be active you could do
 it like this:
-<<isActive2>>=
-isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
-isActiveSeq(txdb) <- c("chr1"=TRUE)
+<<seqlevels2>>=
+seqlevels(txdb, force=TRUE) <- c("chr1")
 @ 
 
 So if you ran this, then from this point on in your R session only
 chromosome 1 would be consulted when you call the various retrieval
-methods..
+methods...  If you need to reset back to the original seqlevels, use
+the \Rmethod{restoreSeqlevels} method.
+<<seqlevels3>>=
+txdb <- restoreSeqlevels(txdb)
+@ 
+
 
 \begin{Exercise}
-Use \Rmethod{isActiveSeq} to set only chromsome 15 to be active.  BTW,
+Use \Rmethod{seqlevels} to set only chromsome 15 to be active.  BTW,
 the rest of this vignette will assume you have succeeded at this.
 \end{Exercise}
 \begin{Solution}
-<<isActive3>>=
-isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
-isActiveSeq(txdb) <- c("chr15"=TRUE)
+<<seqlevels4>>=
+seqlevels(txdb, force=TRUE) <- c("chr15")
 @
 \end{Solution}
 

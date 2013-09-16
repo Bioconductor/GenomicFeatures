@@ -221,8 +221,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
     ## modify results to not respect our activeSeqs mask.
     isActSeq <- .isActiveSeq(txdb)
     ## remove unwanted stuff from df 
-    remove <- names(isActSeq)[isActSeq==FALSE]
-    ans[!(ans$exon_chrom %in% remove),]
+    ans[ans$exon_chrom %in% names(isActSeq),]
 }
 
 ### 'tx_id': character or integer vector with runs of identical elements (one
