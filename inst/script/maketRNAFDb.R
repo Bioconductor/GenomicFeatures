@@ -1,7 +1,7 @@
 ## It all has to start with an FDB package
 library(GenomicFeatures)
 makeFDbPackageFromUCSC(version="1.0.0",
-                 maintainer="Biocore Data Team <bioconductor@r-project.org>",
+                 maintainer="Bioconductor Package Maintainer <maintainer@bioconductor.org>",
                                 author="Marc Carlson",
                                 genome="hg19",
                                 track="tRNAs",

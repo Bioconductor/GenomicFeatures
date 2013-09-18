@@ -4,7 +4,7 @@ library(GenomicFeatures)
 ## version = "2.7.0" ## best if I pass this down (from makeTerminal)
 ## TxDbOutDir = paste(outDir,"_TxDbs",sep="")  
 
-maintainer = "Biocore Data Team <bioconductor@r-project.org>"
+maintainer = "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
 author = "Marc Carlson"
 
 ## Human HG18
