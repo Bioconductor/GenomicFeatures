@@ -561,7 +561,7 @@ getChromInfoFromUCSC <- function(genome,
 ###
 
 .prepareUCSCMetadata <- function(genome, tablename, gene_id_type, full_dataset,
-                                 miRBaseBuild)
+                                 miRBaseBuild=NA)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)

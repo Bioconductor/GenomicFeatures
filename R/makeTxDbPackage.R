@@ -204,9 +204,9 @@ makeTxDbPackageFromUCSC <- function(
     if(!isSingleString(goldenPath_url)){
         stop("'goldenPath_url' must be supplied as a single element",
              " character vector.")}
-    if(!isSingleString(miRBaseBuild)){
+    if(!isSingleStringOrNA(miRBaseBuild)){
         stop("'miRBaseBuild' must be supplied as a single element",
-             " character vector.")}
+             " character vector or be NA.")}
     
     ## Make the DB
     txdb <- makeTranscriptDbFromUCSC(genome=genome,
@@ -261,9 +261,9 @@ makeTxDbPackageFromBiomart <- function(
              " character vector.")}
     if(!is.character(circ_seqs) || length(circ_seqs)<1){
         stop("'circ_seqs' must be supplied as a named character vector.")}
-    if(!isSingleString(miRBaseBuild)){
+    if(!isSingleStringOrNA(miRBaseBuild)){
         stop("'miRBaseBuild' must be supplied as a single element",
-             " character vector.")}
+             " character vector or be NA.")}
     ## Make the DB
     txdb <- makeTranscriptDbFromBiomart(biomart=biomart,
                                         dataset=dataset,
