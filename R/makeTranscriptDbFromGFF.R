@@ -176,7 +176,7 @@
 ## helpers to pre-tidy the data
 .checkExonRank <- function(data, gff, exonRankAttributeName){
   cnames <- colnames(data)
-  if(!is.null(exonRankAttributeName)){
+  if(!is.na(exonRankAttributeName)){
     exon_rank <- DataFrame(exonRankAttributeName=
                            mcols(gff)[[exonRankAttributeName]])
     data <- cbind(data,exon_rank)
@@ -191,7 +191,7 @@
 }
 
 .checkGeneIdAttrib <- function(data, gff, gffGeneIdAttributeName){
-  if(!is.null(gffGeneIdAttributeName)){
+  if(!is.na(gffGeneIdAttributeName)){
     cnames <- colnames(data)
     gene_id <- DataFrame(gffGeneIdAttributeName=
                          mcols(gff)[[gffGeneIdAttributeName]])
@@ -275,7 +275,7 @@
   message("Extracting gene IDs")
   gns <- data[data$type=="gene",]
   ## now decide how to get the gene ID names...
-  if(!is.null(gffGeneIdAttributeName)){
+  if(!is.na(gffGeneIdAttributeName)){
       ## then try to compute gns using this other data...
       ## so get these cols
       gns <- data[,c("ID",gffGeneIdAttributeName,"type")]
@@ -350,7 +350,7 @@
   
   ## if needed (usually needed for gff3), deduce the exon rankings from the
   ## order along the chromosome
-  if(is.null(exonRankAttributeName)){
+  if(is.na(exonRankAttributeName)){
     exs <- .deduceExonRankings(exs, format="gff")
   }
   ## Then merge the two frames together based on range information
@@ -445,7 +445,7 @@
                        transcript_id=as.character(mcols(gff)$transcript_id),
                        stringsAsFactors=FALSE)
   ## add ExonRank if there is any  
-  if(!is.null(exonRankAttributeName)){
+  if(!is.na(exonRankAttributeName)){
     data <- cbind(data,exon_rank=mcols(gff)[[exonRankAttributeName]])
   }else{
     data <- cbind(data,exon_rank=rep(NA,length(start(gff))))
@@ -511,7 +511,7 @@
   cds <- .prepareGTFFragments(data,type="CDS")
   
   ## if the exonRankAttributeName is not available ... then deduce.
-  if(is.null(exonRankAttributeName)){
+  if(is.na(exonRankAttributeName)){
     exs <- .deduceExonRankings(exs,format="gtf")
   }
   
@@ -576,17 +576,41 @@
 
 makeTranscriptDbFromGFF <- function(file,
                                     format=c("gff3", "gtf"),
-                                    exonRankAttributeName=NULL,
-                                    gffGeneIdAttributeName=NULL,
-                                    chrominfo=NULL,
+                                    exonRankAttributeName=NA,
+                                    gffGeneIdAttributeName=NA,
+                                    chrominfo=NA,
                                     dataSource=NA,
                                     species=NA,
                                     circ_seqs=DEFAULT_CIRC_SEQS,
                                     miRBaseBuild=NA,
                                     useGenesAsTranscripts=FALSE)
 {
+  ## Argument checking
+  if(!file.exists(file)) stop("'file' must point to a file that exists.")
   format <- match.arg(format)
   
+  if(!isSingleStringOrNA(exonRankAttributeName)){
+      stop("'exonRankAttributeName' must be a single element character vector or NA.")  }
+  if(!isSingleStringOrNA(gffGeneIdAttributeName)){
+      stop("'gffGeneIdAttributeName' must be a single element character vector or NA.")  }
+  ## check chrominfo
+  if(!(is.data.frame(chrominfo) || is.na(chrominfo))){
+      stop("'chrominfo' must be a data.frame or NA.")  }
+  if(is.data.frame(chrominfo)){
+      if(dim(chrominfo)[2] != 3 ||
+         any(colnames(chrominfo)!= c("chrom","length","is_circular"))){
+          stop("'chrominfo' must have three  columns that correpspond to 'chrom', 'length', and 'is_circular' and are named accordingly")}
+  }
+  if(!isSingleStringOrNA(dataSource)){
+      stop("'dataSource' must be a single element character vector or NA.")  }
+  if(!isSingleStringOrNA(species)){
+      stop("'species' must be a single element character vector or NA.")  }
+  if(!is.character(circ_seqs))stop("'circ_seqs' must be a character vector.")
+  if(!isSingleStringOrNA(miRBaseBuild)){
+      stop("'miRBaseBuild' must be a single element character vector or NA.")  }
+  if(!isTRUEorFALSE(useGenesAsTranscripts)){
+      stop("'useGenesAsTranscripts' must be a single element character vector or NA.")  }
+
   ## start by importing the relevant features from the specified file
   feature.type <- c("gene", "mRNA", "exon", "CDS")
   gff <- import(file, format=format, feature.type=feature.type,
@@ -612,7 +636,7 @@ makeTranscriptDbFromGFF <- function(file,
   metadata <- .prepareGFFMetadata(file, dataSource, species, miRBaseBuild)
 
   ## If there is not chrominfo, then make one up best you can (no lengths)
-  if(is.null(chrominfo)){
+  if(is.na(chrominfo)){
     message("Now generating chrominfo from available sequence names. No chromosome length information is available.")
     chroms <- unique(tables[["transcripts"]][["tx_chrom"]])
     chrominfo <- data.frame(chrom=chroms,

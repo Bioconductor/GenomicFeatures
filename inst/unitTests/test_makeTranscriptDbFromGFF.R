@@ -28,8 +28,8 @@ gffB <- system.file("extdata","NC_011025.gff.txt",package="GenomicFeatures")
 ## test .deduceExonRankings (usually used by gff) 
 test_deduceExonRankings <- function(){
   data <- GenomicFeatures:::.prepareGFF3data.frame(gff3,
-                                                   exonRankAttributeName=NULL,
-                                                   gffGeneIdAttributeName=NULL)
+                                                   exonRankAttributeName=NA,
+                                                   gffGeneIdAttributeName=NA)
   exs <- GenomicFeatures:::.prepareGFF3Fragments(data,type="exon")
   suppressWarnings(
     res <- GenomicFeatures:::.deduceExonRankings(exs))
@@ -44,8 +44,8 @@ test_deduceExonRankings <- function(){
 ## test .mergeFramesViaRanges (used by both)
 test_mergeFramesViaRanges <- function(){
   data <- GenomicFeatures:::.prepareGFF3data.frame(gff3,
-                                                   exonRankAttributeName=NULL,
-                                                   gffGeneIdAttributeName=NULL)
+                                                   exonRankAttributeName=NA,
+                                                   gffGeneIdAttributeName=NA)
 
   exs <- GenomicFeatures:::.prepareGFF3Fragments(data,type="exon")
   cds <- GenomicFeatures:::.prepareGFF3Fragments(data,type="CDS")
@@ -121,8 +121,8 @@ test_prepareGTFTables <- function(){
 test_prepareGFF3Tables <- function(){
   suppressWarnings(
   res <- GenomicFeatures:::.prepareGFF3Tables(gff3,
-                                              exonRankAttributeName=NULL,
-                                              gffGeneIdAttributeName=NULL,
+                                              exonRankAttributeName=NA,
+                                              gffGeneIdAttributeName=NA,
                                               useGenesAsTranscripts=FALSE))
   ## TESTING
   checkTrue(length(res)==3)

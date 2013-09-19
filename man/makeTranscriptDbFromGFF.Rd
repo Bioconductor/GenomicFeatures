@@ -14,9 +14,9 @@
 \usage{
 makeTranscriptDbFromGFF(file,
                         format=c("gff3","gtf"),
-                        exonRankAttributeName,
-                        gffGeneIdAttributeName=NULL,
-                        chrominfo=NULL,
+                        exonRankAttributeName=NA,
+                        gffGeneIdAttributeName=NA,
+                        chrominfo=NA,
                         dataSource=NA,
                         species=NA,
                         circ_seqs=DEFAULT_CIRC_SEQS,
@@ -28,7 +28,7 @@ makeTranscriptDbFromGFF(file,
   \item{format}{"gff3" or "gtf" depending on which file format you have
   to process}
   \item{exonRankAttributeName}{character(1) name of the attribute that
-    defines the exon rank information, or \code{NULL} to indicate that
+    defines the exon rank information, or \code{NA} to indicate that
     exon ranks are inferred from order of occurrence in the GFF.}
   \item{gffGeneIdAttributeName}{an optional argument that can be used
   for gff style files ONLY.  If the gff file lacks rows to specify gene
@@ -105,7 +105,7 @@ makeTranscriptDbFromGFF(file,
 gffFile <- system.file("extdata","a.gff3",package="GenomicFeatures")
 txdb <- makeTranscriptDbFromGFF(file=gffFile,
             format="gff3",
-            exonRankAttributeName=NULL,
+            exonRankAttributeName=NA,
             dataSource="partial gtf file for Tomatoes for testing",
             species="Solanum lycopersicum")
 if(interactive()) {

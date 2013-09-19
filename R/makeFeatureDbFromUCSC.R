@@ -231,6 +231,8 @@ makeFeatureDbFromUCSC <- function(genome,
 {
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
+    if (!isSingleString(track))
+        stop("'track' must be a single string")
     if (!isSingleString(tablename))
         stop("'tablename' must be a single string")
     
