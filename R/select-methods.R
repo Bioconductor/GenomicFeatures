@@ -182,7 +182,9 @@
   paste(sqlCol, "IN (", chrs,")")
 }
 
-.select <- function(x, keys, cols, keytype){
+.select <- function(x, keys, columns, keytype){
+  if(missing(keys)){stop("'keys' must be a character vector")}
+  if(missing(columns)){stop("'columns' must be a character vector")}
   ## 1st we check the keytype to see if it is valid:
   if(is.na(keys(x, keytype)[1]) & length(keys(x, keytype))==1){ 
     stop(paste("There do not appear to be any keys",
@@ -197,9 +199,9 @@
 
   ## we used to add TXID to cnames, which forces splicing to always be included
   ## Splicing is a almost always needed, but almost never requested.
-  ## cnames <- unique(c(cols, "TXID", keytype))
+  ## cnames <- unique(c(columns, "TXID", keytype))
   ## 
-  cnames <- unique(c(keytype, cols))
+  cnames <- unique(c(keytype, columns))
   tKey <- .makeTableKey(x,cnames)
   ## message(paste("keytype generated:",tKey))
 
@@ -247,11 +249,11 @@
   }
   
   
-  ## Then drop any cols that were not explicitely requested but that may have
+  ## Then drop any columns that were not explicitely requested but that may have
   ## been appended to make a joind (like TXID)
   res <- res[,.reverseColAbbreviations(x,cnames),drop=FALSE]
 
-  ## Then sort rows and cols and drop the filtered rows etc. using .resort
+  ## Then sort rows and columns and drop the filtered rows etc. using .resort
   ## from AnnotationDbi
   joinType <- .reverseColAbbreviations(x, keytype)
   if(dim(res)[1]>0){
@@ -276,14 +278,14 @@
     
     ## remove condition after 2.13
     extraArgs <- list(...)
-    if("cols" %in% names(extraArgs)){
+    if("columns" %in% names(extraArgs)){
         ## warn the user about the old argument
         AnnotationDbi:::.colsArgumentWarning()
-        ## then call it using cols in place of columns
+        ## then call it using columns in place of columns
         if(missing(keytype)){
-            .select(x, keys, extraArgs[["cols"]], keytype = columns, ...)
+            .select(x, keys, extraArgs[["columns"]], keytype = columns, ...)
         }else{
-            .select(x, keys, extraArgs[["cols"]], keytype = keytype, ...)
+            .select(x, keys, extraArgs[["columns"]], keytype = keytype, ...)
         }        
     }else{
         .select(x, keys, columns, keytype)
@@ -302,8 +304,8 @@ setMethod("select", "TranscriptDb",
 
 
 #####################################################################
-## method for cols()
-.cols <- function(x){
+## method for columns()
+.columns <- function(x){
   res <- .makeColAbbreviations(x)
   names(res) <- NULL
   res
@@ -311,7 +313,7 @@ setMethod("select", "TranscriptDb",
 
 
 setMethod("columns", "TranscriptDb",
-    function(x) .cols(x)
+    function(x) .columns(x)
 )
 
 
