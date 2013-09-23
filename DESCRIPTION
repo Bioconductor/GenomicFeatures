@@ -33,6 +33,7 @@ Suggests: rtracklayer, biomaRt,
           TxDb.Dmelanogaster.UCSC.dm3.ensGene (>= 2.7.1),
           Rsamtools,
           pasillaBamSubset (>= 0.0.5),
+	  seqnames.db,
           RUnit
 Collate: utils.R
          Ensembl.utils.R
