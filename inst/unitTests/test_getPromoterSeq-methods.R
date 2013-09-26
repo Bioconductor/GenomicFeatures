@@ -38,20 +38,26 @@ testGRangesListBSgenomeFlyGetPromoterSeq <- function() {
      #  gene_id  flybase_id  symbol
      #    40524 FBgn0037215 CG12582
      #    40526 FBgn0037217 CG14636
+     # in 2012, UCSC reported 4 total transcripts for these two genes
+     # in 2013, 6.  there should be as many promoter.seqs as there
+     # are transcripts, and they should each be of width
+     # upstream + downstream.  it is risky to check for specific
+     # sequence in the promoter.seqs since the annotation and sequence
+     # may change
+
     genes <- c("FBgn0037215", "FBgn0037217")
     transcriptCoordsByGene.GRangesList <-
        transcriptsBy(TxDb.Dmelanogaster.UCSC.dm3.ensGene, by="gene") [genes]
   
+    transcript.count <- length(unlist(transcriptCoordsByGene.GRangesList))
+
     promoter.seqs <- getPromoterSeq(transcriptCoordsByGene.GRangesList,
                                     Dmelanogaster, upstream=10, downstream=10)
     checkTrue(is(promoter.seqs, "DNAStringSetList"))
     checkEquals(length(promoter.seqs), 2)
     checkEquals(names(promoter.seqs), genes)
   
-    checkEquals(width(unlist(promoter.seqs)), rep(20, 4))
-    checkEquals(as.character(unlist(promoter.seqs, use.names=FALSE)),
-                c("TGTTCGTGAGTCAGTGGAAG", "GTTCGTGAGTCAGTGGAAGA",
-                  "GTTCGCGCTGCGATCTGTCG", "AACCACCGTCAGTTGTATTT"))
+    checkEquals(width(unlist(promoter.seqs)), rep(20, transcript.count))
 }
 
 testGRangesListFastaFlyGetPromoterSeq <- function() {
@@ -62,6 +68,9 @@ testGRangesListFastaFlyGetPromoterSeq <- function() {
     genes <- c("FBgn0025740", "FBgn0085432")
     transcriptCoordsByGene.GRangesList <-
        transcriptsBy(TxDb.Dmelanogaster.UCSC.dm3.ensGene, by="gene") [genes]
+
+    transcript.count <- length(unlist(transcriptCoordsByGene.GRangesList))
+
     fasta.file <- dm3_chr4 ()
     sequence.from.fasta <- open(FaFile(fasta.file))
     promoter.seqs <- getPromoterSeq(transcriptCoordsByGene.GRangesList,
@@ -71,15 +80,9 @@ testGRangesListFastaFlyGetPromoterSeq <- function() {
     checkEquals(length(promoter.seqs), 2)
     checkEquals(names(promoter.seqs), genes)
   
-    checkEquals(width(unlist(promoter.seqs)), rep(20, 11))
-    checkEquals(as.character(as.character(unlist(promoter.seqs))), 
-                  c("AGCCGATACTAATAATCTGC",
-                    "ACGCCTGCTTATCGACAGTT", "ACGCCTGCTTATCGACAGTT",
-                    "ACGCCTGCTTATCGACAGTT", "AAAATTCGATCAACGCAGAC",
-                    "AAAATTCGATCAACGCAGAC", "AAAATTCGATCAACGCAGAC",
-                    "ATTCGATCAACGCAGACGTG", "GAATTCTCGTGCAAGTGTGT",
-                    "GAAACTCGTTGTGTCATTAG", "AAATCCGATAATGCCACACT"))
-
+    checkEquals(width(unlist(promoter.seqs)), rep(20, transcript.count))
+       # we are unable to check for specific DNA sequence, since
+       # the UCSC annotation of these genes changes over time.
 }
 
 testGRangesBSgenomeHumanGetPromoterSeq <- function() {
