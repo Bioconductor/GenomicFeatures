@@ -8,6 +8,8 @@
 \alias{exons,TranscriptDb-method}
 \alias{cds}
 \alias{cds,TranscriptDb-method}
+\alias{genes}
+\alias{genes,TranscriptDb-method}
 \alias{promoters,TranscriptDb-method}
 \alias{disjointExons}
 \alias{disjointExons,TranscriptDb-method}
@@ -34,6 +36,9 @@ exons(x, ...)
 
 cds(x, ...)
 \S4method{cds}{TranscriptDb}(x, vals=NULL, columns="cds_id")
+
+genes(x, ...)
+\S4method{genes}{TranscriptDb}(x, vals=NULL, columns="gene_id", single.strand.genes.only=TRUE)
 
 #promoters(x, upstream=2000, downstream=200, ...)
 \S4method{promoters}{TranscriptDb}(x, upstream=2000, downstream=200, ...)
@@ -81,6 +86,17 @@ tRNAs(x)
     }
     If the vector is named, those names are used for the corresponding
     column in the element metadata of the returned object. 
+  }
+  \item{single.strand.genes.only}{
+    \code{TRUE} or \code{FALSE}. If \code{TRUE} (the default), then genes
+    that have exons located on both strands of the same chromosome or on
+    two different chromosomes are dropped. In that case, the genes are
+    returned in a \link[GenomnicRanges]{GRanges} object. Otherwise, all genes
+    are returned in a \link[GenomnicRanges]{GRangesList} object with the
+    columns specified thru the \code{columns} argument set as \emph{top level}
+    metadata columns. (Please keep in mind that the \emph{top level} metadata
+    columns of a \link[GenomnicRanges]{GRangesList} object are not displayed
+    by the \code{show} method.)
   }
   \item{upstream}{
     For \code{promoters} : An \code{integer(1)} value indicating the
@@ -132,7 +148,11 @@ tRNAs(x)
   package.
 }
 
-\value{a GRanges object}
+\value{
+  A \link[GenomicRanges]{GRanges} object. The only exception being
+  when \code{genes} is used with \code{single.strand.genes.only=FALSE},
+  in which case a \link[GenomicRanges]{GRangesList} object is returned.
+}
 
 \author{
   M. Carlson, P. Aboyoun and H. Pages. \code{disjointExons} was contributed
@@ -154,14 +174,41 @@ tRNAs(x)
 }
 
 \examples{
-## transcripts() and exons() :
-  txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
-                                   package="GenomicFeatures"))
-  vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
-  transcripts(txdb, vals)
-  exons(txdb, vals=list(exon_id=1), columns=c("EXONID", "TXNAME"))
-  exons(txdb, vals=list(tx_name="uc009vip.1"), columns=c("EXONID",
+## transcripts(), exons(), genes():
+txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+                           package="GenomicFeatures"))
+vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
+
+transcripts(txdb, vals)
+
+exons(txdb, vals=list(exon_id=1), columns=c("EXONID", "TXNAME"))
+exons(txdb, vals=list(tx_name="uc009vip.1"), columns=c("EXONID",
       "TXNAME"))
+
+genes(txdb)  # a GRanges object
+cols <- c("tx_id", "tx_chrom", "tx_strand",
+          "exon_id", "exon_chrom", "exon_strand")
+single_strand_genes <- genes(txdb, columns=cols)
+
+## Because we've returned single strand genes only, the "tx_chrom"
+## and "exon_chrom" metadata columns are guaranteed to match
+## 'seqnames(single_strand_genes)':
+stopifnot(identical(as.character(seqnames(single_strand_genes)),
+                    as.character(mcols(single_strand_genes)$tx_chrom)))
+stopifnot(identical(as.character(seqnames(single_strand_genes)),
+                    as.character(mcols(single_strand_genes)$exon_chrom)))
+## and also the "tx_strand" and "exon_strand" metadata columns are
+## guaranteed to match 'strand(single_strand_genes)':
+stopifnot(identical(as.character(strand(single_strand_genes)),
+                    as.character(mcols(single_strand_genes)$tx_strand)))
+stopifnot(identical(as.character(strand(single_strand_genes)),
+                    as.character(mcols(single_strand_genes)$exon_strand)))
+
+all_genes <- genes(txdb, columns=cols, single.strand.genes.only=FALSE)
+all_genes  # a GRangesList object
+multiple_strand_genes <- all_genes[elementLengths(all_genes) >= 2]
+multiple_strand_genes
+mcols(multiple_strand_genes)
 
 ## microRNAs() :
 \dontrun{library(TxDb.Hsapiens.UCSC.hg19.knownGene)

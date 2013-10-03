@@ -450,7 +450,7 @@ translateCols <- function(columns, txdb){
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### The top-level extractors.
+### Primary extractors: transcripts(), exons(), cds(), and genes().
 ###
 ### Proposal:
 ###   - rename the 'vals' arg -> 'filter'
@@ -500,7 +500,87 @@ setMethod("cds", "TranscriptDb",
         }
 )
 
-## generic is in IRanges
+setGeneric("genes", function(x, ...) standardGeneric("genes"))
+
+.regroup <- function(x, new_breakpoints)
+{
+   if (is.list(x) || is(x, "List")) {
+       new_breakpoints <- end(PartitioningByEnd(x))[new_breakpoints]
+       x <- unlist(x, use.names=FALSE)
+   }
+   relist(x, PartitioningByEnd(new_breakpoints))
+}
+
+.regroup_rows <- function(df, new_breakpoints)
+{
+    ## FIXME: endoapply() on a DataFrame object is broken when applying
+    ## a function 'FUN' that modifies the nb of rows. Furthermore, the
+    ## returned object passes validation despite being broken! Fix it
+    ## in IRanges.
+    ans <- endoapply(df, function(x) unique(.regroup(x, new_breakpoints)))
+    ## Fix the broken DataFrame returned by endoapply().
+    ans@nrows <- length(new_breakpoints)
+    ans@rownames <- NULL
+    ans
+}
+
+### If 'single.strand.genes.only' is TRUE (the default), then genes that
+### have exons located on both strands of the same chromosome, or on 2
+### different chromosomes are dropped. In that case, the genes are returned
+### in a GRanges object. Otherwise, they're returned in a GRangesList object
+### with the metadata columns requested thru 'columns' set at the top level.
+.TranscriptDb.genes <- function(x, vals=NULL, columns="gene_id",
+                                single.strand.genes.only=TRUE)
+{
+    if (!is.character(columns))
+        stop("'columns' must be a character vector")
+    if (!isTRUEorFALSE(single.strand.genes.only))
+        stop("'single.strand.genes.only' must be TRUE or FALSE")
+    columns2 <- union(columns, "gene_id")
+    tx <- transcripts(x, vals=vals, columns=columns2)
+
+    ## Unroll 'tx' along the 'gene_id' metadata column.
+    ## Note that the number of genes per transcript will generally be 1 or 0.
+    ## But we also want to handle the situation where it's > 1 which happens
+    ## when the same transcript is linked to more than 1 gene (because this
+    ## may happen one day and is the reason behind the choice to represent
+    ## the 'gene_id' as a CharacterList object instead of a character vector).
+    gene_id <- mcols(tx)$gene_id
+    ngene_per_tx <- elementLengths(gene_id)
+    tx <- tx[rep.int(seq_along(ngene_per_tx), ngene_per_tx)]
+    mcols(tx)$gene_id <- unlist(gene_id, use.names=FALSE)
+
+    ## Split 'tx' by gene.
+    tx_by_gene <- split(tx, mcols(tx)$gene_id)
+
+    ## Turn inner mcols into outter mcols by reducing them.
+    inner_mcols <- mcols(tx_by_gene@unlistData)[columns]
+    mcols(tx_by_gene@unlistData) <- NULL
+    new_breakpoints <- end(PartitioningByEnd(tx_by_gene))
+    mcols(tx_by_gene) <- .regroup_rows(inner_mcols, new_breakpoints)
+    ## Compute the gene ranges.
+    genes <- range(tx_by_gene)
+
+    if (!single.strand.genes.only)
+        return(genes)
+
+    keep_idx <- which(elementLengths(genes) == 1L)
+    genes <- genes[keep_idx]
+    ans <- unlist(genes, use.names=FALSE)
+    mcols(ans) <- mcols(genes)
+    names(ans) <- names(genes)
+    ans
+}
+
+setMethod("genes", "TranscriptDb", .TranscriptDb.genes)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### "promoters" method
+###
+### generic is in IRanges
+###
+
 setMethod("promoters", "TranscriptDb",
     function(x, upstream=2000, downstream=200, ...)
     {
@@ -508,6 +588,11 @@ setMethod("promoters", "TranscriptDb",
         promoters(gr, upstream=upstream, downstream=downstream)
     }
 ) 
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### disjointExons()
+###
 
 setGeneric("disjointExons", 
     function(x, ...) 
