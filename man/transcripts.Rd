@@ -91,11 +91,11 @@ tRNAs(x)
     \code{TRUE} or \code{FALSE}. If \code{TRUE} (the default), then genes
     that have exons located on both strands of the same chromosome or on
     two different chromosomes are dropped. In that case, the genes are
-    returned in a \link[GenomnicRanges]{GRanges} object. Otherwise, all genes
-    are returned in a \link[GenomnicRanges]{GRangesList} object with the
+    returned in a \link[GenomicRanges]{GRanges} object. Otherwise, all genes
+    are returned in a \link[GenomicRanges]{GRangesList} object with the
     columns specified thru the \code{columns} argument set as \emph{top level}
     metadata columns. (Please keep in mind that the \emph{top level} metadata
-    columns of a \link[GenomnicRanges]{GRangesList} object are not displayed
+    columns of a \link[GenomicRanges]{GRangesList} object are not displayed
     by the \code{show} method.)
   }
   \item{upstream}{

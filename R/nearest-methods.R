@@ -23,8 +23,7 @@ setMethod("distance", c("GenomicRanges", "TranscriptDb"),
         if (type != "gene")
             rng <- .subsetByID(rng, id)
         if (!identical(length(x), length(rng)))
-            stop(paste0(type, " regions in annotation 'y' cannot be collapsed ",
-                        "into a single range"))
+            stop("length(x) != length(subject)")
         distance(x, rng, ignore.strand=ignore.strand)
     }
 )
@@ -32,14 +31,17 @@ setMethod("distance", c("GenomicRanges", "TranscriptDb"),
 .extractByGeneID <- function(y, id)
 {
     tx <- transcripts(y, list(gene_id=id), "gene_id")
-    nms <- unlist(tx$gene_id, use.names=FALSE)
-    f <- factor(nms)
+    f <- factor(unlist(tx$gene_id, use.names=FALSE))
     missing <- !id %in% levels(f) 
     if (any(missing))
           stop("'", paste(id[missing], sep=","), "'", " not found in 'y'")
-    ## FIXME: relist?
-    rngs <- unlist(range(split(tx, f)), use.names=FALSE)
-    rngs[match(id, levels(f))]
+
+    rng <- range(split(tx, f))
+    rng[match(levels(f), id)]
+    if (any(elementLengths(rng) > 1L))
+        stop("gene regions in annotation 'y' cannot be collapsed ",
+             "into a single range")
+    unlist(rng, use.names=TRUE)
 }
 
 .subsetByID <- function(rng, id)
