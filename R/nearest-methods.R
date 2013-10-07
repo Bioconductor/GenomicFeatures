@@ -20,10 +20,12 @@ setMethod("distance", c("GenomicRanges", "TranscriptDb"),
                       tx=transcripts(y, list(tx_id=id), "tx_id"),
                       exon=exons(y, list(exon_id=id), "exon_id"),
                       cds=cds(y, list(cds_id=id), "cds_id"))
-        if (type != "gene")
+        if (type != "gene") {
             rng <- .subsetByID(rng, id)
-        if (!identical(length(x), length(rng)))
-            stop("length(x) != length(subject)")
+            if (!identical(length(x), length(rng)))
+            stop(paste0(type, " regions in annotation cannot be collapsed ",
+                        "into a single range"))
+        }
         distance(x, rng, ignore.strand=ignore.strand)
     }
 )
@@ -36,12 +38,12 @@ setMethod("distance", c("GenomicRanges", "TranscriptDb"),
     if (any(missing))
           stop("'", paste(id[missing], sep=","), "'", " not found in 'y'")
 
-    rng <- range(split(tx, f))
-    rng[match(levels(f), id)]
-    if (any(elementLengths(rng) > 1L))
+    rng <- unlist(range(split(tx, f)), use.names=FALSE)
+    rng <- rng[match(id, levels(f))]
+    if (length(rng) != length(id))
         stop("gene regions in annotation 'y' cannot be collapsed ",
              "into a single range")
-    unlist(rng, use.names=TRUE)
+    rng 
 }
 
 .subsetByID <- function(rng, id)
