@@ -1,3 +1,25 @@
+CHANGES IN VERSION 1.14
+-----------------------
+
+NEW FEATURES
+
+    o keys method now has new arguments to allow for more
+    sophisticated filtering.
+    
+    o adds genes() extractor 
+
+    o makeTranscriptDbFromGFF() now handles even more different kinds
+    of GFF files.
+
+
+BUG FIXES
+
+    o better argument checking for makeTranscriptDbFromGFF()
+
+    o cols arguments and methods will now be columns arguments and methods
+
+
+
 CHANGES IN VERSION 1.12
 -----------------------
 

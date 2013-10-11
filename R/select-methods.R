@@ -283,9 +283,9 @@
         AnnotationDbi:::.colsArgumentWarning()
         ## then call it using columns in place of columns
         if(missing(keytype)){
-            .select(x, keys, extraArgs[["columns"]], keytype = columns, ...)
+            .select(x, keys, extraArgs[["cols"]], keytype = columns, ...)
         }else{
-            .select(x, keys, extraArgs[["columns"]], keytype = keytype, ...)
+            .select(x, keys, extraArgs[["cols"]], keytype = keytype, ...)
         }        
     }else{
         .select(x, keys, columns, keytype)
