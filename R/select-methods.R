@@ -278,14 +278,14 @@
     
     ## remove condition after 2.13
     extraArgs <- list(...)
-    if("columns" %in% names(extraArgs)){
+    if("cols" %in% names(extraArgs)){
         ## warn the user about the old argument
         AnnotationDbi:::.colsArgumentWarning()
-        ## then call it using columns in place of columns
+        ## then call it using cols in place of columns    
         if(missing(keytype)){
-            .select(x, keys, extraArgs[["cols"]], keytype = columns, ...)
+            .select(x, keys, columns=extraArgs[["cols"]], keytype = columns)
         }else{
-            .select(x, keys, extraArgs[["cols"]], keytype = keytype, ...)
+            .select(x, keys, columns=extraArgs[["cols"]], keytype = keytype)
         }        
     }else{
         .select(x, keys, columns, keytype)
