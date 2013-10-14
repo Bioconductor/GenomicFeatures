@@ -6,10 +6,10 @@
 
 \alias{seqinfo,TranscriptDb-method}
 \alias{seqinfo<-,TranscriptDb-method}
-% \alias{isActiveSeq}
-% \alias{isActiveSeq<-}
-% \alias{isActiveSeq,TranscriptDb-method}
-% \alias{isActiveSeq<-,TranscriptDb-method}
+\alias{isActiveSeq}
+\alias{isActiveSeq<-}
+\alias{isActiveSeq,TranscriptDb-method}
+\alias{isActiveSeq<-,TranscriptDb-method}
 \alias{determineDefaultSeqnameStyle}
 \alias{determineDefaultSeqnameStyle,TranscriptDb-method}
 
@@ -50,19 +50,19 @@
       \link[GenomicRanges]{Seqinfo} objects \code{value} (supplied) and
       \code{seqinfo(x)} (current) must be identical.
     }
-%     \item{}{
-%       \code{isActiveSeq(x)}:
-%       Return the currently active sequences for this txdb object as a
-%       named logical vector.  Only active sequences will be tapped when
-%       using the supplied accessor methods.  Inactive sequences will be
-%       ignored.  By default, all available sequences will be active.
-%     } 
-%     \item{}{
-%       \code{isActiveSeq(x) <- value}:
-%       Allows the user to change which sequences will be actively
-%       accessed by the accessor methods by altering the contents of this
-%       named logical vector.
-%     }
+    \item{}{
+      \code{isActiveSeq(x)}:
+      Return the currently active sequences for this txdb object as a
+      named logical vector.  Only active sequences will be tapped when
+      using the supplied accessor methods.  Inactive sequences will be
+      ignored.  By default, all available sequences will be active.
+    } 
+    \item{}{
+      \code{isActiveSeq(x) <- value}:
+      Allows the user to change which sequences will be actively
+      accessed by the accessor methods by altering the contents of this
+      named logical vector.
+    }
     \item{}{
       \code{seqnameStyle(x)}:
       List the matching seqname styles for \code{x}.
