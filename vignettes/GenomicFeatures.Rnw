@@ -1,19 +1,14 @@
 %\VignetteIndexEntry{Making and Utilizing TranscriptDb Objects}
-%\VignetteKeywords{annotation}
+%\VignetteDepends{GenomicFeatures,TxDb.Hsapiens.UCSC.hg19.knownGene,BSgenome.Hsapiens.UCSC.hg19}
+%\VignetteKeywords{annotation, database}
 %\VignettePackage{GenomicFeatures}
+%\VignetteEngine{knitr::knitr}
+
 \documentclass[11pt]{article}
 
-\usepackage{url}
-
-\newcommand{\Rfunction}[1]{{\texttt{#1}}}
-\newcommand{\Robject}[1]{{\texttt{#1}}}
-\newcommand{\Rpackage}[1]{{\textit{#1}}}
-\newcommand{\Rmethod}[1]{{\texttt{#1}}}
-\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
-\newcommand{\Rclass}[1]{{\textit{#1}}}
-\newcommand{\Rcode}[1]{{\texttt{#1}}}
-\newcommand{\software}[1]{\textsf{#1}}
-\newcommand{\R}{\software{R}}
+<<style, eval=TRUE, echo=FALSE, results='asis'>>=
+BiocStyle::latex()
+@
 
 %% Question, Exercise, Solution
 \usepackage{theorem}
@@ -30,15 +25,9 @@
 }{\bigskip}
 
 
-
 \title{Making and Utilizing TranscriptDb Objects}
-\author{Marc Carlson \and
-  Patrick Aboyoun \and
-  Herv\'{e} Pag\`{e}s \and
-  Seth Falcon \and
-  Martin Morgan}
+\author{Marc Carlson, Patrick Aboyoun, Herve Pages, Seth Falcon, Martin Morgan}
 
-\SweaveOpts{keep.source=TRUE}
 
 \begin{document}
 
@@ -82,7 +71,7 @@ gene identifiers.
 
 There are two ways that users can load pre-existing data to generate a
 \Rclass{TranscriptDb} object.  One method is to use the
-\Rmethod{loadDb} method to load the object directly from an
+\Rfunction{loadDb} method to load the object directly from an
 appropriate .sqlite database file.
 
 Here we are loading a previously created \Rclass{TranscriptDb} object
@@ -99,7 +88,7 @@ txdb
 @
 
 In this case, the \Rclass{TranscriptDb} object has been returned by
-the \Rmethod{loadDb} method.
+the \Rfunction{loadDb} method.
 
 
 More commonly however, we expect that users will just load a
@@ -127,7 +116,7 @@ interested in studying a handful of chromosomes.
 
 
 To determine which chromosomes are currently active, use the
-\Rmethod{seqlevels} method.  For example:
+\Rfunction{seqlevels} method.  For example:
 
 <<seqlevels>>=
 head(seqlevels(txdb))
@@ -146,14 +135,14 @@ seqlevels(txdb, force=TRUE) <- c("chr1")
 So if you ran this, then from this point on in your R session only
 chromosome 1 would be consulted when you call the various retrieval
 methods...  If you need to reset back to the original seqlevels, use
-the \Rmethod{restoreSeqlevels} method.
+the \Rfunction{restoreSeqlevels} method.
 <<seqlevels3>>=
 txdb <- restoreSeqlevels(txdb)
 @ 
 
 
 \begin{Exercise}
-Use \Rmethod{seqlevels} to set only chromsome 15 to be active.  BTW,
+Use \Rfunction{seqlevels} to set only chromsome 15 to be active.  BTW,
 the rest of this vignette will assume you have succeeded at this.
 \end{Exercise}
 \begin{Solution}
@@ -170,8 +159,8 @@ The \Rclass{TranscriptDb} objects inherit from \Rclass{AnnotationDb}
 objects (just as the \Rclass{ChipDb} and \Rclass{OrgDb} objects do).
 One of the implications of this relationship is that these object
 ought to be used in similar ways to each other.  Therefore we have
-written supporting \Rmethod{columns}, \Rmethod{keytypes}, \Rmethod{keys}
-and \Rmethod{select} methods for \Rclass{TranscriptDb} objects.
+written supporting \Rfunction{columns}, \Rfunction{keytypes}, \Rfunction{keys}
+and \Rfunction{select} methods for \Rclass{TranscriptDb} objects.
 
 These methods can be a useful way of extracting data from a
 \Rclass{TranscriptDb} object.  And they are used in the same way that
@@ -227,7 +216,7 @@ GR[1:3]
 The \Rfunction{transcripts} function returns a \Rclass{GRanges} class
 object.  You can learn a lot more about the manipulation of these
 objects by reading the \Rpackage{GenomicRanges} introductory
-vignette.  The \Rmethod{show} method for a \Rclass{GRanges} object
+vignette.  The \Rfunction{show} method for a \Rclass{GRanges} object
 will display the ranges, seqnames (a chromosome or a contig), and
 strand on the left side and then present related metadata on the right
 side.  At the bottom, the seqlengths display all the possible seqnames
@@ -283,13 +272,13 @@ GRList[11:12]
 The \Rfunction{transcriptsBy} function returns a \Rclass{GRangesList}
 class object.  As with \Rclass{GRanges} objects, you can learn more
 about these objects by reading the \Rpackage{GenomicRanges}
-introductory vignette.  The \Rmethod{show} method for a
+introductory vignette.  The \Rfunction{show} method for a
 \Rclass{GRangesList} object will display as a list of \Rclass{GRanges}
 objects.  And, at the bottom the seqlengths will be displayed once for
 the entire list.
 
 For each of these three functions, there is a limited set of options
-that can be passed into the \Rfunarg{by} argument to allow grouping.
+that can be passed into the \Rcode{by} argument to allow grouping.
 For the \Rfunction{transcriptsBy} function, you can group by gene,
 exon or cds, whereas for the \Rfunction{exonsBy} and \Rfunction{cdsBy}
 functions can only be grouped by transcript (tx) or gene.
@@ -307,7 +296,7 @@ GRList[[12]]
 
 As you can see, the \Rclass{GRangesList} objects returned from each
 function contain locations and identifiers grouped into a list like
-object according to the type of feature specified in the \Rfunarg{by}
+object according to the type of feature specified in the \Rcode{by}
 argument. The object returned can then be used by functions like
 \Rfunction{findOverlaps} to contextualize alignments from
 high-throughput sequencing.
@@ -326,8 +315,8 @@ always retrieve the original IDs.
 
 \begin{Exercise}
 Starting with the tx\_ids that are the names of the GRList object we
-just made, use \Rmethod{select} to retrieve that matching transcript
-names.  Remember that the list used a \Rfunarg{by} argument = "tx", so
+just made, use \Rfunction{select} to retrieve that matching transcript
+names.  Remember that the list used a \Rcode{by} argument = "tx", so
 the list is grouped by transcript IDs.
 \end{Exercise}
 \begin{Solution}
@@ -384,8 +373,8 @@ tx_seqs1 <- extractTranscriptsFromGenome(Hsapiens,
 And, once these sequences have been extracted, you can translate them
 into proteins with \Rfunction{translate}:
 
-<<translate>>=
-translate(tx_seqs1)
+<<translate1>>=
+suppressWarnings(translate(tx_seqs1))
 @ 
 
 \begin{Exercise}

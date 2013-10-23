@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.15.1
+Version: 1.15.2
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -34,7 +34,9 @@ Suggests: rtracklayer, biomaRt,
           Rsamtools,
           pasillaBamSubset (>= 0.0.5),
 	  seqnames.db,
-          RUnit
+          RUnit,
+	  BiocStyle,
+	  knitr
 Collate: utils.R
          Ensembl.utils.R
          TranscriptDb-class.R
@@ -59,3 +61,4 @@ Collate: utils.R
          getPromoterSeq-methods.R
          test_GenomicFeatures_package.R
 biocViews: Genetics, Infrastructure, Annotation, HighThroughputSequencing
+VignetteBuilder: knitr 
