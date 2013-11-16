@@ -160,6 +160,21 @@ supportedUCSCtables <- function()
                stringsAsFactors=FALSE)
 }
 
+.tablename2track <- function(tablename, genome)
+{
+    if (!isSingleString(tablename))
+        stop("'tablename' must be a single string")
+    if (!isSingleString(genome))
+        stop("'genome' must be a single string")
+    if (tablename == "knownGene"
+     && genome %in% c("hg17", "hg16", "mm8", "mm7", "rn3"))
+        return("Known Genes")
+    track <- supportedUCSCtables()[tablename, "track"]
+    if (is.na(track))
+        stop("UCSC table \"", tablename, "\" is not supported")
+    track
+}
+
 ### The table names above (unique key) must be used to name the top-level
 ### elements of the list below. If no suitable tx_name-to-gene_id mapping is
 ### available in the UCSC database for a supported table, then there is no
@@ -626,13 +641,7 @@ makeTranscriptDbFromUCSC <- function(genome="hg18",
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
         miRBaseBuild=NA)
 {
-    if (!isSingleString(genome))
-        stop("'genome' must be a single string")
-    if (!isSingleString(tablename))
-        stop("'tablename' must be a single string")
-    track <- supportedUCSCtables()[tablename, "track"]
-    if (is.na(track))
-        stop("table \"", tablename, "\" is not supported")
+    track <- .tablename2track(tablename, genome)
     if (!is.null(transcript_ids)) {
         if (!is.character(transcript_ids) || any(is.na(transcript_ids)))
             stop("'transcript_ids' must be a character vector with no NAs")
