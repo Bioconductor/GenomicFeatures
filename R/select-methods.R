@@ -185,6 +185,8 @@
 .select <- function(x, keys, columns, keytype){
   if(missing(keys)){stop("'keys' must be a character vector")}
   if(missing(columns)){stop("'columns' must be a character vector")}
+  ## Some argument checking
+  AnnotationDbi:::.testSelectArgs(x, keys=keys, cols=columns, keytype=keytype)
   ## 1st we check the keytype to see if it is valid:
   if(is.na(keys(x, keytype)[1]) & length(keys(x, keytype))==1){ 
     stop(paste("There do not appear to be any keys",
@@ -322,35 +324,35 @@ setMethod("columns", "TranscriptDb",
 ## method for keys()
 ## PHEW, There are a lot of types.  But names are not always available so...
 .keys <- function(x, keytype){
-    switch(EXPR = keytype,
-           "GENEID" = AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
-             "SELECT DISTINCT gene_id FROM gene", 1L),
-           "TXID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
-             "SELECT DISTINCT _tx_id FROM transcript", 1L),
-           "TXNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
-             "SELECT DISTINCT tx_name FROM transcript", 1L),
-           "EXONID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
-             "SELECT DISTINCT _exon_id FROM exon", 1L),
-           "EXONNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
-             "SELECT DISTINCT exon_name FROM exon", 1L),
-           "CDSID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
-             "SELECT DISTINCT _cds_id FROM cds", 1L),                  
-           "CDSNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
-             "SELECT DISTINCT cds_name FROM cds", 1L),                  
-           stop(paste(keytype, "is not a supported keytype.",
-                      " Please use the keytypes",
-                      "method to identify viable keytypes")))
+    AnnotationDbi:::.testForValidKeytype(x, keytype)
+    res <- switch(EXPR = keytype,
+             "GENEID" = AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+               "SELECT DISTINCT gene_id FROM gene", 1L),
+             "TXID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+               "SELECT DISTINCT _tx_id FROM transcript", 1L),
+             "TXNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+               "SELECT DISTINCT tx_name FROM transcript", 1L),
+             "EXONID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+               "SELECT DISTINCT _exon_id FROM exon", 1L),
+             "EXONNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+               "SELECT DISTINCT exon_name FROM exon", 1L),
+             "CDSID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+               "SELECT DISTINCT _cds_id FROM cds", 1L),                  
+             "CDSNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+               "SELECT DISTINCT cds_name FROM cds", 1L),                  
+                  stop(paste(keytype, "is not a supported keytype.",
+                             " Please use the keytypes",
+                             "method to identify viable keytypes")))
+    as.character(res)
 }
 
-tmpFun <-           function(x, keytype, ...){
-              if (missing(keytype)) keytype <- "GENEID"
-              AnnotationDbi:::smartKeys(x=x, keytype=keytype, ...,
-                                        FUN=GenomicFeatures:::.keys)
-          }
+.keysDispatch <- function(x, keytype, ...){
+    if (missing(keytype)) keytype <- "GENEID"
+    AnnotationDbi:::smartKeys(x=x, keytype=keytype, ...,
+                              FUN=GenomicFeatures:::.keys)
+}
 ## Get the list of possible keys, for a given keytype
-setMethod("keys", "TranscriptDb",tmpFun
-
-)
+setMethod("keys", "TranscriptDb",.keysDispatch)
 
 
 ## Examples to test:
