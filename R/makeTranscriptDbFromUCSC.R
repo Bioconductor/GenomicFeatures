@@ -117,38 +117,63 @@ UCSCGenomeToOrganism <- function(genome){
 ### could easily be modified to accept tables where they are missing.
 
 ### Lookup between UCSC transcript tables and their associated track.
-### All the tables/tracks listed here belong to the "Genes and Gene
-### Prediction" group of tracks. On Aug 13 2010, makeTranscriptDbFromUCSC()
-### was successfully tested by hand on all of them with genome="hg18" (except
-### for "sgdGene" that was tested with genome="sacCer2").
-### Note that the "acembly" table contains more than 250000 transcripts!
 .SUPPORTED_UCSC_TABLES <- c(
-  ## tablename (unique key)    track             subtrack
-  "knownGene",                 "UCSC Genes",     NA,
-  "knownGeneOld3",             "Old UCSC Genes", NA,
-  "wgEncodeGencodeManualV3",   "Gencode Genes",  "Genecode Manual",
-  "wgEncodeGencodeAutoV3",     "Gencode Genes",  "Genecode Auto",
-  "wgEncodeGencodePolyaV3",    "Gencode Genes",  "Genecode PolyA",
-  "ccdsGene",                  "CCDS",           NA,
-  "refGene",                   "RefSeq Genes",   NA,
-  "xenoRefGene",               "Other RefSeq",   NA,
-  "vegaGene",                  "Vega Genes",     "Vega Protein Genes",
-  "vegaPseudoGene",            "Vega Genes",     "Vega Pseudogenes",
-  "ensGene",                   "Ensembl Genes",  NA,
-  "acembly",                   "AceView Genes",  NA,
-  "sibGene",                   "SIB Genes",      NA,
-  "nscanPasaGene",             "N-SCAN",         "N-SCAN PASA-EST",
-  "nscanGene",                 "N-SCAN",         "N-SCAN",
-  "sgdGene",                   "SGD Genes",      NA,
-  "sgpGene",                   "SGP Genes",      NA,
-  "geneid",                    "Geneid Genes",   NA,
-  "genscan",                   "Genscan Genes",  NA,
-  "exoniphy",                  "Exoniphy",       NA,
-  "augustusHints",             "Augustus",       "Augustus Hints",
-  "augustusXRA",               "Augustus",       "Augustus De Novo",
-  "augustusAbinitio",          "Augustus",       "Augustus Ab Initio",
-  "acescan",                   "ACEScan",        NA,
-  "lincRNAsTranscripts",       "lincRNAsTranscripts",       NA
+  ## tablename (unique key)           track                subtrack
+
+  ## Tables/tracks shared by hg18/hg19.
+  ## All the tables/tracks listed in this section belong to the "Genes and
+  ## Gene Prediction" group of tracks for hg18 and hg19.
+  ## On Aug 13 2010, makeTranscriptDbFromUCSC() was successfully tested by
+  ## hand on all of them for hg18 (i.e. with 'genome="hg18"').
+  ## Note: the "acembly" table contains more than 250000 transcripts!
+  "knownGene",                        "UCSC Genes",        NA,
+  "knownGeneOld3",                    "Old UCSC Genes",    NA,
+  "ccdsGene",                         "CCDS",              NA,
+  "refGene",                          "RefSeq Genes",      NA,
+  "xenoRefGene",                      "Other RefSeq",      NA,
+  "vegaGene",                         "Vega Genes",        "Vega Protein Genes",
+  "vegaPseudoGene",                   "Vega Genes",        "Vega Pseudogenes",
+  "ensGene",                          "Ensembl Genes",     NA,
+  "acembly",                          "AceView Genes",     NA,
+  "sibGene",                          "SIB Genes",         NA,
+  "nscanPasaGene",                    "N-SCAN",            "N-SCAN PASA-EST",
+  "nscanGene",                        "N-SCAN",            "N-SCAN",
+  "sgpGene",                          "SGP Genes",         NA,
+  "geneid",                           "Geneid Genes",      NA,
+  "genscan",                          "Genscan Genes",     NA,
+  "exoniphy",                         "Exoniphy",          NA,
+  "augustusHints",                    "Augustus",          "Augustus Hints",
+  "augustusXRA",                      "Augustus",          "Augustus De Novo",
+  "augustusAbinitio",                 "Augustus",          "Augustus Ab Initio",
+  "acescan",                          "ACEScan",           NA,
+  "lincRNAsTranscripts",              "lincRNAsTranscripts", NA,
+
+  ## Tables/tracks specific to hg18.
+  "wgEncodeGencodeManualV3",          "Gencode Genes",     "Gencode Manual",
+  "wgEncodeGencodeAutoV3",            "Gencode Genes",     "Gencode Auto",
+  "wgEncodeGencodePolyaV3",           "Gencode Genes",     "Gencode PolyA",
+
+  ## Tables/tracks specific to hg19.
+  "wgEncodeGencodeBasicV17",          "GENCODE Genes V17", NA,
+  "wgEncodeGencodeCompV17",           "GENCODE Genes V17", NA,
+  "wgEncodeGencodePseudoGeneV17",     "GENCODE Genes V17", NA,
+  "wgEncodeGencode2wayConsPseudoV17", "GENCODE Genes V17", NA,
+  "wgEncodeGencodePolyaV17",          "GENCODE Genes V17", NA,
+  "wgEncodeGencodeBasicV14",          "GENCODE Genes V14", NA,
+  "wgEncodeGencodeCompV14",           "GENCODE Genes V14", NA,
+  "wgEncodeGencodePseudoGeneV14",     "GENCODE Genes V14", NA,
+  "wgEncodeGencode2wayConsPseudoV14", "GENCODE Genes V14", NA,
+  "wgEncodeGencodePolyaV14",          "GENCODE Genes V14", NA,
+  "wgEncodeGencodeBasicV7",           "GENCODE Genes V7",  NA,
+  "wgEncodeGencodeCompV7",            "GENCODE Genes V7",  NA,
+  "wgEncodeGencodePseudoGeneV7" ,     "GENCODE Genes V7",  NA,
+  "wgEncodeGencode2wayConsPseudoV7",  "GENCODE Genes V7",  NA,
+  "wgEncodeGencodePolyaV7",           "GENCODE Genes V7",  NA,
+
+  ## Tables/tracks specific to sacCer2.
+  ## makeTranscriptDbFromUCSC(genome="sacCer2", tablename="sgdGene")
+  ## successfully tested on On Aug 13 2010.
+  "sgdGene",                          "SGD Genes",         NA
 )
 
 supportedUCSCtables <- function()
@@ -188,30 +213,6 @@ supportedUCSCtables <- function()
               Rcolname="value")
         ),
         gene_id_type="Entrez Gene ID"
-    ),
-    wgEncodeGencodeManualV3=list(
-        L2Rchain=list(
-            c(tablename="wgEncodeGencodeClassesV3",
-              Lcolname="name",
-              Rcolname="geneId")
-        ),
-        gene_id_type="HAVANA Pseudogene ID"
-    ),
-    wgEncodeGencodeAutoV3=list(
-        L2Rchain=list(
-            c(tablename="wgEncodeGencodeClassesV3",
-              Lcolname="name",
-              Rcolname="geneId")
-        ),
-        gene_id_type="HAVANA Pseudogene ID"
-    ),
-    wgEncodeGencodePolyaV3=list(
-        L2Rchain=list(
-            c(tablename="wgEncodeGencodeClassesV3",
-              Lcolname="name",
-              Rcolname="geneId")
-        ),
-        gene_id_type="HAVANA Pseudogene ID"
     ),
     refGene=list(
         L2Rchain=list(
@@ -253,6 +254,154 @@ supportedUCSCtables <- function()
         colname="name2",
         gene_id_type="Ensembl gene ID"
     ),
+    lincRNAsTranscripts=c(
+        colname="name",
+        gene_id_type="Name of gene"
+    ),
+    wgEncodeGencodeManualV3=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeClassesV3",
+              Lcolname="name",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodeAutoV3=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeClassesV3",
+              Lcolname="name",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodePolyaV3=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeClassesV3",
+              Lcolname="name",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodeBasicV17=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV17",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodeCompV17=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV17",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodePseudoGeneV17=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV17",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencode2wayConsPseudoV17=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV17",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodePolyaV17=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV17",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodeBasicV14=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV14",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodeCompV14=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV14",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodePseudoGeneV14=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV14",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencode2wayConsPseudoV14=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV14",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodePolyaV14=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV14",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodeBasicV7=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV7",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodeCompV7=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV7",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodePseudoGeneV7=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV7",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencode2wayConsPseudoV7=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV7",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
+    wgEncodeGencodePolyaV7=list(
+        L2Rchain=list(
+            c(tablename="wgEncodeGencodeAttrsV7",
+              Lcolname="transcriptId",
+              Rcolname="geneId")
+        ),
+        gene_id_type="Ensembl gene ID"
+    ),
     sgdGene=list(
         L2Rchain=list(
             c(tablename="sgdIsoforms",
@@ -263,11 +412,7 @@ supportedUCSCtables <- function()
               Rcolname="transcript")
         ),
         gene_id_type="ID of canonical transcript in cluster"
-    ),
-    lincRNAsTranscripts=c(
-        colname="name",
-        gene_id_type="Name of gene"
-    )                                    
+    )
 )
 
 .howToGetTxName2GeneIdMapping <- function(tablename)
@@ -286,7 +431,11 @@ supportedUCSCtables <- function()
         Lcolname <- L2Rlink[["Lcolname"]]
         Rcolname <- L2Rlink[["Rcolname"]]
         message("Download the ", tablename, " table ... ", appendLF=FALSE)
-        query <- ucscTableQuery(session, track, table=tablename)
+        ## The tables involved in the "left join" don't necessarily belong
+        ## to the track of the leftmost table (e.g. "wgEncodeGencodeAttrsV17"
+        ## table does NOT belong to the "GENCODE Genes V17" track).
+        #query <- ucscTableQuery(session, track, table=tablename)
+        query <- ucscTableQuery(session, table=tablename)
         ucsc_table <- getTable(query)
         message("OK")
         if (!all(hasCol(ucsc_table, c(Lcolname, Rcolname))))
