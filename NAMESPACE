@@ -99,7 +99,6 @@ exportMethods(
   "isActiveSeq<-",
   asBED, asGFF,
   determineDefaultSeqnameStyle,
-  findSpliceOverlaps,
   getPromoterSeq,
   distance
 )
