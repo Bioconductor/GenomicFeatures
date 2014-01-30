@@ -26,8 +26,7 @@ extractTranscriptSeqs(x, transcripts, ...)
     A \link[Biostrings]{DNAString} or \link[BSgenome]{BSgenome} object.
   }
   \item{transcripts}{
-    An object representing the ranges of the exons for each transcript
-    to extract.
+    An object representing the exon ranges of each transcript to extract.
  
     It must be an \link[IRanges]{RangesList} object when \code{x} is a
     \link[Biostrings]{DNAString} object.
@@ -51,12 +50,12 @@ extractTranscriptSeqs(x, transcripts, ...)
     as the strand of all the exons in the i-th transcript.
 
     \code{strand} can also be a list-like object, in which case it indicates
-    the strand of each exon, individually. It must have the same \emph{shape}
-    as \link[IRanges]{RangesList} object \code{transcripts} (i.e. same length
-    plus \code{strand[[i]]} must have the same length as
-    \code{transcripts[[i]]} for all \code{i}).
+    the strand of each exon, individually. Thus it must have the same
+    \emph{shape} as \link[IRanges]{RangesList} object \code{transcripts}
+    (i.e. same length plus \code{strand[[i]]} must have the same length
+    as \code{transcripts[[i]]} for all \code{i}).
 
-    \code{strand} cannot only contain \code{"+"} and \code{"-"} values.
+    \code{strand} can only contain \code{"+"} and/or \code{"-"} values.
     \code{"*"} is not allowed.
   }
 }
@@ -130,7 +129,7 @@ cds <- cdsBy(txdb, by="tx", use.names=TRUE)
 cds_seqs <- extractTranscriptSeqs(genome, cds)
 cds_seqs
 
-## A sanity checks:
+## A sanity check:
 stopifnot(identical(width(cds_seqs), unname(sum(width(cds)))))
 
 ## Note that, alternatively, the CDS sequences can be obtained from the
