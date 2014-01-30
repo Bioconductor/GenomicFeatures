@@ -108,17 +108,56 @@ setMethod("extractTranscriptSeqs", "DNAString",
     transcripts
 }
 
+### TODO: Incorporate this fast path to "unlist" method for XStringSet objects.
+.fast_XStringSet_unlist <- function(x)
+{
+    # Disabling the fast path for now. Until I understand why using it
+    # causes extractTranscriptSeqs(Hsapiens, TxDb.Hsapiens.UCSC.hg18.knownGene)
+    # to use more memory (319.7 Mb) than when NOT using it (288.9 Mb).
+if (FALSE) {
+    x_len <- length(x)
+    if (x_len != 0L && length(x@pool) == 1L) {
+        x_ranges <- x@ranges
+        x_start <- start(x_ranges)
+        x_end <- end(x_ranges)
+        if (identical(x_end[-x_len] + 1L, x_start[-1L])) {
+            ## The ranges are adjacent. We can unlist() without copying
+            ## the sequence data!
+            cat("using fast path (", x_len, ") ...\n")
+            ans_class <- elementType(x)
+            ans_shared <- x@pool[[1L]]
+            ans_offset <- x_start[1L] - 1L
+            ans_length <- x_end[x_len] - ans_offset
+            ans <- new2(ans_class, shared=ans_shared,
+                                   offset=ans_offset, 
+                                   length=ans_length,
+                                   check = FALSE)
+            return(ans)
+        }
+    }
+}
+    unlist(x, use.names=FALSE)
+}
+
+.extract_and_combine <- function(x, seqname, ranges)
+    .fast_XStringSet_unlist(getSeq(x, GRanges(seqname, ranges)))
+
 .extractTranscriptSeqsFromOneBSgenomeSeq <-
     function(seqname, x, transcripts)
 {
     seqlevels(transcripts, force=TRUE) <- seqname
     strand <- strand(transcripts)
     transcripts <- ranges(transcripts)
-    ## Load the sequence.
     if (seqname %in% seqnames(x)) {
-        x <- x[[seqname]]
-        masks(x) <- NULL
+        ## We try to load the less stuff possible i.e. only the nucleotides
+        ## that participate in at least one exon.
+        exons <- unlist(transcripts, use.names=FALSE)
+        ranges_to_load <- reduce(exons, with.inframe.attrib=TRUE)
+        x <- .extract_and_combine(x, seqname, ranges_to_load)
+        exons <- attr(ranges_to_load, "inframe")
+        transcripts <- relist(exons, transcripts)
     } else {
+        ## Why do we need this?
         regex <- paste0("^", seqname, "$")
         x <- getSeq(x, regex, as.character=FALSE)
     }
