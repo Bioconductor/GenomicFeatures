@@ -36,6 +36,9 @@ extractTranscriptSeqs(x, transcripts, ...)
     If the latter, it's first turned into a \link[GenomicRanges]{GRangesList}
     object with \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
   }
+  \item{...}{
+    Additional arguments, for use in specific methods.
+  }
   \item{strand}{
     Only supported when \code{x} is a \link[Biostrings]{DNAString} object.
 
@@ -57,9 +60,6 @@ extractTranscriptSeqs(x, transcripts, ...)
 
     \code{strand} can only contain \code{"+"} and/or \code{"-"} values.
     \code{"*"} is not allowed.
-  }
-  \item{...}{
-    Additional arguments, for use in specific methods.
   }
 }
 
