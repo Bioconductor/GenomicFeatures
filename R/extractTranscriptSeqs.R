@@ -16,7 +16,8 @@
         return(strand(unlist(strand, use.names=FALSE)))
     }
     if (!(is.vector(strand) || is.factor(strand) || is(strand, "Rle")))
-        stop("'strand' must be a vector, factor, Rle, or list-like object")
+        stop("'strand' must be an atomic vector, a factor, an Rle object, ",
+             "or a list-like object")
     strand <- strand(strand)
     strand <- Biostrings:::.V_recycle(strand, transcripts,
                                       "strand", "length of 'transcripts'")
@@ -32,7 +33,7 @@ setMethod("extractTranscriptSeqs", "DNAString",
     {
         if (!is(transcripts, "RangesList"))
             stop("when 'x' is a DNAString object, ",
-                 "'transcripts' must be a RangesList object")
+                 "'transcripts' must be an RangesList object")
         unlisted_strand <- .unlist_strand(strand, transcripts)
         if (!all(unlisted_strand %in% c("+", "-")))
             stop("'strand' can only contain \"+\" and/or \"-\" values. ",
