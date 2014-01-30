@@ -86,6 +86,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
                                strand=character(0),
                                decreasing.rank.on.minus.strand=FALSE)
 {
+    .Deprecated("extractTranscriptSeqs")
     if (!is(x, "DNAString")) {
         if (!is(x, "MaskedDNAString"))
             stop("'x' must be a DNAString object")
@@ -275,6 +276,7 @@ extractTranscriptsFromGenome <- function(genome, txdb,
                                          decreasing.rank.on.minus.strand=FALSE,
                                          use.names=TRUE)
 {
+    .Deprecated("extractTranscriptSeqs")
     if (!is(genome, "BSgenome"))
         stop("'genome' must be a BSgenome object")
     if (!isTRUEorFALSE(decreasing.rank.on.minus.strand))
