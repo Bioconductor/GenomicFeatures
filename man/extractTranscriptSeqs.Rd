@@ -58,6 +58,9 @@ extractTranscriptSeqs(x, transcripts, ...)
     \code{strand} can only contain \code{"+"} and/or \code{"-"} values.
     \code{"*"} is not allowed.
   }
+  \item{...}{
+    Additional arguments, for use in specific methods.
+  }
 }
 
 \value{
