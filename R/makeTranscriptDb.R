@@ -261,7 +261,7 @@
                 "are not available for this TranscriptDb object")
         chrom <- unique(c(as.character(transcripts_tx_chrom),
                           as.character(splicings_exon_chrom)))
-        chrom_ids <- makeSeqnameIds(chrom)
+        chrom_ids <- rankSeqlevels(chrom)
         chrom[chrom_ids] <- chrom
         chrominfo <- data.frame(
             chrom=chrom,

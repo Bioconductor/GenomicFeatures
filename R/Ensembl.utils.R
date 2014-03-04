@@ -166,7 +166,7 @@
     ans <- ans[i2, j2, drop=FALSE]
 
     ## Ordering: First by rank, then by name.
-    names_as_int <- makeSeqnameIds(ans$name)
+    names_as_int <- rankSeqlevels(ans$name)
     oo <- order(ans$coord_system_rank, names_as_int)
     ans <- ans[oo, , drop=FALSE]
 

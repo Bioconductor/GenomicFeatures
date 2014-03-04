@@ -700,7 +700,7 @@ supportedUCSCtables <- function()
         length=ucsc_chrominfotable$size,
         is_circular=matchCircularity(ucsc_chrominfotable$chrom, circ_seqs)
     )
-    chrom_ids <- makeSeqnameIds(chrominfo$chrom)
+    chrom_ids <- rankSeqlevels(chrominfo$chrom)
     chrominfo <- chrominfo[order(chrom_ids), ]
     message("OK")
     chrominfo

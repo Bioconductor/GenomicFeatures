@@ -6,6 +6,8 @@ import(BiocGenerics)
 import(IRanges)
 import(GenomicRanges)
 
+importFrom(GenomeInfoDb, rankSeqlevels)
+
 importMethodsFrom(DBI, dbCommit, dbConnect,
                   dbDisconnect, dbExistsTable, dbGetQuery,
                   dbReadTable, dbWriteTable, dbListTables, dbListFields)
