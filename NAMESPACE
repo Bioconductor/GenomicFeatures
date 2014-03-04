@@ -6,7 +6,7 @@ import(BiocGenerics)
 import(IRanges)
 import(GenomicRanges)
 
-importFrom(GenomeInfoDb, rankSeqlevels)
+importFrom(GenomeInfoDb, rankSeqlevels, seqlevelsStyle)
 
 importMethodsFrom(DBI, dbCommit, dbConnect,
                   dbDisconnect, dbExistsTable, dbGetQuery,
@@ -75,7 +75,9 @@ export(
   makeFDbPackageFromUCSC,	
   features,
   supportedMiRBaseBuildValues,
-  getPromoterSeq
+  getPromoterSeq,
+  ## Deprecated
+  determineDefaultSeqnameStyle
 )
 
 exportMethods(
@@ -99,10 +101,10 @@ exportMethods(
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
   extractTranscriptSeqs,
+  seqlevelsStyle,
   isActiveSeq,
   "isActiveSeq<-",
   asBED, asGFF,
-  determineDefaultSeqnameStyle,
   getPromoterSeq,
   distance
 )

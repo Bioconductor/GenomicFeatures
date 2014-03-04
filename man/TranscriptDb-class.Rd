@@ -10,8 +10,7 @@
 \alias{isActiveSeq<-}
 \alias{isActiveSeq,TranscriptDb-method}
 \alias{isActiveSeq<-,TranscriptDb-method}
-\alias{determineDefaultSeqnameStyle}
-\alias{determineDefaultSeqnameStyle,TranscriptDb-method}
+\alias{seqlevelsStyle,TranscriptDb-method}
 
 % coercion
 \alias{as.list,TranscriptDb-method}
@@ -72,7 +71,7 @@
       stored in the seqnames.db metadata package (required).
     }
     \item{}{
-      \code{determineDefaultSeqnameStyle(x)}:
+      \code{seqlevelsStyle(x)}:
       Determine the default seqname style for the database in \code{x}.
     }
     \item{}{
@@ -116,6 +115,7 @@ txdb <- loadDb(txdb_file)
 txdb
 
 ## Use of seqinfo
+seqlevelsStyle(txdb)
 seqinfo(txdb)
 seqlevels(txdb)  # shortcut for 'seqlevels(seqinfo(txdb))'
 seqlengths(txdb)  # shortcut for 'seqlengths(seqinfo(txdb))'
