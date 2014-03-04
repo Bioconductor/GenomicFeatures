@@ -2,8 +2,8 @@
 ## Helpers to access/process the table names and columns
 .getTableColMapping <- function(x){
   conn <- AnnotationDbi:::dbConn(x)
-  tables <- DBI:::dbListTables(conn)
-  tCols <- sapply(tables, DBI:::dbListFields, conn=conn)
+  tables <- DBI::dbListTables(conn)
+  tCols <- sapply(tables, DBI::dbListFields, conn=conn)
   ## right up front we are getting rid of metadata and chrominfo tables...
   tCols[names(tCols)!="metadata" & names(tCols)!="chrominfo"]
 }
@@ -246,7 +246,7 @@
   res <- AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x), sql)
 
   if(length(keys) > 1000){ ##Then drop the extras now(in event there are some)
-      ktColId <- GenomicFeatures:::.reverseColAbbreviations(x,keytype)
+      ktColId <- .reverseColAbbreviations(x, keytype)
       res <-  res[res[[ktColId]] %in% keys,]
   }
   
@@ -348,8 +348,7 @@ setMethod("columns", "TranscriptDb",
 
 .keysDispatch <- function(x, keytype, ...){
     if (missing(keytype)) keytype <- "GENEID"
-    AnnotationDbi:::smartKeys(x=x, keytype=keytype, ...,
-                              FUN=GenomicFeatures:::.keys)
+    AnnotationDbi:::smartKeys(x=x, keytype=keytype, ..., FUN=.keys)
 }
 ## Get the list of possible keys, for a given keytype
 setMethod("keys", "TranscriptDb",.keysDispatch)

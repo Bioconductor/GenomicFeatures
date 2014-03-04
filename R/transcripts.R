@@ -695,7 +695,7 @@ setMethod("disjointExons", "TranscriptDb",
   con <- AnnotationDbi:::dbConn(txdb)
   bld <- dbGetQuery(con,
            "SELECT value FROM metadata WHERE name='miRBase build ID'")
-  src <- DBI:::dbGetQuery(con,
+  src <- DBI::dbGetQuery(con,
            "SELECT value FROM metadata WHERE name='Data source'")[[1]]
 
   ## And if not - bail out with message
