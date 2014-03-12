@@ -247,7 +247,7 @@
 
   if(length(keys) > 1000){ ##Then drop the extras now(in event there are some)
       ktColId <- .reverseColAbbreviations(x, keytype)
-      res <-  res[res[[ktColId]] %in% keys,]
+      res <-  res[res[[ktColId]] %in% keys,,drop=FALSE]
   }
   
   
@@ -604,3 +604,13 @@ setMethod("keytypes", "TranscriptDb",
 
 ##
 ## So I think I have this fixed now.  But I still need to add unit tests.
+
+
+
+
+
+###################3##########################################################
+## New bug.  Can reproduce it like this:
+## FIXED
+## library(TxDb.Hsapiens.UCSC.hg19.knownGene); x <- TxDb.Hsapiens.UCSC.hg19.knownGene; geneGR <- exonsBy(x, "gene"); keys <- names(geneGR); kt = "GENEID"; cols = "GENEID"; debug(GenomicFeatures:::.select)
+## GenomicFeatures:::.select(x, keys, columns=cols, keytype=kt)
