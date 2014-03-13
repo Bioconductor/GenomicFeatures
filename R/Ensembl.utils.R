@@ -80,13 +80,13 @@
     paste0(url, core_dir, "/")
 }
 
-.Ensembl.getTable <- function(base_url, tablename, col.names)
+.Ensembl.getTable <- function(base_url, tablename, col.names, nrows=-1)
 {
     url <- paste0(base_url, tablename, ".txt.gz")
     destfile <- tempfile()
     download.file(url, destfile, quiet=TRUE)
     data <- read.table(destfile, sep="\t", quote="",
-                       col.names=col.names, comment.char="",
+                       col.names=col.names, nrows=nrows, comment.char="",
                        stringsAsFactors=FALSE)
     unlink(destfile)
     data
@@ -114,9 +114,19 @@
 
 .Ensembl.fetchAttribTypeIdForTopLevelSequence <- function(core_url)
 {
-    ## Get 'attrib_type' table.
+    ## Get the first 50 rows of 'attrib_type' table.
+    ## The reason we don't read in the entire table is because some rows at
+    ## the bottom of the table (rows with attrib_type_id >= 416, these rows
+    ## were added in Ensembl 75) contain embedded EOL characters that break
+    ## read.table(). Since we only need to retrieve the attrib_type_id
+    ## associated with the "toplevel" code, and since this code is generally
+    ## found at the beginning of the file (AFAIK "toplevel" has always been
+    ## assigned the attrib_type_id of 6 and the lines in the file seem to
+    ## always be ordered by attrib_type_id), reading in the first 50 rows
+    ## should be way enough to get what we need.
     COLNAMES <- c("attrib_type_id", "code", "name", "description")
-    attrib_type <- .Ensembl.getTable(core_url, "attrib_type", COLNAMES)
+    attrib_type <- .Ensembl.getTable(core_url, "attrib_type", COLNAMES,
+                                     nrows=50)
     i <- which(attrib_type$code == "toplevel")
     if (length(i) != 1L)
         stop("Ensembl data anomaly: \"toplevel\" attrib found 0 or more ",
