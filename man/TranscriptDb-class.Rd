@@ -10,7 +10,7 @@
 \alias{isActiveSeq<-}
 \alias{isActiveSeq,TranscriptDb-method}
 \alias{isActiveSeq<-,TranscriptDb-method}
-\alias{seqlevelsStyle,TranscriptDb-method}
+\alias{seqlevelsStyle,ANY-method}
 
 % coercion
 \alias{as.list,TranscriptDb-method}

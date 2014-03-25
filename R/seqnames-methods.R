@@ -7,7 +7,7 @@ determineDefaultSeqnameStyle <- function(x) {
     seqlevelsStyle(x)
 }
 
-setMethod("seqlevelsStyle", "TranscriptDb",
+setMethod("seqlevelsStyle", "ANY",
     function(x)
 {
     seqlevelsStyle(seqlevels(x))
