@@ -101,7 +101,6 @@ exportMethods(
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
   extractTranscriptSeqs,
-  seqlevelsStyle,
   isActiveSeq,
   "isActiveSeq<-",
   asBED, asGFF,

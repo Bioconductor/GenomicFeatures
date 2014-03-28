@@ -7,11 +7,6 @@ determineDefaultSeqnameStyle <- function(x) {
     seqlevelsStyle(x)
 }
 
-setMethod("seqlevelsStyle", "ANY",
-    function(x)
-{
-    seqlevelsStyle(seqlevels(x))
-})
 
 ## Tests:
 ## library(TxDb.Athaliana.BioMart.plantsmart12);

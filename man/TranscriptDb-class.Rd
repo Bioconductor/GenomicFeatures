@@ -10,7 +10,6 @@
 \alias{isActiveSeq<-}
 \alias{isActiveSeq,TranscriptDb-method}
 \alias{isActiveSeq<-,TranscriptDb-method}
-\alias{seqlevelsStyle,ANY-method}
 
 % coercion
 \alias{as.list,TranscriptDb-method}
@@ -71,10 +70,6 @@
       stored in the seqnames.db metadata package (required).
     }
     \item{}{
-      \code{seqlevelsStyle(x)}:
-      Determine the default seqname style for the database in \code{x}.
-    }
-    \item{}{
       \code{as.list(x)}:
       Dumps the entire db into a list of data frames \code{txdump} that can
       be used in \code{do.call(makeTranscriptDb, txdump)} to make the db
@@ -117,7 +112,7 @@ txdb
 ## Use of seqinfo
 seqlevelsStyle(txdb)
 seqinfo(txdb)
-seqlevels(txdb)  # shortcut for 'seqlevels(seqinfo(txdb))'
+seqlevels(txdb)
 seqlengths(txdb)  # shortcut for 'seqlengths(seqinfo(txdb))'
 isCircular(txdb)  # shortcut for 'isCircular(seqinfo(txdb))'
 names(which(isCircular(txdb)))
