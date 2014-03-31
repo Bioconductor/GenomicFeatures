@@ -236,7 +236,7 @@
   if("gffGeneIdAttributeName" %in% colnames(data)){
       data$gffGeneIdAttributeName <- as.character(data$gffGeneIdAttributeName)
   }
-  as.data.frame(data, stringsAsFactors=FALSE)
+  as.data.frame(data)
 }
 
 
