@@ -2,7 +2,7 @@
 
 \alias{extractTranscriptSeqs}
 \alias{extractTranscriptSeqs,DNAString-method}
-\alias{extractTranscriptSeqs,BSgenome-method}
+\alias{extractTranscriptSeqs,ANY-method}
 
 \title{Extract transcript sequences from chromosomes}
 
@@ -23,7 +23,8 @@ extractTranscriptSeqs(x, transcripts, ...)
 
 \arguments{
   \item{x}{
-    A \link[Biostrings]{DNAString} or \link[BSgenome]{BSgenome} object.
+    A \link[Biostrings]{DNAString} or \link[BSgenome]{BSgenome} object
+    or any object with a \code{\link[Biostrings]{getSeq}} method.
   }
   \item{transcripts}{
     An object representing the exon ranges of each transcript to extract.

@@ -80,8 +80,7 @@ setMethod("extractTranscriptSeqs", "DNAString",
     if (is(transcripts, "TranscriptDb")) {
         transcripts <- exonsBy(transcripts, by="tx", use.names=TRUE)
     } else if (!is(transcripts, "GRangesList")) {
-        stop("when 'x' is a BSgenome object, ",
-             "'transcripts' must be a GRangesList or\n  TranscriptDb object")
+        stop("'transcripts' must be a GRangesList or\n  TranscriptDb object")
     }
     ## Check for transcripts that have exons located on more than one
     ## chromosome.
@@ -143,7 +142,7 @@ if (FALSE) {
 .extract_and_combine <- function(x, seqname, ranges)
     .fast_XStringSet_unlist(getSeq(x, GRanges(seqname, ranges)))
 
-.extractTranscriptSeqsFromOneBSgenomeSeq <-
+.extractTranscriptSeqsFromOneSeq <-
     function(seqname, x, transcripts)
 {
     seqlevels(transcripts, force=TRUE) <- seqname
@@ -165,7 +164,7 @@ if (FALSE) {
     extractTranscriptSeqs(x, transcripts, strand=strand)
 }
 
-setMethod("extractTranscriptSeqs", "BSgenome",
+setMethod("extractTranscriptSeqs", "ANY",
     function(x, transcripts)
     {
         transcripts <- .normarg_transcripts(transcripts)
@@ -174,7 +173,7 @@ setMethod("extractTranscriptSeqs", "BSgenome",
         ## 'transcripts'.
         seqnames0 <- unlist(runValue(seqnames(transcripts)), use.names=FALSE)
         dnaset_list <- lapply(levels(seqnames0),
-                              .extractTranscriptSeqsFromOneBSgenomeSeq,
+                              ..extractTranscriptSeqsFromOneSeq,
                               x, transcripts)
         ans <- unsplit_list_of_XVectorList("DNAStringSet",
                                            dnaset_list,
