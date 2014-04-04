@@ -173,7 +173,7 @@ setMethod("extractTranscriptSeqs", "ANY",
         ## 'transcripts'.
         seqnames0 <- unlist(runValue(seqnames(transcripts)), use.names=FALSE)
         dnaset_list <- lapply(levels(seqnames0),
-                              ..extractTranscriptSeqsFromOneSeq,
+                              .extractTranscriptSeqsFromOneSeq,
                               x, transcripts)
         ans <- unsplit_list_of_XVectorList("DNAStringSet",
                                            dnaset_list,
