@@ -18,7 +18,7 @@ extractTranscriptSeqs(x, transcripts, ...)
 
 \S4method{extractTranscriptSeqs}{DNAString}(x, transcripts, strand="+")
 
-\S4method{extractTranscriptSeqs}{BSgenome}(x, transcripts)
+\S4method{extractTranscriptSeqs}{ANY}(x, transcripts)
 }
 
 \arguments{
