@@ -3,6 +3,7 @@ import(methods)
 importFrom(utils, download.file, installed.packages, read.table)
 
 import(BiocGenerics)
+import(S4Vectors)
 import(IRanges)
 import(GenomicRanges)
 
