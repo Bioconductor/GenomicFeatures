@@ -283,12 +283,12 @@
     if("cols" %in% names(extraArgs)){
         ## warn the user about the old argument
         AnnotationDbi:::.colsArgumentWarning()
-        ## then call it using cols in place of columns    
-        if(missing(keytype)){
-            .select(x, keys, columns=extraArgs[["cols"]], keytype = columns)
-        }else{
-            .select(x, keys, columns=extraArgs[["cols"]], keytype = keytype)
-        }        
+        ## ## then call it using cols in place of columns    
+        ## if(missing(keytype)){
+        ##     .select(x, keys, columns=extraArgs[["cols"]], keytype = columns)
+        ## }else{
+        ##     .select(x, keys, columns=extraArgs[["cols"]], keytype = keytype)
+        ## }        
     }else{
         .select(x, keys, columns, keytype)
     }

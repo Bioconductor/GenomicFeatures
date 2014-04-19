@@ -9,16 +9,16 @@ setGeneric("saveFeatures", signature="x",
 setMethod("saveFeatures", "TranscriptDb",
           function(x, file)
           {	      
-	    .Deprecated(new="saveDb")
-            saveDb(x, file)
+	    .Defunct(new="saveDb")
+            ## saveDb(x, file)
           }
 )
 
 setMethod("saveFeatures", "FeatureDb",
           function(x, file)
           {
-            .Deprecated(new="saveDb")
-            saveDb(x, file)
+            .Defunct(new="saveDb")
+            ## saveDb(x, file)
           }
 )
 
@@ -26,7 +26,7 @@ setMethod("saveFeatures", "FeatureDb",
 ## current users too unhappy.
 loadFeatures <- function(file)
 {
-    .Deprecated(new="loadDb")
-    loadDb(file)
+    .Defunct(new="loadDb")
+    ## loadDb(file)
 }
 
