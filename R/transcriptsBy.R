@@ -248,7 +248,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
     first_exon_with_cds[pseudo_tx_id[exons_with_cds]] <- exons_with_cds
     offset <- cumsum(c(0L, nexon[-length(nexon)]))
     lengths <- first_exon_with_cds - offset
-    IRanges:::fancy_mseq(lengths, offset=offset)
+    S4Vectors:::fancy_mseq(lengths, offset=offset)
 }
 
 ### 'tx_id', 'exons_with_cds': same as for .exons_with_5utr().
@@ -268,7 +268,7 @@ setMethod("intronsByTranscript", "TranscriptDb",
     last_exon_with_cds[pseudo_tx_id[exons_with_cds]] <- exons_with_cds
     offset <- last_exon_with_cds - 1L
     lengths <- cumsum(nexon) - offset
-    IRanges:::fancy_mseq(lengths, offset=offset)
+    S4Vectors:::fancy_mseq(lengths, offset=offset)
 }
 
 .makeUTRsByTranscript <- function(x, splicings, utr_start, utr_end)

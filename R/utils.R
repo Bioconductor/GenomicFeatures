@@ -291,23 +291,23 @@ makeFeatureIds <- function(chrom_ids, strand, start, end, name=NULL,
         d[is.na(d)] <- 0L
     }
     if (!same.id.for.dups) {
-        oo <- IRanges:::orderIntegerQuads(a, b, c, d)
+        oo <- S4Vectors:::orderIntegerQuads(a, b, c, d)
         ans <- integer(length(oo))
         ans[oo] <- seq_len(length(oo))
         return(ans)
     }
     ## There should be a better way to do this...
-    is_not_dup <- !IRanges:::duplicatedIntegerQuads(a, b, c ,d)
+    is_not_dup <- !S4Vectors:::duplicatedIntegerQuads(a, b, c ,d)
     ua <- a[is_not_dup]
     ub <- b[is_not_dup]
     uc <- c[is_not_dup]
     ud <- d[is_not_dup]
-    oo <- IRanges:::orderIntegerQuads(ua, ub, uc, ud)
+    oo <- S4Vectors:::orderIntegerQuads(ua, ub, uc, ud)
     ua <- ua[oo]
     ub <- ub[oo]
     uc <- uc[oo]
     ud <- ud[oo]
-    IRanges:::matchIntegerQuads(a, b, c, d, ua, ub, uc, ud)
+    S4Vectors:::matchIntegerQuads(a, b, c, d, ua, ub, uc, ud)
 }
 
 

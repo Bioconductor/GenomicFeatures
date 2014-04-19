@@ -67,8 +67,8 @@ setMethod("extractTranscriptSeqs", "DNAString",
         stop("\"exon_rank\" column in GRangesList object 'transcripts' ",
              "contains ranks < 1")
     transcripts_eltlens <- elementLengths(partitioning)
-    target <- IRanges:::fancy_mseq(transcripts_eltlens,
-                                   offset=min_rank - 1L)
+    target <- S4Vectors:::fancy_mseq(transcripts_eltlens,
+                                     offset=min_rank - 1L)
     if (!identical(target, unname(exon_rank)))
         stop("\"exon_rank\" column in GRangesList object 'transcripts' ",
              "does not contain\n  increasing consecutive ranks ",
