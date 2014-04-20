@@ -58,14 +58,14 @@ test_transcripts <- function()
 
 }
 
-## make sure that seqnameStyle behaves correctly
-test_transcripts_seqnameStyleSwap <- function(){
+## make sure that seqlevelStyle behaves correctly
+test_transcripts_seqlevelStyleSwap <- function(){
     txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                       package="GenomicFeatures"))
-    ## extra test to make sure that we can change names via seqnameStyle
-    checkTrue(seqnameStyle(txdb) == "UCSC")
-    seqnameStyle(txdb) <- "NCBI"
-    checkTrue(seqnameStyle(txdb) == "NCBI")    
+    ## extra test to make sure that we can change names via seqlevelStyle
+    checkTrue(seqlevelStyle(txdb) == "UCSC")
+    seqlevelStyle(txdb) <- "NCBI"
+    checkTrue(seqlevelStyle(txdb) == "NCBI")    
     get_grg <- transcripts(txdb, vals=list(gene_id=c("3081", "9501")),
                                  columns=c("tx_id", "tx_name", "gene_id"))
     checkTrue(as.character(seqnames(get_grg))[1] =="17")

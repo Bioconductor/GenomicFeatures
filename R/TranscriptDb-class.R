@@ -133,7 +133,7 @@ gc()
     setRefClass("TranscriptDb", contains="AnnotationDb",
         fields=list(.chrom="character",
                     isActiveSeq="logical",
-                    seqnameStyle="character",
+                    seqlevelStyle="character",
                     new2old="integer"),
         methods=list(
           initialize=function(...) {
@@ -147,7 +147,7 @@ gc()
                   ## deprecate .chrom and isActiveSeq
                   .self$.chrom <- chrominfo$chrom 
                   .self$isActiveSeq <- !logical(length(.self$.chrom)) 
-                  .self$seqnameStyle <- character()
+                  .self$seqlevelStyle <- character()
               }
           .self
       }))
