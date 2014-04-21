@@ -62,12 +62,10 @@
       named logical vector.
     }
     \item{}{
-      \code{seqlevelStyle(x)}:
-      List the matching seqname styles for \code{x}.
-      \code{seqlevelStyle(x)} is equivalent to \code{seqlevelStyle(seqinfo(x))}.
-      Note that this information is not stored in \code{x} but inferred
-      by looking up \code{seqlevels(x)} against a seqname style database
-      stored in the seqnames.db metadata package (required).
+      \code{seqlevelsStyle(x)}, \code{seqlevelsStyle(x) <- value}:
+      Get or set the seqname style for \code{x}.
+      See the \link[GenomeInfoDb]{seqlevelsStyle} generic getter and setter
+      in the \pkg{GenomeInfoDb} package for more information.
     }
     \item{}{
       \code{as.list(x)}:

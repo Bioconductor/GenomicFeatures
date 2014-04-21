@@ -118,16 +118,16 @@ test_transcriptsBy <- function()
     checkTrue(validObject(fiveUTRs))
 }
 
-## make sure that seqlevelStyle behaves correctly
-test_transcriptsBy_seqlevelStyleSwap <- function(){
+## make sure that seqlevelsStyle behaves correctly
+test_transcriptsBy_seqlevelsStyleSwap <- function(){
     txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
                                package="GenomicFeatures"))    
     get_grl <- transcriptsBy(txdb, by="gene")
-    checkTrue(seqlevelStyle(txdb) == "UCSC")
+    checkTrue(seqlevelsStyle(txdb) == "UCSC")
     checkTrue(as.character(seqnames(get_grl[["10771"]])) =="chr10")
     
-    seqlevelStyle(txdb) <- "NCBI"
-    checkTrue(seqlevelStyle(txdb) == "NCBI")    
+    seqlevelsStyle(txdb) <- "NCBI"
+    checkTrue(seqlevelsStyle(txdb) == "NCBI")    
     get_grlN <- transcriptsBy(txdb, by="gene")
     checkTrue(as.character(seqnames(get_grlN[["10771"]])) =="10")
 }
