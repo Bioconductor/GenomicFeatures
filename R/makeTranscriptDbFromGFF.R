@@ -402,17 +402,39 @@
 }
 
 
+## These take the list of data.frames (one per transcript) and checks
+## that they have only one chromosome each.
+.validTranscript <-function(list){
+    .checkSeqnames <- function(x){
+        if(length(unique(x$seqnames))==1){
+            return(TRUE)
+        }else{
+            return(FALSE)
+        }
+    }
+    unlist(lapply(list, .checkSeqnames))
+}
+
+
 ## This works but is extremely slow.
 .deduceTranscriptsFromGTF <- function(data){
-  ## which transcripts?
-  trns <- unique(data$transcript_id)
-
   message("Estimating transcript ranges.")
   ## for each transcript, we have to subset out the records and determine:
   ## start and stop based on strand using max and min.
   ## pre split the data for a substantial speedup
   sub <- as.data.frame(data, stringsAsFactors=FALSE)
   subs <- split(sub, as.factor(sub$transcript_id))
+
+  ## check for cases where two exons are on the different chromosomes
+  keepSubs <- .validTranscript(subs)
+  if(!all(keepSubs)){
+      warning("Some of your transcripts have exons on more than one chromsome.  We cannot deduce the order of these exons so these transcripts have been discarded.")}
+  subs <- subs[keepSubs]
+  
+  ## which transcripts? - TODO - only includes ones we didn't just throw out!
+  ## trns <- unique(data$transcript_id)
+  trns <- unique(names(subs))
+  
   ## and assign into a pre-allocated matrix
   res <- matrix(nrow = length(trns), ncol=6) ## always 6 wide
 
