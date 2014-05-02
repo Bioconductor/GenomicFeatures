@@ -5,9 +5,8 @@ importFrom(utils, download.file, installed.packages, read.table)
 import(BiocGenerics)
 import(S4Vectors)
 import(IRanges)
+import(GenomeInfoDb)
 import(GenomicRanges)
-
-importFrom(GenomeInfoDb, rankSeqlevels, seqlevelsStyle)
 
 importMethodsFrom(DBI, dbCommit, dbConnect,
                   dbDisconnect, dbExistsTable, dbGetQuery,
