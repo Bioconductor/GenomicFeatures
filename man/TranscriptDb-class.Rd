@@ -45,7 +45,7 @@
       Note that, for now, the setter only supports replacement of the
       sequence names, i.e., except for their sequence names (accessed with
       \code{seqnames(value)} and \code{seqnames(seqinfo(x))}, respectively),
-      \link[GenomicRanges]{Seqinfo} objects \code{value} (supplied) and
+      \link[GenomeInfoDb]{Seqinfo} objects \code{value} (supplied) and
       \code{seqinfo(x)} (current) must be identical.
     }
     \item{}{
@@ -97,7 +97,8 @@
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
           TranscriptDb object.
-    \item The \link[GenomicRanges]{Seqinfo} class in the GenomicRanges package.
+    \item The \link[GenomeInfoDb]{Seqinfo} class in the \pkg{GenomeInfoDb}
+          package.
   }
 }
 
