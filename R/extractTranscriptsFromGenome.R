@@ -86,34 +86,7 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
                                strand=character(0),
                                decreasing.rank.on.minus.strand=FALSE)
 {
-    .Deprecated("extractTranscriptSeqs")
-    if (!is(x, "DNAString")) {
-        if (!is(x, "MaskedDNAString"))
-            stop("'x' must be a DNAString object")
-        masks(x) <- NULL
-    }
-    if (is(exonStarts, "RangesList")) {
-        if (!identical(exonEnds, list()))
-            stop("'exonEnds' cannot be specified ",
-                 "when 'exonStarts' is a RangesList object")
-        exonEnds <- end(exonStarts)
-        exonStarts <- start(exonStarts)
-    }
-    exonStarts <- .normargExonStartsOrEnds(exonStarts, "exonStarts")
-    exonEnds <- .normargExonStartsOrEnds(exonEnds, "exonEnds")
-    if (is.factor(strand))
-        strand <- as.vector(strand)
-    if (!is.character(strand))
-        stop("'strand' must be a character vector")
-    if (length(exonStarts) != length(strand)
-     || length(exonEnds) != length(strand))
-        stop("'exonStarts', 'exonEnds' and 'strand' must have the same length")
-    if (!isTRUEorFALSE(decreasing.rank.on.minus.strand))
-        stop("'decreasing.rank.on.minus.strand' must be TRUE or FALSE")
-    lkup <- Biostrings:::getDNAComplementLookup()
-    GenomicRanges:::unsafe.extractTranscripts("DNAStringSet", x,
-                            exonStarts, exonEnds, strand,
-                            decreasing.rank.on.minus.strand, lkup)
+    .Defunct("extractTranscriptSeqs")
 }
 
 
@@ -237,65 +210,11 @@ extractTranscripts <- function(x, exonStarts=list(), exonEnds=list(),
          exonEnds=exonEnds)
 }
 
-.extractTranscriptsFromGenomeAndUCSCTxList <- function(genome, ucsc_txlist,
-                                                decreasing.rank.on.minus.strand)
-{
-    ## The 3 lists below have identical shapes and names (names are the
-    ## REFSEQnames).
-    strand_list <- split(ucsc_txlist$strand, ucsc_txlist$chrom, drop=TRUE)
-    exonStarts_list <- split(ucsc_txlist$exonStarts, ucsc_txlist$chrom, drop=TRUE)
-    exonEnds_list <- split(ucsc_txlist$exonEnds, ucsc_txlist$chrom, drop=TRUE)
-    REFSEQnames <- names(strand_list)  # REFSEQnames has no duplicates
-    extractTranscriptsFromREFSEQ <- function(REFSEQname)
-    {
-        ## Load the subject.
-        if (REFSEQname %in% seqnames(genome)) {
-            subject <- genome[[REFSEQname]]
-            masks(subject) <- NULL
-        } else {
-            regex <- paste0("^", REFSEQname, "$")
-            subject <- getSeq(genome, regex, as.character=FALSE)
-        }
-        exonStarts <- exonStarts_list[[REFSEQname]]
-        exonEnds <- exonEnds_list[[REFSEQname]]
-        strand <- strand_list[[REFSEQname]]
-        extractTranscripts(subject,
-            exonStarts, exonEnds, strand,
-            decreasing.rank.on.minus.strand=decreasing.rank.on.minus.strand)
-    }
-    ## Loop over the names of the reference sequences and extract the
-    ## transcripts.
-    dnaset_list <- lapply(REFSEQnames, extractTranscriptsFromREFSEQ)
-    ans <- unsplit_list_of_XVectorList("DNAStringSet", dnaset_list,
-                                       ucsc_txlist$chrom)
-    names(ans) <- ucsc_txlist$name
-    ans
-}
-
 extractTranscriptsFromGenome <- function(genome, txdb,
                                          decreasing.rank.on.minus.strand=FALSE,
                                          use.names=TRUE)
 {
-    .Deprecated("extractTranscriptSeqs")
-    if (!is(genome, "BSgenome"))
-        stop("'genome' must be a BSgenome object")
-    if (!isTRUEorFALSE(decreasing.rank.on.minus.strand))
-        stop("'decreasing.rank.on.minus.strand' must be TRUE or FALSE")
-    if (is.data.frame(txdb)) {
-        ucsc_txlist <- .makeUCSCTxListFromUCSCTxTable(txdb)
-    } else {
-        if (is(txdb, "TranscriptDb")) {
-            if (decreasing.rank.on.minus.strand)
-                stop("'decreasing.rank.on.minus.strand' must be FALSE ",
-                     "when 'txdb' is a TranscriptDb object")
-            txdb <- exonsBy(txdb, by="tx", use.names=use.names)
-        } else if (!is(txdb, "GRangesList"))
-            stop("'txdb' must be a TranscriptDb object, a GRangesList ",
-                 "object, or a data frame")
-        ucsc_txlist <- .makeUCSCTxListFromGRangesList(txdb)
-    }
-    .extractTranscriptsFromGenomeAndUCSCTxList(genome, ucsc_txlist,
-                                               decreasing.rank.on.minus.strand)
+    .Defunct("extractTranscriptSeqs")
 }
 
 

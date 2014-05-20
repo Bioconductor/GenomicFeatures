@@ -47,7 +47,7 @@ gc()
 
 ## Other considerations: the implementation of a seqinfo slot could
 ## create additional complications for methods similar to
-## extractTranscriptsFromGenome because these rely on the names coming
+## extractTranscriptSeqs because these rely on the names coming
 ## back being the same as the ones in the DB.  In fact, anywhere that
 ## we have code that relys on this it is at risk for breaking.  So if
 ## we want to go down the route of making these methods the same

@@ -8,21 +8,21 @@
 \alias{extractTranscripts}
 \alias{extractTranscriptsFromGenome}
 
-\title{Various OBSOLETE tools for extracting transcript sequences}
+\title{Various DEFUNCT tools for extracting transcript sequences}
 
 \description{
-  WARNING: The tools described in this man page are obsolete and
-  in the process of being DEPRECATED.
+  WARNING: Starting with BioC 3.0, the tools described in this man page
+  are DEFUNCT.
 
   \code{extractTranscriptsFromGenome} extracts the transcript
   sequences from a BSgenome data package using the transcript
   information (exon boundaries) stored in a \link{TranscriptDb}
   or \link[GenomicRanges]{GRangesList} object.
-  DEPRECATED. Please use \code{\link{extractTranscriptSeqs}} instead.
+  DEFUNCT. Please use \code{\link{extractTranscriptSeqs}} instead.
 
   \code{extractTranscripts} extracts a set of transcripts
   from a single DNA sequence.
-  DEPRECATED. Please use \code{\link{extractTranscriptSeqs}} instead.
+  DEFUNCT. Please use \code{\link{extractTranscriptSeqs}} instead.
 
   Related utilities:
 
@@ -40,12 +40,12 @@
 }
 
 \usage{
-# DEPRECATED. Please use extractTranscriptSeqs() instead.
+# DEFUNCT. Please use extractTranscriptSeqs() instead.
 extractTranscriptsFromGenome(genome, txdb,
                              decreasing.rank.on.minus.strand=FALSE,
                              use.names=TRUE)
 
-# DEPRECATED. Please use extractTranscriptSeqs() instead.
+# DEFUNCT. Please use extractTranscriptSeqs() instead.
 extractTranscripts(x,
         exonStarts=list(), exonEnds=list(), strand=character(0),
         decreasing.rank.on.minus.strand=FALSE)
@@ -150,7 +150,8 @@ sortExonsByRank(x, decreasing.rank.on.minus.strand=FALSE)
 }
 
 \seealso{
-  \code{\link{extractTranscriptSeqs}}
+  \code{\link{extractTranscriptSeqs}} as a replacement for
+  \code{extractTranscriptsFromGenome} and \code{extractTranscripts}.
 }
 
 \examples{
