@@ -459,12 +459,6 @@ translateCols <- function(columns, txdb){
 
 setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
 
-setMethod("transcripts", "data.frame",
-    function(x, vals=NULL, columns=c("tx_id", "tx_name"))
-        stop("Please use 'transcripts_deprecated' for older ",
-             "data.frame-based transcript metadata.")
-)
-
 ## TODOS: change defaults (WILL break many examples!)
 ## TODO: change defaults from c("tx_id", "tx_name") to: c("TXID", "TXNAME") 
 setMethod("transcripts", "TranscriptDb",
@@ -475,12 +469,6 @@ setMethod("transcripts", "TranscriptDb",
 )
 
 setGeneric("exons", function(x, ...) standardGeneric("exons"))
-
-setMethod("exons", "data.frame",
-    function(x, vals=NULL, columns="exon_id")
-        stop("Please use 'exons_deprecated' for older ",
-             "data.frame-based transcript metadata.")
-)
 
 ## TODO: change defaults from c("exon_id") to: c("EXONID") 
 setMethod("exons", "TranscriptDb",

@@ -493,14 +493,14 @@ could be accessed from programs other than \R if desired).  Note that
 it is not possible to serialize a \Rclass{TranscriptDb} object using
 \R's \Rfunction{save} function.
 
-<<saveFeatures 1, eval=FALSE>>=
+<<saveDb-1, eval=FALSE>>=
 saveDb(mm9KG, file="fileName.sqlite")
 @
 
 And as was mentioned earlier, a saved \Rclass{TranscriptDb} object can
 be initialized from a .sqlite file by simply using \Rfunction{loadDb}.
 
-<<loadFeatures-1, eval=FALSE>>=
+<<loadDb-1, eval=FALSE>>=
 mm9KG <- loadDb("fileName.sqlite")
 @
 

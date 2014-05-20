@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.17.6
+Version: 1.17.7
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -34,8 +34,8 @@ Suggests: org.Mm.eg.db, BSgenome, BSgenome.Hsapiens.UCSC.hg18 (>= 1.3.14),
 Collate: utils.R Ensembl.utils.R TranscriptDb-class.R FeatureDb-class.R
         makeTranscriptDb.R makeTranscriptDbFromUCSC.R
         makeTranscriptDbFromBiomart.R makeTranscriptDbFromGFF.R
-        makeFeatureDbFromUCSC.R saveFeatures.R id2name.R transcripts.R
-        transcriptsByOverlaps.R transcriptsBy.R regions.R features.R
+        makeFeatureDbFromUCSC.R id2name.R transcripts.R
+        transcriptsByOverlaps.R transcriptsBy.R features.R
         extractTranscriptsFromGenome.R extractTranscriptSeqs.R
         makeTxDbPackage.R seqnames-methods.R select-methods.R
         nearest-methods.R getPromoterSeq-methods.R

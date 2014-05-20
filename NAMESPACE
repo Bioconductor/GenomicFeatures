@@ -33,10 +33,6 @@ importFrom(AnnotationDbi, loadDb, saveDb)
 exportClasses(TranscriptDb, FeatureDb)
 
 export(
-  loadFeatures,
-  transcripts_deprecated,
-  exons_deprecated,
-  introns_deprecated,
   DEFAULT_CIRC_SEQS,
   makeTranscriptDb,
   supportedUCSCtables,
@@ -81,7 +77,6 @@ export(
 )
 
 exportMethods(
-  saveFeatures,
   metadata,
   show,
   as.list,

@@ -1,10 +1,8 @@
 \name{transcripts}
 
 \alias{transcripts}
-\alias{transcripts,data.frame-method}
 \alias{transcripts,TranscriptDb-method}
 \alias{exons}
-\alias{exons,data.frame-method}
 \alias{exons,TranscriptDb-method}
 \alias{cds}
 \alias{cds,TranscriptDb-method}
