@@ -59,11 +59,8 @@ export(
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
   extractTranscriptSeqs,
-  transcriptWidths,
   transcriptLocs2refLocs,
-  extractTranscripts,
-  extractTranscriptsFromGenome,
-  sortExonsByRank,
+  transcriptWidths,
   makeFeatureDbFromUCSC,
   makeTxDbPackage,
   makeTxDbPackageFromUCSC,
@@ -72,7 +69,13 @@ export(
   features,
   supportedMiRBaseBuildValues,
   getPromoterSeq,
-  ## Defunct
+
+  # Deprecated:
+  sortExonsByRank,
+
+  ## Defunct:
+  extractTranscripts,
+  extractTranscriptsFromGenome,
   determineDefaultSeqnameStyle
 )
 

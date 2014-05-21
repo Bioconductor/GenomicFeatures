@@ -37,6 +37,7 @@ Collate: utils.R Ensembl.utils.R TranscriptDb-class.R FeatureDb-class.R
         makeFeatureDbFromUCSC.R id2name.R transcripts.R
         transcriptsByOverlaps.R transcriptsBy.R features.R
         extractTranscriptsFromGenome.R extractTranscriptSeqs.R
+        transcriptLocs2refLocs.R
         makeTxDbPackage.R seqnames-methods.R select-methods.R
         nearest-methods.R getPromoterSeq-methods.R
         test_GenomicFeatures_package.R

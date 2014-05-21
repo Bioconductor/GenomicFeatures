@@ -76,6 +76,9 @@ extractTranscriptSeqs(x, transcripts, ...)
 
 \seealso{
   \itemize{
+    \item The \code{\link{transcriptLocs2refLocs}} function for converting
+          transcript-based locations into reference-based locations.
+
     \item The \code{\link[BSgenome]{available.genomes}} function in the
           \pkg{BSgenome} package for checking avaibility of BSgenome
           data packages (and installing the desired one).
