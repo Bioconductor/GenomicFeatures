@@ -170,6 +170,9 @@ UCSCGenomeToOrganism <- function(genome){
   "wgEncodeGencode2wayConsPseudoV7",  "GENCODE Genes V7",  NA,
   "wgEncodeGencodePolyaV7",           "GENCODE Genes V7",  NA,
 
+  ## Tables/tracks specific to D. melanogaster.
+  "flyBaseGene",                      "FlyBase Genes",     NA,
+
   ## Tables/tracks specific to sacCer2.
   ## makeTranscriptDbFromUCSC(genome="sacCer2", tablename="sgdGene")
   ## successfully tested on On Aug 13 2010.
@@ -402,6 +405,17 @@ supportedUCSCtables <- function()
         ),
         gene_id_type="Ensembl gene ID"
     ),
+    flyBaseGene=list(
+        L2Rchain=list(
+            c(tablename="flyBaseIsoforms",
+              Lcolname="transcript",
+              Rcolname="clusterId"),
+            c(tablename="flyBaseCanonical",
+              Lcolname="clusterId",
+              Rcolname="transcript")
+        ),
+        gene_id_type="Name of canonical transcript in cluster"
+    ),
     sgdGene=list(
         L2Rchain=list(
             c(tablename="sgdIsoforms",
@@ -411,7 +425,7 @@ supportedUCSCtables <- function()
               Lcolname="clusterId",
               Rcolname="transcript")
         ),
-        gene_id_type="ID of canonical transcript in cluster"
+        gene_id_type="Name of canonical transcript in cluster"
     )
 )
 
@@ -757,6 +771,15 @@ getChromInfoFromUCSC <- function(genome,
 {
     ucsc_txtable <- setDataFrameColClass(ucsc_txtable, .UCSC_TXCOL2CLASS,
                                          drop.extra.cols=TRUE)
+
+    strand_is_dot <- ucsc_txtable$strand == "."
+    if (any(strand_is_dot)) {
+        msg <- sprintf("dropped %d transcript(s) for which strand
+            was not set (i.e. was set to '.')", sum(strand_is_dot))
+        warning(paste(strwrap(msg, exdent=2), collapse="\n"))
+        keep_idx <- which(!strand_is_dot)
+        ucsc_txtable <- ucsc_txtable[keep_idx, , drop=FALSE]
+    }
 
     transcripts <- .extractTranscriptsFromUCSCTxTable(ucsc_txtable)
     splicings <- .extractSplicingsFromUCSCTxTable(ucsc_txtable,
