@@ -629,8 +629,6 @@ setMethod("asGFF", "TranscriptDb", function(x) {
 
 setMethod(rtracklayer:::bestFileFormat, "TranscriptDb", function(x) "gff3")
 
-
-## Custom method for TranscriptDb
 setMethod("show", "TranscriptDb",
     function(object)
     {
@@ -640,7 +638,6 @@ setMethod("show", "TranscriptDb",
             cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
                 "\n", sep="")
         }
-        message("\n","Please see: help('TranscriptDb-class') for usage information", sep="")
     }
 )
 
