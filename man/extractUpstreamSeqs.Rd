@@ -25,11 +25,14 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
 
 \arguments{
   \item{x}{
-    A \link[BSgenome]{BSgenome}, \link[rtracklayer]{TwoBitFile}, or
-    \link[Rsamtools]{FaFile} object, or any object containing the chromosome
-    sequences from which to extract the upstream sequences. More formally,
-    \code{x} must be an object for which \code{\link[GenomeInfoDb]{seqinfo}}
-    and \code{\link[Biostrings]{getSeq}} are defined.
+    An object containing the chromosome sequences from which to extract the
+    upstream sequences. It can be a \link[BSgenome]{BSgenome},
+    \link[rtracklayer]{TwoBitFile}, or \link[Rsamtools]{FaFile} object,
+    or any \emph{genome sequence container}.
+
+    More formally, \code{x} must be an object for which
+    \code{\link[GenomeInfoDb]{seqinfo}} and \code{\link[Biostrings]{getSeq}}
+    are defined.
   }
   \item{genes}{
     An object containing the locations (i.e. chromosome name, start, end, and
@@ -80,21 +83,38 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
   }
 }
 
+\note{
+  IMPORTANT: Always make sure to use a TxDb package (or \link{TranscriptDb}
+  object) that contains a gene model compatible with the \emph{genome sequence
+  container} \code{x}, that is, a gene model based on the exact same reference
+  genome as \code{x}.
+  Note that you can make your own custom \link{TranscriptDb} object from
+  various annotation resources. See the \code{\link{makeTranscriptDbFromUCSC}},
+  \code{\link{makeTranscriptDbFromBiomart}}, and
+  \code{\link{makeTranscriptDbFromGFF}} functions for more information about
+  this.
+}
+
 \author{
   H. Pages
 }
 
 \seealso{
   \itemize{
+    \item The \code{\link[BSgenome]{available.genomes}} function in the
+          \pkg{BSgenome} package for checking avaibility of BSgenome
+          data packages (and installing the desired one).
+          
+    \item The \code{\link{makeTranscriptDbFromUCSC}},
+          \code{\link{makeTranscriptDbFromBiomart}}, and
+          \code{\link{makeTranscriptDbFromGFF}} functions for making your own
+          custom \link{TranscriptDb} object from various annotation resources.
+
     \item The \link[BSgenome]{BSgenome}, \link[rtracklayer]{TwoBitFile}, and
           \link[Rsamtools]{FaFile} classes, defined and documented
           in the \pkg{BSgenome}, \pkg{rtracklayer}, and \pkg{Rsamtools}
           packages, respectively.
 
-    \item The \code{\link[BSgenome]{available.genomes}} function in the
-          \pkg{BSgenome} package for checking avaibility of BSgenome
-          data packages (and installing the desired one).
-          
     \item The \link{TranscriptDb} class.
 
     \item The \code{\link{genes}} function for extracting gene ranges from
