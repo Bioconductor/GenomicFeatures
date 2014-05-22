@@ -4,6 +4,7 @@
 \alias{extractTranscriptSeqs,DNAString-method}
 \alias{extractTranscriptSeqs,ANY-method}
 
+
 \title{Extract transcript sequences from chromosomes}
 
 \description{

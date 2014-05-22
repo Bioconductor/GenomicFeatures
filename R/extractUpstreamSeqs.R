@@ -10,12 +10,26 @@ setGeneric("extractUpstreamSeqs", signature="genes",
 
 ### Will work on any object 'x' for which seqinfo() and getSeq() are defined
 ### e.g. BSgenome, FaFile, TwoBitFile, etc...
-setMethod("extractUpstreamSeqs", "GRanges",
+setMethod("extractUpstreamSeqs", "GenomicRanges",
     function(x, genes, width=1000)
     {
         seqinfo(genes) <- merge(seqinfo(genes), seqinfo(x))
         upstream <- trim(suppressWarnings(flank(genes, width=width)))
-        getSeq(x, upstream)
+        ans <- getSeq(x, upstream)
+
+        ## Add metada columns to 'ans'.
+        gene_seqnames <- seqnames(genes)
+        gene_strand <- strand(genes)
+        idx1 <- which(gene_strand != "-")
+        idx2 <- which(gene_strand == "-")
+        gene_TSS <- integer(length(genes))
+        gene_TSS[idx1] <- start(genes)[idx1]
+        gene_TSS[idx2] <- end(genes)[idx2]
+        ans_mcols <- DataFrame(gene_seqnames=gene_seqnames,
+                               gene_strand=gene_strand,
+                               gene_TSS=gene_TSS)
+        mcols(ans) <- ans_mcols
+        ans
     }
 )
 
