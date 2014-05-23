@@ -29,7 +29,6 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
     upstream sequences. It can be a \link[BSgenome]{BSgenome},
     \link[rtracklayer]{TwoBitFile}, or \link[Rsamtools]{FaFile} object,
     or any \emph{genome sequence container}.
-
     More formally, \code{x} must be an object for which
     \code{\link[GenomeInfoDb]{seqinfo}} and \code{\link[Biostrings]{getSeq}}
     are defined.
@@ -39,8 +38,8 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
     strand) of the genes or transcripts with respect to the reference genome.
     Only \link[GenomicRanges]{GenomicRanges} and \link{TranscriptDb} objects
     are supported at the moment. If the latter, the gene locations are obtained
-    by calling \code{\link{genes}} on the \link{TranscriptDb} object
-    internally.
+    by calling the \code{\link{genes}} function on the \link{TranscriptDb}
+    object internally.
   }
   \item{width}{
     How many bases to extract upstream of each TSS (transcription start site).
@@ -88,6 +87,11 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
   object) that contains a gene model compatible with the \emph{genome sequence
   container} \code{x}, that is, a gene model based on the exact same reference
   genome as \code{x}.
+
+  See
+  \url{http://bioconductor.org/packages/release/BiocViews.html#___TranscriptDb}
+  for the list of TxDb packages available in the current release of
+  Bioconductor.
   Note that you can make your own custom \link{TranscriptDb} object from
   various annotation resources. See the \code{\link{makeTranscriptDbFromUCSC}},
   \code{\link{makeTranscriptDbFromBiomart}}, and
