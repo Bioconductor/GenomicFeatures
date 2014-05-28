@@ -597,12 +597,11 @@ supportedUCSCtables <- function()
     cds_end1[exons_with_cds] <- exon_end1[exons_with_cds]
     cds_start0[first_exon_with_cds] <- cdsStart0
     cds_end1[last_exon_with_cds] <- cdsEnd1
-    if(!any(is.na(cds_end1),is.na(cds_start0))){
-        bad <- sum(cds_end1 - cds_start0, na.rm=TRUE) %% 3L != 0L
-    }else{
-        bad <- TRUE ## if there are NAs, then we can't say it's %% 3L != 0
-    }
-    list(cds_start0, cds_end1, bad) ## WHY DO I STILL GET NAs????
+    ## NAs are OK in here since they indicate the absence of any CDS
+    ## (which is common and nothing to write home about)
+    ## changed from 50K to 19.3K ...   but the 'bad' ones are not present?
+    bad <- sum(cds_end1 - cds_start0, na.rm=TRUE) %% 3L != 0L 
+    list(cds_start0, cds_end1, bad) 
 }
 
 ### 'exon_locs' must be the list of 2 lists returned by

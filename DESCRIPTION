@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.17.8
+Version: 1.17.9
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -15,15 +15,15 @@ Description: A set of tools and methods for making and manipulating
         provided for extracting the desired features in a convenient
         format.
 Maintainer: Bioconductor Package Maintainer
-        <maintainer@bioconductor.org>
-Depends: BiocGenerics (>= 0.1.0), S4Vectors (>= 0.0.1), IRanges (>= 1.99.1),
-        GenomeInfoDb (>= 1.1.3), GenomicRanges (>= 1.17.12),
+ <maintainer@bioconductor.org>
+Depends: BiocGenerics (>= 0.1.0), S4Vectors (>= 0.0.1), IRanges (>=
+        1.99.1), GenomeInfoDb (>= 1.1.3), GenomicRanges (>= 1.17.12),
         AnnotationDbi (>= 1.27.1)
-Imports: methods, DBI (>= 0.2-5), RSQLite (>= 0.8-1),
-        Biostrings (>= 2.23.3), rtracklayer (>= 1.25.2), biomaRt (>= 2.17.1),
-        RCurl, utils, Biobase (>= 2.15.1), GenomeInfoDb
-Suggests: org.Mm.eg.db, BSgenome, BSgenome.Hsapiens.UCSC.hg18 (>= 1.3.14),
-        BSgenome.Hsapiens.UCSC.hg19 (>= 1.3.17),
+Imports: methods, DBI (>= 0.2-5), RSQLite (>= 0.8-1), Biostrings (>=
+        2.23.3), rtracklayer (>= 1.25.2), biomaRt (>= 2.17.1), RCurl,
+        utils, Biobase (>= 2.15.1), GenomeInfoDb
+Suggests: org.Mm.eg.db, BSgenome, BSgenome.Hsapiens.UCSC.hg18 (>=
+        1.3.14), BSgenome.Hsapiens.UCSC.hg19 (>= 1.3.17),
         BSgenome.Celegans.UCSC.ce2, BSgenome.Dmelanogaster.UCSC.dm3 (>=
         1.3.17), mirbase.db, FDb.UCSC.tRNAs,
         TxDb.Hsapiens.UCSC.hg18.knownGene,
@@ -36,11 +36,10 @@ Collate: utils.R Ensembl.utils.R TranscriptDb-class.R FeatureDb-class.R
         makeTranscriptDbFromBiomart.R makeTranscriptDbFromGFF.R
         makeFeatureDbFromUCSC.R id2name.R transcripts.R
         transcriptsByOverlaps.R transcriptsBy.R features.R
-        extractUpstreamSeqs.R
-        extractTranscriptSeqs.R transcriptLocs2refLocs.R
-        makeTxDbPackage.R seqnames-methods.R select-methods.R
-        nearest-methods.R getPromoterSeq-methods.R
-        extractTranscriptsFromGenome.R
-        test_GenomicFeatures_package.R
+        extractUpstreamSeqs.R extractTranscriptSeqs.R
+        transcriptLocs2refLocs.R makeTxDbPackage.R seqnames-methods.R
+        select-methods.R nearest-methods.R getPromoterSeq-methods.R
+        extractTranscriptsFromGenome.R test_GenomicFeatures_package.R
 VignetteBuilder: knitr
 biocViews: Genetics, Infrastructure, Annotation, Sequencing
+Packaged: 2014-05-28 22:07:59 UTC; mcarlson
