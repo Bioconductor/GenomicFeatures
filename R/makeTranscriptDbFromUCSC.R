@@ -576,7 +576,7 @@ supportedUCSCtables <- function()
     cds_start0[] <- NA_integer_
     cds_end1[] <- NA_integer_
     if (cdsStart0 >= cdsEnd1)
-        return(list(cds_start0, cds_end1, TRUE))
+        return(list(cds_start0, cds_end1, FALSE))
     first_exon_with_cds <- which(exon_start0 <= cdsStart0
                                  & cdsStart0 < exon_end1)
     if (length(first_exon_with_cds) != 1L)
