@@ -236,7 +236,9 @@
   if("gffGeneIdAttributeName" %in% colnames(data)){
       data$gffGeneIdAttributeName <- as.character(data$gffGeneIdAttributeName)
   }
-  as.data.frame(data)
+  data <- as.data.frame(data)
+  data <- .filterBadStrandsAndWarn(data)
+  data
 }
 
 
@@ -455,6 +457,23 @@
   res
 }
 
+## Helper to warn if there is bad strand information in the final
+## data.frame made by .prepareGTFdata.frame() OR by
+## .prepareGFF3data.frame()
+.filterBadStrandsAndWarn <- function(data){
+    good <- c("+","-")
+    if( any( !(data$strand %in% good) ) ){
+        badData <- data[!(data$strand %in% good),]
+        data <- data[(data$strand %in% good),]
+        msg <- paste0("Some bad strand information was included in your file. ",
+                      "This has been filtered out for you. An example of some ",
+                      "offending data is: ",
+                      paste(as.character(badData), collapse=" "))
+        warning(wmsg(msg)) ## uses the new wmsg() function
+    }
+    data
+}
+
 
 ## helpers to pre-tidy the data
 .prepareGTFdata.frame <- function(gff,exonRankAttributeName){
@@ -472,6 +491,8 @@
   }else{
     data <- cbind(data,exon_rank=rep(NA,length(start(gff))))
   }
+  ## check for bad strand information:
+  data <- .filterBadStrandsAndWarn(data)
   data
 }
 

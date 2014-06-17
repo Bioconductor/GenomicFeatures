@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.17.10
+Version: 1.17.11
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -41,5 +41,6 @@ Collate: utils.R Ensembl.utils.R TranscriptDb-class.R FeatureDb-class.R
         select-methods.R nearest-methods.R getPromoterSeq-methods.R
         extractTranscriptsFromGenome.R test_GenomicFeatures_package.R
 VignetteBuilder: knitr
-biocViews: Genetics, Infrastructure, Annotation, Sequencing, GenomeAnnotation
-Packaged: 2014-05-28 22:07:59 UTC; mcarlson
+biocViews: Genetics, Infrastructure, Annotation, Sequencing,
+        GenomeAnnotation
+Packaged: 2014-06-17 20:02:01 UTC; mcarlson
