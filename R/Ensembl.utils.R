@@ -21,6 +21,10 @@
 ###
 
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### .Ensembl_getMySQLCoreUrl()
+###
+
 .ENSEMBL.PUB_FTP_URL <- "ftp://ftp.ensembl.org/pub/"
 
 ### Uses RCurl to access and list the content of an FTP dir.
@@ -35,7 +39,7 @@
     sub("[[:space:]].*$", "", listing)
 }
 
-.Ensembl.getFtpUrlToMySQL <- function(release=NA)
+.Ensembl_getFtpUrlToMySQL <- function(release=NA)
 {
     if (is.na(release))
         pub_subdir <- "current_mysql"
@@ -44,10 +48,10 @@
     paste0(.ENSEMBL.PUB_FTP_URL, pub_subdir, "/")
 }
 
-.Ensembl.listMySQLCoreDirs <- function(release=NA, url=NA)
+.Ensembl_listMySQLCoreDirs <- function(release=NA, url=NA)
 {
     if (is.na(url))
-        url <- .Ensembl.getFtpUrlToMySQL(release)
+        url <- .Ensembl_getFtpUrlToMySQL(release)
     core_dirs <- .lsFtpUrl(url)
     pattern <- "_core_"
     if (!is.na(release))
@@ -55,11 +59,11 @@
     core_dirs[grep(pattern, core_dirs, fixed=TRUE)]
 }
 
-.Ensembl.getMySQLCoreDir <- function(dataset, release=NA, url=NA)
+.Ensembl_getMySQLCoreDir <- function(dataset, release=NA, url=NA)
 {
     if (is.na(url))
-        url <- .Ensembl.getFtpUrlToMySQL(release)
-    core_dirs <- .Ensembl.listMySQLCoreDirs(release=release, url=url)
+        url <- .Ensembl_getFtpUrlToMySQL(release)
+    core_dirs <- .Ensembl_listMySQLCoreDirs(release=release, url=url)
     shortnames <- sapply(strsplit(core_dirs, "_", fixed=TRUE),
                          function(x)
                            paste0(substr(x[1L], 1L, 1L), x[2L]))
@@ -72,15 +76,20 @@
 }
 
 ### Return URL of Ensemble Core DB (FTP access).
-.Ensembl.getMySQLCoreUrl <- function(dataset, release=NA, url=NA)
+.Ensembl_getMySQLCoreUrl <- function(dataset, release=NA, url=NA)
 {
     if (is.na(url))
-        url <- .Ensembl.getFtpUrlToMySQL(release)
-    core_dir <- .Ensembl.getMySQLCoreDir(dataset, release=release, url=url)
+        url <- .Ensembl_getFtpUrlToMySQL(release)
+    core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release, url=url)
     paste0(url, core_dir, "/")
 }
 
-.Ensembl.getTable <- function(base_url, tablename, col.names, nrows=-1)
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### .Ensembl_fetchChromLengthsFromCoreUrl()
+###
+
+.Ensembl_getTable <- function(base_url, tablename, col.names, nrows=-1)
 {
     url <- paste0(base_url, tablename, ".txt.gz")
     destfile <- tempfile()
@@ -92,18 +101,18 @@
     data
 }
 
-.Ensembl.getTable.seq_region <- function(core_url, with.coord_system=FALSE)
+.Ensembl_getTable_seq_region <- function(core_url, with.coord_system=FALSE)
 {
     ## Get 'seq_region' table.
     COLNAMES <- c("seq_region_id", "name", "coord_system_id", "length")
-    ans <- .Ensembl.getTable(core_url, "seq_region", COLNAMES)
+    ans <- .Ensembl_getTable(core_url, "seq_region", COLNAMES)
     if (!with.coord_system)
         return(ans)
     ## Get 'coord_system' table.
     COLNAMES <- c("coord_system_id", "species_id", "name",
                   "version", "rank", "attrib")
     COLNAMES[3:6] <- paste0("coord_system_", COLNAMES[3:6])
-    coord_system <- .Ensembl.getTable(core_url, "coord_system", COLNAMES)
+    coord_system <- .Ensembl_getTable(core_url, "coord_system", COLNAMES)
     left2right <- match(ans[["coord_system_id"]],
                         coord_system[["coord_system_id"]])
     ans_right <- coord_system[left2right, , drop=FALSE]
@@ -112,7 +121,7 @@
     cbind(ans, ans_right)
 }
 
-.Ensembl.fetchAttribTypeIdForTopLevelSequence <- function(core_url)
+.Ensembl_fetchAttribTypeIdForTopLevelSequence <- function(core_url)
 {
     ## Get the first 50 rows of 'attrib_type' table.
     ## The reason we don't read in the entire table is because some rows at
@@ -125,7 +134,7 @@
     ## always be ordered by attrib_type_id), reading in the first 50 rows
     ## should be way enough to get what we need.
     COLNAMES <- c("attrib_type_id", "code", "name", "description")
-    attrib_type <- .Ensembl.getTable(core_url, "attrib_type", COLNAMES,
+    attrib_type <- .Ensembl_getTable(core_url, "attrib_type", COLNAMES,
                                      nrows=50)
     i <- which(attrib_type$code == "toplevel")
     if (length(i) != 1L)
@@ -134,25 +143,25 @@
     attrib_type$attrib_type_id[i]
 }
 
-.Ensembl.fetchTopLevelSequenceIds <- function(core_url)
+.Ensembl_fetchTopLevelSequenceIds <- function(core_url)
 {
-    id0 <- .Ensembl.fetchAttribTypeIdForTopLevelSequence(core_url)
+    id0 <- .Ensembl_fetchAttribTypeIdForTopLevelSequence(core_url)
     ## Get 'seq_region_attrib' table.
     COLNAMES <- c("seq_region_id", "attrib_type_id", "value")
-    seq_region_attrib <- .Ensembl.getTable(core_url,
+    seq_region_attrib <- .Ensembl_getTable(core_url,
                              "seq_region_attrib", COLNAMES)
     seq_region_attrib$seq_region_id[seq_region_attrib$attrib_type_id == id0]
 }
 
 ### Fetch sequence names and lengths from the 'seq_region' table.
 ### Typical use:
-###   core_url <- .Ensembl.getMySQLCoreUrl("hsapiens_gene_ensembl")
+###   core_url <- .Ensembl_getMySQLCoreUrl("hsapiens_gene_ensembl")
 ###   extra_seqnames <- c("GL000217.1", "NC_012920", "HG79_PATCH")
-###   .Ensembl.fetchChromLengthsFromCoreUrl(core_url,
+###   .Ensembl_fetchChromLengthsFromCoreUrl(core_url,
 ###                                         extra_seqnames=extra_seqnames)
-.Ensembl.fetchChromLengthsFromCoreUrl <- function(core_url, extra_seqnames=NULL)
+.Ensembl_fetchChromLengthsFromCoreUrl <- function(core_url, extra_seqnames=NULL)
 {
-    seq_region <- .Ensembl.getTable.seq_region(core_url, with.coord_system=TRUE)
+    seq_region <- .Ensembl_getTable_seq_region(core_url, with.coord_system=TRUE)
 
     ## 1st filtering: Keep only "default_version" sequences.
     i1 <- grep("default_version", seq_region$coord_system_attrib, fixed=TRUE)
@@ -162,7 +171,7 @@
 
     ## 2nd filtering: Keep only "toplevel" sequences that are not LRGs +
     ## extra sequences.
-    ids <- .Ensembl.fetchTopLevelSequenceIds(core_url)
+    ids <- .Ensembl_fetchTopLevelSequenceIds(core_url)
     i2 <- ans$seq_region_id %in% ids & ans$coord_system_name != "lrg"
     if (!is.null(extra_seqnames)) {
         extra_seqnames <- unique(extra_seqnames)
@@ -194,11 +203,27 @@
     ans
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### fetchChromLengthsFromEnsembl() and fetchChromLengthsFromEnsemblPlants()
+###
+
 fetchChromLengthsFromEnsembl <- function(dataset, release=NA,
                                          extra_seqnames=NULL)
 {
-    core_url <- .Ensembl.getMySQLCoreUrl(dataset, release=release)
-    .Ensembl.fetchChromLengthsFromCoreUrl(core_url,
+    core_url <- .Ensembl_getMySQLCoreUrl(dataset, release=release)
+    .Ensembl_fetchChromLengthsFromCoreUrl(core_url,
+                                          extra_seqnames=extra_seqnames)
+}
+
+.ENSEMBL_PLANTS.CURRENT_MYSQL_URL <- "ftp://ftp.ensemblgenomes.org/pub/plants/current/mysql/"
+
+fetchChromLengthsFromEnsemblPlants <- function(dataset,
+                                               extra_seqnames=NULL)
+{
+    core_url <- .Ensembl_getMySQLCoreUrl(dataset,
+                                         url=.ENSEMBL_PLANTS.CURRENT_MYSQL_URL)
+    .Ensembl_fetchChromLengthsFromCoreUrl(core_url,
                                           extra_seqnames=extra_seqnames)
 }
 

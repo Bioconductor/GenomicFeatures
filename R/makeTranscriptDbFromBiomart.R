@@ -182,15 +182,21 @@
 {
     biomart <- biomaRt:::martBM(mart)
     dataset <- biomaRt:::martDataset(mart)
-    if (biomart == "ensembl") {
+    if (biomart == "ensembl" || substr(biomart, 1, 12) == "plants_mart_") {
         message("Download and preprocess the 'chrominfo' data frame ... ",
                 appendLF=FALSE)
-        db_version <- .getBiomartDbVersion(biomart, host, port)
-        ensembl_release <- .extractEnsemblReleaseFromDbVersion(db_version)
-        chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
-                                release=ensembl_release,
-                                extra_seqnames=extra_seqnames),
-                            silent=TRUE)
+        if (biomart == "ensembl") {
+            db_version <- .getBiomartDbVersion(biomart, host, port)
+            ensembl_release <- .extractEnsemblReleaseFromDbVersion(db_version)
+            chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
+                                    release=ensembl_release,
+                                    extra_seqnames=extra_seqnames),
+                                silent=TRUE)
+        } else {
+            chromlengths <- try(fetchChromLengthsFromEnsemblPlants(dataset,
+                                    extra_seqnames=extra_seqnames),
+                                silent=TRUE)
+        }
         if (is(chromlengths, "try-error")) {
             message("FAILED! (=> skipped)")
             return(NULL)
@@ -205,6 +211,7 @@
     }
     NULL
 }
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Allow users to discover 'chrominfo' data frame.
