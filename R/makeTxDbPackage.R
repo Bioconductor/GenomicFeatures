@@ -24,7 +24,7 @@
 ## helper functions
 .choosePrefix <- function(txdb){
   pkgType <- .getMetaDataValue(txdb,'Db type')
-  if(pkgType == "TranscriptDb"){
+  if(pkgType %in% c("TranscriptDb", "TxDb")){
     prefix <- "TxDb"
   }else if(pkgType == "FeatureDb"){
     prefix <- "FDb"

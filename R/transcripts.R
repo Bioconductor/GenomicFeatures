@@ -215,7 +215,7 @@ translateCols <- function(columns, txdb){
     ans
 }
 
-### In the case of TranscriptDb objects, the distance between 'root_table'
+### In the case of TxDb objects, the distance between 'root_table'
 ### and 'child_table' is always <= 2.
 ### TODO: Revisit this. Not sure it would be guaranteed to work correctly if
 ### the distance between 'root_table' and 'child_table' was >= 3.
@@ -461,7 +461,7 @@ setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
 
 ## TODOS: change defaults (WILL break many examples!)
 ## TODO: change defaults from c("tx_id", "tx_name") to: c("TXID", "TXNAME") 
-setMethod("transcripts", "TranscriptDb",
+setMethod("transcripts", "TxDb",
     function(x, vals=NULL, columns=c("tx_id", "tx_name")){
         vals = c(vals, .makeActiveSeqsList("tx_chrom", x))
         .extractFeatureRowsAsGRanges("transcript", x, vals, columns)
@@ -471,7 +471,7 @@ setMethod("transcripts", "TranscriptDb",
 setGeneric("exons", function(x, ...) standardGeneric("exons"))
 
 ## TODO: change defaults from c("exon_id") to: c("EXONID") 
-setMethod("exons", "TranscriptDb",
+setMethod("exons", "TxDb",
     function(x, vals=NULL, columns="exon_id"){
         vals = c(vals, .makeActiveSeqsList("exon_chrom", x))
         .extractFeatureRowsAsGRanges("exon", x, vals, columns)
@@ -481,7 +481,7 @@ setMethod("exons", "TranscriptDb",
 setGeneric("cds", function(x, ...) standardGeneric("cds"))
 
 ## TODO: change defaults from c("cds_id") to: c("CDSID") 
-setMethod("cds", "TranscriptDb",
+setMethod("cds", "TxDb",
     function(x, vals=NULL, columns="cds_id"){
         vals = c(vals, .makeActiveSeqsList("cds_chrom", x))
         .extractFeatureRowsAsGRanges("cds", x, vals, columns)
@@ -517,8 +517,8 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
 ### different chromosomes are dropped. In that case, the genes are returned
 ### in a GRanges object. Otherwise, they're returned in a GRangesList object
 ### with the metadata columns requested thru 'columns' set at the top level.
-.TranscriptDb.genes <- function(x, vals=NULL, columns="gene_id",
-                                single.strand.genes.only=TRUE)
+.TxDb.genes <- function(x, vals=NULL, columns="gene_id",
+                        single.strand.genes.only=TRUE)
 {
     if (!is.character(columns))
         stop("'columns' must be a character vector")
@@ -560,7 +560,7 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     ans
 }
 
-setMethod("genes", "TranscriptDb", .TranscriptDb.genes)
+setMethod("genes", "TxDb", .TxDb.genes)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -569,7 +569,7 @@ setMethod("genes", "TranscriptDb", .TranscriptDb.genes)
 ### generic is in IRanges
 ###
 
-setMethod("promoters", "TranscriptDb",
+setMethod("promoters", "TxDb",
     function(x, upstream=2000, downstream=200, ...)
     {
         gr <- transcripts(x, ...)
@@ -587,7 +587,7 @@ setGeneric("disjointExons",
              standardGeneric("disjointExons")
 )
 
-setMethod("disjointExons", "TranscriptDb", 
+setMethod("disjointExons", "TxDb", 
     function(x, aggregateGenes=FALSE, includeTranscripts=TRUE, ...) 
     {
         exonsByGene <- exonsBy(x, by="gene")
@@ -650,7 +650,7 @@ setMethod("disjointExons", "TranscriptDb",
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extractors for features in other databases.
 ###
-### This is for extractors that do NOT point to the TranscriptDb proper.
+### This is for extractors that do NOT point to the TxDb proper.
 ### Such extractors can point to other databases (mirbase.db) OR they can
 ### point to other FeatureDbs within the same package.
 
@@ -688,7 +688,7 @@ setMethod("disjointExons", "TranscriptDb",
 
   ## And if not - bail out with message
   if(is.na(bld) || dim(bld)[1]==0){
-    stop("this TranscriptDb does not have a miRBase build ID specified")}
+    stop("this TxDb does not have a miRBase build ID specified")}
   ## now connect to mirbase
   require(mirbase.db) ## strictly required
 
@@ -728,7 +728,7 @@ setMethod("disjointExons", "TranscriptDb",
 setGeneric("microRNAs", function(x) standardGeneric("microRNAs"))
 
 ## Then set our method
-setMethod("microRNAs", "TranscriptDb", function(x){.microRNAs(x)} )
+setMethod("microRNAs", "TxDb", function(x){.microRNAs(x)} )
 
 
 
@@ -755,5 +755,5 @@ setMethod("microRNAs", "TranscriptDb", function(x){.microRNAs(x)} )
 
 setGeneric("tRNAs", function(x) standardGeneric("tRNAs"))
 
-setMethod("tRNAs", "TranscriptDb", function(x){.tRNAs(x)} )
+setMethod("tRNAs", "TxDb", function(x){.tRNAs(x)} )
 

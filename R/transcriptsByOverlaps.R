@@ -6,7 +6,7 @@ setGeneric("transcriptsByOverlaps", signature="x",
         standardGeneric("transcriptsByOverlaps")
 )
 
-setMethod("transcriptsByOverlaps", "TranscriptDb",
+setMethod("transcriptsByOverlaps", "TxDb",
     function(x, ranges, maxgap = 0L, minoverlap = 1L,
              type = c("any", "start", "end"),
              columns = c("tx_id", "tx_name"))
@@ -21,7 +21,7 @@ setGeneric("exonsByOverlaps", signature="x",
         standardGeneric("exonsByOverlaps")
 )
 
-setMethod("exonsByOverlaps", "TranscriptDb",
+setMethod("exonsByOverlaps", "TxDb",
     function(x, ranges, maxgap = 0L, minoverlap = 1L,
              type = c("any", "start", "end"),
              columns = "exon_id")
@@ -36,7 +36,7 @@ setGeneric("cdsByOverlaps", signature="x",
         standardGeneric("cdsByOverlaps")
 )
 
-setMethod("cdsByOverlaps", "TranscriptDb",
+setMethod("cdsByOverlaps", "TxDb",
     function(x, ranges, maxgap = 0L, minoverlap = 1L,
              type = c("any", "start", "end"),
              columns = "cds_id")

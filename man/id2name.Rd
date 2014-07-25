@@ -13,18 +13,18 @@
 id2name(txdb, feature.type=c("tx", "exon", "cds"))
 }
 \arguments{
-  \item{txdb}{A \link{TranscriptDb} object.}
+  \item{txdb}{A \link{TxDb} object.}
   \item{feature.type}{The feature type for which the mapping must be
     retrieved.}
 }
 \details{
-  Transcripts, exons and CDS in a \link{TranscriptDb} object are
+  Transcripts, exons and CDS in a \link{TxDb} object are
   stored in seperate tables where the primary key is an integer
   called \emph{feature internal id}. This id is stored in the
   \code{"tx_id"} column for transcripts, in the \code{"exon_id"}
   column for exons, and in the \code{"cds_id"} column for CDS.
   Unlike other commonly used ids like Entrez Gene IDs or Ensembl IDs,
-  this internal id was generated at the time the \link{TranscriptDb}
+  this internal id was generated at the time the \link{TxDb}
   object was created and has no meaning outside the scope of this object.
 
   The \code{id2name} function can be used to translate this internal
@@ -44,8 +44,8 @@ ids and the values the external names.}
   \itemize{
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
           and \code{\link{transcriptsByOverlaps}}, for how to extract
-          genomic features from a \link{TranscriptDb} object.
-    \item The \link{TranscriptDb} class.
+          genomic features from a \link{TxDb} object.
+    \item The \link{TxDb} class.
   }
 }
 \examples{

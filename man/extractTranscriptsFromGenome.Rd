@@ -13,7 +13,7 @@
 
   \code{extractTranscriptsFromGenome} extracts the transcript
   sequences from a BSgenome data package using the transcript
-  information (exon boundaries) stored in a \link{TranscriptDb}
+  information (exon boundaries) stored in a \link{TxDb}
   or \link[GenomicRanges]{GRangesList} object.
   DEFUNCT. Please use \code{\link{extractTranscriptSeqs}} instead.
 
@@ -51,7 +51,7 @@ sortExonsByRank(x, decreasing.rank.on.minus.strand=FALSE)
     in the BSgenome package for how to install a genome.
   }
   \item{txdb}{
-    A \link{TranscriptDb} object or a \link[GenomicRanges]{GRangesList}
+    A \link{TxDb} object or a \link[GenomicRanges]{GRangesList}
     object.
   }
   \item{decreasing.rank.on.minus.strand}{
@@ -65,7 +65,7 @@ sortExonsByRank(x, decreasing.rank.on.minus.strand=FALSE)
   }
   \item{use.names}{
     \code{TRUE} or \code{FALSE}. Ignored if \code{txdb} is not
-    a \link{TranscriptDb} object.
+    a \link{TxDb} object.
     If \code{TRUE} (the default), the returned sequences are named
     with the transcript names.
     If \code{FALSE}, they are named with the transcript internal ids.

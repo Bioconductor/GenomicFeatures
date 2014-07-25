@@ -10,7 +10,7 @@
   The FeatureDb class is a generic container for storing
   genomic locations of an arbitrary type of genomic features.
   
-  See \code{?\link{TranscriptDb}} for a container for storing transcript
+  See \code{?\link{TxDb}} for a container for storing transcript
   annotations.
 
   See \code{?\link{makeFeatureDbFromUCSC}} for a convenient way to
@@ -32,7 +32,7 @@
 
 \seealso{
   \itemize{
-    \item The \link{TranscriptDb} class for storing transcript annotations.
+    \item The \link{TxDb} class for storing transcript annotations.
     \item \code{\link{makeFeatureDbFromUCSC}} for a convenient way to
           make a FeatureDb object from UCSC online resources.
     \item \code{\link{saveDb}} and \code{\link{loadDb}} for

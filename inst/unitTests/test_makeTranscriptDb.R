@@ -78,7 +78,7 @@ test_makeTranscriptDb <- function()
     txdb1 <- do.call(makeTranscriptDb, as.list(txdb0))
 
     ## compare
-    ok <- GenomicFeatures:::compareTranscriptDbs(txdb1, txdb0)
+    ok <- GenomicFeatures:::compareTxDbs(txdb1, txdb0)
     checkTrue(ok)
 }
 

@@ -146,7 +146,7 @@
   ## If there is info. for CDS rank and not for exons, then swap that
   ## over and send the user a message.
   if(all(is.na(exs$exon_rank)) && !all(is.na(cds$exon_rank))){
-      msg <- "This file does not have information about exon rank, but it does have data for CDS rank.  Therefore we are applying the CDS rank information for the corresponding/overlapping exons.  This also means that any exons that did not have a CDS described will also not be present in the final TranscriptDb object."
+      msg <- "This file does not have information about exon rank, but it does have data for CDS rank.  Therefore we are applying the CDS rank information for the corresponding/overlapping exons.  This also means that any exons that did not have a CDS described will also not be present in the final TxDb object."
       warning(paste(strwrap(msg, exdent=2), collapse="\n"),
               immediate.=TRUE, call.=FALSE)
       cdsExs$exon_rank <- cdsExs[[8]]

@@ -1,11 +1,11 @@
 \name{transcriptsByOverlaps}
 
 \alias{transcriptsByOverlaps}
-\alias{transcriptsByOverlaps,TranscriptDb-method}
+\alias{transcriptsByOverlaps,TxDb-method}
 \alias{exonsByOverlaps}
-\alias{exonsByOverlaps,TranscriptDb-method}
+\alias{exonsByOverlaps,TxDb-method}
 \alias{cdsByOverlaps}
-\alias{cdsByOverlaps,TranscriptDb-method}
+\alias{cdsByOverlaps,TxDb-method}
 
 \title{
   Extract genomic features from an object based on their by genomic location
@@ -13,13 +13,13 @@
 \description{
   Generic functions to extract genomic features for specified genomic
   locations.
-  This page documents the methods for \link{TranscriptDb} objects only.
+  This page documents the methods for \link{TxDb} objects only.
 }
 \usage{
 transcriptsByOverlaps(x, ranges,
                       maxgap = 0L, minoverlap = 1L,
                       type = c("any", "start", "end"), ...)
-\S4method{transcriptsByOverlaps}{TranscriptDb}(x, ranges,
+\S4method{transcriptsByOverlaps}{TxDb}(x, ranges,
                       maxgap = 0L, minoverlap = 1L,
                       type = c("any", "start", "end"),
                       columns = c("tx_id", "tx_name"))
@@ -27,7 +27,7 @@ transcriptsByOverlaps(x, ranges,
 exonsByOverlaps(x, ranges,
                 maxgap = 0L, minoverlap = 1L,
                 type = c("any", "start", "end"), ...)
-\S4method{exonsByOverlaps}{TranscriptDb}(x, ranges,
+\S4method{exonsByOverlaps}{TxDb}(x, ranges,
                 maxgap = 0L, minoverlap = 1L,
                 type = c("any", "start", "end"),
                 columns = "exon_id")
@@ -35,13 +35,13 @@ exonsByOverlaps(x, ranges,
 cdsByOverlaps(x, ranges,
               maxgap = 0L, minoverlap = 1L,
               type = c("any", "start", "end"), ...)
-\S4method{cdsByOverlaps}{TranscriptDb}(x, ranges,
+\S4method{cdsByOverlaps}{TxDb}(x, ranges,
               maxgap = 0L, minoverlap = 1L,
               type = c("any", "start", "end"),
               columns = "cds_id")
 }
 \arguments{  
-  \item{x}{A \link{TranscriptDb} object.}
+  \item{x}{A \link{TxDb} object.}
   \item{...}{Arguments to be passed to or from methods.}
   \item{ranges}{A \link[GenomicRanges]{GRanges} object to restrict the output.}
   \item{type}{How to perform the interval overlap operations of the
@@ -68,13 +68,13 @@ cdsByOverlaps(x, ranges,
   \itemize{
     \item \code{\link{transcripts}} and \code{\link{transcriptsBy}}
           for more ways to extract genomic features
-          from a \link{TranscriptDb} object.
+          from a \link{TxDb} object.
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
-          \link{TranscriptDb} object.
-    \item \code{\link{id2name}} for mapping \link{TranscriptDb} internal ids
+          \link{TxDb} object.
+    \item \code{\link{id2name}} for mapping \link{TxDb} internal ids
           to external names for a given feature type.
-    \item The \link{TranscriptDb} class.
+    \item The \link{TxDb} class.
   }
 }
 \examples{

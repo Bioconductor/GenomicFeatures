@@ -7,7 +7,7 @@
 ### distance 
 ###
 
-setMethod("distance", c("GenomicRanges", "TranscriptDb"),
+setMethod("distance", c("GenomicRanges", "TxDb"),
     function(x, y, ignore.strand=FALSE, ..., id, 
              type=c("gene", "tx", "exon", "cds"))
     {

@@ -31,7 +31,7 @@ test_makeTranscriptDbFromUCSCTxTable <- function()
                  DEFAULT_CIRC_SEQS)
 
     ## compare
-    ok <- GenomicFeatures:::compareTranscriptDbs(txdb1, txdb0)
+    ok <- GenomicFeatures:::compareTxDbs(txdb1, txdb0)
     checkTrue(ok)
 }
 

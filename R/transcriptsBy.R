@@ -36,8 +36,8 @@
                         order_by_exon_rank=TRUE,
                         use.names=FALSE)
 {
-    if(!is(txdb,"TranscriptDb"))
-        stop("'txdb' must be a TranscriptDb object")
+    if(!is(txdb, "TxDb"))
+        stop("'txdb' must be a TxDb object")
 
     long <- ifelse(type == "tx", "transcript", type)
     short <- type
@@ -134,7 +134,7 @@ setGeneric("transcriptsBy", signature="x",
 ###    cds    tx        no       yes        no  exon_rank
 ###    cds  gene       yes       yes       yes      locus
 
-setMethod("transcriptsBy", "TranscriptDb",
+setMethod("transcriptsBy", "TxDb",
     function(x, by=c("gene", "exon", "cds"), use.names=FALSE)
     {
         by <- match.arg(by)
@@ -153,7 +153,7 @@ setGeneric("exonsBy", signature="x",
     function(x, by=c("tx", "gene"), ...) standardGeneric("exonsBy")
 )
 
-setMethod("exonsBy", "TranscriptDb",
+setMethod("exonsBy", "TxDb",
     function(x, by=c("tx", "gene"), use.names=FALSE)
     {
         by <- match.arg(by)
@@ -172,7 +172,7 @@ setGeneric("cdsBy", signature="x",
     function(x, by=c("tx", "gene"), ...) standardGeneric("cdsBy")
 )
 
-setMethod("cdsBy", "TranscriptDb",
+setMethod("cdsBy", "TxDb",
     function(x, by=c("tx", "gene"), use.names=FALSE)
     {
         by <- match.arg(by)
@@ -196,7 +196,7 @@ setGeneric("intronsByTranscript",
     function(x, ...) standardGeneric("intronsByTranscript")
 )
 
-setMethod("intronsByTranscript", "TranscriptDb",
+setMethod("intronsByTranscript", "TxDb",
     function(x, use.names=FALSE)
     {
         tx <- transcripts(x)
@@ -335,7 +335,7 @@ setGeneric("fiveUTRsByTranscript",
     function(x, ...) standardGeneric("fiveUTRsByTranscript")
 )
 
-setMethod("fiveUTRsByTranscript", "TranscriptDb",
+setMethod("fiveUTRsByTranscript", "TxDb",
     function(x, use.names=FALSE)
     {
         splicings <- .getSplicingsForTranscriptsWithCDSs(x)
@@ -347,7 +347,7 @@ setGeneric("threeUTRsByTranscript",
     function(x, ...) standardGeneric("threeUTRsByTranscript")
 )
 
-setMethod("threeUTRsByTranscript", "TranscriptDb",
+setMethod("threeUTRsByTranscript", "TxDb",
     function(x, use.names=FALSE)
     {
         splicings <- .getSplicingsForTranscriptsWithCDSs(x)

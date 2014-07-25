@@ -788,7 +788,7 @@ getChromInfoFromUCSC <- function(genome,
     metadata <- .prepareUCSCMetadata(genome, tablename, gene_id_type,
                                      full_dataset, miRBaseBuild)
 
-    message("Make the TranscriptDb object ... ", appendLF=FALSE)
+    message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTranscriptDb(transcripts, splicings, genes=genes,
                              chrominfo=chrominfo, metadata=metadata,
                              reassign.ids=TRUE)

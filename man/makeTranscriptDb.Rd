@@ -3,11 +3,11 @@
 \alias{makeTranscriptDb}
 
 \title{
-  Making a TranscriptDb object from user supplied annotations
+  Making a TxDb object from user supplied annotations
 }
 \description{
   \code{makeTranscriptDb} is a low-level constructor for making
-  a \link{TranscriptDb} object from user supplied transcript annotations.
+  a \link{TxDb} object from user supplied transcript annotations.
   See \code{?\link{makeTranscriptDbFromUCSC}} and
   \code{?\link{makeTranscriptDbFromBiomart}} for higher-level
   functions that feed data from the UCSC or BioMart sources
@@ -138,7 +138,7 @@
   Other columns, if any, are ignored (with a warning).
 }
 
-\value{A \link{TranscriptDb} object.}
+\value{A \link{TxDb} object.}
 
 \author{
   H. Pages
@@ -148,12 +148,12 @@
   \itemize{
     \item \code{\link{makeTranscriptDbFromUCSC}} and
           \code{\link{makeTranscriptDbFromBiomart}} for convenient ways to
-          make \link{TranscriptDb} objects from UCSC or BioMart online
+          make \link{TxDb} objects from UCSC or BioMart online
           resources.
     \item \code{\link{makeTranscriptDbFromGFF}} for making a
-          \link{TranscriptDb} object from annotations available
+          \link{TxDb} object from annotations available
           as a GFF3 or GTF file.
-    \item The \link{TranscriptDb} class.
+    \item The \link{TxDb} class.
   }
 }
 

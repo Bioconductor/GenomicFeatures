@@ -5,12 +5,12 @@
 \alias{makeTranscriptDbFromUCSC}
 
 \title{
-  Make a TranscriptDb object from annotations available at the
+  Make a TxDb object from annotations available at the
   UCSC Genome Browser
 }
 \description{
   The \code{makeTranscriptDbFromUCSC} function allows the user
-  to make a \link{TranscriptDb} object from transcript annotations
+  to make a \link{TxDb} object from transcript annotations
   available at the UCSC Genome Browser.
 }
 \usage{
@@ -40,7 +40,7 @@ makeTranscriptDbFromUCSC(
   \item{transcript_ids}{optionally, only retrieve transcript
     annotation data for the specified set of transcript ids.
     If this is used, then the meta information displayed for the
-    resulting \link{TranscriptDb} object will say 'Full dataset: no'.
+    resulting \link{TxDb} object will say 'Full dataset: no'.
     Otherwise it will say 'Full dataset: yes'.}
   \item{circ_seqs}{a character vector to list out which chromosomes
     should be marked as circular.}
@@ -60,7 +60,7 @@ makeTranscriptDbFromUCSC(
   that feeds data from a BioMart database.
 }
 
-\value{A \link{TranscriptDb} object.}
+\value{A \link{TxDb} object.}
 
 \author{
   M. Carlson and H. Pages

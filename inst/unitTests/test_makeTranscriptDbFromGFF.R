@@ -157,7 +157,7 @@ test_makeTranscriptDbFromGFF <- function(){
    )
 
   ## test
-  checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb, txdb_gff))
+  checkTrue(GenomicFeatures:::compareTxDbs(txdb, txdb_gff))
 
   
   ## wanted
@@ -180,7 +180,7 @@ test_makeTranscriptDbFromGFF <- function(){
          species="Aedes aegypti"))
 
   ## test
-  checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb2, txdb_gtf))
+  checkTrue(GenomicFeatures:::compareTxDbs(txdb2, txdb_gtf))
 
 
   ## wanted
@@ -201,7 +201,7 @@ test_makeTranscriptDbFromGFF <- function(){
   ## print(lst1 <- lapply(as.list(txdb3), head, n=30))
   ## print(lst2 <- lapply(as.list(txdb_fly), head, n=30))
   ## print(all.equal(lst1, lst2))
-  checkTrue(GenomicFeatures:::compareTranscriptDbs(txdb3, txdb_fly))
+  checkTrue(GenomicFeatures:::compareTxDbs(txdb3, txdb_fly))
 
 
   ## test for broken NCBI bacterial GFFs (that only seem to have
@@ -218,7 +218,7 @@ test_makeTranscriptDbFromGFF <- function(){
                                       useGenesAsTranscripts=TRUE)
 
   ## Tests
-  checkTrue(class(txdb_bac)=="TranscriptDb")
+  checkTrue(class(txdb_bac)=="TxDb")
   checkTrue(length(transcripts(txdb_bac)) > 100)
 
 }

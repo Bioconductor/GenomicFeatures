@@ -1,17 +1,17 @@
 \name{transcriptsBy}
 
 \alias{transcriptsBy}
-\alias{transcriptsBy,TranscriptDb-method}
+\alias{transcriptsBy,TxDb-method}
 \alias{exonsBy}
-\alias{exonsBy,TranscriptDb-method}
+\alias{exonsBy,TxDb-method}
 \alias{cdsBy}
-\alias{cdsBy,TranscriptDb-method}
+\alias{cdsBy,TxDb-method}
 \alias{intronsByTranscript}
-\alias{intronsByTranscript,TranscriptDb-method}
+\alias{intronsByTranscript,TxDb-method}
 \alias{fiveUTRsByTranscript}
-\alias{fiveUTRsByTranscript,TranscriptDb-method}
+\alias{fiveUTRsByTranscript,TxDb-method}
 \alias{threeUTRsByTranscript}
-\alias{threeUTRsByTranscript,TranscriptDb-method}
+\alias{threeUTRsByTranscript,TxDb-method}
 
 \title{
   Extract and group genomic features of a given type
@@ -19,29 +19,29 @@
 \description{
   Generic functions to extract genomic features of a given type
   grouped based on another type of genomic feature.
-  This page documents the methods for \link{TranscriptDb} objects only.
+  This page documents the methods for \link{TxDb} objects only.
 }
 \usage{
 transcriptsBy(x, by=c("gene", "exon", "cds"), ...)
-\S4method{transcriptsBy}{TranscriptDb}(x, by=c("gene", "exon", "cds"), use.names=FALSE)
+\S4method{transcriptsBy}{TxDb}(x, by=c("gene", "exon", "cds"), use.names=FALSE)
 
 exonsBy(x, by=c("tx", "gene"), ...)
-\S4method{exonsBy}{TranscriptDb}(x, by=c("tx", "gene"), use.names=FALSE)
+\S4method{exonsBy}{TxDb}(x, by=c("tx", "gene"), use.names=FALSE)
 
 cdsBy(x, by=c("tx", "gene"), ...)
-\S4method{cdsBy}{TranscriptDb}(x, by=c("tx", "gene"), use.names=FALSE)
+\S4method{cdsBy}{TxDb}(x, by=c("tx", "gene"), use.names=FALSE)
 
 intronsByTranscript(x, ...)
-\S4method{intronsByTranscript}{TranscriptDb}(x, use.names=FALSE)
+\S4method{intronsByTranscript}{TxDb}(x, use.names=FALSE)
 
 fiveUTRsByTranscript(x, ...)
-\S4method{fiveUTRsByTranscript}{TranscriptDb}(x, use.names=FALSE)
+\S4method{fiveUTRsByTranscript}{TxDb}(x, use.names=FALSE)
 
 threeUTRsByTranscript(x, ...)
-\S4method{threeUTRsByTranscript}{TranscriptDb}(x, use.names=FALSE)
+\S4method{threeUTRsByTranscript}{TxDb}(x, use.names=FALSE)
 }
 \arguments{
-  \item{x}{A \link{TranscriptDb} object.}
+  \item{x}{A \link{TxDb} object.}
   \item{...}{Arguments to be passed to or from methods.}
   \item{by}{One of \code{"gene"}, \code{"exon"}, \code{"cds"} or \code{"tx"}.
     Determines the grouping.}
@@ -94,13 +94,13 @@ threeUTRsByTranscript(x, ...)
   \itemize{
     \item \code{\link{transcripts}} and \code{\link{transcriptsByOverlaps}}
           for more ways to extract genomic features
-          from a \link{TranscriptDb} object.
+          from a \link{TxDb} object.
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
-          \link{TranscriptDb} object.
-    \item \code{\link{id2name}} for mapping \link{TranscriptDb} internal ids
+          \link{TxDb} object.
+    \item \code{\link{id2name}} for mapping \link{TxDb} internal ids
           to external names for a given feature type.
-    \item The \link{TranscriptDb} class.
+    \item The \link{TxDb} class.
   }
 }
 \examples{

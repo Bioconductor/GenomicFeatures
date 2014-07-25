@@ -1,20 +1,20 @@
 \name{transcripts}
 
 \alias{transcripts}
-\alias{transcripts,TranscriptDb-method}
+\alias{transcripts,TxDb-method}
 \alias{exons}
-\alias{exons,TranscriptDb-method}
+\alias{exons,TxDb-method}
 \alias{cds}
-\alias{cds,TranscriptDb-method}
+\alias{cds,TxDb-method}
 \alias{genes}
-\alias{genes,TranscriptDb-method}
-\alias{promoters,TranscriptDb-method}
+\alias{genes,TxDb-method}
+\alias{promoters,TxDb-method}
 \alias{disjointExons}
-\alias{disjointExons,TranscriptDb-method}
+\alias{disjointExons,TxDb-method}
 \alias{microRNAs}
-\alias{microRNAs,TranscriptDb-method}
+\alias{microRNAs,TxDb-method}
 \alias{tRNAs}
-\alias{tRNAs,TranscriptDb-method}
+\alias{tRNAs,TxDb-method}
 
 \title{
   Extract genomic features from an object
@@ -22,39 +22,39 @@
 
 \description{
   Generic functions to extract genomic features from an object.
-  This page documents the methods for \link{TranscriptDb} objects only.
+  This page documents the methods for \link{TxDb} objects only.
 }
 
 \usage{
 transcripts(x, ...)
-\S4method{transcripts}{TranscriptDb}(x, vals=NULL, columns=c("tx_id", "tx_name"))
+\S4method{transcripts}{TxDb}(x, vals=NULL, columns=c("tx_id", "tx_name"))
 
 exons(x, ...)
-\S4method{exons}{TranscriptDb}(x, vals=NULL, columns="exon_id")
+\S4method{exons}{TxDb}(x, vals=NULL, columns="exon_id")
 
 cds(x, ...)
-\S4method{cds}{TranscriptDb}(x, vals=NULL, columns="cds_id")
+\S4method{cds}{TxDb}(x, vals=NULL, columns="cds_id")
 
 genes(x, ...)
-\S4method{genes}{TranscriptDb}(x, vals=NULL, columns="gene_id", single.strand.genes.only=TRUE)
+\S4method{genes}{TxDb}(x, vals=NULL, columns="gene_id", single.strand.genes.only=TRUE)
 
 #promoters(x, upstream=2000, downstream=200, ...)
-\S4method{promoters}{TranscriptDb}(x, upstream=2000, downstream=200, ...)
+\S4method{promoters}{TxDb}(x, upstream=2000, downstream=200, ...)
 
 disjointExons(x, ...)
-\S4method{disjointExons}{TranscriptDb}(x, aggregateGenes=FALSE, 
+\S4method{disjointExons}{TxDb}(x, aggregateGenes=FALSE, 
               includeTranscripts=TRUE, ...) 
 
 microRNAs(x)
-\S4method{microRNAs}{TranscriptDb}(x)
+\S4method{microRNAs}{TxDb}(x)
 
 tRNAs(x)
-\S4method{tRNAs}{TranscriptDb}(x)
+\S4method{tRNAs}{TxDb}(x)
 }
 
 \arguments{ 
   \item{x}{
-    A \link{TranscriptDb} object.
+    A \link{TxDb} object.
   }
   \item{...}{
     Arguments to be passed to or from methods.
@@ -121,7 +121,7 @@ tRNAs(x)
 
 \details{
   These are the main functions for extracting transcript information
-  from a \link{TranscriptDb} object. With the exception of
+  from a \link{TxDb} object. With the exception of
   \code{microRNAs}, these methods can restrict the output based on
   categorical information. To restrict the output based on interval
   information, use the \code{\link{transcriptsByOverlaps}},
@@ -129,7 +129,7 @@ tRNAs(x)
   functions.
 
   The \code{promoters} function computes user-defined promoter regions
-  for the transcripts in a \code{TranscriptDb} object. The return object is a 
+  for the transcripts in a \link{TxDb} object. The return object is a 
   \code{GRanges} of promoter regions around the transcription start 
   site the span of which is defined by \code{upstream} and \code{downstream}.
   For additional details on how the promoter range is computed and the
@@ -161,13 +161,13 @@ tRNAs(x)
   \itemize{
     \item \code{\link{transcriptsBy}} and \code{\link{transcriptsByOverlaps}}
           for more ways to extract genomic features
-          from a \link{TranscriptDb} object.
+          from a \link{TxDb} object.
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
-          \link{TranscriptDb} object.
-    \item \code{\link{id2name}} for mapping \link{TranscriptDb} internal ids
+          \link{TxDb} object.
+    \item \code{\link{id2name}} for mapping \link{TxDb} internal ids
           to external names for a given feature type.
-    \item The \link{TranscriptDb} class.
+    \item The \link{TxDb} class.
   }
 }
 

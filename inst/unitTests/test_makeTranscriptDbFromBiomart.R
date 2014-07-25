@@ -22,7 +22,7 @@ test_makeTranscriptDbFromBiomart <- function()
     checkTrue(validObject(txdb1))
 
     ## compare
-    ok <- GenomicFeatures:::compareTranscriptDbs(txdb1, txdb0)
+    ok <- GenomicFeatures:::compareTxDbs(txdb1, txdb0)
     checkTrue(ok)
 }
 

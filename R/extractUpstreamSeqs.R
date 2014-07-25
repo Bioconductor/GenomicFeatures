@@ -33,7 +33,7 @@ setMethod("extractUpstreamSeqs", "GenomicRanges",
     }
 )
 
-setMethod("extractUpstreamSeqs", "TranscriptDb",
+setMethod("extractUpstreamSeqs", "TxDb",
     function(x, genes, width=1000, exclude.seqlevels=NULL)
     {
         genes <- sort(genes(genes))

@@ -1,4 +1,4 @@
-%\VignetteIndexEntry{Making and Utilizing TranscriptDb Objects}
+%\VignetteIndexEntry{Making and Utilizing TxDb Objects}
 %\VignetteDepends{GenomicFeatures,TxDb.Hsapiens.UCSC.hg19.knownGene,BSgenome.Hsapiens.UCSC.hg19}
 %\VignetteKeywords{annotation, database}
 %\VignettePackage{GenomicFeatures}
@@ -25,7 +25,7 @@ BiocStyle::latex()
 }{\bigskip}
 
 
-\title{Making and Utilizing TranscriptDb Objects}
+\title{Making and Utilizing TxDb Objects}
 \author{Marc Carlson, Patrick Aboyoun, Herve Pages, Seth Falcon, Martin Morgan}
 
 
@@ -48,33 +48,33 @@ library("GenomicFeatures")
 
 
 
-\section{\Rclass{TranscriptDb} Objects}
+\section{\Rclass{TxDb} Objects}
 
-The \Rpackage{GenomicFeatures} package uses \Rclass{TranscriptDb}
+The \Rpackage{GenomicFeatures} package uses \Rclass{TxDb}
 objects to store transcript metadata. This class maps the 5' and 3'
 untranslated regions (UTRs), protein coding sequences (CDSs) and exons
 for a set of mRNA transcripts to their associated
-genome. \Rclass{TranscriptDb} objects have numerous accessors functions to
+genome. \Rclass{TxDb} objects have numerous accessors functions to
 allow such features to be retrieved individually or grouped together
 in a way that reflects the underlying biology.
 
-All \Rclass{TranscriptDb} objects are backed by a SQLite database that
+All \Rclass{TxDb} objects are backed by a SQLite database that
 manages genomic locations and the relationships between pre-processed
 mRNA transcripts, exons, protein coding sequences, and their related
 gene identifiers.
 
 
-\section{Retrieving Data from \Rclass{TranscriptDb} objects}
+\section{Retrieving Data from \Rclass{TxDb} objects}
 
 
 \subsection{Loading Transcript Data}
 
 There are two ways that users can load pre-existing data to generate a
-\Rclass{TranscriptDb} object.  One method is to use the
+\Rclass{TxDb} object.  One method is to use the
 \Rfunction{loadDb} method to load the object directly from an
 appropriate .sqlite database file.
 
-Here we are loading a previously created \Rclass{TranscriptDb} object
+Here we are loading a previously created \Rclass{TxDb} object
 based on UCSC known gene data.  This database only contains a small
 subset of the possible annotations for human and is only included to
 demonstrate and test the functionality of the
@@ -87,12 +87,12 @@ txdb <- loadDb(samplefile)
 txdb
 @
 
-In this case, the \Rclass{TranscriptDb} object has been returned by
+In this case, the \Rclass{TxDb} object has been returned by
 the \Rfunction{loadDb} method.
 
 
 More commonly however, we expect that users will just load a
-TranscriptDb annotation package like this:
+TxDb annotation package like this:
 
 <<loadPackage>>=
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
@@ -100,7 +100,7 @@ txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene #shorthand (for convenience)
 txdb
 @
 
-Loading the package like this will also create a \Rclass{TranscriptDb}
+Loading the package like this will also create a \Rclass{TxDb}
 object, and by default that object will have the same name as the
 package itself.
 
@@ -110,7 +110,7 @@ package itself.
 
 \subsection{Pre-filtering data based on Chromosomes}
 It is possible to filter the data that is returned from a
-\Rclass{TranscriptDb} object based on it's chromosome.  This can be a
+\Rclass{TxDb} object based on it's chromosome.  This can be a
 useful way to limit the things that are returned if you are only
 interested in studying a handful of chromosomes.
 
@@ -123,7 +123,7 @@ head(seqlevels(txdb))
 @ 
 
 Will tell you all the chromosomes that are active for the
-TxDb.Hsapiens.UCSC.hg19.knownGene \Rclass{TranscriptDb} object (by
+TxDb.Hsapiens.UCSC.hg19.knownGene \Rclass{TxDb} object (by
 default it will be all of them).
 
 If you then wanted to only set Chromosome 1 to be active you could do
@@ -155,15 +155,15 @@ seqlevels(txdb, force=TRUE) <- c("chr15")
 
 \subsection{Retrieving data using the select method}
 
-The \Rclass{TranscriptDb} objects inherit from \Rclass{AnnotationDb}
+The \Rclass{TxDb} objects inherit from \Rclass{AnnotationDb}
 objects (just as the \Rclass{ChipDb} and \Rclass{OrgDb} objects do).
 One of the implications of this relationship is that these object
 ought to be used in similar ways to each other.  Therefore we have
 written supporting \Rfunction{columns}, \Rfunction{keytypes}, \Rfunction{keys}
-and \Rfunction{select} methods for \Rclass{TranscriptDb} objects.
+and \Rfunction{select} methods for \Rclass{TxDb} objects.
 
 These methods can be a useful way of extracting data from a
-\Rclass{TranscriptDb} object.  And they are used in the same way that
+\Rclass{TxDb} object.  And they are used in the same way that
 they would be used to extract information about a \Rclass{ChipDb} or
 an \Rclass{OrgDb} object.  Here is a simple example of how to find the
 UCSC transcript names that match with a set of gene IDs.
@@ -199,13 +199,13 @@ often the case when you are doing counting or specialized overlap
 operations downstream.  For these use cases there is another family of
 methods available.
 
-Perhaps the most common operations for a \Rclass{TranscriptDb} object
+Perhaps the most common operations for a \Rclass{TxDb} object
 is to retrieve the genomic coordinates or \textit{ranges} for exons,
 transcripts or coding sequences.  The functions
 \Rfunction{transcripts}, \Rfunction{exons}, and \Rfunction{cds} return
 the coordinate information as a \Rclass{GRanges} object.
 
-As an example, all transcripts present in a \Rclass{TranscriptDb} object
+As an example, all transcripts present in a \Rclass{TxDb} object
 can be obtained as follows:
 
 <<transcripts1>>=
@@ -302,7 +302,7 @@ argument. The object returned can then be used by functions like
 high-throughput sequencing.
 
 The identifiers used to label the \Rclass{GRanges} objects depend upon
-the data source used to create the \Rclass{TranscriptDb} object.  So
+the data source used to create the \Rclass{TxDb} object.  So
 the list identifiers will not always be Entrez Gene IDs, as they were
 in the first example.  Furthermore, some data sources do not provide a
 unique identifier for all features.  In this situation, the group
@@ -393,13 +393,13 @@ translate(cds_seqs)
 
 
 
-\section{Creating New \Rclass{TranscriptDb} Objects or Packages}
+\section{Creating New \Rclass{TxDb} Objects or Packages}
 
 The \Rpackage{GenomicFeatures} package provides functions to create
-\Rclass{TranscriptDb} objects based on data downloaded from UCSC
+\Rclass{TxDb} objects based on data downloaded from UCSC
 Genome Bioinformatics or BioMart. The following subsections
 demonstrate the use of these functions.  There is also support for
-creating \Rclass{TranscriptDb} objects from custom data sources using
+creating \Rclass{TxDb} objects from custom data sources using
 \Rfunction{makeTranscriptDb}; see the help page for this function for
 details.
 
@@ -478,22 +478,22 @@ Usage is similar to \Rfunction{makeTranscriptDbFromBiomart} and
 \Rfunction{makeTranscriptDbFromUCSC}.  
 
 
-\subsection{Saving and Loading a \Rclass{TranscriptDb} Object}
+\subsection{Saving and Loading a \Rclass{TxDb} Object}
 
-Once a \Rclass{TranscriptDb} object has been created, it can be saved
+Once a \Rclass{TxDb} object has been created, it can be saved
 to avoid the time and bandwidth costs of recreating it and to make it
 possible to reproduce results with identical genomic feature data at a
-later date.  Since \Rclass{TranscriptDb} objects are backed by a
+later date.  Since \Rclass{TxDb} objects are backed by a
 SQLite database, the save format is a SQLite database file (which
 could be accessed from programs other than \R if desired).  Note that
-it is not possible to serialize a \Rclass{TranscriptDb} object using
+it is not possible to serialize a \Rclass{TxDb} object using
 \R's \Rfunction{save} function.
 
 <<saveDb-1, eval=FALSE>>=
 saveDb(mm9KG, file="fileName.sqlite")
 @
 
-And as was mentioned earlier, a saved \Rclass{TranscriptDb} object can
+And as was mentioned earlier, a saved \Rclass{TxDb} object can
 be initialized from a .sqlite file by simply using \Rfunction{loadDb}.
 
 <<loadDb-1, eval=FALSE>>=
@@ -512,7 +512,7 @@ to \Rfunction{makeTranscriptDbFromUCSC} and
 \Rfunction{makeTranscriptDbFromBiomart} except that they will take the
 extra step of actually wrapping the database up into an annotation
 package for you.  This package can then be installed and used as of
-the standard TranscriptDb packages found on in the Bioconductor
+the standard TxDb packages found on in the Bioconductor
 repository.
 
 

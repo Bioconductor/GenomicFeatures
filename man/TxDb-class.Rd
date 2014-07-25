@@ -1,38 +1,37 @@
-\name{TranscriptDb-class}
+\name{TxDb-class}
 
-\alias{TranscriptDb-class}
-\alias{class:TranscriptDb}
-\alias{TranscriptDb}
+\alias{TxDb-class}
+\alias{class:TxDb}
+\alias{TxDb}
 
-\alias{seqinfo,TranscriptDb-method}
-\alias{seqinfo<-,TranscriptDb-method}
+\alias{seqinfo,TxDb-method}
+\alias{seqinfo<-,TxDb-method}
 \alias{isActiveSeq}
 \alias{isActiveSeq<-}
-\alias{isActiveSeq,TranscriptDb-method}
-\alias{isActiveSeq<-,TranscriptDb-method}
+\alias{isActiveSeq,TxDb-method}
+\alias{isActiveSeq<-,TxDb-method}
 
 % coercion
-\alias{as.list,TranscriptDb-method}
+\alias{as.list,TxDb-method}
 
-\title{TranscriptDb objects}
+\title{TxDb objects}
 
 \description{
-  The TranscriptDb class is a container for storing transcript
-  annotations.
+  The TxDb class is a container for storing transcript annotations.
 
   See \code{?\link{FeatureDb}} for a more generic container for storing
   genomic locations of an arbitrary type of genomic features.
 
   See \code{?\link{makeTranscriptDbFromUCSC}} and
   \code{?\link{makeTranscriptDbFromBiomart}} for convenient ways to
-  make TranscriptDb objects from UCSC or BioMart online resources.
+  make TxDb objects from UCSC or BioMart online resources.
 
-  See \code{?\link{makeTranscriptDbFromGFF}} for making a TranscriptDb
+  See \code{?\link{makeTranscriptDbFromGFF}} for making a TxDb
   object from annotations available as a GFF3 or GTF file.
 }
 
 \section{Methods}{
-  In the code snippets below, \code{x} is a TranscriptDb object.
+  In the code snippets below, \code{x} is a TxDb object.
 
   \describe{
     \item{}{
@@ -86,17 +85,17 @@
           genomic locations of an arbitrary type of genomic features.
     \item \code{\link{makeTranscriptDbFromUCSC}} and
           \code{\link{makeTranscriptDbFromBiomart}} for convenient ways to
-          make TranscriptDb objects from UCSC or BioMart online resources.
-    \item \code{\link{makeTranscriptDbFromGFF}} for making a TranscriptDb
+          make TxDb objects from UCSC or BioMart online resources.
+    \item \code{\link{makeTranscriptDbFromGFF}} for making a TxDb
           object from annotations available as a GFF3 or GTF file.
     \item \code{\link{saveDb}} and \code{\link{loadDb}} for
-          saving and loading the database content of a TranscriptDb object.
+          saving and loading the database content of a TxDb object.
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
           and \code{\link{transcriptsByOverlaps}},
-          for how to extract genomic features from a TranscriptDb object.
+          for how to extract genomic features from a TxDb object.
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
-          TranscriptDb object.
+          TxDb object.
     \item The \link[GenomeInfoDb]{Seqinfo} class in the \pkg{GenomeInfoDb}
           package.
   }

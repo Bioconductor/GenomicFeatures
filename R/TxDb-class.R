@@ -1,5 +1,5 @@
 ### =========================================================================
-### TranscriptDb objects
+### TxDb objects
 ### -------------------------------------------------------------------------
 
 
@@ -129,8 +129,8 @@ gc()
 
 
 ### Concrete GenomicFeatures types
-.TranscriptDb <-
-    setRefClass("TranscriptDb", contains="AnnotationDb",
+.TxDb <-
+    setRefClass("TxDb", contains="AnnotationDb",
         fields=list(.chrom="character",
                     isActiveSeq="logical",
                     seqlevelsStyle="character",
@@ -154,7 +154,7 @@ gc()
 
 ### Not exported.
 DB_TYPE_NAME <- "Db type"
-DB_TYPE_VALUE <- "TranscriptDb"  # same as the name of the class
+DB_TYPE_VALUE <- "TxDb"  # same as the name of the class
 DB_SCHEMA_VERSION <- "1.0"
 
 
@@ -252,7 +252,7 @@ load_genes <- function(txdb, set.col.class=FALSE)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Validity of a TranscriptDb object.
+### Validity of a TxDb object.
 ###
 
 ### Not exported.
@@ -327,7 +327,7 @@ makeFeatureColnames <- function(feature_shortname)
     NULL
 }
 
-.valid.TranscriptDb <- function(x)
+.valid.TxDb <- function(x)
 {
     conn <- AnnotationDbi:::dbConn(x)
 
@@ -341,7 +341,7 @@ makeFeatureColnames <- function(feature_shortname)
       .valid.chrominfo.table(conn))
 }
 
-setValidity2("TranscriptDb", .valid.TranscriptDb)
+setValidity2("TxDb", .valid.TxDb)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -351,9 +351,9 @@ setValidity2("TranscriptDb", .valid.TranscriptDb)
 
 ## Legacy constructor (still not exported) - used in some other places so
 ## preserved for now
-TranscriptDb <- function(conn)
+TxDb <- function(conn)
 {
-    .TranscriptDb$new(conn=conn)
+    .TxDb$new(conn=conn)
 }
 
 
@@ -363,7 +363,7 @@ TranscriptDb <- function(conn)
 
 ## seqinfo getter needs to rename and re-sort things based on new2old
 ## integers every single time it is accessed
-.seqinfo.TranscriptDb <- function(x)
+.seqinfo.TxDb <- function(x)
 {
     data <- load_chrominfo(x, set.col.class=TRUE)
     ## We take the seqnames from x's private field '.chrom'.
@@ -380,20 +380,20 @@ TranscriptDb <- function(conn)
     ans
 }
 
-setMethod("seqinfo", "TranscriptDb", function(x){.seqinfo.TranscriptDb(x)})
+setMethod("seqinfo", "TxDb", function(x){.seqinfo.TxDb(x)})
 
-### This is a restricted "seqinfo<-" method for TranscriptDb objects
+### This is a restricted "seqinfo<-" method for TxDb objects
 ### that only supports replacement of the sequence names or dropping
 ### and resorting of the sequence names.  Since the getter above is
 ### resorting and renaming every time, the setter only needs to put
 ### the new2old field together correctly (in the object).
 
-.seqinfo.TranscriptDbReplace <- function(x, new2old=NULL, force=FALSE, value)
+.seqinfo.TxDbReplace <- function(x, new2old=NULL, force=FALSE, value)
 {
     if (!is(value, "Seqinfo"))
         stop("the supplied 'seqinfo' must be a Seqinfo object")
     IN_THIS_CONTEXT <- paste0("when replacing the 'seqinfo' ",
-                              "of a TranscriptDb object")
+                              "of a TxDb object")
 
     ## Get the current seqinfo
     x_seqinfo <- seqinfo(x)
@@ -455,8 +455,8 @@ setMethod("seqinfo", "TranscriptDb", function(x){.seqinfo.TranscriptDb(x)})
     x
 }
 
-setReplaceMethod("seqinfo", "TranscriptDb", function(x, new2old, force, value){
-    .seqinfo.TranscriptDbReplace(x, new2old=new2old, force=force, value)})
+setReplaceMethod("seqinfo", "TxDb", function(x, new2old, force, value){
+    .seqinfo.TxDbReplace(x, new2old=new2old, force=force, value)})
 
 
 ## This is the seqlevels() currently in use from GRanges
@@ -491,7 +491,7 @@ setReplaceMethod("seqinfo", "TranscriptDb", function(x, new2old, force, value){
 
 
 ## Reset seqlevels (seqnames) back to original values.
-setMethod("seqlevels0", "TranscriptDb", 
+setMethod("seqlevels0", "TxDb", 
     function(x) x$initialize()
 )
 
@@ -504,7 +504,7 @@ setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
     names(ans) <- x$.chrom
     ans
 }
-setMethod("isActiveSeq", "TranscriptDb",
+setMethod("isActiveSeq", "TxDb",
           function(x){
               #.Deprecated("seqlevels", package="GenomicFeatures")
               .isActiveSeq(x)
@@ -538,7 +538,7 @@ setGeneric("isActiveSeq<-",
     x_isActiveSeq
 }
 
-setReplaceMethod("isActiveSeq","TranscriptDb",
+setReplaceMethod("isActiveSeq","TxDb",
     function(x, value)
     {
         #.Deprecated("seqlevels", package="GenomicFeatures")
@@ -550,7 +550,7 @@ setReplaceMethod("isActiveSeq","TranscriptDb",
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Comparing 2 TranscriptDb objects.
+### Comparing 2 TxDb objects.
 ###
 
 ### Dump the entire db into a list of data frames 'txdump' that can be used
@@ -558,7 +558,7 @@ setReplaceMethod("isActiveSeq","TranscriptDb",
 ### of information.
 ### Note that the transcripts are dumped in the same order in all the
 ### data frames.
-setMethod("as.list", "TranscriptDb",
+setMethod("as.list", "TxDb",
     function(x, ...)
     {
         transcripts <- load_transcripts(x, set.col.class=TRUE)
@@ -570,11 +570,10 @@ setMethod("as.list", "TranscriptDb",
     }
 )
 
-compareTranscriptDbs <- function(txdb1, txdb2)
+compareTxDbs <- function(txdb1, txdb2)
 {
-    if (!is(txdb1, "TranscriptDb")
-     || !is(txdb2, "TranscriptDb"))
-        stop("'txdb1' and 'txdb2' must be TranscriptDb objects")
+    if (!is(txdb1, "TxDb") || !is(txdb2, "TxDb"))
+        stop("'txdb1' and 'txdb2' must be TxDb objects")
     txdump1 <- as.list(txdb1)
     txdump2 <- as.list(txdb2)
     identical(txdump1, txdump2)
@@ -584,7 +583,7 @@ compareTranscriptDbs <- function(txdb1, txdb2)
 ### Coercion
 ###
 
-setMethod("asBED", "TranscriptDb", function(x) {
+setMethod("asBED", "TxDb", function(x) {
   exons_tx <- exonsBy(x)
   cds_tx <- range(cdsBy(x))
   exons_tx <- exons_tx[names(cds_tx)]
@@ -593,7 +592,7 @@ setMethod("asBED", "TranscriptDb", function(x) {
   bed
 })
 
-setMethod("asGFF", "TranscriptDb", function(x) {
+setMethod("asGFF", "TxDb", function(x) {
   tx_gene <- transcriptsBy(x)
   gene <- unlist(range(tx_gene))
   mcols(gene)$Parent <- CharacterList(character())
@@ -627,9 +626,9 @@ setMethod("asGFF", "TranscriptDb", function(x) {
   gff
 })
 
-setMethod(rtracklayer:::bestFileFormat, "TranscriptDb", function(x) "gff3")
+setMethod(rtracklayer:::bestFileFormat, "TxDb", function(x) "gff3")
 
-setMethod("show", "TranscriptDb",
+setMethod("show", "TxDb",
     function(object)
     {
         cat(class(object), "object:\n")

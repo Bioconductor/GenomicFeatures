@@ -3,12 +3,12 @@
 \alias{makeTranscriptDbFromGFF}
 
 \title{
-  Make a TranscriptDb object from annotations available as a
+  Make a TxDb object from annotations available as a
   GFF3 or GTF file
 }
 \description{
   The \code{makeTranscriptDbFromGFF} function allows the user
-  to make a \link{TranscriptDb} object from transcript annotations
+  to make a \link{TxDb} object from transcript annotations
   available as a GFF3 or GTF file.
 }
 \usage{
@@ -86,7 +86,7 @@ makeTranscriptDbFromGFF(file,
   avoid the inference.
 }
 
-\value{A \link{TranscriptDb} object.}
+\value{A \link{TxDb} object.}
 
 \author{
   M. Carlson

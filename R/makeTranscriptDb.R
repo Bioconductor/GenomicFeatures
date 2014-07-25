@@ -1,5 +1,5 @@
 ### =========================================================================
-### Making TranscriptDb objects
+### Making TxDb objects
 ### -------------------------------------------------------------------------
 
 
@@ -153,7 +153,7 @@
         stop("'splicings' has a \"cds_start\" col ",
              "but no \"cds_end\" col, or vice versa")
     if (!hasCol(splicings, "cds_start")) {
-        warning("no CDS information for this TranscriptDb object")
+        warning("no CDS information for this TxDb object")
     } else {
         ## Check 'cds_start'.
         if (!is.vector(splicings$cds_start)
@@ -180,7 +180,7 @@
             stop("NAs in 'splicings$cds_start' don't match ",
                  "NAs in 'splicings$cds_end'")
         if (all(start_is_na)) {
-            warning("no CDS information for this TranscriptDb object")
+            warning("no CDS information for this TxDb object")
         } else {
             if (any(splicings$cds_start > splicings$cds_end, na.rm=TRUE))
                 stop("cds starts must be <= cds ends")
@@ -258,7 +258,7 @@
 {
     if (is.null(chrominfo)) {
         warning("chromosome lengths and circularity flags ",
-                "are not available for this TranscriptDb object")
+                "are not available for this TxDb object")
         chrom <- unique(c(as.character(transcripts_tx_chrom),
                           as.character(splicings_exon_chrom)))
         chrom_ids <- rankSeqlevels(chrom)
@@ -319,7 +319,7 @@
         }
     } else {
         warning("chromosome circularity flags ",
-                "are not available for this TranscriptDb object")
+                "are not available for this TxDb object")
         chrominfo$is_circular <- rep.int(NA, nrow(chrominfo))
     }
     chrominfo
@@ -628,7 +628,7 @@ makeTranscriptDb <- function(transcripts, splicings,
                         splicings_internal_cds_id)
     .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
     .writeMetadataTable(conn, metadata)  # must come last!
-    TranscriptDb(conn)
+    TxDb(conn)
 }
 
 
@@ -636,7 +636,7 @@ makeTranscriptDb <- function(transcripts, splicings,
 ### makeToyTranscriptDb().
 ###
 ### A simple wrapper around makeTranscriptDb() typically used to make toy
-### TranscriptDb objects.
+### TxDb objects.
 ###
 ### 'splicings' must have the same format as for makeTranscriptDb().
 ### If the "exon_chrom" col is missing, then it's added and filled with

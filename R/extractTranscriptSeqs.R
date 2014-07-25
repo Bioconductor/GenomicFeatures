@@ -77,10 +77,10 @@ setMethod("extractTranscriptSeqs", "DNAString",
 
 .normarg_transcripts <- function(transcripts)
 {
-    if (is(transcripts, "TranscriptDb")) {
+    if (is(transcripts, "TxDb")) {
         transcripts <- exonsBy(transcripts, by="tx", use.names=TRUE)
     } else if (!is(transcripts, "GRangesList")) {
-        stop("'transcripts' must be a GRangesList or\n  TranscriptDb object")
+        stop("'transcripts' must be a GRangesList or\n  TxDb object")
     }
     ## Check for transcripts that have exons located on more than one
     ## chromosome.

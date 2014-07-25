@@ -2,28 +2,28 @@
 
 \alias{nearest-methods}
 
-\alias{distance,GenomicRanges,TranscriptDb-method}
+\alias{distance,GenomicRanges,TxDb-method}
 
-\title{Finding the nearest genomic range neighbor in a TranscriptDb}
+\title{Finding the nearest genomic range neighbor in a TxDb}
 
 \description{
-  The \code{distance} methods for TranscriptDb objects and subclasses.
+  The \code{distance} methods for TxDb objects and subclasses.
 }
 
 \usage{
-\S4method{distance}{GenomicRanges,TranscriptDb}(x, y, ignore.strand=FALSE,
+\S4method{distance}{GenomicRanges,TxDb}(x, y, ignore.strand=FALSE,
     ..., id, type=c("gene", "tx", "exon", "cds"))
 }
 
 \arguments{
   \item{x}{The query \link{GenomicRanges} instance.
   }
-  \item{y}{For \code{distance}, a \link{TranscriptDb} instance. The
-   \code{id} is used to extract ranges from the \link{TranscriptDb}
+  \item{y}{For \code{distance}, a \link{TxDb} instance. The
+   \code{id} is used to extract ranges from the \link{TxDb}
    which are then used to compute the distance from \code{x}.
   }
   \item{id}{A \code{character} vector the same length as \code{x}.
-    The \code{id} must be identifiers in the TranscriptDb object.
+    The \code{id} must be identifiers in the \link{TxDb} object.
     \code{type} indicates what type of identifier \code{id} is. 
   }
   \item{type}{A \code{character(1)} describing the \code{id}. 
@@ -42,9 +42,9 @@
   \itemize{
     \item{distance: }{
        Returns the distance for each range in \code{x} to the range 
-       extracted from the TranscriptDb object \code{y}. Values in 
+       extracted from the \link{TxDb} object \code{y}. Values in 
        \code{id} are matched to one of \sQuote{gene_id}, \sQuote{tx_id}, 
-       \sQuote{exon_id} or \sQuote{cds_id} identifiers in the TranscriptDb 
+       \sQuote{exon_id} or \sQuote{cds_id} identifiers in the \link{TxDb}
        and the corresponding ranges are extracted. The \code{type} argument 
        specifies which identifier is represented in \code{id}. The extracted 
        ranges are used in the distance calculation with the ranges in 
@@ -93,7 +93,7 @@
   distance(gr, txdb, id=c("4097", "4"), type="tx")
 
   ## distance() compares each 'x' to the corresponding 'y'.
-  ## If an 'id' is not found in the TranscriptDb 'y' will not 
+  ## If an 'id' is not found in the TxDb 'y' will not 
   ## be the same lenth as 'x' and an error is thrown.
   \dontrun{ 
   distance(gr, txdb, id=c("FBgn0000008", "INVALID"), type="gene") ## will fail

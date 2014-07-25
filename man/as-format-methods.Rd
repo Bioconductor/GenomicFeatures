@@ -1,25 +1,25 @@
 \name{as-format-methods}
-\alias{asBED,TranscriptDb-method}
-\alias{asGFF,TranscriptDb-method}
+\alias{asBED,TxDb-method}
+\alias{asGFF,TxDb-method}
 
 \title{Coerce to file format structures}
 \description{
-  These functions coerce a \code{\linkS4class{TranscriptDb}} object to a
+  These functions coerce a \code{\linkS4class{TxDb}} object to a
   \code{\link[GenomicRanges:GRanges-class]{GRanges}} object with
   metadata columns encoding transcript structures according to the
   model of a standard file format. Currently, BED and GFF models are
-  supported. If a \code{TranscriptDb} is passed to
+  supported. If a \code{TxDb} is passed to
   \code{\link[rtracklayer]{export}}, when targeting a BED or GFF file,
   this coercion occurs automatically.
 }
 \usage{
-\S4method{asBED}{TranscriptDb}(x)
-\S4method{asGFF}{TranscriptDb}(x)
+\S4method{asBED}{TxDb}(x)
+\S4method{asGFF}{TxDb}(x)
 }
 
 \arguments{
   \item{x}{
-    A \code{TranscriptDb} object to coerce to a \code{GRanges},
+    A \code{TxDb} object to coerce to a \code{GRanges},
     structured as BED or GFF.
   }
 }

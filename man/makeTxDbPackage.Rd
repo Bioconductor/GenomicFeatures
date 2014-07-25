@@ -7,20 +7,23 @@
 \alias{supportedMiRBaseBuildValues}
 
 \title{
-  Making a TranscriptDb packages from annotations available at the
+  Making a TxDb package from annotations available at the
   UCSC Genome Browser, biomaRt or from another source.
 }
 \description{
+  A \link{TxDb} package is an annotation package containing a
+  \link{TxDb} object.
+
   The \code{makeTxDbPackageFromUCSC} function allows the user
-  to make a \link{TranscriptDb} object from transcript annotations
+  to make a \link{TxDb} package from transcript annotations
   available at the UCSC Genome Browser.
+
   The \code{makeTxDbPackageFromBiomart} function allows the user
   to do the same thing as \code{makeTxDbPackageFromUCSC} except that the
   annotations originate from biomaRt.
+
   Finally, the \code{makeTxDbPackage} function allows the user to make a   
-  \link{TranscriptDb} object from transcript annotations that are in 
-  a custom transcript Database, such as could be produced using 
-  \code{makeTranscriptDb}.
+  \link{TxDb} package directly from a \link{TxDb} object.
 }
 \usage{
 
@@ -106,7 +109,7 @@ makeFDbPackageFromUCSC(
   \item{transcript_ids}{optionally, only retrieve transcript
     annotation data for the specified set of transcript ids.
     If this is used, then the meta information displayed for the
-    resulting \link{TranscriptDb} object will say 'Full dataset: no'.
+    resulting \link{TxDb} object will say 'Full dataset: no'.
     Otherwise it will say 'Full dataset: yes'.}
   \item{circ_seqs}{a character vector to list out which chromosomes
     should be marked as circular.}
@@ -126,7 +129,7 @@ makeFDbPackageFromUCSC(
         so that their definition can be re-specified}
   \item{chromStartCol}{Same thing as chromCol, but for renames of 'chromStart'}
   \item{chromEndCol}{Same thing as chromCol, but for renames of 'chromEnd'}
-  \item{txdb}{A \link{TranscriptDb} object that represents a handle to a 
+  \item{txdb}{A \link{TxDb} object that represents a handle to a 
     transcript database. This object type is what is returned by 
     \code{makeTranscriptDbFromUCSC}, \code{makeTranscriptDbFromUCSC} or 
     \code{makeTranscriptDb}}
@@ -147,21 +150,18 @@ makeFDbPackageFromUCSC(
   list all the possible values for the miRBaseBuild argument.
 }
 
-\value{A \link{TranscriptDb} object.}
+\value{A \link{TxDb} object.}
 
 \author{
   M. Carlson
 }
 
 \seealso{
-  \code{\link[rtracklayer]{ucscGenomes}},
-  \code{\link{DEFAULT_CIRC_SEQS}},
   \code{\link{makeTranscriptDbFromUCSC}},
   \code{\link{makeTranscriptDbFromBiomart}},
-  \code{\link{makeTranscriptDb}}
-  \code{\link{supportedUCSCtables}}
-  \code{\link{getChromInfoFromUCSC}}
-  \code{\link{getChromInfoFromBiomart}}
+  \code{\link{makeTranscriptDb}},
+  \code{\link[rtracklayer]{ucscGenomes}},
+  \code{\link{DEFAULT_CIRC_SEQS}}
 }
 
 \examples{

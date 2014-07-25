@@ -295,7 +295,7 @@
 }
 
 
-setMethod("select", "TranscriptDb",
+setMethod("select", "TxDb",
     function(x, keys, columns, keytype, ...) {
           .selectWarnTxDb(x, keys, columns, keytype, ...)
 ##           .select(x, keys, columns, keytype)
@@ -314,7 +314,7 @@ setMethod("select", "TranscriptDb",
 }
 
 
-setMethod("columns", "TranscriptDb",
+setMethod("columns", "TxDb",
     function(x) .columns(x)
 )
 
@@ -351,7 +351,7 @@ setMethod("columns", "TranscriptDb",
     AnnotationDbi:::smartKeys(x=x, keytype=keytype, ..., FUN=.keys)
 }
 ## Get the list of possible keys, for a given keytype
-setMethod("keys", "TranscriptDb",.keysDispatch)
+setMethod("keys", "TxDb",.keysDispatch)
 
 
 ## Examples to test:
@@ -377,8 +377,8 @@ setMethod("keys", "TranscriptDb",.keysDispatch)
 
 #####################################################################
 ## method for keytypes()
-## Seven! keytypes for TranscriptDb
-setMethod("keytypes", "TranscriptDb",
+## Seven! keytypes for TxDb
+setMethod("keytypes", "TxDb",
     function(x) return(c("GENEID","TXID","TXNAME","EXONID","EXONNAME","CDSID","CDSNAME"))
 )
 

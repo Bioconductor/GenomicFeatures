@@ -15,7 +15,7 @@
 
   The names of any objects exposed by this package indicate the origin and
   resources exposed.  So for example TxDb.Hsapiens.UCSC.hg19.knownGene
-  would be a TranscriptDb object, of Homo Sapiens data from UCSC build
+  would be a TxDb object, of Homo Sapiens data from UCSC build
   hg19 based on the knownGene Track.
 }
 

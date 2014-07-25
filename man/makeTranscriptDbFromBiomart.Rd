@@ -4,12 +4,12 @@
 \alias{getChromInfoFromBiomart}
 
 \title{
-  Make a TranscriptDb object from annotations available on a
+  Make a TxDb object from annotations available on a
   BioMart database
 }
 \description{
   The \code{makeTranscriptDbFromBiomart} function allows the user
-  to make a \link{TranscriptDb} object from transcript annotations
+  to make a \link{TxDb} object from transcript annotations
   available on a BioMart database.
 }
 \usage{
@@ -44,7 +44,7 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
   \item{transcript_ids}{optionally, only retrieve transcript
     annotation data for the specified set of transcript ids.
     If this is used, then the meta information displayed for the
-    resulting \link{TranscriptDb} object will say 'Full dataset: no'.
+    resulting \link{TxDb} object will say 'Full dataset: no'.
     Otherwise it will say 'Full dataset: yes'.}
   \item{circ_seqs}{a character vector to list out which chromosomes
     should be marked as circular.}
@@ -83,7 +83,7 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
   Not all annotations will have CDS information.
 }
 
-\value{A \link{TranscriptDb} object.}
+\value{A \link{TxDb} object.}
 
 \author{
   M. Carlson and H. Pages

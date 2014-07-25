@@ -38,7 +38,7 @@
 ###   - A1, A2 and G are required attributes;
 ###   - B, C and D are optional attributes: C is required for inferring the
 ###     CDS (they cannot be inferred from D). Therefore, if C is missing,
-###     the TranscriptDb object can still be made but won't have any CDS (no
+###     the TxDb object can still be made but won't have any CDS (no
 ###     row in the cds table). D is only used for sanity check.
 .A1_ATTRIBS <- c("ensembl_transcript_id",
                  "chromosome_name",
@@ -81,7 +81,7 @@
         attrgroups <- "A"
     ## Groups B, C and D are optional attributes.
     ## C is required for inferring the CDS (they cannot be inferred from D).
-    ## Therefore, if C is missing, the TranscriptDb object can still be made
+    ## Therefore, if C is missing, the TxDb object can still be made
     ## but won't have any CDS (no row in the cds table).
     if (.B_ATTRIB %in% attribs$name)
         attrgroups <- paste0(attrgroups, "B")
@@ -732,7 +732,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     metadata <- .prepareBiomartMetadata(mart, is.null(transcript_ids), host,
                                         port, miRBaseBuild)
 
-    message("Make the TranscriptDb object ... ", appendLF=FALSE)
+    message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTranscriptDb(transcripts, splicings,
                              genes=genes, chrominfo=chrominfo,
                              metadata=metadata, reassign.ids=TRUE)

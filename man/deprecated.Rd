@@ -2,7 +2,7 @@
 \alias{GenomicFeatures-deprecated}
 \title{Deprecated Functions in package \pkg{GenomicFeatures}}
 \alias{determineDefaultSeqnameStyle}
-\alias{determineDefaultSeqnameStyle,TranscriptDb-method}
+\alias{determineDefaultSeqnameStyle,TxDb-method}
 \description{
   The functions or variables listed here have been deprecated and should no
   longer be used.

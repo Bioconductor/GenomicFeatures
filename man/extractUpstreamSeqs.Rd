@@ -2,7 +2,7 @@
 
 \alias{extractUpstreamSeqs}
 \alias{extractUpstreamSeqs,GenomicRanges-method}
-\alias{extractUpstreamSeqs,TranscriptDb-method}
+\alias{extractUpstreamSeqs,TxDb-method}
 \alias{extractUpstreamSeqs,GRangesList-method}
 
 
@@ -20,7 +20,7 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
 
 \S4method{extractUpstreamSeqs}{GenomicRanges}(x, genes, width=1000)
 
-\S4method{extractUpstreamSeqs}{TranscriptDb}(x, genes, width=1000, exclude.seqlevels=NULL)
+\S4method{extractUpstreamSeqs}{TxDb}(x, genes, width=1000, exclude.seqlevels=NULL)
 }
 
 \arguments{
@@ -36,9 +36,9 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
   \item{genes}{
     An object containing the locations (i.e. chromosome name, start, end, and
     strand) of the genes or transcripts with respect to the reference genome.
-    Only \link[GenomicRanges]{GenomicRanges} and \link{TranscriptDb} objects
+    Only \link[GenomicRanges]{GenomicRanges} and \link{TxDb} objects
     are supported at the moment. If the latter, the gene locations are obtained
-    by calling the \code{\link{genes}} function on the \link{TranscriptDb}
+    by calling the \code{\link{genes}} function on the \link{TxDb}
     object internally.
   }
   \item{width}{
@@ -49,7 +49,7 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
   }
   \item{exclude.seqlevels}{
     A character vector containing the chromosome names (a.k.a. sequence levels)
-    to exclude when the genes are obtained from a \link{TranscriptDb} object.
+    to exclude when the genes are obtained from a \link{TxDb} object.
   }
 }
 
@@ -65,8 +65,8 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
   \link[GenomicRanges]{GenomicRanges} object are propagated to the returned
   object.
 
-  If \code{genes} is a \link{TranscriptDb} object, the names on the returned
-  object are the gene IDs found in the \link{TranscriptDb} object. To see the
+  If \code{genes} is a \link{TxDb} object, the names on the returned
+  object are the gene IDs found in the \link{TxDb} object. To see the
   type of gene IDs (i.e. Entrez gene ID or Ensembl gene ID or ...), you can
   display \code{genes} with \code{show(genes)}.
 
@@ -83,16 +83,16 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
 }
 
 \note{
-  IMPORTANT: Always make sure to use a TxDb package (or \link{TranscriptDb}
+  IMPORTANT: Always make sure to use a TxDb package (or \link{TxDb}
   object) that contains a gene model compatible with the \emph{genome sequence
   container} \code{x}, that is, a gene model based on the exact same reference
   genome as \code{x}.
 
   See
-  \url{http://bioconductor.org/packages/release/BiocViews.html#___TranscriptDb}
+  \url{http://bioconductor.org/packages/release/BiocViews.html#___TxDb}
   for the list of TxDb packages available in the current release of
   Bioconductor.
-  Note that you can make your own custom \link{TranscriptDb} object from
+  Note that you can make your own custom \link{TxDb} object from
   various annotation resources. See the \code{\link{makeTranscriptDbFromUCSC}},
   \code{\link{makeTranscriptDbFromBiomart}}, and
   \code{\link{makeTranscriptDbFromGFF}} functions for more information about
@@ -112,17 +112,17 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
     \item The \code{\link{makeTranscriptDbFromUCSC}},
           \code{\link{makeTranscriptDbFromBiomart}}, and
           \code{\link{makeTranscriptDbFromGFF}} functions for making your own
-          custom \link{TranscriptDb} object from various annotation resources.
+          custom \link{TxDb} object from various annotation resources.
 
     \item The \link[BSgenome]{BSgenome}, \link[rtracklayer]{TwoBitFile}, and
           \link[Rsamtools]{FaFile} classes, defined and documented
           in the \pkg{BSgenome}, \pkg{rtracklayer}, and \pkg{Rsamtools}
           packages, respectively.
 
-    \item The \link{TranscriptDb} class.
+    \item The \link{TxDb} class.
 
     \item The \code{\link{genes}} function for extracting gene ranges from
-          a \link{TranscriptDb} object.
+          a \link{TxDb} object.
 
     \item The \link[GenomicRanges]{GenomicRanges} class defined and documented
           in the \pkg{GenomicRanges} package.
@@ -144,7 +144,7 @@ library(BSgenome.Dmelanogaster.UCSC.dm3)
 genome <- BSgenome.Dmelanogaster.UCSC.dm3
 genome
 
-## Use a TranscriptDb object:
+## Use a TxDb object:
 library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
 txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
 txdb  # contains Ensembl gene IDs

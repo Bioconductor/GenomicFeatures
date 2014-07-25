@@ -2,20 +2,20 @@
 
 \alias{select-methods}
 
-\alias{columns,TranscriptDb-method}
-\alias{keytypes,TranscriptDb-method}
-\alias{keys,TranscriptDb-method}
-\alias{select,TranscriptDb-method}
+\alias{columns,TxDb-method}
+\alias{keytypes,TxDb-method}
+\alias{keys,TxDb-method}
+\alias{select,TxDb-method}
 
-\title{Using the "select" interface on TranscriptDb objects}
+\title{Using the "select" interface on TxDb objects}
 
 \description{
   \code{select}, \code{columns} and \code{keys} can be used together to
-  extract data from a \link{TranscriptDb} object.
+  extract data from a \link{TxDb} object.
 }
 
 \details{
-  In the code snippets below, \code{x} is a \link{TranscriptDb} object.
+  In the code snippets below, \code{x} is a \link{TxDb} object.
 
   \describe{
     \item{}{
@@ -25,7 +25,7 @@
     }
     \item{}{
       \code{keys(x, keytype, pattern, column, fuzzy)}: Return keys for
-      the database contained in the \link{TranscriptDb} object .
+      the database contained in the \link{TxDb} object .
 
       The \code{keytype} argument specifies the kind of keys that will
       be returned. By default \code{keys} will return the "GENEID" keys
@@ -51,7 +51,7 @@
     \item{}{
       \code{columns(x)}:
       Show which kinds of data can be returned for the
-      \link{TranscriptDb} object.
+      \link{TxDb} object.
     }
     \item{}{
       \code{select(x, keys, columns, keytype)}:
@@ -74,8 +74,8 @@
     of methods \code{select},\code{keytypes},\code{keys} and \code{columns}.
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
           and \code{\link{transcriptsByOverlaps}}, for other ways to
-          extract genomic features from a \link{TranscriptDb} object.
-    \item The \link{TranscriptDb} class.
+          extract genomic features from a \link{TxDb} object.
+    \item The \link{TxDb} class.
   }
 }
 

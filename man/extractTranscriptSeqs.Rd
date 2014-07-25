@@ -33,7 +33,7 @@ extractTranscriptSeqs(x, transcripts, ...)
     It must be an \link[IRanges]{RangesList} object when \code{x} is a
     \link[Biostrings]{DNAString} object.
 
-    It must be a \link[GenomicRanges]{GRangesList} or \link{TranscriptDb}
+    It must be a \link[GenomicRanges]{GRangesList} or \link{TxDb}
     object when \code{x} is a \link[BSgenome]{BSgenome} object.
     If the latter, it's first turned into a \link[GenomicRanges]{GRangesList}
     object with \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
@@ -44,10 +44,10 @@ extractTranscriptSeqs(x, transcripts, ...)
   \item{strand}{
     Only supported when \code{x} is a \link[Biostrings]{DNAString} object.
 
-    Can be an atomic vector, a factor, or an Rle object, in which case it
-    indicates the strand of each transcript (i.e. all the exons in a
-    transcript are considered to be on the same strand).
-    More precisely: it's turned into a factor (or factor-\link[IRanges]{Rle})
+    Can be an atomic vector, a factor, or an \link[S4Vectors]{Rle} object,
+    in which case it indicates the strand of each transcript (i.e. all the
+    exons in a transcript are considered to be on the same strand).
+    More precisely: it's turned into a factor (or factor-\link[S4Vectors]{Rle})
     that has the "standard strand levels" (this is done by calling the
     \code{\link[BiocGenerics]{strand}} function on it). Then it's recycled
     to the length of \link[IRanges]{RangesList} object \code{transcripts}
@@ -111,7 +111,7 @@ extractTranscriptSeqs(x, transcripts, ...)
 library(BSgenome.Hsapiens.UCSC.hg18)
 genome <- BSgenome.Hsapiens.UCSC.hg18
 
-## Load a TranscriptDb object:
+## Load a TxDb object:
 txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
                          package="GenomicFeatures")
 txdb <- loadDb(txdb_file)
