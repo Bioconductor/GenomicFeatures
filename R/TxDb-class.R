@@ -152,6 +152,9 @@ gc()
           .self
       }))
 
+### Temporary alias. Remove when nobody uses TranscriptDb anymore.
+setClass("TranscriptDb", contains="TxDb")
+
 ### Not exported.
 DB_TYPE_NAME <- "Db type"
 DB_TYPE_VALUE <- "TxDb"  # same as the name of the class

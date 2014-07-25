@@ -30,7 +30,7 @@ importFrom(rtracklayer, browserSession, ucscTableQuery,
 
 importFrom(AnnotationDbi, loadDb, saveDb)
 
-exportClasses(TxDb, FeatureDb)
+exportClasses(TxDb, TranscriptDb, FeatureDb)
 
 export(
   DEFAULT_CIRC_SEQS,
