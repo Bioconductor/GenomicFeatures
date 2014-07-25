@@ -126,11 +126,15 @@ gc()
 
 
 
+### Just for backward compatibility with packages that define methods on
+### TranscriptDb objects.
+### TODO: Remove when nobody uses TranscriptDb anymore.
+setClass("TranscriptDb", representation("VIRTUAL"))
 
 
 ### Concrete GenomicFeatures types
 .TxDb <-
-    setRefClass("TxDb", contains="AnnotationDb",
+    setRefClass("TxDb", contains=c("AnnotationDb", "TranscriptDb"),
         fields=list(.chrom="character",
                     isActiveSeq="logical",
                     seqlevelsStyle="character",
@@ -151,9 +155,6 @@ gc()
               }
           .self
       }))
-
-### Temporary alias. Remove when nobody uses TranscriptDb anymore.
-setClass("TranscriptDb", contains="TxDb")
 
 ### Not exported.
 DB_TYPE_NAME <- "Db type"
