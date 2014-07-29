@@ -14,11 +14,6 @@
 % coercion
 \alias{as.list,TxDb-method}
 
-% old stuff (remove when TranscriptDb class goes away)
-\alias{TranscriptDb-class}
-\alias{class:TranscriptDb}
-\alias{TranscriptDb}
-
 \title{TxDb objects}
 
 \description{
