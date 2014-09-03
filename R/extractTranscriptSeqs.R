@@ -19,8 +19,8 @@
         stop("'strand' must be an atomic vector, a factor, an Rle object, ",
              "or a list-like object")
     strand <- strand(strand)
-    strand <- Biostrings:::.V_recycle(strand, transcripts,
-                                      "strand", "length of 'transcripts'")
+    strand <- S4Vectors:::V_recycle(strand, transcripts,
+                                    "strand", "transcripts")
     rep.int(strand, elementLengths(transcripts))
 }
 
