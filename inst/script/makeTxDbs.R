@@ -33,6 +33,16 @@ makeTxDbPackageFromUCSC(version=version,
                         tablename="lincRNAsTranscripts",
                         miRBaseBuild="GRCh37")
 
+## Human HG38
+makeTxDbPackageFromUCSC(version=version,
+                        maintainer=maintainer,
+                        author=author,
+			destDir=TxDbOutDir,
+                        genome="hg38",
+                        tablename="knownGene")
+
+
+
 ## Mouse mm9
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
