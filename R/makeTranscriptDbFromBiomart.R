@@ -40,12 +40,12 @@
 ###
 
 .makeBiomartTranscripts <- function(filters, values, mart, transcript_ids,
-                                    biomartAttribGroups,
+                                    recognized_attribs,
                                     id_prefix="ensembl_")
 {
     message("Download and preprocess the 'transcripts' data frame ... ",
             appendLF=FALSE)
-    bm_table <- getBM(biomartAttribGroups[['A1']], filters=filters,
+    bm_table <- getBM(recognized_attribs[['T']], filters=filters,
                       values=values, mart=mart, bmHeader=FALSE)
     tx_id_colname <- paste0(id_prefix, "transcript_id")
     if (!is.null(transcript_ids)) {
@@ -145,7 +145,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                                     host="www.biomart.org",
                                     port=80)
 {
-    biomartAttribGroups <- getBiomartAttribGroups(id_prefix)
+    recognized_attribs <- recognizedBiomartAttribs(id_prefix)
 
     mart <- .parseBMMartParams(biomart=biomart,
                                dataset=dataset,
@@ -156,7 +156,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     values <- .parseBMValuesParams(transcript_ids=NULL)
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
                                            transcript_ids=NULL,
-                                           biomartAttribGroups,
+                                           recognized_attribs,
                                            id_prefix)
     chrominfo <- .makeBiomartChrominfo(mart,
                                        extra_seqnames=transcripts$tx_chrom,
@@ -376,7 +376,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 ### we use them to infer the cds coordinates. We also retrieve the
 ### cds_length attribute to do a sanity check.
 .makeBiomartSplicings <- function(filters, values, mart, transcripts_tx_id,
-                                  biomartAttribGroups, id_prefix="ensembl_")
+                                  recognized_attribs, id_prefix="ensembl_")
 {
 
     ## Those are the strictly required fields.
@@ -391,13 +391,13 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     message("Download and preprocess the 'splicings' data frame ... ",
             appendLF=FALSE)
     allattribs <- listAttributes(mart)$name
-    attributes <- biomartAttribGroups[['A2']]
-    if (all(biomartAttribGroups[['B']] %in% allattribs))
-      attributes <- c(attributes, biomartAttribGroups[['B']])
-    if (all(biomartAttribGroups[['C1']] %in% allattribs))
-      attributes <- c(attributes, biomartAttribGroups[['C1']])
-    if (all(biomartAttribGroups[['C2']] %in% allattribs))
-      attributes <- c(attributes, biomartAttribGroups[['C2']])
+    attributes <- recognized_attribs[['E1']]
+    if (all(recognized_attribs[['E2']] %in% allattribs))
+      attributes <- c(attributes, recognized_attribs[['E2']])
+    if (all(recognized_attribs[['C1']] %in% allattribs))
+      attributes <- c(attributes, recognized_attribs[['C1']])
+    if (all(recognized_attribs[['C2']] %in% allattribs))
+      attributes <- c(attributes, recognized_attribs[['C2']])
     if ("cds_length" %in% allattribs)
         attributes <- c(attributes, "cds_length")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart,
@@ -412,8 +412,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
         exon_start=bm_table$exon_chrom_start,
         exon_end=bm_table$exon_chrom_end
     )
-    if ((all(biomartAttribGroups[['C1']] %in% allattribs) ||
-         all(biomartAttribGroups[['C2']] %in% allattribs))
+    if ((all(recognized_attribs[['C1']] %in% allattribs) ||
+         all(recognized_attribs[['C2']] %in% allattribs))
      && ("cds_length" %in% allattribs)) {
         cds_ranges <- .extractCdsRangesFromBiomartTable(bm_table, id_prefix)
         splicings <- cbind(splicings, .makeCdsDataFrameFromRanges(cds_ranges))
@@ -428,12 +428,12 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 ###
 
 .makeBiomartGenes <- function(filters, values, mart,
-                              transcripts_tx_id, biomartAttribGroups,
+                              transcripts_tx_id, recognized_attribs,
                               id_prefix="ensembl_")
 {
     message("Download and preprocess the 'genes' data frame ... ",
             appendLF=FALSE)
-    attributes <- c(biomartAttribGroups[['G']],
+    attributes <- c(recognized_attribs[['G']],
                     paste0(id_prefix, "transcript_id"))
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart,
                       bmHeader=FALSE)
@@ -637,10 +637,10 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     filters <- return_list$filters
     values <- return_list$values
     
-    biomartAttribGroups <- getBiomartAttribGroups(id_prefix)
+    recognized_attribs <- recognizedBiomartAttribs(id_prefix)
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
                                            transcript_ids,
-                                           biomartAttribGroups,
+                                           recognized_attribs,
                                            id_prefix)
     transcripts_tx_id <- transcripts$tx_id
     names(transcripts_tx_id) <- transcripts$tx_name
@@ -650,10 +650,10 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                        host, port)
     splicings <- .makeBiomartSplicings(filters, values, mart,
                                        transcripts_tx_id,
-                                       biomartAttribGroups,
+                                       recognized_attribs,
                                        id_prefix=id_prefix)
     genes <- .makeBiomartGenes(filters, values, mart, transcripts_tx_id,
-                               biomartAttribGroups, id_prefix)
+                               recognized_attribs, id_prefix)
     metadata <- .prepareBiomartMetadata(mart, is.null(transcript_ids), host,
                                         port, miRBaseBuild)
 
