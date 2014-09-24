@@ -34,98 +34,20 @@
 .extractEnsemblReleaseFromDbVersion <- function(db_version)
     sub("^ENSEMBL GENES ([^[:space:]]+) \\(SANGER UK\\)", "\\1", db_version)
 
-### Groups of BioMart attributes:
-###   - A1, A2 and G are required attributes;
-###   - B, C and D are optional attributes: C is required for inferring the
-###     CDS (they cannot be inferred from D). Therefore, if C is missing,
-###     the TxDb object can still be made but won't have any CDS (no
-###     row in the cds table). D is only used for sanity check.
-.A1_ATTRIBS <- c("ensembl_transcript_id",
-                 "chromosome_name",
-                 "strand",
-                 "transcript_start",
-                 "transcript_end")
-
-.A2_ATTRIBS <- c("ensembl_transcript_id",
-                 "strand",
-                 "rank",
-                 "exon_chrom_start",
-                 "exon_chrom_end")
-
-.B_ATTRIB <- "ensembl_exon_id"
-
-.C_ATTRIBS <- c("5_utr_start",
-                "5_utr_end",
-                "3_utr_start",
-                "3_utr_end")
-
-.D_ATTRIBS <- c("cds_start",
-                "cds_end",
-                "cds_length")
-
-.G_ATTRIB <- "ensembl_gene_id"
-
-### 'attribs' can be either a Mart object or a 2-col data frame as returned by
-### 'listAttributes()'.
-.getDatasetAttrGroups <- function(attribs)
-{
-    if (is(attribs, "Mart"))
-        attribs <- listAttributes(attribs)
-    else if (!is.data.frame(attribs) ||
-             !identical(colnames(attribs), c("name", "description")))
-        stop("invalid 'attribs' object")
-    attrgroups <- "none"
-    ## Group A: Required attributes.
-    attrA <- unique(c(.A1_ATTRIBS, .A2_ATTRIBS))
-    if (all(attrA %in% attribs$name))
-        attrgroups <- "A"
-    ## Groups B, C and D are optional attributes.
-    ## C is required for inferring the CDS (they cannot be inferred from D).
-    ## Therefore, if C is missing, the TxDb object can still be made
-    ## but won't have any CDS (no row in the cds table).
-    if (.B_ATTRIB %in% attribs$name)
-        attrgroups <- paste0(attrgroups, "B")
-    if (all(.C_ATTRIBS %in% attribs$name))
-        attrgroups <- paste0(attrgroups, "C")
-    if (all(.D_ATTRIBS %in% attribs$name))
-        attrgroups <- paste0(attrgroups, "D")
-    ## Group G: Required attribute.
-    if (.G_ATTRIB %in% attribs$name)
-        attrgroups <- paste0(attrgroups, "G")
-    attrgroups
-}
-
-### 'attrlist' can be a list (as returned by getMartAttribList()), a Mart
-### object, or the name of a Mart service (single string).
-### Typical use:
-###   ensembl_attrgroups <-
-###       GenomicFeatures:::.getAllDatasetAttrGroups("ensembl")
-.getAllDatasetAttrGroups <- function(attrlist)
-{
-    if (!is.list(attrlist))
-        attrlist <- getMartAttribList(attrlist)
-    sapply(attrlist, .getDatasetAttrGroups)
-}
-
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Download and preprocess the 'transcripts' data frame.
 ###
 
 .makeBiomartTranscripts <- function(filters, values, mart, transcript_ids,
-                                    biomartAttribGroups, id_prefix)
+                                    biomartAttribGroups,
+                                    id_prefix="ensembl_")
 {
     message("Download and preprocess the 'transcripts' data frame ... ",
             appendLF=FALSE)
     bm_table <- getBM(biomartAttribGroups[['A1']], filters=filters,
                       values=values, mart=mart, bmHeader=FALSE)
-    ##bm_table_names <- sub(paste0("^", biomartAttribGroups[['id_prefix']]),
-    ##                      "",
-    ##                      colnames(bm_table))
-    ##colnames(bm_table) <- bm_table_names
-
     tx_id_colname <- paste0(id_prefix, "transcript_id")
-
     if (!is.null(transcript_ids)) {
         idx <- !(transcript_ids %in% bm_table[[tx_id_colname]])
         if (any(idx)) {
@@ -223,7 +145,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                                     host="www.biomart.org",
                                     port=80)
 {
-    biomartAttribGroups <- .getBiomartAttribGroups(id_prefix)
+    biomartAttribGroups <- getBiomartAttribGroups(id_prefix)
 
     mart <- .parseBMMartParams(biomart=biomart,
                                dataset=dataset,
@@ -340,7 +262,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 }
 
 .utrIsNa <- function(utr_start, utr_end, exon_start, exon_end,
-                     what_utr, bm_table, id_prefix)
+                     what_utr, bm_table, id_prefix="ensembl_")
 {
     is_na <- is.na(utr_start)
     if (!identical(is_na, is.na(utr_end)))
@@ -361,7 +283,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     is_na | utr_start == utr_end + 1L
 }
 
-.extractCdsRangesFromBiomartTable <- function(bm_table, id_prefix)
+.extractCdsRangesFromBiomartTable <- function(bm_table, id_prefix="ensembl_")
 {
     if (nrow(bm_table) == 0L)
         return(IRanges())
@@ -454,7 +376,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 ### we use them to infer the cds coordinates. We also retrieve the
 ### cds_length attribute to do a sanity check.
 .makeBiomartSplicings <- function(filters, values, mart, transcripts_tx_id,
-                                  biomartAttribGroups, id_prefix)
+                                  biomartAttribGroups, id_prefix="ensembl_")
 {
 
     ## Those are the strictly required fields.
@@ -470,10 +392,12 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
             appendLF=FALSE)
     allattribs <- listAttributes(mart)$name
     attributes <- biomartAttribGroups[['A2']]
-    if (biomartAttribGroups[['B']] %in% allattribs)
+    if (all(biomartAttribGroups[['B']] %in% allattribs))
       attributes <- c(attributes, biomartAttribGroups[['B']])
-    if (all(biomartAttribGroups[['C']] %in% allattribs))
-      attributes <- c(attributes, biomartAttribGroups[['C']])
+    if (all(biomartAttribGroups[['C1']] %in% allattribs))
+      attributes <- c(attributes, biomartAttribGroups[['C1']])
+    if (all(biomartAttribGroups[['C2']] %in% allattribs))
+      attributes <- c(attributes, biomartAttribGroups[['C2']])
     if ("cds_length" %in% allattribs)
         attributes <- c(attributes, "cds_length")
     bm_table <- getBM(attributes, filters=filters, values=values, mart=mart,
@@ -488,7 +412,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
         exon_start=bm_table$exon_chrom_start,
         exon_end=bm_table$exon_chrom_end
     )
-    if (all(biomartAttribGroups[['C']] %in% allattribs)
+    if ((all(biomartAttribGroups[['C1']] %in% allattribs) ||
+         all(biomartAttribGroups[['C2']] %in% allattribs))
      && ("cds_length" %in% allattribs)) {
         cds_ranges <- .extractCdsRangesFromBiomartTable(bm_table, id_prefix)
         splicings <- cbind(splicings, .makeCdsDataFrameFromRanges(cds_ranges))
@@ -504,7 +429,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 
 .makeBiomartGenes <- function(filters, values, mart,
                               transcripts_tx_id, biomartAttribGroups,
-                              id_prefix)
+                              id_prefix="ensembl_")
 {
     message("Download and preprocess the 'genes' data frame ... ",
             appendLF=FALSE)
@@ -593,7 +518,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     useMart(biomart=biomart, dataset=dataset, host=host, port=port)
 }
 
-.parseBMFiltersParams <- function(transcript_ids, id_prefix)
+.parseBMFiltersParams <- function(transcript_ids, id_prefix="ensembl_")
 {
     if (is.null(transcript_ids)) {
         filters <- ""
@@ -712,7 +637,7 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     filters <- return_list$filters
     values <- return_list$values
     
-    biomartAttribGroups <- .getBiomartAttribGroups(id_prefix)
+    biomartAttribGroups <- getBiomartAttribGroups(id_prefix)
     transcripts <- .makeBiomartTranscripts(filters, values, mart,
                                            transcript_ids,
                                            biomartAttribGroups,
@@ -740,152 +665,3 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
     txdb
 }
 
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Some non-exported tools to help exploring/scanning the BioMart landscape.
-###
-
-### 'mart' can be either a Mart object or the name of a Mart service (single
-### string). Returns a named list of 2-col data frames with one elt per
-### dataset in 'mart'. Each data frame describes the attributes that are
-### available for the corresponding dataset.
-### Typical use:
-###   ensembl_attrlist <- GenomicFeatures:::getMartAttribList("ensembl")
-###   sapply(ensembl_attrlist, nrow)
-getMartAttribList <- function(mart)
-{
-    if (!is(mart, "Mart"))
-        mart <- useMart(mart)
-    datasets <- listDatasets(mart)
-    ans_length <- nrow(datasets)
-    ans <- vector(mode="list", length=ans_length)
-    names(ans) <- as.character(datasets$dataset)
-    for (i in seq_len(ans_length)) {
-        dataset <- names(ans)[i]
-        mart <- useDataset(dataset, mart=mart)
-        message("Getting attributes for dataset \"", dataset, "\"... ",
-                appendLF=FALSE)
-        ans[[i]] <- listAttributes(mart)
-        message("OK")
-    }
-    ans
-}
-
-### 'biomart' and 'version' must be single character strings.
-scanMart <- function(biomart, version)
-{
-    cat("Scanning ", biomart, "... ", sep="")
-    suppressMessages(attrgroups <- .getAllDatasetAttrGroups(biomart))
-    cat("OK\n")
-    cat("biomart: ", biomart, "\n", sep="")
-    cat("version: ", version, "\n", sep="")
-    tmp <- names(attrgroups)
-    if (length(tmp) > 3L)
-        tmp <- c(tmp[1:3], "...")
-    cat("nb of datasets: ", length(attrgroups),
-        " (", paste(tmp, collapse=", "), ")\n",
-        sep="")
-    if (length(attrgroups) != 0L) {
-        tbl <- table(attrgroups)
-        tbl2 <- as.integer(tbl)
-        names(tbl2) <- names(tbl)
-        tmp <- paste0(names(tbl2), ":", tbl2, collapse=", ")
-        cat("table of attribute groups: ", tmp, "\n", sep="")
-    }
-    cat("\n")
-}
-
-scanMarts <- function(marts=NULL)
-{
-    if (is.null(marts))
-        marts <- listMarts()
-    biomarts <- as.character(marts$biomart)
-    versions <- as.character(marts$version)
-    for (i in seq_len(nrow(marts)))
-        scanMart(biomarts[i], versions[i])
-}
-
-### scanMarts() output as of 6/28/2010 (only biomarts with at least groups
-### A and G are listed):
-###
-### biomart: ensembl
-### version: ENSEMBL GENES 58 (SANGER UK)
-### nb of datasets: 51 (hsapiens_gene_ensembl, oanatinus_gene_ensembl,
-###                     tguttata_gene_ensembl, cporcellus_gene_ensembl, ...)
-### NOTE: the mgallopavo_gene_ensembl dataset seems to be broken!
-### table of attribute groups: ABCDG:50
-###
-### biomart: bacterial_mart_5
-### version: ENSEMBL BACTERIA 5 (EBI UK)
-### nb of datasets: 183 (str_57_gene, esc_20_gene, myc_25994_gene, ...)
-### table of attribute groups: ABG:183
-###
-### biomart: fungal_mart_5
-### version: ENSEMBL FUNGAL 5 (EBI UK)
-### nb of datasets: 12 (aniger_eg_gene, aflavus_eg_gene, aterreus_eg_gene, ...)
-### table of attribute groups: ABG:12 
-###
-### biomart: metazoa_mart_5
-### version: ENSEMBL METAZOA 5 (EBI UK)
-### nb of datasets: 23 (dgrimshawi_eg_gene, ppacificus_eg_gene,
-###                     dpseudoobscura_eg_gene, ...)
-### table of attribute groups: ABG:23
-###
-### biomart: plant_mart_5
-### version: ENSEMBL PLANT 5 (EBI UK)
-### nb of datasets: 8 (sbicolor_eg_gene, bdistachyon_eg_gene,
-###                    alyrata_eg_gene, ...)
-### table of attribute groups: ABG:8 
-###
-### biomart: protist_mart_5
-### version: ENSEMBL PROTISTS 5 (EBI UK)
-### nb of datasets: 6 (tpseudonana_gene, ptricornutum_gene, pknowlesi_gene, ...)
-### table of attribute groups: ABG:6
-###
-### biomart: ensembl_expressionmart_48
-### version: EURATMART (EBI UK)
-### nb of datasets: 1 (rnorvegicus_expr_gene_ensembl)
-### table of attribute groups: AG:1
-###
-### biomart: Ensembl56
-### version: PANCREATIC EXPRESSION DATABASE (INSTITUTE OF CANCER UK)
-### nb of datasets: 1 (hsapiens_gene_pancreas)
-### table of attribute groups: ABCDG:1
-###
-### biomart: ENSEMBL_MART_ENSEMBL
-### version: GRAMENE 30 ENSEMBL GENES (CSHL/CORNELL US)
-### nb of datasets: 8 (sbicolor_eg_gene, bdistachyon_eg_gene,
-###                    alyrata_eg_gene, ...)
-### table of attribute groups: ABG:8
-
-.getBiomartAttribGroups <- function(id_prefix) {
-  attribs <- list()
-  attribs[['A1']] <- c(paste0(id_prefix, "transcript_id"),
-                       "chromosome_name",
-                       "strand",
-                       "transcript_start",
-                       "transcript_end")
-  
-  attribs[['A2']] <- c(paste0(id_prefix, "transcript_id"),
-                       "strand",
-                       "rank",
-                       "exon_chrom_start",
-                       "exon_chrom_end")
-  
-  attribs[['B']] <- paste0(id_prefix, "exon_id")
-  
-  attribs[['C']] <- c("5_utr_start",
-                      "5_utr_end",
-                      "3_utr_start",
-                      "3_utr_end")
-  
-  attribs[['D']] <- c("cds_start",
-                      "cds_end",
-                      "cds_length")
-  
-  attribs[['G']] <- paste0(id_prefix, "gene_id")
-  
-  attribs[['id_prefix']] <- id_prefix
-  
-  return(attribs)
-}
