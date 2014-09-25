@@ -153,7 +153,7 @@
         stop("'splicings' has a \"cds_start\" col ",
              "but no \"cds_end\" col, or vice versa")
     if (!hasCol(splicings, "cds_start")) {
-        warning("no CDS information for this TxDb object")
+        warning("making a TxDb object without CDS information")
     } else {
         ## Check 'cds_start'.
         if (!is.vector(splicings$cds_start)
@@ -179,16 +179,12 @@
         if (!all(start_is_na == end_is_na))
             stop("NAs in 'splicings$cds_start' don't match ",
                  "NAs in 'splicings$cds_end'")
-        if (all(start_is_na)) {
-            warning("no CDS information for this TxDb object")
-        } else {
-            if (any(splicings$cds_start > splicings$cds_end, na.rm=TRUE))
-                stop("cds starts must be <= cds ends")
-            ## Check CDS/exon start/end compatibility.
-            if (any(splicings$cds_start < splicings$exon_start, na.rm=TRUE)
-             || any(splicings$cds_end > splicings$exon_end, na.rm=TRUE))
-                stop("cds starts/ends are incompatible with exon starts/ends")
-        }
+        if (any(splicings$cds_start > splicings$cds_end, na.rm=TRUE))
+            stop("cds starts must be <= cds ends")
+        ## Check CDS and exon compatibility.
+        if (any(splicings$cds_start < splicings$exon_start, na.rm=TRUE)
+         || any(splicings$cds_end > splicings$exon_end, na.rm=TRUE))
+            stop("cds starts/ends are incompatible with exon starts/ends")
     }
     ## Check 'cds_id'.
     if (hasCol(splicings, "cds_id")) {

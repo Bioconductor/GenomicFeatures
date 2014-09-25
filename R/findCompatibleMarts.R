@@ -146,9 +146,9 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
     if (!is.character(available_attribs))
         stop("invalid 'available_attribs' argument")
     recognized_attribs <- recognizedBiomartAttribs()
-    found_it <- sapply(recognized_attribs,
-                       function(attribs) all(attribs %in% available_attribs))
-    ans <- paste0(names(found_it)[found_it], collapse="+") 
+    has_group <- sapply(recognized_attribs,
+                        function(attribs) all(attribs %in% available_attribs))
+    ans <- paste0(names(has_group)[has_group], collapse="+") 
     if (ans == "")
         ans <- "none"
     ans
