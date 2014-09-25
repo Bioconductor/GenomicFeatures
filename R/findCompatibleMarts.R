@@ -102,12 +102,13 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
 ### dataset in 'mart'. Each data frame describes the attributes that are
 ### available for the corresponding dataset.
 ### Typical use:
-###   ensembl_attribs_list <- GenomicFeatures:::getMartAttribsList("ensembl")
+###   ensembl_attribs_list <- GenomicFeatures:::.get_attribs_for_each_dataset(
+###                                                     "ensembl")
 ###   sapply(ensembl_attribs_list, nrow)
 ###   table(sapply(ensembl_attribs_list, nrow))
 ### or to walk only on the first 5 datasets:
-###   GenomicFeatures:::getMartAttribsList("ensembl", length.out=5)
-getMartAttribsList <- function(mart, length.out=NULL)
+###   GenomicFeatures:::.get_attribs_for_each_dataset("ensembl", length.out=5)
+.get_attribs_for_each_dataset <- function(mart, length.out=NULL)
 {
     if (!is(mart, "Mart"))
         mart <- useMart(mart)
@@ -152,20 +153,21 @@ getMartAttribsList <- function(mart, length.out=NULL)
 }
 
 ### Vectorized version of .find_available_attrib_groups().
-### 'available_attribs_list' can be a named list (as returned by
-### getMartAttribsList()), a Mart object, or the name of a Mart service
-### (single string).
+### 'available_attribs' can be a named list (as returned by
+### .get_attribs_for_each_dataset()), a Mart object, or the name of a Mart
+### service (single string).
 ### Typical use:
 ###   ensembl_attrib_groups <-
 ###     GenomicFeatures:::.find_available_attrib_groups_for_each_dataset(
 ###                           "ensembl")
 .find_available_attrib_groups_for_each_dataset <-
-    function(available_attribs_list, length.out=NULL)
+    function(available_attribs, length.out=NULL)
 {
-    if (!is.list(available_attribs_list))
-        available_attribs_list <- getMartAttribsList(available_attribs_list,
-                                                     length.out=length.out)
-    sapply(available_attribs_list, .find_available_attrib_groups)
+    if (!is.list(available_attribs))
+        available_attribs <- .get_attribs_for_each_dataset(
+                                     available_attribs,
+                                     length.out=length.out)
+    sapply(available_attribs, .find_available_attrib_groups)
 }
 
 ### 'biomart' and 'version' must be single character strings.
@@ -185,16 +187,16 @@ scanMart <- function(biomart, version, length.out=NULL)
                                length.out=length.out)
     )
     cat("OK\n")
-    cat("Scan result:\n")
+    cat("-------------------------- scan result --------------------------\n")
     cat("### biomart: ", biomart, "\n", sep="")
     cat("### version: ", version, "\n", sep="")
     available_datasets <- names(available_groups)
     if (length(available_datasets) > 4L)
-        available_datasets <- c(available_datasets[1:3], " ... ")
+        available_datasets <- c(available_datasets[1:3], "...")
     cat("### nb of available datasets: ", length(available_groups),
         " (", paste(available_datasets, collapse=", "), ")\n",
         sep="")
-    cat("### table of attribute groups:\n")
+    cat("### summary of attribute groups:\n")
     tbl <- table(available_groups)
     headers <- c("available attribute groups", "nb of datasets")
     col1 <- c(headers[1L], format(names(tbl), width=nchar(headers[1L])))
@@ -221,8 +223,8 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ### findCompatibleMarts() output as of 9/24/2014
 ###
 ### Notes:
-###  - Output was manually cleaned to keep only biomarts providing datasets
-###    with REQUIRED attributes (i.e. groups T, E1, and G).
+###  - Output was manually cleaned to keep only biomarts providing at least
+###    1 dataset with the REQUIRED attributes (i.e. groups T, E1, and G).
 ###  - Since Ensembl Genomes release 17 (Feb 2013), BioMart access to
 ###    Ensembl Bacteria is no longer possible. See announcement:
 ###      http://www.ensembl.info/blog/2013/02/07/ensembl-genomes-release-17/
@@ -232,50 +234,68 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ### version: ENSEMBL GENES 75 (SANGER UK)
 ### nb of available datasets: 66 (hsapiens_gene_ensembl,
 ###     oanatinus_gene_ensembl, cporcellus_gene_ensembl,
-###     gaculeatus_gene_ensembl,  ... )
-### table of attribute groups:
+###     gaculeatus_gene_ensembl, ...)
+### summary of attribute groups:
 ###     available attribute groups | nb of datasets
 ###     T+E1+E2+C1+C2+D+G          |             66
 ###
 ### biomart: fungi_mart_22
 ### version: ENSEMBL FUNGI 22 (EBI UK)
-### nb of datasets: 45 (aterreus_eg_gene, mlaricipopulina_eg_gene,
-###                     treesei_eg_gene, ...)
-### table of attribute groups: AE2C1C2G:45
+### nb of available datasets: 45 (aterreus_eg_gene,
+###     mlaricipopulina_eg_gene, treesei_eg_gene, ...)
+### summary of attribute groups:
+###     available attribute groups | nb of datasets
+###     T+E1+E2+C1+C2+G            |             45
 ###
 ### biomart: metazoa_mart_22
 ### version: ENSEMBL METAZOA 22 (EBI UK)
-### nb of datasets: 52 (tcastaneum_eg_gene, dgrimshawi_eg_gene,
-###                     rprolixus_eg_gene, ...)
-### table of attribute groups: AE2C1C2G:52
+### nb of available datasets: 52 (tcastaneum_eg_gene, dgrimshawi_eg_gene,
+###     rprolixus_eg_gene, ...)
+### summary of attribute groups:
+###     available attribute groups | nb of datasets
+###     T+E1+E2+C1+C2+G            |             52
 ###
 ### biomart: plants_mart_22
 ### version: ENSEMBL PLANTS 22 (EBI UK)
-### nb of datasets: 33 (atauschii_eg_gene, obrachyantha_eg_gene,
-###                     ppersica_eg_gene, ...)
-### table of attribute groups: AE2C1C2G:33
+### nb of available datasets: 33 (athaliana_eg_gene, atauschii_eg_gene,
+###     obrachyantha_eg_gene, ppersica_eg_gene, ...)
+### summary of attribute groups:
+###     available attribute groups | nb of datasets
+###     T+E1+E2+C1+C2+G            |             33
 ###
 ### biomart: protists_mart_22
 ### version: ENSEMBL PROTISTS 22 (EBI UK)
-### nb of datasets: 29 (pramorum_eg_gene, pvivax_eg_gene,
-###                     piwayamai_eg_gene, ...)
-### table of attribute groups: AE2C1C2G:29
+### nb of available datasets: 29 (pramorum_eg_gene,
+###     pvivax_eg_gene, piwayamai_eg_gene,  ... )
+### summary of attribute groups:
+###     available attribute groups | nb of datasets
+###     T+E1+E2+C1+C2+G            |             29
 ###
 ### biomart: Breast_mart_69
 ### version: BCCTB Bioinformatics Portal (UK and Ireland)
-### nb of datasets: 2 (breastCancer_expressionStudy, hsapiens_gene_breastCancer)
-### table of attribute groups: AE2C1C2DG:1, none:1
+### nb of available datasets: 2 (breastCancer_expressionStudy,
+###     hsapiens_gene_breastCancer)
+### summary of attribute groups:
+###     available attribute groups | nb of datasets
+###     none                       |              1
+###     T+E1+E2+C1+C2+D+G          |              1
 ###
 ### biomart: Pancreas63
 ### version: PANCREATIC EXPRESSION DATABASE (BARTS CANCER INSTITUTE UK)
-### nb of datasets: 2 (hsapiens_gene_pancreas, hsapiens_cancer_pancreas)
-### table of attribute groups: AE2C1C2DG:1, none:1
+### nb of available datasets: 2 (hsapiens_gene_pancreas,
+###     hsapiens_cancer_pancreas)
+### summary of attribute groups:
+###     available attribute groups | nb of datasets
+###     none                       |              1
+###     T+E1+E2+C1+C2+D+G          |              1
 ###
 ### biomart: ENSEMBL_MART_PLANT
 ### version: GRAMENE 40 ENSEMBL GENES (CSHL/CORNELL US)
-### nb of datasets: 33 (atauschii_eg_gene, obrachyantha_eg_gene,
-###                     ptrichocarpa_eg_gene, ...)
-### table of attribute groups: AE2C1C2G:33
+### nb of available datasets: 33 (atauschii_eg_gene, obrachyantha_eg_gene,
+###     ptrichocarpa_eg_gene,  ... )
+### summary of attribute groups:
+###     available attribute groups | nb of datasets
+###     T+E1+E2+C1+C2+G            |             33
 
 
 ### =========================================================================
