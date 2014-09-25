@@ -224,7 +224,7 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ### =========================================================================
 ### findCompatibleMarts() output as of 9/24/2014
 ###
-### Using GenomicFeatures 1.17.15 (rev 94508).
+### Using GenomicFeatures 1.17.15 (rev 94513).
 ###
 ### Notes:
 ###  - Output was manually cleaned to keep only biomarts providing at least
@@ -241,7 +241,7 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ###     gaculeatus_gene_ensembl, ...)
 ### summary of attribute groups:
 ###     available attribute groups | nb of datasets
-###     T+E1+E2+C1+C2+D+G          |             66
+###     T+E1+E2+C1+C2+D1+D2+G      |             66
 ###
 ### biomart: fungi_mart_22
 ### version: ENSEMBL FUNGI 22 (EBI UK)
@@ -249,7 +249,7 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ###     mlaricipopulina_eg_gene, treesei_eg_gene, ...)
 ### summary of attribute groups:
 ###     available attribute groups | nb of datasets
-###     T+E1+E2+C1+C2+G            |             45
+###     T+E1+E2+C1+C2+D1+G         |             45
 ###
 ### biomart: metazoa_mart_22
 ### version: ENSEMBL METAZOA 22 (EBI UK)
@@ -257,7 +257,7 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ###     rprolixus_eg_gene, ...)
 ### summary of attribute groups:
 ###     available attribute groups | nb of datasets
-###     T+E1+E2+C1+C2+G            |             52
+###     T+E1+E2+C1+C2+D1+G         |             52
 ###
 ### biomart: plants_mart_22
 ### version: ENSEMBL PLANTS 22 (EBI UK)
@@ -265,7 +265,7 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ###     obrachyantha_eg_gene, ppersica_eg_gene, ...)
 ### summary of attribute groups:
 ###     available attribute groups | nb of datasets
-###     T+E1+E2+C1+C2+G            |             33
+###     T+E1+E2+C1+C2+D1+G         |             33
 ###
 ### biomart: protists_mart_22
 ### version: ENSEMBL PROTISTS 22 (EBI UK)
@@ -273,7 +273,7 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ###     pvivax_eg_gene, piwayamai_eg_gene,  ... )
 ### summary of attribute groups:
 ###     available attribute groups | nb of datasets
-###     T+E1+E2+C1+C2+G            |             29
+###     T+E1+E2+C1+C2+D1+G         |             29
 ###
 ### biomart: Breast_mart_69
 ### version: BCCTB Bioinformatics Portal (UK and Ireland)
@@ -282,7 +282,7 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ### summary of attribute groups:
 ###     available attribute groups | nb of datasets
 ###     none                       |              1
-###     T+E1+E2+C1+C2+D+G          |              1
+###     T+E1+E2+C1+C2+D1+D2+G      |              1
 ###
 ### biomart: Pancreas63
 ### version: PANCREATIC EXPRESSION DATABASE (BARTS CANCER INSTITUTE UK)
@@ -291,7 +291,7 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ### summary of attribute groups:
 ###     available attribute groups | nb of datasets
 ###     none                       |              1
-###     T+E1+E2+C1+C2+D+G          |              1
+###     T+E1+E2+C1+C2+D1+D2+G      |              1
 ###
 ### biomart: ENSEMBL_MART_PLANT
 ### version: GRAMENE 40 ENSEMBL GENES (CSHL/CORNELL US)
@@ -299,7 +299,7 @@ findCompatibleMarts <- function(marts=NULL, ...)
 ###     ptrichocarpa_eg_gene,  ... )
 ### summary of attribute groups:
 ###     available attribute groups | nb of datasets
-###     T+E1+E2+C1+C2+G            |             33
+###     T+E1+E2+C1+C2+D1+G         |             33
 
 
 ### =========================================================================
