@@ -82,7 +82,7 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
         ## to perform sanity checks.
         D1=c(
             "cds_start",
-            "cds_end",
+            "cds_end"
         ),
         D2="cds_length",
 
@@ -223,6 +223,8 @@ findCompatibleMarts <- function(marts=NULL, ...)
 
 ### =========================================================================
 ### findCompatibleMarts() output as of 9/24/2014
+###
+### Using GenomicFeatures 1.17.15 (rev 94508).
 ###
 ### Notes:
 ###  - Output was manually cleaned to keep only biomarts providing at least

@@ -13,12 +13,6 @@
   available on a BioMart database.
 }
 \usage{
-getChromInfoFromBiomart(biomart="ensembl",
-                        dataset="hsapiens_gene_ensembl",
-                        id_prefix="ensembl_",
-                        host="www.biomart.org",
-                        port=80)
-
 makeTranscriptDbFromBiomart(biomart="ensembl",
                             dataset="hsapiens_gene_ensembl",
                             transcript_ids=NULL,
@@ -28,6 +22,12 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
                             host="www.biomart.org",
                             port=80,
                             miRBaseBuild=NA)
+
+getChromInfoFromBiomart(biomart="ensembl",
+                        dataset="hsapiens_gene_ensembl",
+                        id_prefix="ensembl_",
+                        host="www.biomart.org",
+                        port=80)
 }
 \arguments{
   \item{biomart}{which BioMart database to use.
@@ -65,22 +65,40 @@ makeTranscriptDbFromBiomart(biomart="ensembl",
 
 \details{
   \code{makeTranscriptDbFromBiomart} is a convenience function that feeds
-  data from a BioMart database to the lower level \code{\link{makeTranscriptDb}}
-  function.
+  data from a BioMart database to the lower level
+  \code{\link{makeTranscriptDb}} function.
   See \code{?\link{makeTranscriptDbFromUCSC}} for a similar function
   that feeds data from the UCSC source.
 
-  BioMart databases that are known to have compatible transcript annotations are:
+  The \code{listMarts} function from the \pkg{biomaRt} package can be
+  used to list all public BioMart databases.
+  Not all databases returned by this function contain datasets that
+  are compatible with (i.e. understood by) \code{makeTranscriptDbFromBiomart}.
+  Here is a list of datasets known to be compatible (updated on Sep 24, 2014):
   \itemize{
-    \item the most recent ensembl: ENSEMBL GENES (SANGER UK)
-    \item the most recent bacterial_mart: ENSEMBL BACTERIA (EBI UK)
-    \item the most recent fungal_mart: ENSEMBL FUNGAL (EBI UK)
-    \item the most recent metazoa_mart: ENSEMBL METAZOA (EBI UK)
-    \item the most recent plant_mart: ENSEMBL PLANT (EBI UK)
-    \item the most recent protist_mart: ENSEMBL PROTISTS (EBI UK)
-    \item the most recent ensembl_expressionmart: EURATMART (EBI UK)
+    \item All the datasets in the main Ensembl database:
+          use \code{biomart="ensembl"}.
+
+    \item All the datasets in the Ensembl Fungi database:
+          use \code{biomart="fungi_mart_XX"} where XX is the release
+          version of the database e.g. \code{"fungi_mart_22"}.
+
+    \item All the datasets in the Ensembl Metazoa database:
+          use \code{biomart="metazoa_mart_XX"} where XX is the release
+          version of the database e.g. \code{"metazoa_mart_22"}.
+
+    \item All the datasets in the Ensembl Plants database:
+          use \code{biomart="plants_mart_XX"} where XX is the release
+          version of the database e.g. \code{"plants_mart_22"}.
+
+    \item All the datasets in the Ensembl Protists database:
+          use \code{biomart="protists_mart_XX"} where XX is the release
+          version of the database e.g. \code{"protists_mart_22"}.
+
+    \item All the datasets in the Gramene Mart:
+          use \code{biomart="ENSEMBL_MART_PLANT"}.
   }
-  Not all annotations will have CDS information.
+  Not all these datasets have CDS information.
 }
 
 \value{A \link{TxDb} object.}
@@ -126,10 +144,9 @@ listMarts(host="uswest.ensembl.org")
 ## Therefore we must also change the name passed into the "mart"
 ## argument thusly:
 try(
-	txdb <- makeTranscriptDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
-                                            transcript_ids=transcript_ids,
-		      		      	    host="uswest.ensembl.org")	    
+    txdb <- makeTranscriptDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
+                                        transcript_ids=transcript_ids,
+                                        host="uswest.ensembl.org")	    
 )
 txdb
-
 }
