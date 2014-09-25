@@ -40,8 +40,8 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
         ),
         E2=c(exon_name="<id_prefix>exon_id"),
 
-        ## Groups C1, C2: CDS-level attributes
-        ## -----------------------------------
+        ## Groups C1 and C2: CDS-level attributes
+        ## --------------------------------------
         ## These attributes are OPTIONAL.
         ##
         ## Ensembl added group C1 in release 74 (Dec 2013):
@@ -49,9 +49,10 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
         ## We added group C1 to recognizedBiomartAttribs() on 9/23/2014.
         ##
         ## Either group C1 or C2 is needed for inferring the CDS genomic
-        ## coordinates (they cannot be inferred from group D, see IMPORTANT
-        ## NOTE ABOUT GROUP D below). If C1 and C2 are missing, the TxDb object
-        ## will still be made but won't have any CDS (no row in the cds table).
+        ## coordinates (they cannot be inferred from group D1, see IMPORTANT
+        ## NOTE ABOUT GROUP D1 below). If C1 and C2 are missing, the TxDb
+        ## object will still be made but won't have any CDS (no row in the
+        ## cds table).
         C1=c(
             cds_start="genomic_coding_start",
             cds_end="genomic_coding_end"
@@ -65,24 +66,25 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
             "3_utr_end"
         ),
 
-        ## Group D: CDS-level attributes used for sanity checks only
-        ## ---------------------------------------------------------
+        ## Groups D1 and D2: CDS-level attributes used for sanity checks only
+        ## ------------------------------------------------------------------
         ## These attributes are OPTIONAL.
         ##
-        ## IMPORTANT NOTE ABOUT GROUP D: The "cds_start" and "cds_end"
+        ## IMPORTANT NOTE ABOUT GROUP D1: The "cds_start" and "cds_end"
         ## attributes that we get from BioMart are the CDS coordinates
-        ## relative to the coding mRNA. This is not what we want to store
+        ## relative to the coding mRNA. This is *not* what we want to store
         ## in a TxDb object. What we want instead are the CDS *genomic*
         ## coordinates. Prior to Ensembl release 74, these were not provided
         ## by Ensembl so we were inferring them from the exon and UTR genomic
         ## coordinates (the UTR genomic coordinates are obtained thru the
         ## attributes in group C2).
-        ## So attributes in group D are only used to perform sanity checks.
-        D=c(
+        ## So attributes in group D1 (as well as in group D2) are only used
+        ## to perform sanity checks.
+        D1=c(
             "cds_start",
             "cds_end",
-            "cds_length"
         ),
+        D2="cds_length",
 
         ## Group G: Gene-level attributes
         ## ------------------------------
