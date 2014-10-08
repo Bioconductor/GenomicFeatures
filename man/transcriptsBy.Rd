@@ -104,7 +104,7 @@ threeUTRsByTranscript(x, ...)
   }
 }
 \examples{
-  txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
+  txdb_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
                            package="GenomicFeatures")
   txdb <- loadDb(txdb_file)
 

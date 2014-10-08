@@ -173,7 +173,7 @@ tRNAs(x)
 
 \examples{
 ## transcripts(), exons(), genes():
-txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite",
                            package="GenomicFeatures"))
 vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
 

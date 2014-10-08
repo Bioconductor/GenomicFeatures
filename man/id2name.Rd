@@ -49,7 +49,7 @@ ids and the values the external names.}
   }
 }
 \examples{
-  txdb1_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
+  txdb1_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
                             package="GenomicFeatures")
   txdb1 <- loadDb(txdb1_file)
   id2name(txdb1, feature.type="tx")[1:4]

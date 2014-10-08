@@ -81,7 +81,7 @@ demonstrate and test the functionality of the
 \Rpackage{GenomicFeatures} packageas a demonstration.
 
 <<loadDb>>=
-samplefile <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
+samplefile <- system.file("extdata", "hg19_knownGene_sample.sqlite",
                           package="GenomicFeatures")
 txdb <- loadDb(samplefile)
 txdb

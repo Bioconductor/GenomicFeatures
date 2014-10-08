@@ -108,15 +108,15 @@ extractTranscriptSeqs(x, transcripts, ...)
 ## ---------------------------------------------------------------------
 
 ## Load a genome:
-library(BSgenome.Hsapiens.UCSC.hg18)
-genome <- BSgenome.Hsapiens.UCSC.hg18
+library(BSgenome.Hsapiens.UCSC.hg19)
+genome <- BSgenome.Hsapiens.UCSC.hg19
 
 ## Load a TxDb object:
-txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
+txdb_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
                          package="GenomicFeatures")
 txdb <- loadDb(txdb_file)
 
-## Check that 'txdb' is based on the hg18 assembly:
+## Check that 'txdb' is based on the hg19 assembly:
 txdb
 
 ## Extract the exon ranges grouped by transcript from 'txdb':

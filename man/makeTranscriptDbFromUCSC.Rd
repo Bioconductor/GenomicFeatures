@@ -21,7 +21,7 @@ getChromInfoFromUCSC(
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 
 makeTranscriptDbFromUCSC(
-        genome="hg18",
+        genome="hg19",
         tablename="knownGene",
         transcript_ids=NULL,
         circ_seqs=DEFAULT_CIRC_SEQS,
@@ -32,7 +32,7 @@ makeTranscriptDbFromUCSC(
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
     \code{\link[rtracklayer]{ucscGenomes}()[ , "db"]}.
-    For example: \code{"hg18"}.}
+    For example: \code{"hg19"}.}
   \item{tablename}{name of the UCSC table containing the transcript
     annotations to retrieve. Use the \code{supportedUCSCtables} utility
     function to get the list of supported tables. Note that not all

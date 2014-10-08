@@ -57,7 +57,7 @@ test_transcriptsBy <- function()
                     
     ## WITH REAL DATA
     ## --------------
-    txdb1 <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+    txdb1 <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
     checkException(transcriptsBy(data.frame()), silent = TRUE)
@@ -76,24 +76,24 @@ test_transcriptsBy <- function()
     txByGene <- transcriptsBy(txdb1, by="gene")
     checkTrue(validObject(txByGene))
     checkIdentical(dupCount(txByGene), 0L)
-    want <- GRanges(seqnames = factor("chr21_random", levels=seqlevels),
-                    ranges   = IRanges(start=103280, end=164670),
-                    strand   = strand("-"),
-                    tx_id    = 127L,
-                    tx_name  = "uc002zka.1")
+    want <- GRanges(seqnames = factor("chr6", levels=seqlevels),
+                    ranges   = IRanges(start=10414300, end=10416190),
+                    strand   = strand("+"),
+                    tx_id    = 28L,
+                    tx_name  = "uc003myy.1")
     seqinfo(want) <- seqinfo
 #    metadata(want)[[1]] <- DataFrame(metadata(txdb1)) ##WTH?
-    checkIdentical(txByGene[[1]], want)
+    checkIdentical(txByGene[["100130275"]], want)
 
     ## transcripts by exon
     txByExon <- transcriptsBy(txdb1, by="exon")
     checkTrue(validObject(txByExon))
     checkIdentical(dupCount(txByExon), 0L)
-    want <- GRanges(seqnames = factor(c("chr1", "chr1"), levels=seqlevels),
-                    ranges   = IRanges(start=1116, end=c(4121, 4272)),
-                    strand   = strand(c("+", "+")),
-                    tx_id    = c(1L, 2L),
-                    tx_name  = c("uc001aaa.2", "uc009vip.1"))
+    want <- GRanges(seqnames = factor("chr1", levels=seqlevels),
+                    ranges   = IRanges(start=23853365, end=23855542),
+                    strand   = strand("+"),
+                    tx_id    = 1L,
+                    tx_name  = "uc001bhf.1")
     seqinfo(want) <- seqinfo
 #    metadata(want)[[1]] <- DataFrame(metadata(txdb1)) ##WTH?
     checkIdentical(txByExon[[1]], want)
@@ -102,11 +102,11 @@ test_transcriptsBy <- function()
     txByCds <- transcriptsBy(txdb1, by="cds")
     checkTrue(validObject(txByCds))
     checkIdentical(dupCount(txByCds), 0L)
-    want <- GRanges(seqnames = factor("chr2", levels=seqlevels),
-                    ranges   = IRanges(start=31608, end=36385),
-                    strand   = strand("-"),
-                    tx_id    = 4L,
-                    tx_name  = "uc002qvt.1")
+    want <- GRanges(seqnames = factor("chr1", levels=seqlevels),
+                    ranges   = IRanges(start=32671236, end=32674288),
+                    strand   = strand("+"),
+                    tx_id    = 2L,
+                    tx_name  = "uc009vua.2")
     seqinfo(want) <- seqinfo
 #    metadata(want)[[1]] <- DataFrame(metadata(txdb1)) ##WTH?
     checkIdentical(txByCds[[1]], want)
@@ -120,22 +120,22 @@ test_transcriptsBy <- function()
 
 ## make sure that seqlevelsStyle behaves correctly
 test_transcriptsBy_seqlevelsStyleSwap <- function(){
-    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite", 
+    txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite", 
                                package="GenomicFeatures"))    
     get_grl <- transcriptsBy(txdb, by="gene")
     checkTrue(seqlevelsStyle(txdb) == "UCSC")
-    checkTrue(as.character(seqnames(get_grl[["10771"]])) =="chr10")
+    checkTrue(as.character(seqnames(get_grl[["100130275"]])) =="chr6")
     
     seqlevelsStyle(txdb) <- "NCBI"
     checkTrue(seqlevelsStyle(txdb) == "NCBI")    
     get_grlN <- transcriptsBy(txdb, by="gene")
-    checkTrue(as.character(seqnames(get_grlN[["10771"]])) =="10")
+    checkTrue(as.character(seqnames(get_grlN[["100130275"]])) == "6")
 }
 
 
 test_exonsBy <- function()
 {
-    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+    txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
     checkException(exonsBy(data.frame()), silent = TRUE)
@@ -154,16 +154,16 @@ test_exonsBy <- function()
     exonByTx <- exonsBy(txdb, "tx")
     checkTrue(validObject(exonByTx))
     checkIdentical(dupCount(exonByTx), 0L)
-    want <- GRanges(seqnames = factor(c("chr1","chr1"), levels = seqlevels),
-                    ranges = IRanges(start = c(1116,2476),
-                                     end = c(2090,4272)),
-                    strand = strand(c("+","+")),
-                    exon_id = c(1L,3L),
-                    exon_name = as.character(c(NA,NA)),
-                    exon_rank = 1:2)
+    want <- GRanges(seqnames = factor("chr1", levels=seqlevels),
+                    ranges = IRanges(start = c(153330330, 153330745, 153333120),
+                                     end = c(153330357, 153330909, 153333503)),
+                    strand = strand(c("+", "+", "+")),
+                    exon_id = 14:16,
+                    exon_name = as.character(c(NA, NA, NA)),
+                    exon_rank = 1:3)
     seqinfo(want) <- seqinfo
 #    metadata(want)[[1]] <- DataFrame(metadata(txdb))  ##WTH?
-    checkIdentical(exonByTx[[2]], want)
+    checkIdentical(exonByTx[[4]], want)
 
     ## exons by gene
     exonByGene <- exonsBy(txdb, "gene")
@@ -173,7 +173,7 @@ test_exonsBy <- function()
 
 test_cdsBy <- function()
 {
-    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+    txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
     checkException(cdsBy(data.frame()), silent = TRUE)
@@ -197,20 +197,20 @@ test_cdsBy <- function()
     cdsByGene <- cdsBy(txdb, "gene")
     checkTrue(validObject(cdsByGene))
     checkIdentical(dupCount(cdsByGene), 0L)
-    want <- GRanges(seqnames = factor(c("chr5","chr5"), levels = seqlevels),
-                    ranges = IRanges(start = c(258412,269844),
-                                     end = c(259073,269964)),
-                    strand = strand(c("-","-")),
-                    cds_id = c(53L,54L),
-                    cds_name = as.character(c(NA,NA)))
+    want <- GRanges(seqnames = factor("chr13", levels = seqlevels),
+                    ranges = IRanges(start = c(39918073, 39952565, 40174969),
+                                     end = c(39918191, 39952663, 40175353)),
+                    strand = strand("-"),
+                    cds_id = 487:489,
+                    cds_name = as.character(c(NA, NA, NA)))
     seqinfo(want) <- seqinfo
 #    metadata(want)[[1]] <- DataFrame(metadata(txdb))  ##WTH?
-    checkIdentical(cdsByGene[[6]], want)
+    checkIdentical(cdsByGene[["10186"]], want)
 }
 
 test_intronsByTranscript <- function()
 {
-    txdb <- loadDb(system.file("extdata", "UCSC_knownGene_sample.sqlite",
+    txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite",
                                      package="GenomicFeatures"))
 
     seqinfo <- seqinfo(txdb)
@@ -219,8 +219,9 @@ test_intronsByTranscript <- function()
     intronByTx <- intronsByTranscript(txdb)
     checkTrue(validObject(intronByTx))
     want <- GRanges(seqnames = factor("chr1", levels = seqlevels),
-                    ranges = IRanges(start = 2091, end = 2475),
+                    ranges = IRanges(start=c(153330358, 153330910),
+                                     end=c(153330744, 153333119)),
                     strand = strand("+"))
     seqinfo(want) <- seqinfo
-    checkIdentical(intronByTx[[2]], want)
+    checkIdentical(intronByTx[[4]], want)
 }

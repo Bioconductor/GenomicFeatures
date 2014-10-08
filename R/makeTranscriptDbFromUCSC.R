@@ -804,7 +804,7 @@ getChromInfoFromUCSC <- function(genome,
 ###   - for genome="hg18" and tablename="knownGene":
 ###       (1) download takes about 40-50 sec.
 ###       (2) db creation takes about 30-35 sec.
-makeTranscriptDbFromUCSC <- function(genome="hg18",
+makeTranscriptDbFromUCSC <- function(genome="hg19",
         tablename="knownGene",
         transcript_ids=NULL,
         circ_seqs=DEFAULT_CIRC_SEQS,

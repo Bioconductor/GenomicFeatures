@@ -75,9 +75,9 @@ transcriptWidths(exonStarts=list(), exonEnds=list())
 ## ---------------------------------------------------------------------
 ## GOING FROM TRANSCRIPT-BASED TO REFERENCE-BASED LOCATIONS
 ## ---------------------------------------------------------------------
-library(BSgenome.Hsapiens.UCSC.hg18)  # load the genome
-genome <- BSgenome.Hsapiens.UCSC.hg18
-txdb_file <- system.file("extdata", "UCSC_knownGene_sample.sqlite",
+library(BSgenome.Hsapiens.UCSC.hg19)  # load the genome
+genome <- BSgenome.Hsapiens.UCSC.hg19
+txdb_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
                          package="GenomicFeatures")
 txdb <- loadDb(txdb_file)
 transcripts <- exonsBy(txdb, by="tx", use.names=TRUE)

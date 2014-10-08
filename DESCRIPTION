@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.17.20
+Version: 1.17.21
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -22,11 +22,9 @@ Depends: BiocGenerics (>= 0.1.0), S4Vectors (>= 0.1.5), IRanges (>=
 Imports: methods, DBI (>= 0.2-5), RSQLite (>= 0.8-1), Biostrings (>=
         2.23.3), rtracklayer (>= 1.25.2), biomaRt (>= 2.17.1), RCurl,
         utils, Biobase (>= 2.15.1), GenomeInfoDb
-Suggests: org.Mm.eg.db, BSgenome, BSgenome.Hsapiens.UCSC.hg18 (>=
-        1.3.14), BSgenome.Hsapiens.UCSC.hg19 (>= 1.3.17),
+Suggests: org.Mm.eg.db, BSgenome, BSgenome.Hsapiens.UCSC.hg19 (>= 1.3.17),
         BSgenome.Celegans.UCSC.ce2, BSgenome.Dmelanogaster.UCSC.dm3 (>=
         1.3.17), mirbase.db, FDb.UCSC.tRNAs,
-        TxDb.Hsapiens.UCSC.hg18.knownGene,
         TxDb.Hsapiens.UCSC.hg19.knownGene,
         TxDb.Dmelanogaster.UCSC.dm3.ensGene (>= 2.7.1), Rsamtools,
         pasillaBamSubset (>= 0.0.5),  RUnit, BiocStyle,
