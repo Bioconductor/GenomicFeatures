@@ -1,15 +1,11 @@
 ###
 
-### The 2 utilities below were used to obtain the hg19_knownGene_sample
-### and hg19_knownToLocusLink_sample datasets:
-###   library(GenomicFeatures)
-###   source(system.file("unitTests", "test_makeTranscriptDbFromUCSC.R",
-###                      package="GenomicFeatures"))
-###   hg19_knownGene_sample <- .make_hg19_knownGene_sample()
-###   hg19_knownToLocusLink_sample <-
-###           .make_hg19_knownToLocusLink_sample(hg19_knownGene_sample)
-.make_hg19_knownGene_sample <- function()
-{
+if (FALSE) {
+  ### Code use to obtain the hg19_knownGene_sample and
+  ### hg19_knownToLocusLink_sample datasets.
+
+  .get_hg19_knownGene <- function()
+  {
     genome <- "hg19"
     tablename <- "knownGene"
     track <- GenomicFeatures:::.tablename2track(tablename, genome)
@@ -18,14 +14,11 @@
     genome(session) <- genome
     track_tables <- tableNames(ucscTableQuery(session, track=track))
     query <- ucscTableQuery(session, track, table=tablename)
-    hg19_knownGene <- getTable(query)
-    set.seed(333)
-    sample_idx <- sort(sample(nrow(hg19_knownGene), 100))
-    droplevels(hg19_knownGene[sample_idx, ])
-}
+    getTable(query)
+  }
 
-.make_hg19_knownToLocusLink_sample <- function(hg19_knownGene_sample)
-{
+  .get_hg19_knownToLocusLink <- function()
+  {
     genome <- "hg19"
     tablename <- "knownGene"
     track <- GenomicFeatures:::.tablename2track(tablename, genome)
@@ -35,10 +28,32 @@
     mapdef <- GenomicFeatures:::.howToGetTxName2GeneIdMapping(tablename)
     txname2geneid <- GenomicFeatures:::.fetchTxName2GeneIdMappingFromUCSC(
                                  session, track, tablename, mapdef)
-    hg19_knownToLocusLink <- txname2geneid$genes
-    sample_idx <- which(hg19_knownToLocusLink$tx_name %in%
-                        hg19_knownGene_sample$name)
-    droplevels(hg19_knownToLocusLink[sample_idx, ])
+    txname2geneid$genes
+  }
+
+  library(GenomicFeatures)
+  hg19_knownGene <- .get_hg19_knownGene()
+  hg19_knownToLocusLink <- .get_hg19_knownToLocusLink()
+
+  ## Pick up random samples.
+  set.seed(333)
+  sample_idx1 <- sort(sample(nrow(hg19_knownGene), 50))
+  sample_idx2 <- which(hg19_knownToLocusLink$tx_name %in%
+                       hg19_knownGene$name[sample_idx1])
+  sample_idx2 <- which(hg19_knownToLocusLink$gene_id %in%
+                       hg19_knownToLocusLink$gene_id[sample_idx2])
+  hg19_knownToLocusLink_sample <-
+                 droplevels(hg19_knownToLocusLink[sample_idx2, ])
+  selected_tx_names <- union(hg19_knownGene$name[sample_idx1],
+                             hg19_knownToLocusLink_sample$tx_name)
+  sample_idx1 <- which(hg19_knownGene$name %in% selected_tx_names)
+  hg19_knownGene_sample <- droplevels(hg19_knownGene[sample_idx1, ])
+
+  ## Save them.
+  save(hg19_knownToLocusLink_sample,
+       file="GenomicFeatures/inst/extdata/hg19_knownToLocusLink_sample.rda")
+  save(hg19_knownGene_sample,
+       file="GenomicFeatures/inst/extdata/hg19_knownGene_sample.rda")
 }
 
 test_makeTranscriptDbFromUCSCTxTable <- function()

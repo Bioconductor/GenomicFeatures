@@ -13,33 +13,33 @@ test_transcriptsByOverlaps <- function()
     seqinfo <- seqinfo(txdb)
     seqlevels <- seqlevels(seqinfo)
 
-    gr <- GRanges(seqnames = "chr8",
-                  ranges = IRanges(start=1, end=29100000),
+    gr <- GRanges(seqnames = "chrX",
+                  ranges = IRanges(start=54071000, width=1),
                   strand = strand("-"))
     want <-
-      GRanges(seqnames = factor("chr8", levels = seqlevels),
-              ranges = IRanges(start=29003375, end=29120610),
+      GRanges(seqnames = factor("chrX", levels = seqlevels),
+              ranges = IRanges(start=53963113, end=54071569),
               strand = strand("-"),
-              tx_id = 43L,
-              tx_name = "uc003xhj.2")
+              tx_id = 147L,
+              tx_name = "uc004dsu.3")
     seqinfo(want) <- seqinfo
     want <- GenomicFeatures:::.assignMetadataList(want, txdb)
     checkIdentical(transcriptsByOverlaps(txdb, gr), want)
 
-    ranges <- IRanges(start = c(1, 150000000, 1, 150000000),
-                      end   = c(35000000, 250000000, 35000000, 250000000))
-    chrom <- c("chr1", "chr1", "chr2", "chr2")
-    strand <- strand(c("+", "-", "+", "-"))
+    ranges <- IRanges(start = c(113000000, 54071000, 54071000),
+                      width = c(  5000000,        1,        1))
+    chrom <- c("chr3", "chrX", "chrX")
+    strand <- strand(c("+", "+", "-"))
     gr <- GRanges(seqnames = chrom, ranges = ranges, strand = strand)
     want <- GRanges(seqnames =
-                    factor(c("chr1", "chr1", "chr1", "chr2", "chr2"),
+                    factor(c("chr3", "chr3", "chr3", "chrX"),
                            levels = seqlevels),
-                    ranges = IRanges(start = c(23853365, 32671236, 150547027,
-                                               10281981, 166626170),
-                                     end   = c(23855542, 32674288, 150552214,
-                                               10350942, 166650803)),
-                    strand = strand(c("+", "+", "-", "+", "-")),
-                    tx_id = c(1L, 2L, 11L, 12L, 17L))
+                    ranges = IRanges(start = c(113666748, 113666822, 113676421,
+                                                53963113),
+                                     end   = c(113681827, 113681827, 113682211,
+                                                54071569)),
+                    strand = strand(c("+", "+", "+", "-")),
+                    tx_id = c(29:31, 147L))
     seqinfo(want) <- seqinfo
     want <- GenomicFeatures:::.assignMetadataList(want, txdb)
     checkIdentical(transcriptsByOverlaps(txdb, gr, columns="tx_id"), want)
@@ -58,15 +58,15 @@ test_exonsByOverlaps <- function()
     seqinfo <- seqinfo(txdb)
     seqlevels <- seqlevels(seqinfo)
 
-    gr <- GRanges(seqnames = "chr8",
-                  ranges = IRanges(start=129000000, end=141000000),
-                  strand = strand("-"))
+    gr <- GRanges(seqnames = "chr3",
+                  ranges = IRanges(start=113677210, width=1),
+                  strand = strand("+"))
     want <-
-      GRanges(seqnames = factor(rep("chr8", 3), levels = seqlevels),
-              ranges = IRanges(start=c(129022628, 140922391, 140998934),
-                               end  =c(129022857, 140922544, 140999044)),
-              strand = strand(rep("-", 3)),
-              exon_id = 359:361)
+      GRanges(seqnames = factor("chr3", levels = seqlevels),
+              ranges = IRanges(start=c(113677210, 113677210),
+                               end  =c(113677385, 113682211)),
+              strand = strand("+"),
+              exon_id = 139:140)
     seqinfo(want) <- seqinfo
     want <- GenomicFeatures:::.assignMetadataList(want, txdb)
     checkIdentical(exonsByOverlaps(txdb, gr), want)
@@ -85,15 +85,15 @@ test_cdsByOverlaps <- function()
     seqinfo <- seqinfo(txdb)
     seqlevels <- seqlevels(seqinfo)
 
-    gr <- GRanges(seqnames = "chr8",
-                  ranges = IRanges(start=129000000, end=141000000),
-                  strand = strand("-"))
+    gr <- GRanges(seqnames = "chr3",
+                  ranges = IRanges(start=113677210, width=1),
+                  strand = strand("+"))
     want <-
-      GRanges(seqnames = factor(rep("chr8", 2), levels = seqlevels),
-              ranges = IRanges(start=c(140922391, 140998934),
-                               end  =c(140922544, 140999044)),
-              strand = strand(rep("-", 2)),
-              cds_id = 304:305)
+      GRanges(seqnames = factor("chr3", levels = seqlevels),
+              ranges = IRanges(start=c(113677210, 113677210),
+                               end  =c(113677385, 113677477)),
+              strand = strand("+"),
+              cds_id = 116:117)
     seqinfo(want) <- seqinfo
     want <- GenomicFeatures:::.assignMetadataList(want, txdb)
     checkIdentical(cdsByOverlaps(txdb, gr), want)
