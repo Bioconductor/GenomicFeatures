@@ -10,6 +10,7 @@
 \alias{isActiveSeq<-}
 \alias{isActiveSeq,TxDb-method}
 \alias{isActiveSeq<-,TxDb-method}
+\alias{show,TxDb-method}
 
 % coercion
 \alias{as.list,TxDb-method}
