@@ -39,29 +39,55 @@
 ## considers both pieces together to make a decision and call order in
 ## the right way.  Then unlist and cbind etc.
 
+## What I want to do instead here is to be more accomodating.  So when 
+## I get a transcript that has trans-splicing, throw it out with a warning 
+## instead...
+
+## pre-filter out rankings that cannot be assigned...
+.isRankable <- function(strands){
+    if(length(unique(strands)) > 1){
+        ret <- FALSE
+    }else{
+        ret <- TRUE
+    }
+    ret
+}
+
 ## to be called by mapply
 .assignRankings <- function(starts, strands){
-  if(length(unique(strands)) >1 )
-    stop("Exon rank inference cannot accomodate trans-splicing.")
+##     if(length(unique(strands)) >1 )
+##         stop("Exon rank inference cannot accomodate trans-splicing.")
   if (unique(strands) == "+") { 
     ord <- order(as.integer(starts))
   } else {
     ord <- order(as.integer(starts), decreasing=TRUE)
-  }
-  
-  ## This new method will no longer sort the output (I don't expect it
-  ## will matter.  But I will have to check...
- 
+  } 
   ord
 }
 
+
 .buildRanks <- function(exs){
-    ## 1st we have to make 100% certain that we are we are sorted by tx_names
+    ## Make 100% certain that we are we are sorted by tx_names
     exs <- exs[order(exs$tx_name),]
+    ## Get index of rankability    
+    rawStrands <- split(exs[,"exon_strand"], as.factor(exs$tx_name)[,drop=TRUE])
+    rnkIdx <- unlist(lapply(rawStrands, .isRankable))
+    if(any(!rnkIdx)){
+        warning(wmsg(paste0("Exon rank inference cannot accomodate",
+                            " trans-splicing. Exons from such transcripts",
+                            " have been discarded")))
+        ## and if you are here then you need to keep only rank-able groups
+        ## but 1st we need to move back to exs dimensionality
+        repInt <- unlist(lapply(rawStrands,length))
+        repRnkIdx <- rep(rnkIdx, repInt)
+        exs <- exs[repRnkIdx,]
+    }
     ## then we can split by name
     starts <- split(exs[,"exon_start"], as.factor(exs$tx_name)[,drop=TRUE])
     strands <- split(exs[,"exon_strand"], as.factor(exs$tx_name)[,drop=TRUE])
+    ## Then rank the rest
     ranks <- unlist(mapply(.assignRankings, starts, strands))
+    ## This can't work when ranks is the wrong length?
     exs[,"exon_rank"] <- ranks
     exs
 }
@@ -430,7 +456,9 @@
   ## check for cases where two exons are on the different chromosomes
   keepSubs <- .validTranscript(subs)
   if(!all(keepSubs)){
-      warning("Some of your transcripts have exons on more than one chromsome.  We cannot deduce the order of these exons so these transcripts have been discarded.")}
+      warning(wmsg(paste0("Some of your transcripts have exons on more than ",
+                          "one chromsome.  We cannot deduce the order of these",
+                          " exons so these transcripts have been discarded.")))}
   subs <- subs[keepSubs]
   
   ## which transcripts? - TODO - only includes ones we didn't just throw out!
