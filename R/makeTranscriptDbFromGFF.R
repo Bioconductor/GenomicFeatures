@@ -44,19 +44,26 @@
 ## instead...
 
 ## pre-filter out rankings that cannot be assigned...
-.isRankable <- function(strands){
+.isRankable <- function(strands, chroms){
+    ## are strands one value?
     if(length(unique(strands)) > 1){
-        ret <- FALSE
+        retStrand <- FALSE
     }else{
-        ret <- TRUE
+        retStrand <- TRUE
     }
+    ## are chroms one value?
+    if(length(unique(chroms)) > 1){
+        retChrom <- FALSE
+    }else{
+        retChrom <- TRUE
+    }
+    ## Both must be true to be rankable
+    ret <- retStrand & retChrom
     ret
 }
 
 ## to be called by mapply
 .assignRankings <- function(starts, strands){
-##     if(length(unique(strands)) >1 )
-##         stop("Exon rank inference cannot accomodate trans-splicing.")
   if (unique(strands) == "+") { 
     ord <- order(as.integer(starts))
   } else {
@@ -71,7 +78,8 @@
     exs <- exs[order(exs$tx_name),]
     ## Get index of rankability    
     rawStrands <- split(exs[,"exon_strand"], as.factor(exs$tx_name)[,drop=TRUE])
-    rnkIdx <- unlist(lapply(rawStrands, .isRankable))
+    rawChroms <- split(exs[,"exon_chrom"], as.factor(exs$tx_name)[,drop=TRUE])
+    rnkIdx <- unlist(mapply(.isRankable, rawStrands, rawChroms))
     if(any(!rnkIdx)){
         warning(wmsg(paste0("Exon rank inference cannot accomodate",
                             " trans-splicing. Exons from such transcripts",
@@ -444,6 +452,8 @@
 }
 
 
+
+
 ## This works but is extremely slow.
 .deduceTranscriptsFromGTF <- function(data){
   message("Estimating transcript ranges.")
@@ -456,9 +466,10 @@
   ## check for cases where two exons are on the different chromosomes
   keepSubs <- .validTranscript(subs)
   if(!all(keepSubs)){
-      warning(wmsg(paste0("Some of your transcripts have exons on more than ",
-                          "one chromsome.  We cannot deduce the order of these",
-                          " exons so these transcripts have been discarded.")))}
+      warning(wmsg(paste0("Some of your transcripts are present on more than ",
+                          "one chromosome.  We cannot deduce the ",
+                          "ranges for such transcripts and so ",
+                          "these have been discarded.")))}
   subs <- subs[keepSubs]
   
   ## which transcripts? - TODO - only includes ones we didn't just throw out!
