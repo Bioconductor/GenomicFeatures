@@ -3,26 +3,21 @@
 test_makeTranscriptDbFromBiomart <- function()
 {
     ## We test makeTranscriptDbFromBiomart() on the following transcripts.
-    ## NOTE: Looks like ENST00000341724 and ENST00000400839 are not in
-    ## Ensembl 76 anymore!
     TARGET_TX_NAME <- c(
         ## Coding transcripts.
         "ENST00000013894",  #  6 exons on + strand, CDS'es on exons 1:3
         "ENST00000268655",  #  3 exons on + strand, CDS'es on all exons
         "ENST00000313243",  # 14 exons on - strand, CDS'es on exons 2:14
-        "ENST00000341724",  # 22 exons on + strand, CDS'es on exons 3:22
-        "ENST00000400839",  #  2 exons on - strand, CDS'es on all exons
         "ENST00000435657",  # 30 exons on - strand, CDS'es on exons 2:30
         ## Non-coding transcripts.
         "ENST00000384428",  #  1 exon  on - strand, no CDS
         "ENST00000478783"   #  2 exons on + strand, no CDS
     )
-    TARGET_NEXONS_PER_TX <- c(6L, 3L, 14L, 22L, 2L, 30L, 1L, 2L)
-    TARGET_TX_STRAND <- c("+", "+", "-", "+", "-", "-", "-", "+")
-    TARGET_CDS2EXON <- list(1:3, 1:3, 2:14, 3:22, 1:2, 2:30)
+    TARGET_NEXONS_PER_TX <- c(6L, 3L, 14L, 30L, 1L, 2L)
+    TARGET_TX_STRAND <- c("+", "+", "-", "-", "-", "+")
+    TARGET_CDS2EXON <- list(1:3, 1:3, 2:14, 2:30)
     TARGET_GENE <- c("ENSG00000011198", "ENSG00000103343",
-                     "ENSG00000111837", "ENSG00000124151",
-                     "ENSG00000215750", "ENSG00000231116",
+                     "ENSG00000111837", "ENSG00000231116",
                      "ENSG00000207157", "ENSG00000067646")
 
     current_txdb <- makeTranscriptDbFromBiomart(transcript_ids=TARGET_TX_NAME)

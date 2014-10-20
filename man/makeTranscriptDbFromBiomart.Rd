@@ -127,11 +127,11 @@ head(listDatasets(useMart("ensembl")))
 ## Retrieving an incomplete transcript dataset for Human from the
 ## "ensembl" BioMart database:
 transcript_ids <- c(
+    "ENST00000013894",
     "ENST00000268655",
     "ENST00000313243",
-    "ENST00000341724",
-    "ENST00000400839",
     "ENST00000435657",
+    "ENST00000384428",
     "ENST00000478783"
 )
 txdb <- makeTranscriptDbFromBiomart(transcript_ids=transcript_ids)
