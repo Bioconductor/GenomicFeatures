@@ -72,12 +72,9 @@ export(
   getPromoterSeq,
 
   # Deprecated:
-  sortExonsByRank,
 
   ## Defunct:
-  extractTranscripts,
-  extractTranscriptsFromGenome,
-  determineDefaultSeqnameStyle
+  sortExonsByRank
 )
 
 exportMethods(

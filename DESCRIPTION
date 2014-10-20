@@ -36,9 +36,9 @@ Collate: utils.R Ensembl.utils.R findCompatibleMarts.R
         makeFeatureDbFromUCSC.R id2name.R transcripts.R
         transcriptsByOverlaps.R transcriptsBy.R features.R
         extractUpstreamSeqs.R extractTranscriptSeqs.R
-        transcriptLocs2refLocs.R makeTxDbPackage.R seqnames-methods.R
+        transcriptLocs2refLocs.R makeTxDbPackage.R
         select-methods.R nearest-methods.R getPromoterSeq-methods.R
-        extractTranscriptsFromGenome.R test_GenomicFeatures_package.R
+        sortExonsByRank.R test_GenomicFeatures_package.R
 VignetteBuilder: knitr
 biocViews: Genetics, Infrastructure, Annotation, Sequencing,
         GenomeAnnotation
