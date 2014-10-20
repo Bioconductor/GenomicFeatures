@@ -1,9 +1,4 @@
-- makeTranscriptDbFromUCSC() - Address the CDS non-completeness issue.
+- makeTxDbFromUCSC() - Address the CDS non-completeness issue.
   The status of the CDS (complete or not) can be inferred from the
   cds*Stat field (when present) of the UCSC table.
-
-- makeTranscriptDbFromBiomart() - Add support for chromosome lengths.
-
-- makeTranscriptDbFromGFF3() - Primary target: GFF3 files on the TAIR,
-  Flybase and Wormbase websites/FTP servers.
 

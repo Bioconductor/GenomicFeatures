@@ -1,5 +1,5 @@
 ### =========================================================================
-### makeTranscriptDbFromUCSC()
+### makeTxDbFromUCSC()
 ### -------------------------------------------------------------------------
 
 ## take any of the supported genomes at UCSC, remove the version number, 
@@ -98,8 +98,8 @@ UCSCGenomeToOrganism <- function(genome){
   genome2org[genome]
 }
 
-### makeTranscriptDbFromUCSC() expects a UCSC transcript table to have at
-### least the following columns:
+### makeTxDbFromUCSC() expects a UCSC transcript table to have at least
+### the following columns:
 .UCSC_TXCOL2CLASS <- c(
     name="character",
     chrom="factor",
@@ -113,7 +113,7 @@ UCSCGenomeToOrganism <- function(genome){
     exonEnds="character"
 )
 ### Note that, from a strictly technical point of view, the 'name' and
-### 'exonCount' cols are not required and .makeTranscriptDbFromUCSCTxTable()
+### 'exonCount' cols are not required and .makeTxDbFromUCSCTxTable()
 ### could easily be modified to accept tables where they are missing.
 
 ### Lookup between UCSC transcript tables and their associated track.
@@ -123,8 +123,8 @@ UCSCGenomeToOrganism <- function(genome){
   ## Tables/tracks shared by hg18/hg19.
   ## All the tables/tracks listed in this section belong to the "Genes and
   ## Gene Prediction" group of tracks for hg18 and hg19.
-  ## On Aug 13 2010, makeTranscriptDbFromUCSC() was successfully tested by
-  ## hand on all of them for hg18 (i.e. with 'genome="hg18"').
+  ## On Aug 13 2010, makeTxDbFromUCSC() was successfully tested by hand on
+  ## all of them for hg18 (i.e. with 'genome="hg18"').
   ## Note: the "acembly" table contains more than 250000 transcripts!
   "knownGene",                        "UCSC Genes",        NA,
   "knownGeneOld3",                    "Old UCSC Genes",    NA,
@@ -174,7 +174,7 @@ UCSCGenomeToOrganism <- function(genome){
   "flyBaseGene",                      "FlyBase Genes",     NA,
 
   ## Tables/tracks specific to sacCer2.
-  ## makeTranscriptDbFromUCSC(genome="sacCer2", tablename="sgdGene")
+  ## makeTxDbFromUCSC(genome="sacCer2", tablename="sgdGene")
   ## successfully tested on On Aug 13 2010.
   "sgdGene",                          "SGD Genes",         NA
 )
@@ -206,8 +206,8 @@ supportedUCSCtables <- function()
 ### The table names above (unique key) must be used to name the top-level
 ### elements of the list below. If no suitable tx_name-to-gene_id mapping is
 ### available in the UCSC database for a supported table, then there is no
-### entry in the list below for this table and makeTranscriptDbFromUCSC()
-### will leave the gene table empty.
+### entry in the list below for this table and makeTxDbFromUCSC() will leave
+### the gene table empty.
 .UCSC_TXNAME2GENEID_MAPDEFS <- list(
     knownGene=list(
         L2Rchain=list(
@@ -758,10 +758,10 @@ getChromInfoFromUCSC <- function(genome,
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### makeTranscriptDbFromUCSC()
+### makeTxDbFromUCSC()
 ###
 
-.makeTranscriptDbFromUCSCTxTable <- function(ucsc_txtable, genes,
+.makeTxDbFromUCSCTxTable <- function(ucsc_txtable, genes,
         genome, tablename, gene_id_type,
         full_dataset,
         circ_seqs,
@@ -789,22 +789,22 @@ getChromInfoFromUCSC <- function(genome,
                                      full_dataset, miRBaseBuild)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
-    txdb <- makeTranscriptDb(transcripts, splicings, genes=genes,
-                             chrominfo=chrominfo, metadata=metadata,
-                             reassign.ids=TRUE)
+    txdb <- makeTxDb(transcripts, splicings, genes=genes,
+                     chrominfo=chrominfo, metadata=metadata,
+                     reassign.ids=TRUE)
     message("OK")
     txdb
 }
 
-### The 2 main tasks that makeTranscriptDbFromUCSC() performs are:
+### The 2 main tasks that makeTxDbFromUCSC() performs are:
 ###   (1) download the data from UCSC into a data.frame (the getTable() call);
 ###   (2) store that data.frame in an SQLite db (the
-###       .makeTranscriptDbFromUCSCTxTable() call).
+###       .makeTxDbFromUCSCTxTable() call).
 ### Speed:
 ###   - for genome="hg18" and tablename="knownGene":
 ###       (1) download takes about 40-50 sec.
 ###       (2) db creation takes about 30-35 sec.
-makeTranscriptDbFromUCSC <- function(genome="hg19",
+makeTxDbFromUCSC <- function(genome="hg19",
         tablename="knownGene",
         transcript_ids=NULL,
         circ_seqs=DEFAULT_CIRC_SEQS,
@@ -861,12 +861,18 @@ makeTranscriptDbFromUCSC <- function(genome="hg19",
         stop("GenomicFeatures internal error: invalid 'mapdef'")
     }
 
-    .makeTranscriptDbFromUCSCTxTable(ucsc_txtable, txname2geneid$genes,
-                                     genome, tablename,
-                                     txname2geneid$gene_id_type,
-                                     full_dataset=is.null(transcript_ids),
-                                     circ_seqs=circ_seqs,
-                                     goldenPath_url=goldenPath_url,
-                                     miRBaseBuild=miRBaseBuild)
+    .makeTxDbFromUCSCTxTable(ucsc_txtable, txname2geneid$genes,
+                             genome, tablename,
+                             txname2geneid$gene_id_type,
+                             full_dataset=is.null(transcript_ids),
+                             circ_seqs=circ_seqs,
+                             goldenPath_url=goldenPath_url,
+                             miRBaseBuild=miRBaseBuild)
+}
+
+makeTranscriptDbFromUCSC <- function(...)
+{
+    .Deprecated("makeTxDbFromUCSC")
+    makeTxDbFromUCSC(...)
 }
 

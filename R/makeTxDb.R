@@ -4,9 +4,9 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### 1st group of helper functions for makeTranscriptDb()
+### 1st group of helper functions for makeTxDb()
 ###
-### 4 functions to check and normalize the input of makeTranscriptDb():
+### 4 functions to check and normalize the input of makeTxDb():
 ###   o .normargTranscripts()
 ###   o .normargSplicings()
 ###   o .normargGenes()
@@ -323,7 +323,7 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### 2nd group of helper functions for makeTranscriptDb()
+### 2nd group of helper functions for makeTxDb()
 ###
 ### These functions deal with id assignment and reassignment.
 ###
@@ -373,7 +373,7 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### 3rd group of helper functions for makeTranscriptDb()
+### 3rd group of helper functions for makeTxDb()
 ###
 ### These functions deal with writing data to the database.
 ###
@@ -572,12 +572,12 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### makeTranscriptDb().
+### makeTxDb().
 ###
 
-makeTranscriptDb <- function(transcripts, splicings,
-                             genes=NULL, chrominfo=NULL, metadata=NULL,
-                             reassign.ids=FALSE)
+makeTxDb <- function(transcripts, splicings,
+                     genes=NULL, chrominfo=NULL, metadata=NULL,
+                     reassign.ids=FALSE)
 {
     if (!isTRUEorFALSE(reassign.ids))
         stop("'reassign.ids' must be TRUE or FALSE")
@@ -627,14 +627,20 @@ makeTranscriptDb <- function(transcripts, splicings,
     TxDb(conn)
 }
 
+makeTranscriptDb <- function(...)
+{
+    .Deprecated("makeTxDb")
+    makeTxDb(...)
+}
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### makeToyTranscriptDb().
+### makeToyTxDb().
 ###
-### A simple wrapper around makeTranscriptDb() typically used to make toy
+### A simple wrapper around makeTxDb() typically used to make toy
 ### TxDb objects.
 ###
-### 'splicings' must have the same format as for makeTranscriptDb().
+### 'splicings' must have the same format as for makeTxDb().
 ### If the "exon_chrom" col is missing, then it's added and filled with
 ### "chr1". If the "exon_strand" col is missing, then it's added and filled
 ### with "+". Within each transcript the "exon_chrom" and "exon_strand" values
@@ -649,7 +655,7 @@ makeTranscriptDb <- function(transcripts, splicings,
 ###     their first and last exons.
 ###
 
-makeToyTranscriptDb <- function(splicings, genes=NULL)
+makeToyTxDb <- function(splicings, genes=NULL)
 {
     if (!is.data.frame(splicings))
         stop("'splicings' must be a data frame")

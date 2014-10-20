@@ -11,8 +11,8 @@ can us it as a default value for \code{circ_seqs} arguments, and
 append to it as needed.
 }
 \seealso{
-  \code{\link{makeTranscriptDbFromUCSC}},
-  \code{\link{makeTranscriptDbFromBiomart}}
+  \code{\link{makeTxDbFromUCSC}},
+  \code{\link{makeTxDbFromBiomart}}
 }
 
 \examples{

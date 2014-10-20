@@ -552,8 +552,8 @@ setReplaceMethod("isActiveSeq","TxDb",
 ###
 
 ### Dump the entire db into a list of data frames 'txdump' that can be used
-### in 'do.call(makeTranscriptDb, txdump)' to make the db again with no loss
-### of information.
+### in 'do.call(makeTxDb, txdump)' to make the db again with no loss of
+### information.
 ### Note that the transcripts are dumped in the same order in all the
 ### data frames.
 setMethod("as.list", "TxDb",

@@ -219,7 +219,7 @@ test_GenomicRanges_distance <- function()
         exon_end=c(999, 2085, 2144, 2199, 3085, 3199),
         cds_start=c(1, 2022, 2101, 2131, 3001, 3131),
         cds_end=c(999, 2085, 2144, 2193, 3085, 3199))
-    txdb <- quiet(makeTranscriptDb(transcripts, splicings, genes))
+    txdb <- quiet(makeTxDb(transcripts, splicings, genes))
 
     gr <- GRanges("chr1", IRanges(1050, width=1))
     strand(gr) <- "-"

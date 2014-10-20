@@ -1,22 +1,25 @@
-\name{makeTranscriptDb}
+\name{makeTxDb}
 
+\alias{makeTxDb}
+
+% deprecated
 \alias{makeTranscriptDb}
 
 \title{
   Making a TxDb object from user supplied annotations
 }
 \description{
-  \code{makeTranscriptDb} is a low-level constructor for making
+  \code{makeTxDb} is a low-level constructor for making
   a \link{TxDb} object from user supplied transcript annotations.
-  See \code{?\link{makeTranscriptDbFromUCSC}} and
-  \code{?\link{makeTranscriptDbFromBiomart}} for higher-level
+  See \code{?\link{makeTxDbFromUCSC}} and
+  \code{?\link{makeTxDbFromBiomart}} for higher-level
   functions that feed data from the UCSC or BioMart sources
-  to \code{makeTranscriptDb}.
+  to \code{makeTxDb}.
 }
 \usage{
-  makeTranscriptDb(transcripts, splicings,
-                   genes=NULL, chrominfo=NULL, metadata=NULL,
-                   reassign.ids=FALSE)
+makeTxDb(transcripts, splicings,
+         genes=NULL, chrominfo=NULL, metadata=NULL,
+         reassign.ids=FALSE)
 }
 \arguments{
   \item{transcripts}{data frame containing the genomic locations of
@@ -146,11 +149,11 @@
 
 \seealso{
   \itemize{
-    \item \code{\link{makeTranscriptDbFromUCSC}} and
-          \code{\link{makeTranscriptDbFromBiomart}} for convenient ways to
+    \item \code{\link{makeTxDbFromUCSC}} and
+          \code{\link{makeTxDbFromBiomart}} for convenient ways to
           make \link{TxDb} objects from UCSC or BioMart online
           resources.
-    \item \code{\link{makeTranscriptDbFromGFF}} for making a
+    \item \code{\link{makeTxDbFromGFF}} for making a
           \link{TxDb} object from annotations available
           as a GFF3 or GTF file.
     \item The \link{TxDb} class.
@@ -172,5 +175,5 @@ splicings <-  data.frame(
                    cds_start=c(1, 2022, 2101, 2131, NA, NA),
                    cds_end=c(999, 2085, 2144, 2193, NA, NA))
 
-txdb <- makeTranscriptDb(transcripts, splicings)
+txdb <- makeTxDb(transcripts, splicings)
 }

@@ -1,5 +1,8 @@
-\name{makeTranscriptDbFromGFF}
+\name{makeTxDbFromGFF}
 
+\alias{makeTxDbFromGFF}
+
+% deprecated
 \alias{makeTranscriptDbFromGFF}
 
 \title{
@@ -7,21 +10,21 @@
   GFF3 or GTF file
 }
 \description{
-  The \code{makeTranscriptDbFromGFF} function allows the user
+  The \code{makeTxDbFromGFF} function allows the user
   to make a \link{TxDb} object from transcript annotations
   available as a GFF3 or GTF file.
 }
 \usage{
-makeTranscriptDbFromGFF(file,
-                        format=c("gff3","gtf"),
-                        exonRankAttributeName=NA,
-                        gffGeneIdAttributeName=NA,
-                        chrominfo=NA,
-                        dataSource=NA,
-                        species=NA,
-                        circ_seqs=DEFAULT_CIRC_SEQS,
-                        miRBaseBuild=NA,
-                        useGenesAsTranscripts=FALSE)
+makeTxDbFromGFF(file,
+                format=c("gff3","gtf"),
+                exonRankAttributeName=NA,
+                gffGeneIdAttributeName=NA,
+                chrominfo=NA,
+                dataSource=NA,
+                species=NA,
+                circ_seqs=DEFAULT_CIRC_SEQS,
+                miRBaseBuild=NA,
+                useGenesAsTranscripts=FALSE)
 }
 \arguments{
   \item{file}{path/file to be processed}
@@ -40,8 +43,7 @@ makeTranscriptDbFromGFF(file,
   gff3 file.  For gtf files this argument is ignored entirely.}
   \item{chrominfo}{data frame containing information about the
   chromosomes.  Will be passed to the internal call to
-  \code{\link{makeTranscriptDb}}. See \code{?\link{makeTranscriptDb}}
-  for the details.}
+  \code{\link{makeTxDb}}. See \code{?\link{makeTxDb}} for the details.}
   \item{dataSource}{Where did this data file originate?  Please be as
   specific as possible.}
   \item{species}{What is the Genus and species of this organism. Please
@@ -63,8 +65,8 @@ makeTranscriptDbFromGFF(file,
     are dealing with something very simple like a prokaryote.}
 }
 \details{
-  \code{makeTranscriptDbFromGFF} is a convenience function that feeds
-  data from the parsed file to the lower level \code{\link{makeTranscriptDb}}
+  \code{makeTxDbFromGFF} is a convenience function that feeds
+  data from the parsed file to the lower level \code{\link{makeTxDb}}
   function.
 
   There are some real deficiencies in the gtf and the gff3 file formats
@@ -94,16 +96,16 @@ makeTranscriptDbFromGFF(file,
 
 \seealso{
   \code{\link{DEFAULT_CIRC_SEQS}},
-  \code{\link{makeTranscriptDbFromUCSC}},
-  \code{\link{makeTranscriptDbFromBiomart}},
-  \code{\link{makeTranscriptDb}},
+  \code{\link{makeTxDbFromUCSC}},
+  \code{\link{makeTxDbFromBiomart}},
+  \code{\link{makeTxDb}},
   \code{\link{supportedMiRBaseBuildValues}}
 }
 
 \examples{
 ## TESTING GFF3
 gffFile <- system.file("extdata","a.gff3",package="GenomicFeatures")
-txdb <- makeTranscriptDbFromGFF(file=gffFile,
+txdb <- makeTxDbFromGFF(file=gffFile,
             format="gff3",
             exonRankAttributeName=NA,
             dataSource="partial gtf file for Tomatoes for testing",
@@ -118,7 +120,7 @@ gtfFile <- system.file("extdata","Aedes_aegypti.partial.gtf",
 chrominfo <- data.frame(chrom = c('supercont1.1','supercont1.2'),
                         length=c(5220442, 5300000),
                         is_circular=c(FALSE, FALSE))
-txdb2 <- makeTranscriptDbFromGFF(file=gtfFile,
+txdb2 <- makeTxDbFromGFF(file=gtfFile,
              format="gtf",
              exonRankAttributeName="exon_number",
              chrominfo=chrominfo,

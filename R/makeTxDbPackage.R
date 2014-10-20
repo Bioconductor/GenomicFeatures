@@ -209,13 +209,13 @@ makeTxDbPackageFromUCSC <- function(
              " character vector or be NA.")}
     
     ## Make the DB
-    txdb <- makeTranscriptDbFromUCSC(genome=genome,
-                                     tablename=tablename,
-                                     transcript_ids=transcript_ids,
-                                     circ_seqs=circ_seqs,
-                                     url=url,
-                                     goldenPath_url=goldenPath_url,
-                                     miRBaseBuild=miRBaseBuild)
+    txdb <- makeTxDbFromUCSC(genome=genome,
+                             tablename=tablename,
+                             transcript_ids=transcript_ids,
+                             circ_seqs=circ_seqs,
+                             url=url,
+                             goldenPath_url=goldenPath_url,
+                             miRBaseBuild=miRBaseBuild)
     ## Make the Package
     makeTxDbPackage(txdb,
                     version=version,
@@ -265,11 +265,11 @@ makeTxDbPackageFromBiomart <- function(
         stop("'miRBaseBuild' must be supplied as a single element",
              " character vector or be NA.")}
     ## Make the DB
-    txdb <- makeTranscriptDbFromBiomart(biomart=biomart,
-                                        dataset=dataset,
-                                        transcript_ids=transcript_ids,
-                                        circ_seqs=circ_seqs,
-                                        miRBaseBuild=miRBaseBuild)
+    txdb <- makeTxDbFromBiomart(biomart=biomart,
+                                dataset=dataset,
+                                transcript_ids=transcript_ids,
+                                circ_seqs=circ_seqs,
+                                miRBaseBuild=miRBaseBuild)
     ## Make the Package
     makeTxDbPackage(txdb,
                     version=version,

@@ -56,7 +56,7 @@ if (FALSE) {
        file="GenomicFeatures/inst/extdata/hg19_knownGene_sample.rda")
 }
 
-test_makeTranscriptDbFromUCSCTxTable <- function()
+test_makeTxDbFromUCSCTxTable <- function()
 {
     ## want
     txdb0_file <- system.file(
@@ -81,7 +81,7 @@ test_makeTranscriptDbFromUCSCTxTable <- function()
     load(knownToLocusLink_sample_file)
     genes <- data.frame(tx_name=hg19_knownToLocusLink_sample$tx_name,
                         gene_id=hg19_knownToLocusLink_sample$gene_id)
-    txdb1 <- GenomicFeatures:::.makeTranscriptDbFromUCSCTxTable(
+    txdb1 <- GenomicFeatures:::.makeTxDbFromUCSCTxTable(
                  hg19_knownGene_sample, genes,
                  "hg19", "knownGene", "Entrez Gene ID", FALSE,
                  DEFAULT_CIRC_SEQS)

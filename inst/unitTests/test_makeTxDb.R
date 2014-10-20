@@ -1,6 +1,6 @@
 ###
 
-test_makeTranscriptDb <- function()
+test_makeTxDb <- function()
 {
     ## A TOY CASE
     ## ----------
@@ -17,9 +17,9 @@ test_makeTranscriptDb <- function()
                         exon_start=c(1L, 16844685L, 1L, 16844685L),
                         exon_end=c(100L, 16844760L, 100L, 16844760L))
 
-    suppressWarnings(txdb0a <- makeTranscriptDb(transcripts0, splicings0,
+    suppressWarnings(txdb0a <- makeTxDb(transcripts0, splicings0,
                                                 reassign.ids=TRUE))
-    suppressWarnings(txdb0b <- makeTranscriptDb(transcripts0, splicings0))
+    suppressWarnings(txdb0b <- makeTxDb(transcripts0, splicings0))
 
     ## Check the transcripts.
     transcripts1 <- data.frame(
@@ -75,7 +75,7 @@ test_makeTranscriptDb <- function()
     txdb0 <- loadDb(txdb0_file)
 
     ## get
-    txdb1 <- do.call(makeTranscriptDb, as.list(txdb0))
+    txdb1 <- do.call(makeTxDb, as.list(txdb0))
 
     ## compare
     ok <- GenomicFeatures:::compareTxDbs(txdb1, txdb0)

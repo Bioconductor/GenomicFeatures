@@ -1,8 +1,8 @@
 ###
 
-test_makeTranscriptDbFromBiomart <- function()
+test_makeTxDbFromBiomart <- function()
 {
-    ## We test makeTranscriptDbFromBiomart() on the following transcripts.
+    ## We test makeTxDbFromBiomart() on the following transcripts:
     TARGET_TX_NAME <- c(
         ## Coding transcripts.
         "ENST00000013894",  #  6 exons on + strand, CDS'es on exons 1:3
@@ -20,7 +20,7 @@ test_makeTranscriptDbFromBiomart <- function()
                      "ENSG00000111837", "ENSG00000231116",
                      "ENSG00000207157", "ENSG00000067646")
 
-    current_txdb <- makeTranscriptDbFromBiomart(transcript_ids=TARGET_TX_NAME)
+    current_txdb <- makeTxDbFromBiomart(transcript_ids=TARGET_TX_NAME)
     checkTrue(validObject(current_txdb))
 
     ## Extract transcripts and re-order them as in TARGET_TX_NAME.

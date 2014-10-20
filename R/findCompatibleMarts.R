@@ -1,15 +1,15 @@
 ### =========================================================================
 ### Some non-exported tools to help explore/scan the BioMart landscape and
-### find marts compatible with makeTranscriptDbFromBiomart()
+### find marts compatible with makeTxDbFromBiomart()
 ### -------------------------------------------------------------------------
 ###
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Groups of BioMart attributes "recognized" by makeTranscriptDbFromBiomart()
+### Groups of BioMart attributes "recognized" by makeTxDbFromBiomart()
 ###
-### REQUIRED attributes: makeTranscriptDbFromBiomart() expects their presence
+### REQUIRED attributes: makeTxDbFromBiomart() expects their presence
 ### in the dataset and will fail if they are not.
-### OPTIONAL attributes: makeTranscriptDbFromBiomart() will use them if
+### OPTIONAL attributes: makeTxDbFromBiomart() will use them if
 ### they're present in the dataset but won't fail if they are not.
 ###
 
@@ -96,7 +96,7 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Find marts compatible with makeTranscriptDbFromBiomart().
+### Find marts compatible with makeTxDbFromBiomart().
 ###
 
 ### 'mart' can be either a Mart object or the name of a Mart service (single

@@ -1,7 +1,10 @@
-\name{makeTranscriptDbFromUCSC}
+\name{makeTxDbFromUCSC}
 
 \alias{supportedUCSCtables}
 \alias{getChromInfoFromUCSC}
+\alias{makeTxDbFromUCSC}
+
+% deprecated
 \alias{makeTranscriptDbFromUCSC}
 
 \title{
@@ -9,7 +12,7 @@
   UCSC Genome Browser
 }
 \description{
-  The \code{makeTranscriptDbFromUCSC} function allows the user
+  The \code{makeTxDbFromUCSC} function allows the user
   to make a \link{TxDb} object from transcript annotations
   available at the UCSC Genome Browser.
 }
@@ -20,7 +23,7 @@ getChromInfoFromUCSC(
         genome,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 
-makeTranscriptDbFromUCSC(
+makeTxDbFromUCSC(
         genome="hg19",
         tablename="knownGene",
         transcript_ids=NULL,
@@ -53,10 +56,10 @@ makeTranscriptDbFromUCSC(
     \code{microRNAs} accessor.}
 }
 \details{
-  \code{makeTranscriptDbFromUCSC} is a convenience function that feeds
-  data from the UCSC source to the lower level \code{\link{makeTranscriptDb}}
+  \code{makeTxDbFromUCSC} is a convenience function that feeds
+  data from the UCSC source to the lower level \code{\link{makeTxDb}}
   function.
-  See \code{?\link{makeTranscriptDbFromBiomart}} for a similar function
+  See \code{?\link{makeTxDbFromBiomart}} for a similar function
   that feeds data from a BioMart database.
 }
 
@@ -69,9 +72,9 @@ makeTranscriptDbFromUCSC(
 \seealso{
   \code{\link[rtracklayer]{ucscGenomes}},
   \code{\link{DEFAULT_CIRC_SEQS}},
-  \code{\link{makeTranscriptDbFromBiomart}},
-  \code{\link{makeTranscriptDbFromGFF}},
-  \code{\link{makeTranscriptDb}},
+  \code{\link{makeTxDbFromBiomart}},
+  \code{\link{makeTxDbFromGFF}},
+  \code{\link{makeTxDb}},
   \code{\link{supportedMiRBaseBuildValues}}
 }
 
@@ -80,12 +83,12 @@ makeTranscriptDbFromUCSC(
 library(rtracklayer)
 ucscGenomes()[ , "db"]
 
-## Display the list of tables supported by makeTranscriptDbFromUCSC():
+## Display the list of tables supported by makeTxDbFromUCSC():
 supportedUCSCtables()
 
 \dontrun{
 ## Retrieving a full transcript dataset for Yeast from UCSC:
-txdb1 <- makeTranscriptDbFromUCSC(genome="sacCer2", tablename="ensGene")
+txdb1 <- makeTxDbFromUCSC(genome="sacCer2", tablename="ensGene")
 }
 
 ## Retrieving an incomplete transcript dataset for Mouse from UCSC
@@ -98,7 +101,7 @@ transcript_ids <- c(
     "uc009uzj.1"
 )
 
-txdb2 <- makeTranscriptDbFromUCSC(genome="mm9", tablename="knownGene",
-                                  transcript_ids=transcript_ids)
+txdb2 <- makeTxDbFromUCSC(genome="mm9", tablename="knownGene",
+                          transcript_ids=transcript_ids)
 txdb2
 }

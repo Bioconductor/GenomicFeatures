@@ -7,7 +7,7 @@
 
 ## IF I require GenomicFeatures here it will 'fix' the problem for R -e
 ## 'BiocGenerics:::testPackage(pkgname="GenomicFeatures",
-## pattern="test_makeTranscriptDbFromGFF")' ...  but NOT for R CMD check
+## pattern="test_makeTxDbFromGFF")' ...  but NOT for R CMD check
 ## GenomicFeatures_x.y.z.tar.gz
 library(GenomicFeatures)
 gffFile <- system.file("extdata","a.gff3",package="GenomicFeatures")
@@ -142,7 +142,7 @@ test_prepareGFF3Tables <- function(){
 
 
 ## Test that outputs match what is expected. ## BOOM
-test_makeTranscriptDbFromGFF <- function(){  
+test_makeTxDbFromGFF <- function(){  
   ## wanted
   gffDBFile <- system.file("extdata","TESTGFF.sqlite",
                            package="GenomicFeatures")
@@ -150,7 +150,7 @@ test_makeTranscriptDbFromGFF <- function(){
 
   ## generated
   suppressWarnings(
-  txdb <- makeTranscriptDbFromGFF(file=gffFile,
+  txdb <- makeTxDbFromGFF(file=gffFile,
          format="gff3",
          dataSource="partial GFF file for Tomatoes for testing",
          species="Solanum lycopersicum")
@@ -171,7 +171,7 @@ test_makeTranscriptDbFromGFF <- function(){
                         is_circular=c(FALSE, FALSE))
   
   suppressWarnings(
-  txdb2 <- makeTranscriptDbFromGFF(file=gtfFile,
+  txdb2 <- makeTxDbFromGFF(file=gtfFile,
          format="gtf",
          exonRankAttributeName="exon_number",
          chrominfo= chrominfo,
@@ -189,7 +189,7 @@ test_makeTranscriptDbFromGFF <- function(){
   txdb_fly <- loadDb(flyDBFile)
 
   suppressWarnings(
-  txdb3 <- makeTranscriptDbFromGFF(file=flyFile,
+  txdb3 <- makeTxDbFromGFF(file=flyFile,
                                    format="gff3",
                                    dataSource="gff file from flybase",
                                    gffGeneIdAttributeName = "geneID",
@@ -211,7 +211,7 @@ test_makeTranscriptDbFromGFF <- function(){
                           is_circular=c(TRUE))
 
   ## mostly I want to see if if can run this:
-  txdb_bac <- makeTranscriptDbFromGFF(file = gffB, format = "gff",
+  txdb_bac <- makeTxDbFromGFF(file = gffB, format = "gff",
                                       chrominfo = chrominfoBac,
                                       dataSource = "NCBI",
                                       species = "Mycoplasma arthritidis",

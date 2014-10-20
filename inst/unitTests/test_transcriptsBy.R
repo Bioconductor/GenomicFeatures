@@ -15,7 +15,7 @@ test_transcriptsBy <- function()
                         exon_start=c(1L, 16844685L, 1L, 16844685L),
                         exon_end=c(100L, 16844760L, 100L, 16844760L))
 
-    suppressWarnings(txdb0 <- makeTranscriptDb(transcripts0, splicings0))
+    suppressWarnings(txdb0 <- makeTxDb(transcripts0, splicings0))
 
     seqinfo <- seqinfo(txdb0)
     seqlevels <- seqlevels(seqinfo)

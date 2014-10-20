@@ -34,16 +34,16 @@ exportClasses(TxDb, FeatureDb)
 
 export(
   DEFAULT_CIRC_SEQS,
-  makeTranscriptDb,
+  makeTxDb,
   supportedUCSCtables,
   supportedUCSCFeatureDbTracks,
   supportedUCSCFeatureDbTables,
   UCSCFeatureDbTableSchema,
   getChromInfoFromUCSC,
-  makeTranscriptDbFromUCSC,
+  makeTxDbFromUCSC,
   getChromInfoFromBiomart,
-  makeTranscriptDbFromBiomart,
-  makeTranscriptDbFromGFF,
+  makeTxDbFromBiomart,
+  makeTxDbFromGFF,
   transcripts, exons, cds, genes,
   disjointExons,
   microRNAs,
@@ -72,6 +72,10 @@ export(
   getPromoterSeq,
 
   # Deprecated:
+  makeTranscriptDb,
+  makeTranscriptDbFromUCSC,
+  makeTranscriptDbFromBiomart,
+  makeTranscriptDbFromGFF,
 
   ## Defunct:
   sortExonsByRank

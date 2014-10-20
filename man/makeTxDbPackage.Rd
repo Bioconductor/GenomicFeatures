@@ -131,8 +131,8 @@ makeFDbPackageFromUCSC(
   \item{chromEndCol}{Same thing as chromCol, but for renames of 'chromEnd'}
   \item{txdb}{A \link{TxDb} object that represents a handle to a 
     transcript database. This object type is what is returned by 
-    \code{makeTranscriptDbFromUCSC}, \code{makeTranscriptDbFromUCSC} or 
-    \code{makeTranscriptDb}}
+    \code{makeTxDbFromUCSC}, \code{makeTxDbFromUCSC} or 
+    \code{makeTxDb}}
   \item{miRBaseBuild}{specify the string for the appropriate build
     Information from mirbase.db to use for microRNAs.  This can be
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
@@ -141,10 +141,10 @@ makeFDbPackageFromUCSC(
 }
 \details{
   \code{makeTxDbPackageFromUCSC} is a convenience function that calls
-    both the \code{\link{makeTranscriptDbFromUCSC}} and the
+    both the \code{\link{makeTxDbFromUCSC}} and the
     \code{\link{makeTxDbPackage}} functions.  The
     \code{makeTxDbPackageFromBiomart} follows a similar pattern and
-    calls the \code{\link{makeTranscriptDbFromBiomart}} and
+    calls the \code{\link{makeTxDbFromBiomart}} and
     \code{\link{makeTxDbPackage}} functions.
   \code{supportedMiRBaseBuildValues} is a convenience function that will
   list all the possible values for the miRBaseBuild argument.
@@ -157,9 +157,9 @@ makeFDbPackageFromUCSC(
 }
 
 \seealso{
-  \code{\link{makeTranscriptDbFromUCSC}},
-  \code{\link{makeTranscriptDbFromBiomart}},
-  \code{\link{makeTranscriptDb}},
+  \code{\link{makeTxDbFromUCSC}},
+  \code{\link{makeTxDbFromBiomart}},
+  \code{\link{makeTxDb}},
   \code{\link[rtracklayer]{ucscGenomes}},
   \code{\link{DEFAULT_CIRC_SEQS}}
 }

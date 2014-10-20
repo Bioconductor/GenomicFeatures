@@ -400,12 +400,12 @@ The \Rpackage{GenomicFeatures} package provides functions to create
 Genome Bioinformatics or BioMart. The following subsections
 demonstrate the use of these functions.  There is also support for
 creating \Rclass{TxDb} objects from custom data sources using
-\Rfunction{makeTranscriptDb}; see the help page for this function for
+\Rfunction{makeTxDb}; see the help page for this function for
 details.
 
-\subsection{Using \Rfunction{makeTranscriptDbFromUCSC}}
+\subsection{Using \Rfunction{makeTxDbFromUCSC}}
 
-The function \Rfunction{makeTranscriptDbFromUCSC} downloads UCSC
+The function \Rfunction{makeTxDbFromUCSC} downloads UCSC
 Genome Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
 \Rcode{"refGene"}, \Rcode{"ensGene"}) for a genome build (e.g.
 \Rcode{"mm9"}, \Rcode{"hg19"}).  Use the
@@ -415,11 +415,11 @@ supported tables.
 <<supportedUCSCtables>>=
 supportedUCSCtables()[1:4, ]
 @
-<<makeTranscriptDbFromUCSC, eval=FALSE>>=
-mm9KG <- makeTranscriptDbFromUCSC(genome = "mm9", tablename = "knownGene")
+<<makeTxDbFromUCSC, eval=FALSE>>=
+mm9KG <- makeTxDbFromUCSC(genome = "mm9", tablename = "knownGene")
 @
 
-The function \Rfunction{makeTranscriptDbFromUCSC} also takes an
+The function \Rfunction{makeTxDbFromUCSC} also takes an
 important argument called \Robject{circ\_seqs} to label which
 chromosomes are circular.  The argument is a character vector of
 strings that correspond to the circular chromosomes (as labeled by the
@@ -440,28 +440,28 @@ tagged as circular by the database.
 head(getChromInfoFromUCSC("hg19"))
 @ 
 
-\subsection{Using \Rfunction{makeTranscriptDbFromBiomart}}
+\subsection{Using \Rfunction{makeTxDbFromBiomart}}
 
 Retrieve data from BioMart by specifying the mart and the data set to
-the \Rfunction{makeTranscriptDbFromBiomart} function (not all BioMart
+the \Rfunction{makeTxDbFromBiomart} function (not all BioMart
 data sets are currently supported):
 %%
-<<makeTranscriptDbFromBiomart, eval=FALSE>>=
+<<makeTxDbFromBiomart, eval=FALSE>>=
 mmusculusEnsembl <-
-   makeTranscriptDbFromBiomart(biomart = "ensembl",
+   makeTxDbFromBiomart(biomart = "ensembl",
                               dataset = "mmusculus_gene_ensembl")
 @
 
-As with the \Rfunction{makeTranscriptDbFromUCSC} function, the
-\Rfunction{makeTranscriptDbFromBiomart} function also has a
+As with the \Rfunction{makeTxDbFromUCSC} function, the
+\Rfunction{makeTxDbFromBiomart} function also has a
 \Robject{circ\_seqs} argument that will default to using the contents
 of the \Robject{DEFAULT\_CIRC\_SEQS} vector.  And just like those UCSC
 sources, there is also a helper function called
 \Rfunction{getChromInfoFromBiomart} that can show what the different
 chromosomes are called for a given source.
 
-Using the \Rfunction{makeTranscriptDbFromBiomart}
-\Rfunction{makeTranscriptDbFromUCSC} functions can take a while and
+Using the \Rfunction{makeTxDbFromBiomart}
+\Rfunction{makeTxDbFromUCSC} functions can take a while and
 may also require some bandwidth as these methods have to download and
 then assemble a database from their respective sources.  It is not
 expected that most users will want to do this step every time.
@@ -470,12 +470,12 @@ them with an appropriate time stamp so as to facilitate reproducible
 research.
 
 
-\subsection{Using \Rfunction{makeTranscriptDbFromGFF}}
+\subsection{Using \Rfunction{makeTxDbFromGFF}}
 
 You can also extract transcript information from either GFF3 or GTF
-files by using the \Rfunction{makeTranscriptDbFromGFF} function.
-Usage is similar to \Rfunction{makeTranscriptDbFromBiomart} and
-\Rfunction{makeTranscriptDbFromUCSC}.  
+files by using the \Rfunction{makeTxDbFromGFF} function.
+Usage is similar to \Rfunction{makeTxDbFromBiomart} and
+\Rfunction{makeTxDbFromUCSC}.  
 
 
 \subsection{Saving and Loading a \Rclass{TxDb} Object}
@@ -501,15 +501,16 @@ mm9KG <- loadDb("fileName.sqlite")
 @
 
 
-\subsection{Using \Rfunction{makeTxDbPackageFromUCSC} and \Rfunction{makeTxDbPackageFromBiomart}}
+\subsection{Using \Rfunction{makeTxDbPackageFromUCSC} and
+    \Rfunction{makeTxDbPackageFromBiomart}}
 
 It is often much more convenient to just make an annotation package
 out of your annotations.  If you are finding that this is the case,
 then you should consider the convenience functions:
 \Rfunction{makeTxDbPackageFromUCSC} and
 \Rfunction{makeTxDbPackageFromBiomart}.  These functions are similar
-to \Rfunction{makeTranscriptDbFromUCSC} and
-\Rfunction{makeTranscriptDbFromBiomart} except that they will take the
+to \Rfunction{makeTxDbFromUCSC} and
+\Rfunction{makeTxDbFromBiomart} except that they will take the
 extra step of actually wrapping the database up into an annotation
 package for you.  This package can then be installed and used as of
 the standard TxDb packages found on in the Bioconductor

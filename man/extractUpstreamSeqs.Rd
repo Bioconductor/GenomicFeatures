@@ -93,9 +93,9 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
   for the list of TxDb packages available in the current release of
   Bioconductor.
   Note that you can make your own custom \link{TxDb} object from
-  various annotation resources. See the \code{\link{makeTranscriptDbFromUCSC}},
-  \code{\link{makeTranscriptDbFromBiomart}}, and
-  \code{\link{makeTranscriptDbFromGFF}} functions for more information about
+  various annotation resources. See the \code{\link{makeTxDbFromUCSC}},
+  \code{\link{makeTxDbFromBiomart}}, and
+  \code{\link{makeTxDbFromGFF}} functions for more information about
   this.
 }
 
@@ -109,9 +109,9 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
           \pkg{BSgenome} package for checking avaibility of BSgenome
           data packages (and installing the desired one).
           
-    \item The \code{\link{makeTranscriptDbFromUCSC}},
-          \code{\link{makeTranscriptDbFromBiomart}}, and
-          \code{\link{makeTranscriptDbFromGFF}} functions for making your own
+    \item The \code{\link{makeTxDbFromUCSC}},
+          \code{\link{makeTxDbFromBiomart}}, and
+          \code{\link{makeTxDbFromGFF}} functions for making your own
           custom \link{TxDb} object from various annotation resources.
 
     \item The \link[BSgenome]{BSgenome}, \link[rtracklayer]{TwoBitFile}, and

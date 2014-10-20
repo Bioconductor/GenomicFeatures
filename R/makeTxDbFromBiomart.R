@@ -1,11 +1,11 @@
 ### =========================================================================
-### makeTranscriptDbFromBiomart()
+### makeTxDbFromBiomart()
 ### -------------------------------------------------------------------------
 ###
 ### For people who want to tap BioMart.
 ### Typical use:
-###   txdb <- makeTranscriptDbFromBiomart(biomart="ensembl",
-###                                       dataset="hsapiens_gene_ensembl")
+###   txdb <- makeTxDbFromBiomart(biomart="ensembl",
+###                               dataset="hsapiens_gene_ensembl")
 ### Speed:
 ###   - for biomart="ensembl" and dataset="hsapiens_gene_ensembl":
 ###       (1) download takes about 8 min.
@@ -437,7 +437,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 
     ## Too many transcripts in the ensembl/hsapiens_gene_ensembl dataset don't
     ## pass the sanity check below (20256 transcripts in Ensembl release 75).
-    ## This makes makeTranscriptDbFromBiomart() a little bit too noisy so we
+    ## This makes makeTxDbFromBiomart() a little bit too noisy so we
     ## comment this out for now.
     #idx <- which(cds_length2 %% 3L != 0L)
     #if (length(idx) != 0L) {
@@ -577,7 +577,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### makeTranscriptDbFromBiomart()
+### makeTxDbFromBiomart()
 ###
 
 .parseBMMartParams <- function(biomart="ensembl",
@@ -652,15 +652,15 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 ### Note that listMarts() and listDatasets() are returning data frames where
 ### the columns are character factors for the former and "AsIs" character
 ### vectors for the latter.
-makeTranscriptDbFromBiomart <- function(biomart="ensembl",
-                                        dataset="hsapiens_gene_ensembl",
-                                        transcript_ids=NULL,
-                                        circ_seqs=DEFAULT_CIRC_SEQS,
-                                        filters="",
-                                        id_prefix="ensembl_",
-                                        host="www.biomart.org",
-                                        port=80,
-                                        miRBaseBuild=NA)
+makeTxDbFromBiomart <- function(biomart="ensembl",
+                                dataset="hsapiens_gene_ensembl",
+                                transcript_ids=NULL,
+                                circ_seqs=DEFAULT_CIRC_SEQS,
+                                filters="",
+                                id_prefix="ensembl_",
+                                host="www.biomart.org",
+                                port=80,
+                                miRBaseBuild=NA)
 {
     ## Could be that the user got the 'biomart' and/or 'dataset' values
     ## programmatically via calls to listMarts() and/or listDatasets().
@@ -733,10 +733,16 @@ makeTranscriptDbFromBiomart <- function(biomart="ensembl",
                                         port, miRBaseBuild)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
-    txdb <- makeTranscriptDb(transcripts, splicings,
-                             genes=genes, chrominfo=chrominfo,
-                             metadata=metadata, reassign.ids=TRUE)
+    txdb <- makeTxDb(transcripts, splicings,
+                     genes=genes, chrominfo=chrominfo,
+                     metadata=metadata, reassign.ids=TRUE)
     message("OK")
     txdb
+}
+
+makeTranscriptDbFromBiomart <- function(...)
+{
+    .Deprecated("makeTxDbFromBiomart")
+    makeTxDbFromBiomart(...)
 }
 

@@ -1,27 +1,30 @@
-\name{makeTranscriptDbFromBiomart}
+\name{makeTxDbFromBiomart}
 
-\alias{makeTranscriptDbFromBiomart}
+\alias{makeTxDbFromBiomart}
 \alias{getChromInfoFromBiomart}
+
+% deprecated
+\alias{makeTranscriptDbFromBiomart}
 
 \title{
   Make a TxDb object from annotations available on a
   BioMart database
 }
 \description{
-  The \code{makeTranscriptDbFromBiomart} function allows the user
+  The \code{makeTxDbFromBiomart} function allows the user
   to make a \link{TxDb} object from transcript annotations
   available on a BioMart database.
 }
 \usage{
-makeTranscriptDbFromBiomart(biomart="ensembl",
-                            dataset="hsapiens_gene_ensembl",
-                            transcript_ids=NULL,
-                            circ_seqs=DEFAULT_CIRC_SEQS,
-                            filters="",
-                            id_prefix="ensembl_",
-                            host="www.biomart.org",
-                            port=80,
-                            miRBaseBuild=NA)
+makeTxDbFromBiomart(biomart="ensembl",
+                    dataset="hsapiens_gene_ensembl",
+                    transcript_ids=NULL,
+                    circ_seqs=DEFAULT_CIRC_SEQS,
+                    filters="",
+                    id_prefix="ensembl_",
+                    host="www.biomart.org",
+                    port=80,
+                    miRBaseBuild=NA)
 
 getChromInfoFromBiomart(biomart="ensembl",
                         dataset="hsapiens_gene_ensembl",
@@ -64,16 +67,16 @@ getChromInfoFromBiomart(biomart="ensembl",
 }
 
 \details{
-  \code{makeTranscriptDbFromBiomart} is a convenience function that feeds
+  \code{makeTxDbFromBiomart} is a convenience function that feeds
   data from a BioMart database to the lower level
-  \code{\link{makeTranscriptDb}} function.
-  See \code{?\link{makeTranscriptDbFromUCSC}} for a similar function
+  \code{\link{makeTxDb}} function.
+  See \code{?\link{makeTxDbFromUCSC}} for a similar function
   that feeds data from the UCSC source.
 
   The \code{listMarts} function from the \pkg{biomaRt} package can be
   used to list all public BioMart databases.
   Not all databases returned by this function contain datasets that
-  are compatible with (i.e. understood by) \code{makeTranscriptDbFromBiomart}.
+  are compatible with (i.e. understood by) \code{makeTxDbFromBiomart}.
   Here is a list of datasets known to be compatible (updated on Sep 24, 2014):
   \itemize{
     \item All the datasets in the main Ensembl database:
@@ -112,9 +115,9 @@ getChromInfoFromBiomart(biomart="ensembl",
   \code{\link[biomaRt]{useMart}},
   \code{\link[biomaRt]{listDatasets}},
   \code{\link{DEFAULT_CIRC_SEQS}},
-  \code{\link{makeTranscriptDbFromUCSC}},
-  \code{\link{makeTranscriptDbFromGFF}},
-  \code{\link{makeTranscriptDb}},
+  \code{\link{makeTxDbFromUCSC}},
+  \code{\link{makeTxDbFromGFF}},
+  \code{\link{makeTxDb}},
   \code{\link{supportedMiRBaseBuildValues}}
 }
 
@@ -134,7 +137,7 @@ transcript_ids <- c(
     "ENST00000384428",
     "ENST00000478783"
 )
-txdb <- makeTranscriptDbFromBiomart(transcript_ids=transcript_ids)
+txdb <- makeTxDbFromBiomart(transcript_ids=transcript_ids)
 txdb  # note that these annotations match the GRCh37 genome assembly
 
 ## Now what if we want to use another mirror?  We might make use of the
@@ -144,9 +147,9 @@ listMarts(host="uswest.ensembl.org")
 ## Therefore we must also change the name passed into the "mart"
 ## argument thusly:
 try(
-    txdb <- makeTranscriptDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
-                                        transcript_ids=transcript_ids,
-                                        host="uswest.ensembl.org")	    
+    txdb <- makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
+                                transcript_ids=transcript_ids,
+                                host="uswest.ensembl.org")	    
 )
 txdb
 }

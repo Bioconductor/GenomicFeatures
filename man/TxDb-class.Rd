@@ -23,11 +23,11 @@
   See \code{?\link{FeatureDb}} for a more generic container for storing
   genomic locations of an arbitrary type of genomic features.
 
-  See \code{?\link{makeTranscriptDbFromUCSC}} and
-  \code{?\link{makeTranscriptDbFromBiomart}} for convenient ways to
+  See \code{?\link{makeTxDbFromUCSC}} and
+  \code{?\link{makeTxDbFromBiomart}} for convenient ways to
   make TxDb objects from UCSC or BioMart online resources.
 
-  See \code{?\link{makeTranscriptDbFromGFF}} for making a TxDb
+  See \code{?\link{makeTxDbFromGFF}} for making a TxDb
   object from annotations available as a GFF3 or GTF file.
 }
 
@@ -70,7 +70,7 @@
     \item{}{
       \code{as.list(x)}:
       Dumps the entire db into a list of data frames \code{txdump} that can
-      be used in \code{do.call(makeTranscriptDb, txdump)} to make the db
+      be used in \code{do.call(makeTxDb, txdump)} to make the db
       again with no loss of information.
       Note that the transcripts are dumped in the same order in all the
       data frames.
@@ -84,10 +84,10 @@
   \itemize{
     \item The \link{FeatureDb} class for storing
           genomic locations of an arbitrary type of genomic features.
-    \item \code{\link{makeTranscriptDbFromUCSC}} and
-          \code{\link{makeTranscriptDbFromBiomart}} for convenient ways to
+    \item \code{\link{makeTxDbFromUCSC}} and
+          \code{\link{makeTxDbFromBiomart}} for convenient ways to
           make TxDb objects from UCSC or BioMart online resources.
-    \item \code{\link{makeTranscriptDbFromGFF}} for making a TxDb
+    \item \code{\link{makeTxDbFromGFF}} for making a TxDb
           object from annotations available as a GFF3 or GTF file.
     \item \code{\link{saveDb}} and \code{\link{loadDb}} for
           saving and loading the database content of a TxDb object.
@@ -125,7 +125,7 @@ txdb <- restoreSeqlevels(txdb)
 ## Use of as.list
 txdump <- as.list(txdb)
 txdump
-txdb1 <- do.call(makeTranscriptDb, txdump)
+txdb1 <- do.call(makeTxDb, txdump)
 stopifnot(identical(as.list(txdb1), txdump))
 }
 

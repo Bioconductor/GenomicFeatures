@@ -1,5 +1,5 @@
 ### =========================================================================
-### makeTranscriptDbFromGFF()
+### makeTxDbFromGFF()
 ### -------------------------------------------------------------------------
 
 ## helper to clean up splicings
@@ -653,19 +653,19 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### makeTranscriptDbFromGFF()
+### makeTxDbFromGFF()
 ###
 
-makeTranscriptDbFromGFF <- function(file,
-                                    format=c("gff3", "gtf"),
-                                    exonRankAttributeName=NA,
-                                    gffGeneIdAttributeName=NA,
-                                    chrominfo=NA,
-                                    dataSource=NA,
-                                    species=NA,
-                                    circ_seqs=DEFAULT_CIRC_SEQS,
-                                    miRBaseBuild=NA,
-                                    useGenesAsTranscripts=FALSE)
+makeTxDbFromGFF <- function(file,
+                            format=c("gff3", "gtf"),
+                            exonRankAttributeName=NA,
+                            gffGeneIdAttributeName=NA,
+                            chrominfo=NA,
+                            dataSource=NA,
+                            species=NA,
+                            circ_seqs=DEFAULT_CIRC_SEQS,
+                            miRBaseBuild=NA,
+                            useGenesAsTranscripts=FALSE)
 {
   ## Argument checking
   if(!file.exists(file)) stop("'file' must point to a file that exists.")
@@ -725,32 +725,32 @@ makeTranscriptDbFromGFF <- function(file,
                             length=rep(NA,length(chroms)),
                             is_circular=matchCircularity(chroms, circ_seqs))
   }
-  ## call makeTranscriptDb
-  txdb <- makeTranscriptDb(transcripts=tables[["transcripts"]],
-                           splicings=tables[["splicings"]],
-                           genes=tables[["genes"]],
-                           chrominfo=chrominfo,
-                           metadata=metadata,
-                           reassign.ids=TRUE)
+  ## call makeTxDb
+  txdb <- makeTxDb(transcripts=tables[["transcripts"]],
+                   splicings=tables[["splicings"]],
+                   genes=tables[["genes"]],
+                   chrominfo=chrominfo,
+                   metadata=metadata,
+                   reassign.ids=TRUE)
   txdb
 }
 
 ## ## TESTING GFF3
 ## gffFile=system.file("extdata","a.gff3")
-## txdb <- makeTranscriptDbFromGFF(file=gffFile,
-##                                 format="gff3",
-##                                 dataSource="partial gtf file for Tomatoes
+## txdb <- makeTxDbFromGFF(file=gffFile,
+##                         format="gff3",
+##                         dataSource="partial gtf file for Tomatoes
 ## donated anonymously for testing",
-##                                 species="Solanum lycopersicum",
-##                                 exonRankAttributeName = "nb_exon")
+##                         species="Solanum lycopersicum",
+##                         exonRankAttributeName = "nb_exon")
 ## saveDb(txdb,file="TESTGFF.sqlite")
 
 ## ## TESTING GTF
 ## gtfFile=system.file("extdata","Aedes_aegypti.partial.gtf")
-## txdb <- makeTranscriptDbFromGFF(file=gtfFile,
-##                                 format="gtf",
-##                                 dataSource="ftp://ftp.ensemblgenomes.org/pub/metazoa/release-13/gtf/aedes_aegypti/",
-##                                 species="Aedes aegypti")
+## txdb <- makeTxDbFromGFF(file=gtfFile,
+##                         format="gtf",
+##                         dataSource="ftp://ftp.ensemblgenomes.org/pub/metazoa/release-13/gtf/aedes_aegypti/",
+##                         species="Aedes aegypti")
 ## saveDb(txdb,file="TESTGTF.sqlite")
 
 
@@ -761,14 +761,14 @@ makeTranscriptDbFromGFF <- function(file,
 ## ) tidy the comments
 
 
-##  library(GenomicFeatures);example(makeTranscriptDbFromGFF)
+##  library(GenomicFeatures);example(makeTxDbFromGFF)
 
-##  example(makeTranscriptDbFromGFF)
+##  example(makeTxDbFromGFF)
 
 
 ### Testing flybase file:
 ## flyFile = "dmel-4-r5.44.gff"
-## txdb3 <- makeTranscriptDbFromGFF(file=flyFile,
+## txdb3 <- makeTxDbFromGFF(file=flyFile,
 ##           format="gff3",
 ##           dataSource="gff file from flybase",
 ##           gffGeneIdAttributeName = "geneID",
@@ -778,4 +778,9 @@ makeTranscriptDbFromGFF <- function(file,
 ## this file will not have any proper names etc.  Use it for testing.
 ## flyFile = "dmel-1000-r5.11.filtered.gff"
 
+makeTranscriptDbFromGFF <- function(...)
+{
+    .Deprecated("makeTxDbFromGFF")
+    makeTxDbFromGFF(...)
+}
 
