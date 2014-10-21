@@ -106,7 +106,7 @@
 .deduceExonRankings <- function(exs, format="gff"){
   message("Deducing exon rank from relative coordinates provided")
   ## And a warning for later (in case they were not watching)
-  warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute for exonRankAttributeName")
+  warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute name via the argument 'exonRankAttributeName' of the function 'makeTranscriptDbFromGFF'; please see its manual page for more information.")
    res <- .buildRanks(exs)  
   ## then cast result to be data.frame 
   res <- data.frame(res, stringsAsFactors=FALSE)
