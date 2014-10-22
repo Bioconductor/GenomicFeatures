@@ -104,9 +104,9 @@
 
 ## Helper to deduce the rankings for each set of cds and exons...
 .deduceExonRankings <- function(exs, format="gff"){
-  message("Deducing exon rank from relative coordinates provided")
+  message("Inferring exon rank from order in GFF")
   ## And a warning for later (in case they were not watching)
-  warning("Infering Exon Rankings.  If this is not what you expected, then please be sure that you have provided a valid attribute name via the argument 'exonRankAttributeName' of the function 'makeTranscriptDbFromGFF'; please see its manual page for more information.")
+  warning("inferring exon rank from order in GFF; see ?makeTxbFromGFF argument 'exonRankAttributeName'")
    res <- .buildRanks(exs)  
   ## then cast result to be data.frame 
   res <- data.frame(res, stringsAsFactors=FALSE)
