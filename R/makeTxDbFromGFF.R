@@ -106,7 +106,7 @@
 .deduceExonRankings <- function(exs, format="gff"){
   message("Inferring exon rank from order in GFF")
   ## And a warning for later (in case they were not watching)
-  warning("inferring exon rank from order in GFF; see ?makeTxbFromGFF argument 'exonRankAttributeName'")
+  warning("inferring exon rank from order in GFF; see ?makeTxDbFromGFF argument 'exonRankAttributeName'")
    res <- .buildRanks(exs)  
   ## then cast result to be data.frame 
   res <- data.frame(res, stringsAsFactors=FALSE)
