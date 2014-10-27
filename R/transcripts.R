@@ -547,8 +547,10 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     new_breakpoints <- end(PartitioningByEnd(tx_by_gene))
     outter_mcols <- .regroup_rows(inner_mcols, new_breakpoints)
     gene_id <- outter_mcols$gene_id
-    if (!is.null(gene_id))
-        outter_mcols$gene_id <- as.character(gene_id)
+    if (!is.null(gene_id)) {
+        stopifnot(identical(names(tx_by_gene), as.character(gene_id)))
+        outter_mcols$gene_id <- names(tx_by_gene)
+    }
     mcols(tx_by_gene) <- outter_mcols
 
     ## Compute the gene ranges.
