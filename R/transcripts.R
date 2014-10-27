@@ -533,7 +533,7 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     ## when the same transcript is linked to more than 1 gene (because this
     ## may happen one day and is the reason behind the choice to represent
     ## the 'gene_id' as a CharacterList object instead of a character vector).
-    gene_id <- mcols(tx)$gene_id
+    gene_id <- mcols(tx)[ , "gene_id"]
     ngene_per_tx <- elementLengths(gene_id)
     tx <- tx[rep.int(seq_along(ngene_per_tx), ngene_per_tx)]
     mcols(tx)$gene_id <- unlist(gene_id, use.names=FALSE)
@@ -545,7 +545,12 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     inner_mcols <- mcols(tx_by_gene@unlistData)[columns]
     mcols(tx_by_gene@unlistData) <- NULL
     new_breakpoints <- end(PartitioningByEnd(tx_by_gene))
-    mcols(tx_by_gene) <- .regroup_rows(inner_mcols, new_breakpoints)
+    outter_mcols <- .regroup_rows(inner_mcols, new_breakpoints)
+    gene_id <- outter_mcols$gene_id
+    if (!is.null(gene_id))
+        outter_mcols$gene_id <- as.character(gene_id)
+    mcols(tx_by_gene) <- outter_mcols
+
     ## Compute the gene ranges.
     genes <- range(tx_by_gene)
 
