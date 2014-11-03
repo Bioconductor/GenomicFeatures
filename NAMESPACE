@@ -13,7 +13,7 @@ importMethodsFrom(DBI, dbCommit, dbConnect,
                   dbReadTable, dbWriteTable, dbListTables, dbListFields)
 
 importFrom(RSQLite, SQLite, SQLITE_RO)
-importMethodsFrom(RSQLite, dbBeginTransaction, dbGetPreparedQuery)
+importMethodsFrom(RSQLite, dbBegin, dbGetPreparedQuery)
 
 importFrom(RCurl, getURL)
 
