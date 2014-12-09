@@ -242,8 +242,8 @@
 ##                     end=end(gff),
 ##                     strand=strand(gff),
 ##                     type=mcols(gff)$type,
-##                     ID=mcols(gff)$ID,
-##                     Parent=mcols(gff)$Parent)
+##                     ID=mcols(gff)$id,
+##                     parent=mcols(gff)$parent)
     
   dataR <- as(as(gff, "data.frame")[,1:5],"DataFrame")
   dataM <- as(mcols(gff), "DataFrame")
@@ -256,14 +256,14 @@
   data <- .checkGeneIdAttrib(data, gff, gffGeneIdAttributeName)
   
   ## Has a compressed col, so expand as needed.
-  data <- expand(data, colnames="Parent", keepEmptyRows=TRUE )
+  data <- expand(data, colnames="parent", keepEmptyRows=TRUE )
 
   ## NOW convert data to a data.frame with no factors.
   data$seqnames <- as.character(data$seqnames)
   data$strand <- as.character(data$strand)
   data$type <- as.character(data$type)
-  data$ID <- as.character(data$ID)
-  data$Parent <- as.character(data$Parent)
+  data$id <- as.character(data$id)
+  data$parent <- as.character(data$parent)
   if("exonRankAttributeName" %in% colnames(data)){
       data$exonRankAttributeName <- as.integer(data$exonRankAttributeName)
   }
@@ -276,18 +276,18 @@
 }
 
 
-.prepareGFF3TXS <- function(data, useGenesAsTranscripts=FALSE){
+.prepareGFF3TXS <- function(data, useGenesAsTranscripts=FALSE,gffTxName="mRNA"){
   ## We absolutely require transcripts, genes and exons.
   message("extracting transcript information")
   if(useGenesAsTranscripts){
       txs <- data[data$type=="gene",]
   }else{
-      txs <- data[data$type=="mRNA",]
+      txs <- data[data$type==gffTxName,]
   }
   if(dim(txs)[1] < 1){
       stop("No Transcript information found in gff file")
   }
-  if(length(txs$ID) != length(unique(txs$ID))){
+  if(length(txs$id) != length(unique(txs$id))){
       stop("Unexpected transcript duplicates")}
   txs <- data.frame(txs, data.frame(tx_id=1:dim(txs)[1]),
                     stringsAsFactors=FALSE)
@@ -295,9 +295,10 @@
 }
 
 
-.prepareGFF3transcripts <- function(data,useGenesAsTranscripts){
-  txs <- .prepareGFF3TXS(data,useGenesAsTranscripts)
-  transcripts <- txs[,c("tx_id","ID","seqnames","strand","start","end")]
+.prepareGFF3transcripts <- function(data,useGenesAsTranscripts,
+                                    gffTxName="mRNA"){
+  txs <- .prepareGFF3TXS(data,useGenesAsTranscripts, gffTxName)
+  transcripts <- txs[,c("tx_id","id","seqnames","strand","start","end")]
   names(transcripts) <- c("tx_id","tx_name","tx_chrom","tx_strand","tx_start",
                      "tx_end")
   ## Clean up any NA columns (any that are optional)
@@ -307,15 +308,15 @@
 
 ## This function probably has too many jobs.  Also it will need a refactor
 .prepareGFF3genes <- function(data, transcripts, gffGeneIdAttributeName, gff,
-                              useGenesAsTranscripts=FALSE){
+                              useGenesAsTranscripts=FALSE, gffTxName="mRNA"){
   message("Extracting gene IDs")
   gns <- data[data$type=="gene",]
   ## now decide how to get the gene ID names...
   if(!is.na(gffGeneIdAttributeName)){
       ## then try to compute gns using this other data...
       ## so get these cols
-      gns <- data[,c("ID",gffGeneIdAttributeName,"type")]
-      gns <- gns[gns$type=="mRNA",] ## TODO: allow user to choose this also...
+      gns <- data[,c("id",gffGeneIdAttributeName,"type")]
+      gns <- gns[gns$type==gffTxName,] 
       gns <- gns[,1:2]
       colnames(gns) <- c("tx_name","gene_id")
       ## Then merge in the tx_ids and then keep those
@@ -328,28 +329,29 @@
       ## therefore OVER-RIDE the above.
       ## no need to warn twice so we suppres the warnings here.
       txs <- suppressWarnings(.prepareGFF3TXS(data,
-                                              useGenesAsTranscripts))
-      gns <- txs[,c("tx_id","ID")] 
+                                              useGenesAsTranscripts,
+                                              gffTxName))
+      gns <- txs[,c("tx_id","id")] 
       names(gns) <- c("tx_id","gene_id") ## same as gns but with tx_id in tow.
   }else{ ## default case = get our data from transcript rows
-      if(length(gns$ID) != length(unique(gns$ID))){
+      if(length(gns$id) != length(unique(gns$id))){
           stop("Unexpected gene duplicates")}
       ## After testing for genes, here I get the actual data from mRNA rows...
-      ## The only difference is that in this more normal case the Parents of
+      ## The only difference is that in this more normal case the parents of
       ## these rows will be the genes that I detected previously.
       ## useGenesAsTranscripts is FALSE in this case (so no warning)
-      txs <- .prepareGFF3TXS(data,useGenesAsTranscripts)
-      txsGene <- txs[,c("tx_id","Parent")] 
+      txs <- .prepareGFF3TXS(data,useGenesAsTranscripts,gffTxName)
+      txsGene <- txs[,c("tx_id","parent")] 
       names(txsGene) <- c("tx_id","gene_id")
       ## Then subset by gene_ids
-      gns <- txsGene[txsGene$gene_id %in% gns$ID,]
+      gns <- txsGene[txsGene$gene_id %in% gns$id,]
   }
   as.data.frame(gns)
 }
 
 
 .prepareGFF3Fragments <- function(data, type){
-    possibleCols <- c("seqnames","start","end","strand","type","ID","Parent",
+    possibleCols <- c("seqnames","start","end","strand","type","id","parent",
                       "exon_rank","gene_id")
     expCols <- colnames(data) %in% possibleCols  
     res <- data[data$type==type,expCols]
@@ -363,21 +365,23 @@
 }
 
 
+
 .prepareGFF3Tables  <- function(gff,exonRankAttributeName,
                                 gffGeneIdAttributeName,
+                                gffTxName="mRNA",
                                 useGenesAsTranscripts=FALSE){
   ## pre-clean the data
   data <- .prepareGFF3data.frame(gff,exonRankAttributeName,
                                 gffGeneIdAttributeName)
   tables <- list()
   ## Get transcripts
-  transcripts <- .prepareGFF3transcripts(data, useGenesAsTranscripts)
+  transcripts <- .prepareGFF3transcripts(data, useGenesAsTranscripts, gffTxName)
   tables[[1]] <- transcripts
   names(tables)[1] = "transcripts"
   ## Get genes
   tables[[2]] <- .prepareGFF3genes(data, transcripts,
                                    gffGeneIdAttributeName, gff,
-                                   useGenesAsTranscripts)
+                                   useGenesAsTranscripts, gffTxName)
   names(tables)[2] = "genes"
 
   message("Processing splicing information for gff3 file.")
@@ -407,6 +411,9 @@
       splicings$cds_start <- as(splicings$cds_start,"integer")}
   if("cds_end" %in% colnames(splicings)){
   splicings$cds_end <- as(splicings$cds_end,"integer")}
+  if("exon_rank" %in% colnames(splicings)){
+  splicings$exon_rank <- as(splicings$exon_rank,"integer")}
+
   tables[[3]] <- splicings
   names(tables)[3] <- "splicings"
   ## return all tables
@@ -553,7 +560,7 @@
 }
 
 .prepareGTFgenes <- function(transcripts){
-  message("Extracting gene IDs")
+  message("Extracting gene ids")
   gns <- transcripts[,c("tx_name","gene_id")]
   if(dim(gns)[1] < 1){warning("No gene information present in gtf file")
   }
@@ -651,6 +658,29 @@
 
 
 
+## Helpers to cast strings to lowercase.
+## These helpers require 2 or more fields to be made to lowercase...
+
+.combineFields <- function(fields){
+    if(length(fields)<=1) stop(wmsg("Not enough fields to collapse."))
+    res <- fields[[1]]
+    ## then aggregatively combine the rest.
+    for(i in seq_along(fields)[-1]){
+        res <- fields[[i]] | res
+    }
+    res
+}
+## TODO: one remaining bug: this currently is not specific enough. The grep presently will mark BOTH 'ID' AND 'geneId' as matching 'id'...
+.makeSelectedFieldsLowerCase <- function(gff, fieldsToCast=c('id','parent')){
+    nms <-  colnames(mcols(gff))
+    fieldsToCast <- paste0('^',fieldsToCast,'$')
+    fieldsIdxs <- lapply(fieldsToCast, grepl, nms, ignore.case=TRUE, perl=TRUE)
+    fieldsIdx <- .combineFields(fieldsIdxs)
+    nms[fieldsIdx] <- tolower(nms[fieldsIdx])
+    colnames(mcols(gff)) <- nms
+    gff
+}
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### makeTxDbFromGFF()
@@ -665,7 +695,8 @@ makeTxDbFromGFF <- function(file,
                             species=NA,
                             circ_seqs=DEFAULT_CIRC_SEQS,
                             miRBaseBuild=NA,
-                            useGenesAsTranscripts=FALSE)
+                            useGenesAsTranscripts=FALSE,
+                            gffTxName="mRNA")
 {
   ## Argument checking
   if(!file.exists(file)) stop("'file' must point to a file that exists.")
@@ -694,23 +725,36 @@ makeTxDbFromGFF <- function(file,
       stop("'useGenesAsTranscripts' must be a single element character vector or NA.")  }
 
   ## start by importing the relevant features from the specified file
-  feature.type <- c("gene", "mRNA", "exon", "CDS")
-  gff <- import(file, format=format, feature.type=feature.type,
-                asRangedData=FALSE)
-
   if(format=="gff3"){
-    ## check that we have ID, Parent
-    if(all(c("ID","Parent") %in% colnames(mcols(gff)))){
+      feature.type <- c("gene", "exon", "CDS", gffTxName)
+      gff <- import(file, format=format, feature.type=feature.type,
+                    asRangedData=FALSE)
+  }else{
+      feature.type <- c("gene", "transcript", "exon", "CDS")
+      gff <- import(file, format=format, feature.type=feature.type,
+                    asRangedData=FALSE)
+  }
+  if(format=="gff3"){
+    ## always cast 'Parent' and 'ID' to lowercase values
+    gff <- .makeSelectedFieldsLowerCase(gff, fieldsToCast=c('id','parent'))
+    ## check that we have 'id', 'parent'
+    if(all(c("id","parent") %in% colnames(mcols(gff)))){
       tables <- .prepareGFF3Tables(gff, exonRankAttributeName,
                                    gffGeneIdAttributeName,
+                                   gffTxName,
                                    useGenesAsTranscripts)
       ## results come back in list like: tables$transctripts etc.
+    }else{
+        stop(wmsg("All gff files must contain ID and Parent information."))
     }
   }else if(format=="gtf"){
     ## check that we have gene_id and transcript_id
     if(all(c("gene_id","transcript_id")
            %in% colnames(mcols(gff)))){
       tables <- .prepareGTFTables(gff,exonRankAttributeName)
+    }else{
+        stop(wmsg(paste0("All gtf files must contain 'gene id' and",
+                         " 'transcript id' information.")))
     }
   }
   ## TODO: verify that I have all I really need for metadata

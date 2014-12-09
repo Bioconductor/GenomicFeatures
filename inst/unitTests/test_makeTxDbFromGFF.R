@@ -11,7 +11,10 @@
 ## GenomicFeatures_x.y.z.tar.gz
 library(GenomicFeatures)
 gffFile <- system.file("extdata","a.gff3",package="GenomicFeatures")
+
 gff3 <- rtracklayer:::import(gffFile, format="gff3", asRangedData=FALSE)
+gff3 <- GenomicFeatures:::.makeSelectedFieldsLowerCase(gff3,
+                               fieldsToCast=c('id','parent'))
 
 gtfFile <- system.file("extdata","Aedes_aegypti.partial.gtf",
                        package="GenomicFeatures")

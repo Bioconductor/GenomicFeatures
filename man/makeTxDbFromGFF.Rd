@@ -24,7 +24,8 @@ makeTxDbFromGFF(file,
                 species=NA,
                 circ_seqs=DEFAULT_CIRC_SEQS,
                 miRBaseBuild=NA,
-                useGenesAsTranscripts=FALSE)
+                useGenesAsTranscripts=FALSE,
+                gffTxName="mRNA")
 }
 \arguments{
   \item{file}{path/file to be processed}
@@ -63,6 +64,9 @@ makeTxDbFromGFF(file,
     that you can use the ranges available for the Gene features in their
     place.  Obviously, this is something you won't want to do unless you
     are dealing with something very simple like a prokaryote.}
+  \item{gffTxName}{If you are parsing a gff file and the transcript
+    feature type is named after something other than 'mRNA' (the default),
+    then you can specify an alternate string value to parse with here.}
 }
 \details{
   \code{makeTxDbFromGFF} is a convenience function that feeds
