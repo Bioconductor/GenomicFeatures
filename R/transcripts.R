@@ -706,8 +706,9 @@ setMethod("disjointExons", "TxDb",
   ## connection
   mcon <- mirbase_dbconn()
   ## 1st lets get the organism abbreviation
-  sql <- paste0("SELECT organism FROM mirna_species WHERE genome_assembly='",
-                bld, "'")
+  sql <- paste0("SELECT organism FROM mirna_species WHERE genome_assembly",
+                " LIKE '", bld, "%'")
+
   organism <- dbGetQuery(mcon, sql)[[1]]
   ## now get data and make a GRanges from it
   sql <- paste0("SELECT * from mirna_chromosome_build AS csome INNER JOIN ",
