@@ -632,7 +632,7 @@ setMethod("show", "TxDb",
         cat(class(object), "object:\n")
         metadata <- metadata(object)
         for (i in seq_len(nrow(metadata))) {
-            cat("| ", metadata[i, "name"], ": ", metadata[i, "value"],
+            cat("# ", metadata[i, "name"], ": ", metadata[i, "value"],
                 "\n", sep="")
         }
     }

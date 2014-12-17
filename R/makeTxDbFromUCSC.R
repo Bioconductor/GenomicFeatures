@@ -683,25 +683,13 @@ supportedUCSCtables <- function()
 ### Download and preprocess the 'chrominfo' data frame.
 ###
 
-.downloadChromInfoFromUCSC <- function(genome,
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
-{
-    url <- paste(goldenPath_url, genome, "database/chromInfo.txt.gz", sep="/")
-    destfile <- tempfile()
-    download.file(url, destfile, quiet=TRUE)
-    colnames <- c("chrom", "size", "fileName")
-    ans <- read.table(destfile, sep="\t", quote="",
-                      col.names=colnames, comment.char="",
-                      stringsAsFactors=FALSE)
-    ans
-}
-
 .makeUCSCChrominfo <- function(genome, circ_seqs,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
     message("Download and preprocess the 'chrominfo' data frame ... ",
             appendLF=FALSE)
-    ucsc_chrominfotable <- .downloadChromInfoFromUCSC(genome, goldenPath_url)
+    ucsc_chrominfotable <- GenomeInfoDb:::fetch_ChromInfo_from_UCSC(genome,
+                                                goldenPath_url)
     COL2CLASS <- c(
         chrom="character",
         size="integer"
@@ -718,6 +706,7 @@ supportedUCSCtables <- function()
     message("OK")
     chrominfo
 }
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Allow users to discover 'chrominfo' data frame.
