@@ -23,7 +23,8 @@
 
 transcriptLocs2refLocs <- function(tlocs, exonStarts=list(), exonEnds=list(),
                                    strand=character(0),
-                                   decreasing.rank.on.minus.strand=FALSE)
+                                   decreasing.rank.on.minus.strand=FALSE,
+                                   error.if.out.of.bounds=TRUE)
 {
     if (!is.list(tlocs)) {
         if (!is(tlocs, "IntegerList"))
@@ -53,7 +54,8 @@ transcriptLocs2refLocs <- function(tlocs, exonStarts=list(), exonEnds=list(),
         stop("'decreasing.rank.on.minus.strand' must be TRUE or FALSE")
     GenomicRanges:::unsafe.transcriptLocs2refLocs(tlocs,
                             exonStarts, exonEnds, strand,
-                            decreasing.rank.on.minus.strand)
+                            decreasing.rank.on.minus.strand,
+                            error.if.out.of.bounds)
 }
 
 

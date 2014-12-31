@@ -18,7 +18,7 @@
 \usage{
 transcriptLocs2refLocs(tlocs,
         exonStarts=list(), exonEnds=list(), strand=character(0),
-        decreasing.rank.on.minus.strand=FALSE)
+        decreasing.rank.on.minus.strand=FALSE, error.if.out.of.bounds=TRUE)
 
 transcriptWidths(exonStarts=list(), exonEnds=list())
 }
@@ -51,6 +51,11 @@ transcriptWidths(exonStarts=list(), exonEnds=list())
     \code{TRUE} or \code{FALSE}.
     Describes the order of exons in transcripts located on the minus strand:
     are they ordered by increasing (default) or decreasing rank?
+  }
+  \item{error.if.out.of.bounds}{
+    \code{TRUE} or \code{FALSE}.
+    Controls how out of bound \code{tlocs} are handled: an error is thrown
+    (default) or \code{NA} is returned.
   }
 }
 
