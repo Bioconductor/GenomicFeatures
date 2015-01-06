@@ -70,6 +70,7 @@ export(
   features,
   supportedMiRBaseBuildValues,
   getPromoterSeq,
+  mapToTranscript, pmapToTranscript,
 
   # Deprecated:
   makeTranscriptDb,
@@ -106,5 +107,6 @@ exportMethods(
   "isActiveSeq<-",
   asBED, asGFF,
   getPromoterSeq,
-  distance
+  distance,
+  mapToTranscript, pmapToTranscript
 )
