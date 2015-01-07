@@ -70,7 +70,7 @@ export(
   features,
   supportedMiRBaseBuildValues,
   getPromoterSeq,
-  mapToTranscript, pmapToTranscript,
+  mapToTranscriptome, pmapToTranscriptome,
 
   # Deprecated:
   makeTranscriptDb,
@@ -108,5 +108,5 @@ exportMethods(
   asBED, asGFF,
   getPromoterSeq,
   distance,
-  mapToTranscript, pmapToTranscript
+  mapToTranscriptome, pmapToTranscriptome
 )
