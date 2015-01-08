@@ -66,11 +66,11 @@ export(
   makeTxDbPackage,
   makeTxDbPackageFromUCSC,
   makeTxDbPackageFromBiomart,
-  makeFDbPackageFromUCSC,	
+  makeFDbPackageFromUCSC,
   features,
   supportedMiRBaseBuildValues,
   getPromoterSeq,
-  mapToTranscriptome, pmapToTranscriptome,
+  mapToTranscripts, pmapToTranscripts,
 
   # Deprecated:
   makeTranscriptDb,
@@ -108,5 +108,5 @@ exportMethods(
   asBED, asGFF,
   getPromoterSeq,
   distance,
-  mapToTranscriptome, pmapToTranscriptome
+  mapToTranscripts, pmapToTranscripts
 )

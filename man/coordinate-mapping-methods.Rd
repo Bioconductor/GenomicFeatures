@@ -1,37 +1,38 @@
-\name{mapToTranscriptome}
+\name{mapToTranscripts}
 \alias{coordinate-mapping}
 
-\alias{mapToTranscriptome}
-\alias{mapToTranscriptome,GenomicRanges,GenomicRanges-method}
-\alias{mapToTranscriptome,GenomicRanges,GRangesList-method}
+\alias{mapToTranscripts}
+\alias{mapToTranscripts,GenomicRanges,GenomicRanges-method}
+\alias{mapToTranscripts,GenomicRanges,GRangesList-method}
 
-\alias{pmapToTranscriptome}
-\alias{pmapToTranscriptome,Ranges,GenomicRanges-method}
-\alias{pmapToTranscriptome,GenomicRanges,GenomicRanges-method}
-\alias{pmapToTranscriptome,GenomicRanges,GRangesList-method}
+\alias{pmapToTranscripts}
+\alias{pmapToTranscripts,Ranges,GenomicRanges-method}
+\alias{pmapToTranscripts,GenomicRanges,GenomicRanges-method}
+\alias{pmapToTranscripts,GenomicRanges,GRangesList-method}
 
 
-\title{Map range coordinates between transcriptome and genome space}
+\title{Map range coordinates between transcripts and genome space}
 
 \description{
-  Map range coordinates between transcriptome and genome space.
+  Map range coordinates between features in the transcriptome and
+  genome (reference) space.
 
-  See \code{?`\link[GenomicAlignments]{mapToAlignment}`} in the 
-  \pkg{GenomicAlignments} package for mapping coordinates between local
-  and genome space using a CIGAR alignment.
+  See \code{?\link[GenomicAlignments]{mapToAlignments}} in the 
+  \pkg{GenomicAlignments} package for mapping coordinates between 
+  reads (local) and genome (reference) space using a CIGAR alignment.
 }
 
 \usage{
-\S4method{mapToTranscriptome}{GenomicRanges,GenomicRanges}(x, transcriptome, 
+\S4method{mapToTranscripts}{GenomicRanges,GenomicRanges}(x, transcripts, 
           reverse = FALSE, ignore.strand = TRUE, ...) 
-\S4method{mapToTranscriptome}{GenomicRanges,GRangesList}(x, transcriptome, 
+\S4method{mapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
           reverse = FALSE, ignore.strand = TRUE, ...) 
 
-\S4method{pmapToTranscriptome}{Ranges,GenomicRanges}(x, transcriptome, 
+\S4method{pmapToTranscripts}{Ranges,GenomicRanges}(x, transcripts, 
           reverse = FALSE, ...) 
-\S4method{pmapToTranscriptome}{GenomicRanges,GenomicRanges}(x, transcriptome, 
+\S4method{pmapToTranscripts}{GenomicRanges,GenomicRanges}(x, transcripts, 
           reverse = FALSE, ignore.strand = TRUE, ...) 
-\S4method{pmapToTranscriptome}{GenomicRanges,GRangesList}(x, transcriptome, 
+\S4method{pmapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
           reverse = FALSE, ignore.strand = TRUE, ...) 
 }
 
@@ -41,25 +42,25 @@
     When \code{reverse = TRUE} (i.e., the mapping is to genome space)
     \code{x} must have names.
   }
-  \item{transcriptome}{
+  \item{transcripts}{
     A named \code{\linkS4class{GenomicRanges}} or 
     \code{\linkS4class{GRangesList}} object used to map between \code{x} and 
-    the result. The ranges can be any transcriptome-based feature 
-    extracted from a \code{TxDb} (e.g., introns, exons, cds regions). 
-    See ?\code{transcripts} and ?\code{transcriptsBy} for a list of extractor 
+    the result. The ranges can be any feature in the transcriptome extracted
+    from a \code{TxDb} (e.g., introns, exons, cds regions). See 
+    ?\code{transcripts} and ?\code{transcriptsBy} for a list of extractor 
     functions.
-
-    When mapping direction is towards the transcriptome (default behavior)
-    the seqlevels of the output are the names of the \code{transcriptome}
-    object, most often these will be the transcript names. 
   }
   \item{reverse}{
     TRUE or FALSE. When FALSE (default) the range in \code{x} is mapped to the
-    transcriptome space. TRUE indicates the reverse mapping to genome space.
+    transcript space. Seqlevels of the output object are the names on the
+    \code{transcripts} object; most often these will be the transcript names. 
+    
+    When \code{reverse=TRUE}, \code{x} is mapped to genome space. Seqlevels
+    of the output are the chromosome names.
   }
   \item{ignore.strand}{
     When TRUE, strand is ignored in overlap operations. When
-    \code{transcriptome} is a \code{GRangesList} and \code{ignore.strand =
+    \code{transcripts} is a \code{GRangesList} and \code{ignore.strand =
     FALSE} all inner list elements of a common list element must have the same
     strand. 
   }
@@ -70,57 +71,57 @@
 
 \details{
   \itemize{
-    \item{mapToTranscriptome:}{
+    \item{mapToTranscripts:}{
       \itemize{
         \item{}{
           When \code{reverse=FALSE} (default), the genomic range in \code{x} is 
-          mapped to the local position in the \code{transcriptome} ranges. A 
+          mapped to the local position in the \code{transcripts} ranges. A 
           successful mapping occurs when \code{x} is completely within the 
-          \code{transcriptome} range, equivalent to: 
+          \code{transcripts} range, equivalent to: 
           \preformatted{
           findOverlaps(..., type="within")
           }
           Transcriptome-based coordinates start counting at 1 at the beginning
-          of the \code{transcriptome} range and return positions where \code{x}
+          of the \code{transcripts} range and return positions where \code{x}
           was aligned. The seqlevels of the return object are taken from the
-          \code{transcriptome} object and should be transcript names. In this
+          \code{transcripts} object and should be transcript names. In this
           direction, mapping is attempted between all elements of \code{x} and
-          all elements of \code{transcriptome}.
+          all elements of \code{transcripts}.
         }
         \item{}{
-          When \code{reverse=TRUE}, the transcriptome range in \code{x} is 
-          mapped to genomic coordinates using the ranges in \code{transcriptome}.
+          When \code{reverse=TRUE}, the transcripts range in \code{x} is 
+          mapped to genomic coordinates using the ranges in \code{transcripts}.
           A successful mapping occurs when the following is TRUE:
           \preformatted{
-          width(transcriptome) >= start(x) + width(x)
+          width(transcripts) >= start(x) + width(x)
           }
-          \code{x} is aligned to \code{transcriptome} by moving in
+          \code{x} is aligned to \code{transcripts} by moving in
           \code{start(x)} positions in from the beginning of the
-          \code{transcriptome} range.  The seqlevels of the return object are
+          \code{transcripts} range.  The seqlevels of the return object are
           genomic chromosomes.
 
           When mapping to the genome, name matching is used to determine the
           mapping pairs (vs attempting to match all possible pairs). Ranges in
-          \code{x} are only mapped to ranges in \code{transcriptome} with the
+          \code{x} are only mapped to ranges in \code{transcripts} with the
           same name. Name matching is motivated by use cases such as
           differentially expressed regions where the expressed regions in
           \code{x} would only be related to a subset of regions in
-          \code{transcriptome}, which may contains gene or transcript ranges.
+          \code{transcripts}, which may contains gene or transcript ranges.
         }
       }
     }
-    \item{pmapToTranscriptome:}{
-      Element-wise (aka `parallel`) version of \code{mapToTranscriptome}. The
+    \item{pmapToTranscripts:}{
+      Element-wise (aka `parallel`) version of \code{mapToTranscripts}. The
       i-th range in \code{x} is mapped to the i-th range in
-      \code{transcriptome}; \code{x} and \code{transcriptome} must have the same
-      length. When \code{reverse=FALSE} mapping is to the transcriptome;
+      \code{transcripts}; \code{x} and \code{transcripts} must have the same
+      length. When \code{reverse=FALSE} mapping is to the transcripts;
       when TRUE mapping is to the genome.
  
       Ranges in \code{x} that do not map (out of bounds or strand mismatch) 
       are returned as zero-width ranges starting at 1. These ranges are given
       the special seqname of "unmapped". Note the non-parallel methods do not 
       return unmapped ranges so the "unmapped" seqname is unique to 
-      \code{pmapToTranscriptome}.
+      \code{pmapToTranscripts}.
     }
   }
 }
@@ -134,16 +135,20 @@
 
   Non-parallel methods return an object that varies in length similar to a
   Hits object. The result only contains mapped records, strand mismatch
-  and non-hits are not returned. \code{xHits} and \code{transcriptomeHits}
-  metadata columns record the element of \code{x} and \code{transcriptome} used
+  and non-hits are not returned. \code{xHits} and \code{transcriptsHits}
+  metadata columns record the element of \code{x} and \code{transcripts} used
   in the mapping.
+
+  When \code{reverse=FALSE} seqlevels of the output object are the names on 
+  the \code{transcripts} object; most often these will be transcript names. 
+  When \code{reverse=TRUE} seqlevels of the output are chromosome names.
 }
 
 \seealso{
   \itemize{
-    \item \code{?\link[GenomicAlignments]{mapToAlignment}} in the 
+    \item \code{?\link[GenomicAlignments]{mapToAlignments}} in the 
     \pkg{GenomicAlignments} package for methods mapping between
-    local and genome space using a CIGAR alignment.
+    reads and genome space using a CIGAR alignment.
   }
 }
 
@@ -152,11 +157,35 @@
 \examples{
 
 ## ---------------------------------------------------------------------
-## 0. TODO: add basic use 
+## A. Basic Use
 ## ---------------------------------------------------------------------
 
+library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
+cds <- cdsBy(TxDb.Dmelanogaster.UCSC.dm3.ensGene, "tx", use.names=TRUE)[1:3]
+x <- GRanges("chr2L", 
+             IRanges(c(7500, 8400, 9000), width=200, names=LETTERS[1:3])) 
+
+## Map to transcript coordinates:
+mapToTranscripts(x, cds)
+
+## Note the seqnames of the output are the transcript names, not
+## chromosomes. The 'xHits' and 'transcriptsHits' metadata 
+## columns indicate which elements were involved in the mapping.
+
+## The element-wise version returns both mapped and unmapped ranges.
+x <- GRanges("chr2L", IRanges(c(8100, 8600), width=10, names=LETTERS[1:2]))
+pmapToTranscripts(x, cds[1:2])
+
+## Mapping to genome space requires both 'x' and 'transcripts' to have
+## names. A map is only attempted for ranges with matching names.
+x <- GRanges("chr1", 
+             IRanges(c(1, 20, 10, 3), width=5, names=c("A", "B", "A", "C")))
+gr <- GRanges("chr1", 
+              IRanges(c(25, 30, 3), width=10, names=c("C", "C", "A"))) 
+mapToTranscripts(x, gr, reverse = TRUE)
+
 ## ---------------------------------------------------------------------
-## A. Map local sequence locations to the genome
+## B. Map local sequence locations to the genome
 ## ---------------------------------------------------------------------
 
 ## NAGNAG alternative splicing plays an essential role in biological processes 
@@ -194,11 +223,11 @@ cag_loc <- vmatchPattern("CAG", exons_seq)
 
 ## Convert the first occurance of CAG in each exon back to genome coordinates.
 first_loc <- do.call(c, sapply(cag_loc, "[", 1, simplify=TRUE))
-pmapToTranscriptome(first_loc, exons[[1]], reverse = TRUE)
+pmapToTranscripts(first_loc, exons[[1]], reverse = TRUE)
 
 
 ## -----------------------------------------------------------------------
-## B. Map 3'UTR variants to genome coordinates
+## C. Map 3'UTR variants to genome coordinates
 ## -----------------------------------------------------------------------
 
 ## A study by Skeeles et. al (PLoS ONE 8(3): e58609. doi:
@@ -224,19 +253,19 @@ library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 txdb <- TxDb.Mmusculus.UCSC.mm10.knownGene
 genes <- genes(txdb)[geneid$ENTREZID]
 
-## mapToTranscriptome(..., reverse=TRUE) determines pairs to map by comparing 
-## names in 'x' and 'transcriptome'. Ranges in 'snps' will be mapped to all 
+## mapToTranscripts(..., reverse=TRUE) determines pairs to map by comparing 
+## names in 'x' and 'transcripts'. Ranges in 'snps' will be mapped to all 
 ## ranges in 'genes' with the same name. Currently the names of 'genes' are 
 ## internal gene ids. Rename 'genes' with the appropriate gene symbol.
 names(genes) <- geneid$SYMBOL 
 
-## The xHits and transcriptomeHits metadta columns indicate which ranges in
+## The xHits and transcriptsHits metadta columns indicate which ranges in
 ## 'snps' and 'genes' were involved in the mapping.
-mapToTranscriptome(snps, genes, reverse = TRUE)
+mapToTranscripts(snps, genes, reverse = TRUE)
 
 
 ## -----------------------------------------------------------------------
-## C. Map dbSNP variants to cds or cDNA coordinates
+## D. Map dbSNP variants to cds or cDNA coordinates
 ## -----------------------------------------------------------------------
 
 ## The GIPR gene encodes a G-protein coupled receptor for gastric inhibitory 
@@ -281,10 +310,10 @@ genome(snps) <- genome(cDNA)
 ## transcript individually 'cDNA' must be unlisted before mapping.
 
 ## Map all 5 SNPS to all 4 transcripts:
-mapToTranscriptome(snps, unlist(cDNA), reverse = FALSE)
+mapToTranscripts(snps, unlist(cDNA), reverse = FALSE)
 
 ## Map the first SNP to transcript uc002pct.1 and the second to uc002pcu.1.
-pmapToTranscriptome(snps[1:2], unlist(cDNA)[1:2], reverse = FALSE)
+pmapToTranscripts(snps[1:2], unlist(cDNA)[1:2], reverse = FALSE)
 
 ## The cdsBy() extractor returns coding regions by gene or by transcript.
 ## Extract the coding regions for transcript uc002pct.1.
@@ -296,19 +325,19 @@ cds
 ## of ranges we leave 'cds' as a GRangesList.
 
 ## Map all 5 SNPs to the total cds region: 
-mapToTranscriptome(snps, cds, reverse = FALSE)
+mapToTranscripts(snps, cds, reverse = FALSE)
 
 ## Only the second SNP could be mapped. Unlisting the 'cds' object maps the
 ## SNPs to the individual cds ranges (vs the concatenated range).
-mapToTranscriptome(snps[2], unlist(cds), reverse = FALSE)
+mapToTranscripts(snps[2], unlist(cds), reverse = FALSE)
 
 ## The location is the same because the SNP hit the first cds range. If the
 ## transcript had been on the negative strand the difference in mapping
 
 ## would be more obvious.
 strand(snps) <- strand(cds) <- "-"
-mapToTranscriptome(snps[2], cds, reverse = FALSE, ignore.strand=FALSE)
-mapToTranscriptome(snps[2], unlist(cds), reverse = FALSE, ignore.strand=FALSE)
+mapToTranscripts(snps[2], cds, reverse = FALSE, ignore.strand=FALSE)
+mapToTranscripts(snps[2], unlist(cds), reverse = FALSE, ignore.strand=FALSE)
 }
 
 \keyword{methods}
