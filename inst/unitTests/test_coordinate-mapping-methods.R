@@ -33,6 +33,17 @@ test_mapToTranscripts <- function()
     checkIdentical(mcols(ans)$transcriptsHits, c(1L, 3L))
     checkIdentical(names(ans), c("B", "B"))
     checkIdentical(seqlevels(ans), c("FBtr0300689", "FBtr0330654"))
+
+    ## TxDb
+    x <- GRanges("chr2L", IRanges(c(7500, 8400, 9000), 
+                 width=200, names=LETTERS[1:3]))
+    checkException(mapToTranscripts(x, txdb, extractor = "foo"), silent=TRUE)
+    ans <- mapToTranscripts(x, txdb, extractor.fun=exonsBy)
+    checkIdentical(names(ans), c("B", "B", rep("C", 3)))
+    checkIdentical(as.character(seqnames(ans)), c("1", "3", "1", "2", "3")) 
+    ans <- mapToTranscripts(x, txdb, extractor.fun=exonsBy, by="gene")
+    checkIdentical(mcols(ans)$transcriptsHits, rep(4179L, 5))
+    checkIdentical(seqlevels(ans), "FBgn0031208")
 }
 
 test_mapFromTranscripts <- function()

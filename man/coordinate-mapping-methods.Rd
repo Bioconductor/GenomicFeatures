@@ -4,6 +4,7 @@
 \alias{mapToTranscripts}
 \alias{mapToTranscripts,GenomicRanges,GenomicRanges-method}
 \alias{mapToTranscripts,GenomicRanges,GRangesList-method}
+\alias{mapToTranscripts,ANY,TxDb-method}
 \alias{pmapToTranscripts}
 \alias{pmapToTranscripts,Ranges,GenomicRanges-method}
 \alias{pmapToTranscripts,GenomicRanges,GenomicRanges-method}
@@ -31,6 +32,8 @@
 \usage{
 \S4method{mapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
           ignore.strand = TRUE, ...) 
+\S4method{mapToTranscripts}{ANY,TxDb}(x, transcripts, ignore.strand = TRUE, 
+          extractor.fun = transcripts, ...) 
 \S4method{pmapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
           ignore.strand = TRUE, ...) 
 
@@ -62,8 +65,34 @@
     FALSE} all inner list elements of a common list element must have the same
     strand. 
   }
+  \item{extractor.fun}{
+    Function to extract genomic features from a \code{TxDb} object.
+
+    This argument is only applicable to \code{mapToTranscripts} when 
+    \code{transcripts} is a \code{TxDb} object. The \code{extractor} should
+    be the name of a function (not a character()) described on the 
+    ?\code{transcripts} or ?\code{transcriptsBy} man page.
+
+    Valid \code{extractor} functions:
+    \itemize{
+      \item{transcripts}  ## default
+      \item{exons}
+      \item{cds}
+      \item{genes}
+      \item{promoters}
+      \item{disjointExons}
+      \item{microRNAs}
+      \item{tRNAs}
+      \item{transcriptsBy}
+      \item{exonsBy}
+      \item{cdsBy}
+      \item{intronsByTranscript}
+      \item{fiveUTRsByTranscript}
+      \item{threeUTRsByTranscript}
+    }    
+  }
   \item{\dots}{
-    Arguments passed to other methods.
+    Additional arguments passed to \code{extractor.fun} functions. 
   }
 }
 

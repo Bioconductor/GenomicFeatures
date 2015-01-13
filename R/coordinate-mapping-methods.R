@@ -71,9 +71,10 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 ### mapToTranscripts() and mapFromTranscripts()
 ###
 
+## 'hits' are for unlisted 'transcripts'
 .mapToTranscripts <- function(x, transcripts, hits, ignore.strand) 
 {
-    flat <- unlist(transcripts)
+    flat <- unlist(transcripts, use.names=FALSE)
     if (length(hits)) {
         xHits <- queryHits(hits)
         txHits <- subjectHits(hits)
@@ -95,10 +96,10 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
             xrange <- shift(xrange, shifted[txHits])
         }
         ## seqnames come from 'transcripts'
-        GRanges(rep(names(flat), elementLengths(flat))[txHits],
+        txGroup <- togroup(transcripts)[txHits]
+        GRanges(names(transcripts)[txGroup], 
                 xrange, strand(flat)[txHits],
-                DataFrame(xHits, 
-                          transcriptsHits=togroup(transcripts)[txHits])) 
+                DataFrame(xHits, transcriptsHits=txGroup))
     } else {
         ans <- GRanges()
         mcols(ans) <- DataFrame(xHits=integer(), transcriptsHits=integer())
@@ -222,6 +223,22 @@ setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"),
         if (any(hasWidth <- width(map) != 0L))
             map <- map[hasWidth]
         map
+    }
+)
+
+setMethod("mapToTranscripts", c("ANY", "TxDb"), 
+    function(x, transcripts, ignore.strand=TRUE, 
+             extractor.fun = transcripts, ...) 
+    {
+        valid <- c("transcripts", "exons", "cds", "genes", "promoters", 
+                   "disjointExons", "microRNAs", "tRNAs", "transcriptsBy", 
+                   "exonsBy", "cdsBy", "intronsByTranscript", 
+                   "fiveUTRsByTranscript", "threeUTRsByTranscript")
+        if (!(extractor.fun@generic %in% valid))
+            stop("see ?mapToTranscript man page for valid 'extractor' names")
+
+        use.names <- TRUE
+        mapToTranscripts(x, extractor.fun(transcripts, ...), ignore.strand, ...)
     }
 )
 
