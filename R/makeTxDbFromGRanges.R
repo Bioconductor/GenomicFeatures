@@ -162,9 +162,7 @@
 ###
 
 ### Metadata columns we care about:
-### o If GRanges obtained from GFF3:
-###     Required: type, ID, Name, Parent,
-###     Optional: Alias, nb_exon
+### o If GRanges obtained from GFF3: type, ID, Name, Parent,
 ### o If GRanges obtained from GTF:
 ###     type, gene_id, transcript_id, exon_number, gene_name, transcript_name
 makeTxDbFromGRanges <- function(gr, metadata=NULL)
@@ -174,8 +172,6 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     ID <- gr_mcols[ , "ID"]
     Name <- gr_mcols[ , "Name"]
     Parent <- gr_mcols[ , "Parent"]
-    Alias <- gr_mcols[ , "Alias"]
-    nb_exon <- gr_mcols[ , "nb_exon"]
 
     transcripts <- .extract_transcripts_from_GRanges(gr, type, ID, Name)
     splicings <- .extract_splicings_from_GRanges(gr, type, ID, Name, Parent)
@@ -201,27 +197,39 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
 
 
 if (FALSE) {
-
-## Test with GRanges obtained from GFF3
-## ====================================
-file <- system.file("extdata", "a.gff3", package="GenomicFeatures")
+library(GenomicFeatures)
 library(rtracklayer)
+
+## Test with GRanges obtained from GFF3 files
+## ==========================================
+
 feature.type <- c("gene", "mRNA", "exon", "CDS")
+
+file <- system.file("extdata", "GFF3_files", "TheCanonicalGene_v1.gff3",
+                    package="GenomicFeatures")
+gr <- import(file, format="gff3", feature.type=feature.type)
+txdb <- makeTxDbFromGRanges(gr)
+txdb
+
+file <- system.file("extdata", "a.gff3", package="GenomicFeatures")
 gr <- import(file, format="gff3", feature.type=feature.type)
 txdb <- makeTxDbFromGRanges(gr)
 txdb
 
 ## Compared with makeTxDbFromGFF():
-## - gene_id, tx_name, exon_name, and cds_name are now imported from the
-##   Name tag instead of the ID tag (GFF3 Spec: "IDs do not have meaning
-##   outside the file in which they reside")
+##
+## (a) makeTxDbFromGFF() fails on TheCanonicalGene_v1.gff3
+##
+## (b) gene_id, tx_name, exon_name, and cds_name are now imported from the
+##     Name tag instead of the ID tag (GFF3 Spec: "IDs do not have meaning
+##     outside the file in which they reside")
 
 
-## Test with GRanges obtained from GTF
-## ===================================
+## Test with GRanges obtained from GTF files
+## =========================================
+
 file <- system.file("extdata", "Aedes_aegypti.partial.gtf",
                     package="GenomicFeatures")
-library(rtracklayer)
 feature.type <- c("gene", "transcript", "exon", "CDS")
 gr <- import(file, format="gtf", feature.type=feature.type)
 txdb <- makeTxDbFromGRanges(gr)
