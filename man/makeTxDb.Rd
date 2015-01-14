@@ -81,8 +81,8 @@ makeTxDb(transcripts, splicings,
         pairs must be unique.
   \item \code{exon_id}: [optional] Exon ID.
         Integer vector with no NAs.
-  \item \code{exon_name}: [optional] Exon name.
-        Character vector (or factor).
+  \item \code{exon_name}: [optional] Exon name.  Character vector (or factor).
+        NAs and/or duplicates are ok.
   \item \code{exon_chrom}: [optional] Exon chromosome.
         Character vector (or factor) with no NAs.
         If missing then \code{transcripts$tx_chrom} is used.
@@ -99,10 +99,9 @@ makeTxDb(transcripts, splicings,
         NAs are allowed and must match NAs in \code{cds_start}
         and \code{cds_end}.
   \item \code{cds_name}: [optional] cds name. Character vector (or factor).
-        If present then \code{cds_start} and \code{cds_end} must also
-        be present.
-        NAs are allowed and must match NAs in \code{cds_start}
-        and \code{cds_end}.
+        If present then \code{cds_start} and \code{cds_end} must also be
+        present. NAs and/or duplicates are ok. Must be NA if corresponding
+        \code{cds_start} and \code{cds_end} are NAs.
   \item \code{cds_start}, \code{cds_end}: [optional] cds start and end.
         Integer vectors.
         If one of the 2 columns is missing then all \code{cds_*} columns

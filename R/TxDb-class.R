@@ -167,14 +167,15 @@ load_chrominfo <- function(txdb, set.col.class=FALSE)
     sql <- c("SELECT chrom, length, is_circular",
              "FROM chrominfo ORDER BY _chrom_id")
     ans <- queryAnnotationDb(txdb, sql)
-    if (!set.col.class)
-        return(ans)
-    COL2CLASS <- c(
-         chrom="character",
-         length="integer",
-         is_circular="logical"
-    )
-    setDataFrameColClass(ans, COL2CLASS)
+    if (set.col.class) {
+        COL2CLASS <- c(
+            chrom="character",
+            length="integer",
+            is_circular="logical"
+        )
+        ans <- setDataFrameColClass(ans, COL2CLASS)
+    }
+    ans
 }
 
 load_transcripts <- function(txdb, set.col.class=FALSE)
@@ -184,17 +185,20 @@ load_transcripts <- function(txdb, set.col.class=FALSE)
              "FROM transcript",
              "ORDER BY tx_id")
     ans <- queryAnnotationDb(txdb, sql)
-    if (!set.col.class)
-        return(ans)
-    COL2CLASS <- c(
-        tx_id="integer",
-        tx_name="character",
-        tx_chrom="factor",
-        tx_strand="factor",
-        tx_start="integer",
-        tx_end="integer"
-    )
-    setDataFrameColClass(ans, COL2CLASS)
+    if (set.col.class) {
+        COL2CLASS <- c(
+            tx_id="integer",
+            tx_name="character",
+            tx_chrom="factor",
+            tx_strand="factor",
+            tx_start="integer",
+            tx_end="integer"
+        )
+        ans <- setDataFrameColClass(ans, COL2CLASS)
+    }
+    if (all(is.na(ans$tx_name)))
+        ans$tx_name <- NULL
+    ans
 }
 
 load_splicings <- function(txdb, set.col.class=FALSE)
@@ -202,8 +206,7 @@ load_splicings <- function(txdb, set.col.class=FALSE)
     sql <- c("SELECT _tx_id AS tx_id, exon_rank,",
              "  splicing._exon_id AS exon_id, exon_name,",
              "  exon_chrom, exon_strand, exon_start, exon_end,",
-             #"  splicing._cds_id AS cds_id, cds_name,",
-             "  splicing._cds_id AS cds_id,",
+             "  splicing._cds_id AS cds_id, cds_name,",
              "  cds_start, cds_end",
              "FROM splicing",
              "  INNER JOIN exon",
@@ -212,23 +215,28 @@ load_splicings <- function(txdb, set.col.class=FALSE)
              "    ON (cds_id=cds._cds_id)",
              "ORDER BY tx_id, exon_rank")
     ans <- queryAnnotationDb(txdb, sql)
-    if (!set.col.class)
-        return(ans)
-    COL2CLASS <- c(
-        tx_id="integer",
-        exon_rank="integer",
-        exon_id="integer",
-        exon_name="character",
-        exon_chrom="factor",
-        exon_strand="factor",
-        exon_start="integer",
-        exon_end="integer",
-        cds_id="integer",
-        #cds_name="character",
-        cds_start="integer",
-        cds_end="integer"
-    )
-    setDataFrameColClass(ans, COL2CLASS)
+    if (set.col.class) {
+        COL2CLASS <- c(
+            tx_id="integer",
+            exon_rank="integer",
+            exon_id="integer",
+            exon_name="character",
+            exon_chrom="factor",
+            exon_strand="factor",
+            exon_start="integer",
+            exon_end="integer",
+            cds_id="integer",
+            cds_name="character",
+            cds_start="integer",
+            cds_end="integer"
+        )
+        ans <- setDataFrameColClass(ans, COL2CLASS)
+    }
+    if (all(is.na(ans$exon_name)))
+        ans$exon_name <- NULL
+    if (all(is.na(ans$cds_name)))
+        ans$cds_name <- NULL
+    ans
 }
 
 load_genes <- function(txdb, set.col.class=FALSE)
@@ -239,13 +247,14 @@ load_genes <- function(txdb, set.col.class=FALSE)
              "    ON (transcript._tx_id=gene._tx_id)",
              "ORDER BY tx_id, gene_id")
     ans <- queryAnnotationDb(txdb, sql)
-    if (!set.col.class)
-        return(ans)
-    COL2CLASS <- c(
-        tx_id="integer",
-        gene_id="character"
-    )
-    setDataFrameColClass(ans, COL2CLASS)
+    if (set.col.class) {
+        COL2CLASS <- c(
+            tx_id="integer",
+            gene_id="character"
+        )
+        ans <- setDataFrameColClass(ans, COL2CLASS)
+    }
+    ans
 }
 
 

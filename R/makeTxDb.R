@@ -7,10 +7,10 @@
 ### 1st group of helper functions for makeTxDb()
 ###
 ### 4 functions to check and normalize the input of makeTxDb():
-###   o .normargTranscripts()
-###   o .normargSplicings()
-###   o .normargGenes()
-###   o .normargChrominfo()
+###   o .normarg_makeTxDb_transcripts()
+###   o .normarg_makeTxDb_splicings()
+###   o .normarg_makeTxDb_genes()
+###   o .normarg_makeTxDb_chrominfo()
 
 .checkargColnames <- function(arg, required_colnames, optional_colnames,
                               argname)
@@ -29,9 +29,12 @@
             paste(colnames(arg)[!is_supported_col], collapse=", "))
 }
 
+### Also returns TRUE if 'x' is an atomic vector or any type with NAs only.
 .isCharacterVectorOrFactor <- function(x)
 {
-    is.character(x) || (is.factor(x) && is.character(levels(x)))
+    if (is.character(x) || is.factor(x))
+        return(TRUE)
+    is.atomic(x) && all(is.na(x))
 }
 
 .checkForeignKey <- function(referring_vals, referring_type, referring_colname,
@@ -48,7 +51,7 @@
              "be present in '", referred_colname, "'")
 }
 
-.normargTranscripts <- function(transcripts)
+.normarg_makeTxDb_transcripts <- function(transcripts)
 {
     .REQUIRED_COLS <- c("tx_id", "tx_chrom", "tx_strand", "tx_start", "tx_end")
     .OPTIONAL_COLS <- "tx_name"
@@ -93,7 +96,7 @@
     transcripts
 }
 
-.normargSplicings <- function(splicings, transcripts_tx_id)
+.normarg_makeTxDb_splicings <- function(splicings, transcripts_tx_id)
 {
     .REQUIRED_COLS <- c("tx_id", "exon_rank", "exon_start", "exon_end")
     .OPTIONAL_COLS <- c("exon_id", "exon_name", "exon_chrom", "exon_strand",
@@ -204,9 +207,9 @@
                  "but no \"cds_start\"/\"cds_end\" cols")
         if (!.isCharacterVectorOrFactor(splicings$cds_name))
             stop("'splicings$cds_name' must be a character vector (or factor)")
-        if (!all(is.na(splicings$cds_name) == is.na(splicings$cds_start)))
-            stop("NAs in 'splicings$cds_name' don't match ",
-                 "NAs in 'splicings$cds_start'")
+        if (any(is.na(splicings$cds_name) < is.na(splicings$cds_start)))
+            stop("'splicings$cds_start' and 'splicings$cds_end' contain NAs ",
+                 "where 'splicings$cds_name' doesn't")
     }
     if (!hasCol(splicings, "cds_start")) {
         splicings$cds_start <- rep.int(NA_integer_, nrow(splicings))
@@ -215,7 +218,7 @@
     splicings
 }
 
-.normargGenes <- function(genes, transcripts_tx_id)
+.normarg_makeTxDb_genes <- function(genes, transcripts_tx_id)
 {
     if (is.null(genes)) {
         genes <- data.frame(tx_id=transcripts_tx_id[FALSE],
@@ -249,8 +252,8 @@
     genes
 }
 
-.normargChrominfo <- function(chrominfo, transcripts_tx_chrom,
-                              splicings_exon_chrom)
+.normarg_makeTxDb_chrominfo <- function(chrominfo, transcripts_tx_chrom,
+                                        splicings_exon_chrom)
 {
     if (is.null(chrominfo)) {
         warning("chromosome lengths and circularity flags ",
@@ -581,13 +584,13 @@ makeTxDb <- function(transcripts, splicings,
 {
     if (!isTRUEorFALSE(reassign.ids))
         stop("'reassign.ids' must be TRUE or FALSE")
-    transcripts <- .normargTranscripts(transcripts)
+    transcripts <- .normarg_makeTxDb_transcripts(transcripts)
     transcripts_tx_id <- transcripts$tx_id  # guaranteed to be unique
     names(transcripts_tx_id) <- transcripts$tx_name
-    splicings <- .normargSplicings(splicings, transcripts_tx_id)
-    genes <- .normargGenes(genes, transcripts_tx_id)
-    chrominfo <- .normargChrominfo(chrominfo, transcripts$tx_chrom,
-                                   splicings$exon_chrom)
+    splicings <- .normarg_makeTxDb_splicings(splicings, transcripts_tx_id)
+    genes <- .normarg_makeTxDb_genes(genes, transcripts_tx_id)
+    chrominfo <- .normarg_makeTxDb_chrominfo(chrominfo, transcripts$tx_chrom,
+                                             splicings$exon_chrom)
     transcripts_internal_tx_id <- .makeTranscriptsInternalTxId(transcripts,
                                                                reassign.ids,
                                                                chrominfo$chrom)
