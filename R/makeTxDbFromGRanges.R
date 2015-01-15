@@ -4,6 +4,35 @@
 ###
 
 
+### TODO: Move this to IRanges and make it the S4 "rank" method for
+### CompressedList objects. Note that the same trick can be used to implement
+### a fast "rank" method for list and SimpleList objects. So it would be
+### great to implement a .rank.List() in S4Vectors that does the same as
+### below but without using IRanges idioms like PartitioningByEnd() and
+### togroup().
+.rank.CompressedList <- function(x, na.last=TRUE,
+                                 ties.method=c("average", "first",
+                                               "random", "max", "min"))
+{
+    ties.method <- match.arg(ties.method)
+    if (!identical(ties.method, "first"))
+        stop(wmsg("\"rank\" method for CompressedList objects ",
+                  "only supports 'ties.method=\"first\"' at the moment"))
+    x_partitioning <- PartitioningByEnd(x)
+    unlisted_x <- unlist(x, use.names=FALSE)
+    oo <- S4Vectors:::orderIntegerPairs(togroup(x_partitioning), unlisted_x)
+    unlisted_ans <- integer(length(oo))
+    unlisted_ans[oo] <- seq_along(oo)
+    ans <- relist(unlisted_ans, x_partitioning)
+    x_len <- length(x)
+    if (x_len != 0L) {
+        offsets <- c(0L, end(x_partitioning)[-x_len])
+        ans <- ans - offsets
+    }
+    ans
+}
+
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extract the 'transcripts' data frame
 ###
@@ -13,7 +42,7 @@
     idx <- which(type == "mRNA")
     tx_id <- ID[idx]
     if (anyDuplicated(tx_id))
-        stop("transcript IDs are not unique")
+        stop(wmsg("transcript IDs are not unique"))
     data.frame(
         tx_id=tx_id,
         tx_name=Name[idx],
@@ -38,7 +67,7 @@
     if (any(is.na(rank)))
         return(NULL)
     ## Sanity check.
-    tmp <- IntegerList(unname(split(rank, parent_id)))
+    tmp <- unname(splitAsList(rank, parent_id))
     if (any(any(duplicated(tmp))))
         return(NULL)
     if (for.cds)
@@ -48,29 +77,55 @@
     rank
 }
 
+.infer_rank_from_position <- function(tx_id, exon_chrom, exon_strand,
+                                             exon_start, exon_end)
+{
+    chrom_per_tx <- split(Rle(exon_chrom), tx_id)
+    tx_chrom <- runValue(chrom_per_tx)
+    if (any(elementLengths(tx_chrom) > 1L))
+        stop(wmsg("Some transcripts have exons on more than one chromosome. ",
+                  "Cannot infer the exon ranks."))
+
+    strand_per_tx <- split(Rle(exon_strand), tx_id)
+    tx_strand <- runValue(strand_per_tx)
+    if (any(elementLengths(tx_strand) > 1L))
+        stop(wmsg("Some transcripts have exons on both strands. ",
+                  "Cannot infer the exon ranks."))
+    minus_idx <- which(as.character(tx_strand) == "-")
+
+    ex_per_tx <- split(IRanges(exon_start, exon_end), tx_id)
+    if (!identical(elementLengths(reduce(ex_per_tx)),
+                   elementLengths(ex_per_tx)))
+        stop(wmsg("Some transcripts have exons not separated by introns. ",
+                  "Cannot infer the exon ranks."))
+
+    start_per_tx <- start(ex_per_tx)
+    start_per_tx[minus_idx] <- start_per_tx[minus_idx] * (-1L)
+    rank <- .rank.CompressedList(start_per_tx, ties.method="first")
+    unsplit(rank, tx_id)
+}
+
 ### Can be used to extract exons or cds.
 .extract_exons <- function(gr, type, ID, Name, Parent, for.cds=FALSE)
 {
     feature.type <- if (for.cds) "CDS" else "exon"
     exon_idx <- which(type == feature.type)
     exon_Parent <- Parent[exon_idx]
+    if (any(any(duplicated(exon_Parent))))
+        stop(wmsg("some ", feature.type, "s are mapped twice ",
+                  "to the same transcript"))
+
     tx_id <- factor(unlist(exon_Parent, use.names=FALSE))
     nparent_per_ex <- elementLengths(exon_Parent)
     exon_id <- rep.int(ID[exon_idx], nparent_per_ex)
-
-    exon_rank <- .extract_rank_from_id(exon_id, tx_id, for.cds=for.cds)
-    if (is.null(exon_rank))
-        stop("failed to extract the ", feature.type, " ranks ",
-             "from the ", feature.type, " IDs")
-
     exon_name <- rep.int(Name[exon_idx], nparent_per_ex)
     exon_chrom <- rep.int(seqnames(gr)[exon_idx], nparent_per_ex)
     exon_strand <- rep.int(strand(gr)[exon_idx], nparent_per_ex)
     exon_start <- rep.int(start(gr)[exon_idx], nparent_per_ex)
     exon_end <- rep.int(end(gr)[exon_idx], nparent_per_ex)
+
     ans <- data.frame(
         tx_id=tx_id,
-        exon_rank=exon_rank,
         exon_name=exon_name,
         exon_chrom=exon_chrom,
         exon_strand=exon_strand,
@@ -78,19 +133,55 @@
         exon_end=exon_end,
         stringsAsFactors=FALSE
     )
-    if (for.cds)
+    if (for.cds) {
         colnames(ans) <- sub("^exon", "cds", colnames(ans))
+    } else {
+        exon_rank <- .extract_rank_from_id(exon_id, tx_id, for.cds=for.cds)
+        if (is.null(exon_rank))
+            exon_rank <- .infer_rank_from_position(tx_id,
+                                                   exon_chrom, exon_strand,
+                                                   exon_start, exon_end)
+        ans$exon_rank <- exon_rank
+    }
     ans
 }
 
-.map_cds_to_exon <- function(cds, exons)
+.find_exon_cds <- function(exons, cds)
 {
-    query <- GRanges(cds$tx_id, IRanges(cds$cds_start, cds$cds_end))
-    subject <- GRanges(exons$tx_id, IRanges(exons$exon_start, exons$exon_end))
-    cds2exon <- findOverlaps(query, subject, type="within")
-    if (anyDuplicated(queryHits(cds2exon)))
-        stop("some exons contain more than one CDS")
-    selectHits(cds2exon, select="arbitrary")
+    query <- GRanges(cds$cds_chrom,
+                     IRanges(cds$cds_start, cds$cds_end),
+                     cds$cds_strand)
+    subject <- GRanges(exons$exon_chrom,
+                       IRanges(exons$exon_start, exons$exon_end),
+                       exons$exon_strand)
+    hits <- findOverlaps(query, subject, type="within")
+    hits <- hits[cds$tx_id[queryHits(hits)] == exons$tx_id[subjectHits(hits)]]
+    q_hits <- queryHits(hits)
+    s_hits <- subjectHits(hits)
+
+    bad_tx <- unique(cds$tx_id[q_hits[duplicated(q_hits)]])
+    if (length(bad_tx)) {
+        bad_tx <- paste0(bad_tx, collapse=", ")
+        stop(wmsg("the following transcripts have CDS that are mapped ",
+                  "to more than one exon: ", bad_tx))
+    }
+
+    cds2exon <- selectHits(hits, select="arbitrary")
+    bad_tx <- unique(cds$tx_id[is.na(cds2exon)])
+    if (length(bad_tx)) {
+        bad_tx <- paste0(bad_tx, collapse=", ")
+        stop(wmsg("the following transcripts have CDS that cannot ",
+                  "be mapped to an exon: ", bad_tx))
+    }
+
+    bad_tx <- unique(exons$tx_id[s_hits[duplicated(s_hits)]])
+    if (length(bad_tx)) {
+        bad_tx <- paste0(bad_tx, collapse=", ")
+        warning(wmsg("the following transcripts have exons containing ",
+                     "more than one CDS (only the first CDS was kept ",
+                     "for each exon): ", bad_tx))
+    }
+    selectHits(t(hits), select="first")
 }
 
 .extract_splicings_from_GRanges <- function(gr, type, ID, Name, Parent)
@@ -100,21 +191,13 @@
 
     cds_tx_id <- factor(cds$tx_id, levels=levels(exons$tx_id))
     if (any(is.na(cds_tx_id)))
-        stop("some CDS cannot be mapped to an exon")
+        stop(wmsg("some CDS cannot be mapped to an exon"))
     cds$tx_id <- cds_tx_id
 
-    cds2exon <- .map_cds_to_exon(cds, exons)
-    if (any(is.na(cds2exon)))
-        stop("some CDS cannot be mapped to an exon")
-    if (any(cds$cds_chrom != exons$exon_chrom[cds2exon])
-     || any(cds$cds_strand != exons$exon_strand[cds2exon]))
-        stop("some CDS are on a chrom/strand that differs from ",
-             "the chrom/strand of the exon they're mapped to")
-    cds_name <- rep.int(NA_character_, nrow(exons))
-    cds_start <- cds_end <- rep.int(NA_integer_, nrow(exons))
-    cds_name[cds2exon] <- cds$cds_name
-    cds_start[cds2exon] <- cds$cds_start
-    cds_end[cds2exon] <- cds$cds_end
+    exon2cds <- .find_exon_cds(exons, cds)
+    cds_name <- cds$cds_name[exon2cds]
+    cds_start <- cds$cds_start[exon2cds]
+    cds_end <- cds$cds_end[exon2cds]
     cbind(exons, cds_name, cds_start, cds_end, stringsAsFactors=FALSE)
 }
 
@@ -182,11 +265,13 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     ## TODO: makeTxDb() should take care of this.
     splicings_tx_id <- match(splicings$tx_id, transcripts$tx_id)
     if (any(is.na(splicings_tx_id)))
-        stop("some exons are mapped to transcripts that cannot be found")
+        stop(wmsg("some exons are linked to transcripts ",
+                  "not found in the file"))
     splicings$tx_id <- splicings_tx_id
     genes_tx_id <- match(genes$tx_id, transcripts$tx_id)
     if (any(is.na(genes_tx_id)))
-        stop("some genes are mapped to transcripts that cannot be found")
+        stop(wmsg("some genes are linked to transcripts ",
+                  "not found in the file"))
     genes$tx_id <- genes_tx_id
     transcripts$tx_id <- seq_along(transcripts$tx_id)
 
