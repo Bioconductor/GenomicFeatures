@@ -290,16 +290,22 @@ library(rtracklayer)
 
 feature.type <- c("gene", "mRNA", "exon", "CDS")
 
-file <- system.file("extdata", "GFF3_files", "TheCanonicalGene_v1.gff3",
-                    package="GenomicFeatures")
-gr <- import(file, format="gff3", feature.type=feature.type)
-txdb <- makeTxDbFromGRanges(gr)
-txdb
+file1 <- system.file("extdata", "GFF3_files", "TheCanonicalGene_v1.gff3",
+                     package="GenomicFeatures")
+gr1 <- import(file1, format="gff3", feature.type=feature.type)
+txdb1 <- makeTxDbFromGRanges(gr1)
+txdb1
 
-file <- system.file("extdata", "a.gff3", package="GenomicFeatures")
-gr <- import(file, format="gff3", feature.type=feature.type)
-txdb <- makeTxDbFromGRanges(gr)
-txdb
+file2 <- system.file("extdata", "GFF3_files", "TheCanonicalGene_v2.gff3",
+                     package="GenomicFeatures")
+gr2 <- import(file2, format="gff3", feature.type=feature.type)
+txdb2 <- makeTxDbFromGRanges(gr2)
+txdb2
+
+file3 <- system.file("extdata", "a.gff3", package="GenomicFeatures")
+gr3 <- import(file3, format="gff3", feature.type=feature.type)
+txdb3 <- makeTxDbFromGRanges(gr3)
+txdb3
 
 ## Compared with makeTxDbFromGFF():
 ##
