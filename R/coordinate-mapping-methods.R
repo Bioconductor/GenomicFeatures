@@ -156,14 +156,6 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GenomicRanges"),
     }
 )
 
-setMethod("mapFromTranscripts", c("GenomicRanges", "GenomicRanges"), 
-    function(x, transcripts, ignore.strand=TRUE, ...)
-    {
-        grl <- relist(transcripts, PartitioningByEnd(seq_along(transcripts), 
-                      names=names(transcripts)))
-        mapFromTranscripts(x, grl, ignore.strand, ...)
-    }
-)
 
 setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"), 
     function(x, transcripts, ignore.strand=TRUE, ...) 
@@ -185,6 +177,38 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"),
         hits <- findOverlaps(x, unlist(transcripts, use.names=FALSE), 
                              type="within", ignore.strand=ignore.strand)
         .mapToTranscripts(x, transcripts, hits, ignore.strand)
+    }
+)
+
+setMethod("mapToTranscripts", c("ANY", "TxDb"), 
+    function(x, transcripts, ignore.strand=TRUE, 
+             extractor.fun = transcripts, ...) 
+    {
+        group1 <- c("transcripts", "exons", "cds", "genes", "promoters",
+                    "disjointExons", "microRNAs", "tRNAs") 
+        group2 <- c("transcriptsBy", "exonsBy", "cdsBy", "intronsByTranscript", 
+                   "fiveUTRsByTranscript", "threeUTRsByTranscript")
+
+        fname <- extractor.fun@generic 
+        if (fname %in% group1) {
+            features <- extractor.fun(transcripts, ...)
+            if (is.null(names(features)))
+                names(features) <- mcols(features)[1]
+        } else if (fname %in% group2) {
+            transcripts <- extractor.fun(transcripts, ...)
+        } else {
+            stop("invalid 'extractor.fun'")
+        }
+        mapToTranscripts(x, transcripts, ignore.strand, ...)
+    }
+)
+
+setMethod("mapFromTranscripts", c("GenomicRanges", "GenomicRanges"), 
+    function(x, transcripts, ignore.strand=TRUE, ...)
+    {
+        grl <- relist(transcripts, PartitioningByEnd(seq_along(transcripts), 
+                      names=names(transcripts)))
+        mapFromTranscripts(x, grl, ignore.strand, ...)
     }
 )
 
@@ -226,21 +250,6 @@ setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"),
     }
 )
 
-setMethod("mapToTranscripts", c("ANY", "TxDb"), 
-    function(x, transcripts, ignore.strand=TRUE, 
-             extractor.fun = transcripts, ...) 
-    {
-        valid <- c("transcripts", "exons", "cds", "genes", "promoters", 
-                   "disjointExons", "microRNAs", "tRNAs", "transcriptsBy", 
-                   "exonsBy", "cdsBy", "intronsByTranscript", 
-                   "fiveUTRsByTranscript", "threeUTRsByTranscript")
-        if (!(extractor.fun@generic %in% valid))
-            stop("see ?mapToTranscript man page for valid 'extractor' names")
-
-        use.names <- TRUE
-        mapToTranscripts(x, extractor.fun(transcripts, ...), ignore.strand, ...)
-    }
-)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### pmapToTranscripts() and pmapFromTranscripts()
