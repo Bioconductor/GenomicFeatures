@@ -108,7 +108,7 @@ makeTxDbFromGFF(file,
 
 \examples{
 ## TESTING GFF3
-gffFile <- system.file("extdata","a.gff3",package="GenomicFeatures")
+gffFile <- system.file("extdata","GFF3_files","a.gff3",package="GenomicFeatures")
 txdb <- makeTxDbFromGFF(file=gffFile,
             format="gff3",
             exonRankAttributeName=NA,

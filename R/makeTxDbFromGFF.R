@@ -780,7 +780,7 @@ makeTxDbFromGFF <- function(file,
 }
 
 ## ## TESTING GFF3
-## gffFile=system.file("extdata","a.gff3")
+## gffFile=system.file("extdata","GFF3_files","a.gff3")
 ## txdb <- makeTxDbFromGFF(file=gffFile,
 ##                         format="gff3",
 ##                         dataSource="partial gtf file for Tomatoes

@@ -359,26 +359,24 @@ library(rtracklayer)
 ## ==========================================
 
 feature.type <- c("gene", "mRNA", "rRNA", "tmRNA", "tRNA", "exon", "CDS")
+GFF3_files <- system.file("extdata", "GFF3_files", package="GenomicFeatures")
 
-file1 <- system.file("extdata", "GFF3_files", "TheCanonicalGene_v1.gff3",
-                     package="GenomicFeatures")
+file1 <- file.path(GFF3_files, "TheCanonicalGene_v1.gff3")
 gr1 <- import(file1, format="gff3", feature.type=feature.type)
 txdb1 <- makeTxDbFromGRanges(gr1)
 txdb1
 
-file2 <- system.file("extdata", "GFF3_files", "TheCanonicalGene_v2.gff3",
-                     package="GenomicFeatures")
+file2 <- file.path(GFF3_files, "TheCanonicalGene_v2.gff3")
 gr2 <- import(file2, format="gff3", feature.type=feature.type)
 txdb2 <- makeTxDbFromGRanges(gr2)
 txdb2
 
-file3 <- system.file("extdata", "a.gff3", package="GenomicFeatures")
+file3 <- file.path(GFF3_files, "a.gff3")
 gr3 <- import(file3, format="gff3", feature.type=feature.type)
 txdb3 <- makeTxDbFromGRanges(gr3)
 txdb3
 
-file4 <- system.file("extdata", "GFF3_files", "NC_011025.gff",
-                     package="GenomicFeatures")
+file4 <- file.path(GFF3_files, "NC_011025.gff")
 gr4 <- import(file4, format="gff3", feature.type=feature.type)
 txdb4 <- makeTxDbFromGRanges(gr4)
 txdb4

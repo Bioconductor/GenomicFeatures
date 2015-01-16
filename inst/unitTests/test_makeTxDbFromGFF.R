@@ -10,7 +10,7 @@
 ## pattern="test_makeTxDbFromGFF")' ...  but NOT for R CMD check
 ## GenomicFeatures_x.y.z.tar.gz
 library(GenomicFeatures)
-gffFile <- system.file("extdata","a.gff3",package="GenomicFeatures")
+gffFile <- system.file("extdata","GFF3_files","a.gff3",package="GenomicFeatures")
 
 gff3 <- rtracklayer:::import(gffFile, format="gff3", asRangedData=FALSE)
 gff3 <- GenomicFeatures:::.makeSelectedFieldsLowerCase(gff3,
