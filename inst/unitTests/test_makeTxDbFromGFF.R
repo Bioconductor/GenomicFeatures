@@ -25,7 +25,7 @@ flyFile <- system.file("extdata","dmel-1000-r5.11.filtered.gff",
                        package="GenomicFeatures")
 
 ## bad bacterial GFFs require use of special argument to ignore most of data.
-gffB <- system.file("extdata","NC_011025.gff.txt",package="GenomicFeatures")
+gffB <- system.file("extdata","GFF3_files","NC_011025.gff",package="GenomicFeatures")
 
 
 ## test .deduceExonRankings (usually used by gff) 

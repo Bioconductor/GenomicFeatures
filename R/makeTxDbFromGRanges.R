@@ -4,6 +4,46 @@
 ###
 
 
+.TX_TYPES <- c("mRNA", "rRNA", "tmRNA", "tRNA")
+.EXON_TYPES <- "exon"
+.CDS_TYPES <- "CDS"
+.GENE_TYPES <- "gene"
+
+.get_gene_IDX <- function(type)
+{
+    which(type %in% .GENE_TYPES)
+}
+
+.get_cds_IDX <- function(type)
+{
+    which(type %in% .CDS_TYPES)
+}
+
+### Returns the index of CDS that are direct children of genes (this happens
+### with some GFF files e.g. inst/extdata/GFF3_files/NC_011025.gff). These CDS
+### will also be considered exons (i.e. added to the set of exons).
+.get_cds_as_exon_IDX <- function(cds_IDX, Parent, gene_IDX, ID)
+{
+    cds_IDX[as.logical(unique(Parent[cds_IDX] %in% ID[gene_IDX]))]
+}
+
+.get_exon_IDX <- function(type, cds_as_exon_IDX)
+{
+    sort(c(which(type %in% .EXON_TYPES), cds_as_exon_IDX))
+}
+
+### Returns the index of genes that have CDS as direct children. These genes
+### will also be considered transcripts (i.e. added to the set of transcripts).
+.get_gene_as_tx_IDX <- function(gene_IDX, ID, cds_as_exon_IDX, Parent)
+{
+    gene_IDX[ID[gene_IDX] %in% unlist(Parent[cds_as_exon_IDX], use.names=FALSE)]
+}
+
+.get_tx_IDX <- function(type, gene_as_tx_IDX)
+{
+    sort(c(which(type %in% .TX_TYPES), gene_as_tx_IDX))
+}
+
 ### TODO: Move this to IRanges and make it the S4 "rank" method for
 ### CompressedList objects. Note that the same trick can be used to implement
 ### a fast "rank" method for list and SimpleList objects. So it would be
@@ -37,19 +77,18 @@
 ### Extract the 'transcripts' data frame
 ###
 
-.extract_transcripts_from_GRanges <- function(gr, type, ID, Name)
+.extract_transcripts_from_GRanges <- function(tx_IDX, gr, ID, Name)
 {
-    idx <- which(type == "mRNA")
-    tx_id <- ID[idx]
+    tx_id <- ID[tx_IDX]
     if (anyDuplicated(tx_id))
         stop(wmsg("transcript IDs are not unique"))
     data.frame(
         tx_id=tx_id,
-        tx_name=Name[idx],
-        tx_chrom=seqnames(gr)[idx],
-        tx_strand=strand(gr)[idx],
-        tx_start=start(gr)[idx],
-        tx_end=end(gr)[idx],
+        tx_name=Name[tx_IDX],
+        tx_chrom=seqnames(gr)[tx_IDX],
+        tx_strand=strand(gr)[tx_IDX],
+        tx_start=start(gr)[tx_IDX],
+        tx_end=end(gr)[tx_IDX],
         stringsAsFactors=FALSE
     )
 }
@@ -106,23 +145,22 @@
 }
 
 ### Can be used to extract exons or cds.
-.extract_exons <- function(gr, type, ID, Name, Parent, for.cds=FALSE)
+.extract_exons <- function(exon_IDX, gr, ID, Name, Parent, for.cds=FALSE)
 {
     feature.type <- if (for.cds) "CDS" else "exon"
-    exon_idx <- which(type == feature.type)
-    exon_Parent <- Parent[exon_idx]
+    exon_Parent <- Parent[exon_IDX]
     if (any(any(duplicated(exon_Parent))))
         stop(wmsg("some ", feature.type, "s are mapped twice ",
                   "to the same transcript"))
 
     tx_id <- factor(unlist(exon_Parent, use.names=FALSE))
     nparent_per_ex <- elementLengths(exon_Parent)
-    exon_id <- rep.int(ID[exon_idx], nparent_per_ex)
-    exon_name <- rep.int(Name[exon_idx], nparent_per_ex)
-    exon_chrom <- rep.int(seqnames(gr)[exon_idx], nparent_per_ex)
-    exon_strand <- rep.int(strand(gr)[exon_idx], nparent_per_ex)
-    exon_start <- rep.int(start(gr)[exon_idx], nparent_per_ex)
-    exon_end <- rep.int(end(gr)[exon_idx], nparent_per_ex)
+    exon_id <- rep.int(ID[exon_IDX], nparent_per_ex)
+    exon_name <- rep.int(Name[exon_IDX], nparent_per_ex)
+    exon_chrom <- rep.int(seqnames(gr)[exon_IDX], nparent_per_ex)
+    exon_strand <- rep.int(strand(gr)[exon_IDX], nparent_per_ex)
+    exon_start <- rep.int(start(gr)[exon_IDX], nparent_per_ex)
+    exon_end <- rep.int(end(gr)[exon_IDX], nparent_per_ex)
 
     ans <- data.frame(
         tx_id=tx_id,
@@ -184,10 +222,11 @@
     selectHits(t(hits), select="first")
 }
 
-.extract_splicings_from_GRanges <- function(gr, type, ID, Name, Parent)
+.extract_splicings_from_GRanges <- function(exon_IDX, cds_IDX,
+                                            gr, ID, Name, Parent)
 {
-    exons <- .extract_exons(gr, type, ID, Name, Parent)
-    cds <- .extract_exons(gr, type, ID, Name, Parent, for.cds=TRUE)
+    exons <- .extract_exons(exon_IDX, gr, ID, Name, Parent)
+    cds <- .extract_exons(cds_IDX, gr, ID, Name, Parent, for.cds=TRUE)
 
     cds_tx_id <- factor(cds$tx_id, levels=levels(exons$tx_id))
     if (any(is.na(cds_tx_id)))
@@ -206,15 +245,36 @@
 ### Extract the 'genes' data frame
 ###
 
-.extract_genes_from_GRanges <- function(type, ID, Name, Parent)
+.extract_genes_from_GRanges <- function(gene_IDX, tx_IDX, ID, Name,
+                                        Parent, Dbxref)
 {
-    idx <- which(type == "gene")
-    geneID2Name <- Name[idx]
-    names(geneID2Name) <- ID[idx]
+    geneID2Name <- Name[gene_IDX]
+    names(geneID2Name) <- ID[gene_IDX]
 
-    idx <- which(type == "mRNA")
-    tx2genes <- Parent[idx]
-    tx_id <- rep.int(factor(ID[idx]), elementLengths(tx2genes))
+    tx2genes <- Parent[tx_IDX]
+
+    ## Genes that we consider transcripts are therefore their own parents.
+    idx0 <- which(tx_IDX %in% gene_IDX)
+    tx2genes[idx0] <- ID[tx_IDX][idx0]
+
+    ## Transcripts with no parents are sometimes linked to a gene via the
+    ## Dbxref tag.
+    if (!is.null(Dbxref)) {
+        idx0 <- which(elementLengths(tx2genes) == 0L)
+        tx_Dbxref <- Dbxref[tx_IDX][idx0]
+        gene_Dbxref <- Dbxref[gene_IDX]
+        tx_Dbxref_unlisted <- unlist(tx_Dbxref, use.names=FALSE)
+        gene_Dbxref_unlisted <- unlist(gene_Dbxref, use.names=FALSE)
+        hits <- findMatches(tx_Dbxref_unlisted, gene_Dbxref_unlisted)
+        hits <- remapHits(hits, query.map=togroup(tx_Dbxref),
+                                new.queryLength=length(tx_Dbxref),
+                                subject.map=togroup(gene_Dbxref),
+                                new.subjectLength=length(gene_Dbxref))
+        tx2genes[idx0] <- relist(ID[gene_IDX][subjectHits(hits)],
+                                 as(hits, "PartitioningByEnd"))
+    }
+
+    tx_id <- rep.int(factor(ID[tx_IDX]), elementLengths(tx2genes))
     gene_id <- unname(geneID2Name[unlist(tx2genes, use.names=FALSE)])
     data.frame(
         tx_id=tx_id,
@@ -244,8 +304,8 @@
 ### makeTxDbFromGRanges()
 ###
 
-### Metadata columns we care about:
-### o If GRanges obtained from GFF3: type, ID, Name, Parent,
+### Tags we care about:
+### o If GRanges obtained from GFF3: type, ID, Name, Parent, Dbxref
 ### o If GRanges obtained from GTF:
 ###     type, gene_id, transcript_id, exon_number, gene_name, transcript_name
 makeTxDbFromGRanges <- function(gr, metadata=NULL)
@@ -255,10 +315,20 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     ID <- gr_mcols[ , "ID"]
     Name <- gr_mcols[ , "Name"]
     Parent <- gr_mcols[ , "Parent"]
+    Dbxref <- gr_mcols$Dbxref  # optional tag
 
-    transcripts <- .extract_transcripts_from_GRanges(gr, type, ID, Name)
-    splicings <- .extract_splicings_from_GRanges(gr, type, ID, Name, Parent)
-    genes <- .extract_genes_from_GRanges(type, ID, Name, Parent)
+    gene_IDX <- .get_gene_IDX(type)
+    cds_IDX <- .get_cds_IDX(type)
+    cds_as_exon_IDX <- .get_cds_as_exon_IDX(cds_IDX, Parent, gene_IDX, ID)
+    exon_IDX <- .get_exon_IDX(type, cds_as_exon_IDX)
+    gene_as_tx_IDX <- .get_gene_as_tx_IDX(gene_IDX, ID, cds_as_exon_IDX, Parent)
+    tx_IDX <- .get_tx_IDX(type, gene_as_tx_IDX)
+
+    transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr, ID, Name)
+    splicings <- .extract_splicings_from_GRanges(exon_IDX, cds_IDX,
+                                                 gr, ID, Name, Parent)
+    genes <- .extract_genes_from_GRanges(gene_IDX, tx_IDX,
+                                         ID, Name, Parent, Dbxref)
     chrominfo <- .extract_chrominfo_from_GRanges(gr)
 
     ## Turn 'tx_id' into an integer vector.
@@ -288,7 +358,7 @@ library(rtracklayer)
 ## Test with GRanges obtained from GFF3 files
 ## ==========================================
 
-feature.type <- c("gene", "mRNA", "exon", "CDS")
+feature.type <- c("gene", "mRNA", "rRNA", "tmRNA", "tRNA", "exon", "CDS")
 
 file1 <- system.file("extdata", "GFF3_files", "TheCanonicalGene_v1.gff3",
                      package="GenomicFeatures")
@@ -306,6 +376,12 @@ file3 <- system.file("extdata", "a.gff3", package="GenomicFeatures")
 gr3 <- import(file3, format="gff3", feature.type=feature.type)
 txdb3 <- makeTxDbFromGRanges(gr3)
 txdb3
+
+file4 <- system.file("extdata", "GFF3_files", "NC_011025.gff",
+                     package="GenomicFeatures")
+gr4 <- import(file4, format="gff3", feature.type=feature.type)
+txdb4 <- makeTxDbFromGRanges(gr4)
+txdb4
 
 ## Compared with makeTxDbFromGFF():
 ##
