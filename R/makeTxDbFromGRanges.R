@@ -4,10 +4,10 @@
 ###
 
 
+.GENE_TYPES <- "gene"
 .TX_TYPES <- c("mRNA", "rRNA", "tmRNA", "tRNA")
 .EXON_TYPES <- "exon"
 .CDS_TYPES <- "CDS"
-.GENE_TYPES <- "gene"
 
 .get_gene_IDX <- function(type)
 {
@@ -313,7 +313,9 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     gr_mcols <- mcols(gr)
     type <- gr_mcols[ , "type"]
     ID <- gr_mcols[ , "ID"]
-    Name <- gr_mcols[ , "Name"]
+    Name <- gr_mcols$Name  # optional tag
+    if (is.null(Name))
+        Name <- ID
     Parent <- gr_mcols[ , "Parent"]
     Dbxref <- gr_mcols$Dbxref  # optional tag
 
@@ -353,12 +355,15 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
 
 if (FALSE) {
 library(GenomicFeatures)
+source("GenomicFeatures/R/makeTxDbFromGRanges.R")
+
 library(rtracklayer)
 
 ## Test with GRanges obtained from GFF3 files
 ## ==========================================
 
-feature.type <- c("gene", "mRNA", "rRNA", "tmRNA", "tRNA", "exon", "CDS")
+feature.type <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES, .CDS_TYPES)
+
 GFF3_files <- system.file("extdata", "GFF3_files", package="GenomicFeatures")
 
 file1 <- file.path(GFF3_files, "TheCanonicalGene_v1.gff3")
@@ -376,10 +381,15 @@ gr3 <- import(file3, format="gff3", feature.type=feature.type)
 txdb3 <- makeTxDbFromGRanges(gr3)
 txdb3
 
-file4 <- file.path(GFF3_files, "NC_011025.gff")
+file4 <- file.path(GFF3_files, "dmel-1000-r5.11.filtered.gff")
 gr4 <- import(file4, format="gff3", feature.type=feature.type)
 txdb4 <- makeTxDbFromGRanges(gr4)
-txdb4
+txdb4  # exactly the same as with makeTxDbFromGFF()
+
+file5 <- file.path(GFF3_files, "NC_011025.gff")
+gr5 <- import(file5, format="gff3", feature.type=feature.type)
+txdb5 <- makeTxDbFromGRanges(gr5)
+txdb5
 
 ## Compared with makeTxDbFromGFF():
 ##

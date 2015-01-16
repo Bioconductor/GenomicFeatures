@@ -21,7 +21,7 @@ gtfFile <- system.file("extdata","Aedes_aegypti.partial.gtf",
 
 gtf <- rtracklayer:::import(gtfFile, format="gtf", asRangedData=FALSE)
 
-flyFile <- system.file("extdata","dmel-1000-r5.11.filtered.gff",
+flyFile <- system.file("extdata","GFF3_files","dmel-1000-r5.11.filtered.gff",
                        package="GenomicFeatures")
 
 ## bad bacterial GFFs require use of special argument to ignore most of data.
