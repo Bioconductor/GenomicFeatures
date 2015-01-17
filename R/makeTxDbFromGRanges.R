@@ -5,7 +5,7 @@
 
 
 .GENE_TYPES <- "gene"
-.TX_TYPES <- c("mRNA", "rRNA", "tmRNA", "tRNA")
+.TX_TYPES <- c("mRNA", "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
 .EXON_TYPES <- "exon"
 .CDS_TYPES <- "CDS"
 
@@ -121,27 +121,35 @@
 {
     chrom_per_tx <- split(Rle(exon_chrom), tx_id)
     tx_chrom <- runValue(chrom_per_tx)
-    if (any(elementLengths(tx_chrom) > 1L))
-        stop(wmsg("Some transcripts have exons on more than one chromosome. ",
-                  "Cannot infer the exon ranks."))
+    bad_tx1 <- unique(names(which(elementLengths(tx_chrom) > 1L)))
 
     strand_per_tx <- split(Rle(exon_strand), tx_id)
     tx_strand <- runValue(strand_per_tx)
-    if (any(elementLengths(tx_strand) > 1L))
-        stop(wmsg("Some transcripts have exons on both strands. ",
-                  "Cannot infer the exon ranks."))
+    is_bad <- elementLengths(tx_strand) > 1L
+    bad_tx2 <- unique(names(which(is_bad)))
+    tx_strand[is_bad] <- "*"
     minus_idx <- which(as.character(tx_strand) == "-")
 
     ex_per_tx <- split(IRanges(exon_start, exon_end), tx_id)
-    if (!identical(elementLengths(reduce(ex_per_tx)),
-                   elementLengths(ex_per_tx)))
-        stop(wmsg("Some transcripts have exons not separated by introns. ",
-                  "Cannot infer the exon ranks."))
+    bad_tx3 <- unique(names(which(elementLengths(reduce(ex_per_tx)) !=
+                                  elementLengths(ex_per_tx))))
+
+    bad_tx <- unique(c(bad_tx1, bad_tx2, bad_tx3))
+    if (length(bad_tx)) {
+        bad_tx <- paste0(bad_tx, collapse=", ")
+        warning(wmsg(
+            "The following transcripts were dropped because their exon ",
+            "ranks could not be inferred (either because the exons are ",
+            "not on the same chromosome/strand or because they are not ",
+            "separated by introns): ", sort(bad_tx)))
+    }
 
     start_per_tx <- start(ex_per_tx)
     start_per_tx[minus_idx] <- start_per_tx[minus_idx] * (-1L)
     rank <- .rank.CompressedList(start_per_tx, ties.method="first")
-    unsplit(rank, tx_id)
+    ans <- unsplit(rank, tx_id)
+    ans[tx_id %in% bad_tx] <- NA_integer_
+    ans
 }
 
 ### Can be used to extract exons or cds.
@@ -200,24 +208,24 @@
     bad_tx <- unique(cds$tx_id[q_hits[duplicated(q_hits)]])
     if (length(bad_tx)) {
         bad_tx <- paste0(bad_tx, collapse=", ")
-        stop(wmsg("the following transcripts have CDS that are mapped ",
-                  "to more than one exon: ", bad_tx))
+        stop(wmsg("The following transcripts have CDS that are mapped ",
+                  "to more than one exon: ", sort(bad_tx)))
     }
 
     cds2exon <- selectHits(hits, select="arbitrary")
     bad_tx <- unique(cds$tx_id[is.na(cds2exon)])
     if (length(bad_tx)) {
         bad_tx <- paste0(bad_tx, collapse=", ")
-        stop(wmsg("the following transcripts have CDS that cannot ",
-                  "be mapped to an exon: ", bad_tx))
+        stop(wmsg("The following transcripts have CDS that cannot ",
+                  "be mapped to an exon: ", sort(bad_tx)))
     }
 
     bad_tx <- unique(exons$tx_id[s_hits[duplicated(s_hits)]])
     if (length(bad_tx)) {
         bad_tx <- paste0(bad_tx, collapse=", ")
-        warning(wmsg("the following transcripts have exons containing ",
+        warning(wmsg("The following transcripts have exons containing ",
                      "more than one CDS (only the first CDS was kept ",
-                     "for each exon): ", bad_tx))
+                     "for each exon): ", sort(bad_tx)))
     }
     selectHits(t(hits), select="first")
 }
