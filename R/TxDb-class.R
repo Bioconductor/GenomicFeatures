@@ -336,7 +336,7 @@ makeFeatureColnames <- function(feature_shortname)
 
 .valid.TxDb <- function(x)
 {
-    conn <- AnnotationDbi:::dbConn(x)
+    conn <- AnnotationDbi:::dbconn(x)
 
     c(AnnotationDbi:::.valid.metadata.table(conn, DB_TYPE_NAME,
                                             DB_TYPE_VALUE),

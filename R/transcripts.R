@@ -326,7 +326,7 @@ translateCols <- function(columns, txdb){
     SQL_orderby <- SQL_what
     SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from,
                  SQL_where, "ORDER BY", SQL_orderby)
-    ans <- dbEasyQuery(AnnotationDbi:::dbConn(txdb), SQL)
+    ans <- dbEasyQuery(AnnotationDbi:::dbconn(txdb), SQL)
     names(ans) <- ans_names
     ans
 }
@@ -687,7 +687,7 @@ setMethod("disjointExons", "TxDb",
 ## main function
 .microRNAs <- function(txdb){
   ## get the data about whether or not we have any info.
-  con <- AnnotationDbi:::dbConn(txdb)
+  con <- AnnotationDbi:::dbconn(txdb)
   bld <- dbGetQuery(con,
            "SELECT value FROM metadata WHERE name='miRBase build ID'")
   src <- DBI::dbGetQuery(con,

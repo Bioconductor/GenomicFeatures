@@ -11,7 +11,7 @@
 .extractFeaturesAsGRanges <- function(db)
 {
     ## 1st figure out what table is not the metadata table.
-    conn <- AnnotationDbi:::dbConn(db) ## featuredbConn(db)
+    conn <- AnnotationDbi:::dbconn(db) ## featuredbconn(db)
     tableNames <- dbListTables(conn)
     tableName <- tableNames[!tableNames %in% "metadata"]
 

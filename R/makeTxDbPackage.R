@@ -12,7 +12,7 @@
 
 ## simplify DB retrievals from metadata table
 .getMetaDataValue <- function(txdb, name){
-  con <- AnnotationDbi:::dbConn(txdb)
+  con <- AnnotationDbi:::dbconn(txdb)
   res <- dbGetQuery(con, 
     paste0("SELECT value FROM metadata WHERE name='", name, "'"))[[1]]  
   if(!is.character(res))
@@ -34,7 +34,7 @@
 
 .makePackageName <- function(txdb){
   prefix <- .choosePrefix(txdb)
-  con <- AnnotationDbi:::dbConn(txdb)
+  con <- AnnotationDbi:::dbconn(txdb)
   species <- .abbrevOrganismName(.getMetaDataValue(txdb,'Organism'))  
   type <- .getMetaDataValue(txdb,'Data source')
   if(type=="UCSC"){

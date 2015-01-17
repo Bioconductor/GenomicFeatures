@@ -1,7 +1,7 @@
 #####################################################################
 ## Helpers to access/process the table names and columns
 .getTableColMapping <- function(x){
-  conn <- AnnotationDbi:::dbConn(x)
+  conn <- AnnotationDbi:::dbconn(x)
   tables <- DBI::dbListTables(conn)
   tCols <- sapply(tables, DBI::dbListFields, conn=conn)
   ## right up front we are getting rid of metadata and chrominfo tables...
@@ -243,7 +243,7 @@
                  majorJoin)
   }
   
-  res <- AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x), sql)
+  res <- AnnotationDbi:::dbQuery(AnnotationDbi:::dbconn(x), sql)
 
   if(length(keys) > 1000){ ##Then drop the extras now(in event there are some)
       ktColId <- .reverseColAbbreviations(x, keytype)
@@ -326,19 +326,19 @@ setMethod("columns", "TxDb",
 .keys <- function(x, keytype){
     AnnotationDbi:::.testForValidKeytype(x, keytype)
     res <- switch(EXPR = keytype,
-             "GENEID" = AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+             "GENEID" = AnnotationDbi:::dbQuery(AnnotationDbi:::dbconn(x),
                "SELECT DISTINCT gene_id FROM gene", 1L),
-             "TXID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+             "TXID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbconn(x),
                "SELECT DISTINCT _tx_id FROM transcript", 1L),
-             "TXNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+             "TXNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbconn(x),
                "SELECT DISTINCT tx_name FROM transcript", 1L),
-             "EXONID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+             "EXONID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbconn(x),
                "SELECT DISTINCT _exon_id FROM exon", 1L),
-             "EXONNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+             "EXONNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbconn(x),
                "SELECT DISTINCT exon_name FROM exon", 1L),
-             "CDSID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+             "CDSID" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbconn(x),
                "SELECT DISTINCT _cds_id FROM cds", 1L),                  
-             "CDSNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbConn(x),
+             "CDSNAME" =  AnnotationDbi:::dbQuery(AnnotationDbi:::dbconn(x),
                "SELECT DISTINCT cds_name FROM cds", 1L),                  
                   stop(paste(keytype, "is not a supported keytype.",
                              " Please use the keytypes",
