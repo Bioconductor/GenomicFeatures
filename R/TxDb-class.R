@@ -178,7 +178,7 @@ load_chrominfo <- function(txdb, set.col.class=FALSE)
     ans
 }
 
-load_transcripts <- function(txdb, set.col.class=FALSE)
+load_transcripts <- function(txdb, drop.tx_name=FALSE, set.col.class=FALSE)
 {
     sql <- c("SELECT _tx_id AS tx_id, tx_name,",
              "  tx_chrom, tx_strand, tx_start, tx_end",
@@ -196,12 +196,13 @@ load_transcripts <- function(txdb, set.col.class=FALSE)
         )
         ans <- setDataFrameColClass(ans, COL2CLASS)
     }
-    if (all(is.na(ans$tx_name)))
+    if (drop.tx_name && all(is.na(ans$tx_name)))
         ans$tx_name <- NULL
     ans
 }
 
-load_splicings <- function(txdb, set.col.class=FALSE)
+load_splicings <- function(txdb, drop.exon_name=FALSE, drop.cds_name=FALSE,
+                                 set.col.class=FALSE)
 {
     sql <- c("SELECT _tx_id AS tx_id, exon_rank,",
              "  splicing._exon_id AS exon_id, exon_name,",
@@ -232,9 +233,9 @@ load_splicings <- function(txdb, set.col.class=FALSE)
         )
         ans <- setDataFrameColClass(ans, COL2CLASS)
     }
-    if (all(is.na(ans$exon_name)))
+    if (drop.exon_name && all(is.na(ans$exon_name)))
         ans$exon_name <- NULL
-    if (all(is.na(ans$cds_name)))
+    if (drop.cds_name && all(is.na(ans$cds_name)))
         ans$cds_name <- NULL
     ans
 }
@@ -568,8 +569,10 @@ setReplaceMethod("isActiveSeq","TxDb",
 setMethod("as.list", "TxDb",
     function(x, ...)
     {
-        transcripts <- load_transcripts(x, set.col.class=TRUE)
-        splicings <- load_splicings(x, set.col.class=TRUE)
+        transcripts <- load_transcripts(x, drop.tx_name=TRUE,
+                                           set.col.class=TRUE)
+        splicings <- load_splicings(x, drop.exon_name=TRUE, drop.cds_name=TRUE,
+                                       set.col.class=TRUE)
         genes <- load_genes(x, set.col.class=TRUE)
         chrominfo <- load_chrominfo(x, set.col.class=TRUE)
         list(transcripts=transcripts, splicings=splicings,
