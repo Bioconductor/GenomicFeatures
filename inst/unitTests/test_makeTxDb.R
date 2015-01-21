@@ -44,7 +44,6 @@ test_makeTxDb <- function()
                         tx_id=splicings0$tx_id,
                         exon_rank=splicings0$exon_rank,
                         exon_id=c(1L, 2L, 1L, 2L),
-                        exon_name=as.character(c(NA, NA, NA, NA)),
                         exon_chrom=transcripts0$tx_chrom[rowmap],
                         exon_strand=transcripts0$tx_strand[rowmap],
                         exon_start=splicings0$exon_start,
