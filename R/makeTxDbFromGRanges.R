@@ -318,6 +318,22 @@
 ###     type, gene_id, transcript_id, exon_number, gene_name, transcript_name
 makeTxDbFromGRanges <- function(gr, metadata=NULL)
 {
+    if (!is(gr, "GenomicRanges"))
+        stop("'gr' must be a GRanges object")
+    Genome <- unique(genome(gr))
+    if (length(Genome) != 1L)
+        stop("all the sequences in 'seqinfo(gr)' must belong ",
+             "to the same genome")
+    if (!is.null(metadata)) {
+        if (!is.data.frame(metadata))
+            stop("'metadata' must be NULL or a data.frame")
+        if (!setequal(colnames(metadata), c("name", "value")))
+            stop("'metadata' columns must be \"name\" and \"value\"")
+    }
+    if (!("Genome" %in% metadata$name)) {
+        df1 <- data.frame(name="Genome", value=Genome, stringsAsFactors=FALSE)
+        metadata <- rbind(metadata, df1)
+    }
     gr_mcols <- mcols(gr)
     type <- gr_mcols[ , "type"]
     ID <- gr_mcols[ , "ID"]
