@@ -136,6 +136,14 @@ queryAnnotationDb <- function(annotationdb, sql)
 ### Not data.frame specific. Would work on any matrix-like object.
 hasCol <- function(x, colnames) {colnames %in% colnames(x)}
 
+makeZeroRowDataFrame <- function(col2class)
+{
+    if (!is.character(col2class) || is.null(names(col2class)))
+        stop("'col2class' must be a named character vector")
+    as.data.frame(lapply(col2class, function(class) get(class)()),
+                  stringsAsFactors=FALSE)
+}
+
 ### Sets the class of (all or some of) the columns of a data.frame.
 ### Typical use:
 ###   x <- setDataFrameColClass(x, c(colA="integer", colB="factor"))

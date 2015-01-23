@@ -69,9 +69,10 @@
     }
     \item{}{
       \code{as.list(x)}:
-      Dumps the entire db into a list of data frames \code{txdump} that can
-      be used in \code{do.call(makeTxDb, txdump)} to make the db
-      again with no loss of information.
+      Dump the entire db into a list of data frames, say \code{txdb_dump},
+      that can then be used to recreate the original db with
+      \code{do.call(makeTxDb, txdb_dump)} with no loss of information
+      (except possibly for some of the metadata).
       Note that the transcripts are dumped in the same order in all the
       data frames.
     }
@@ -108,7 +109,7 @@ txdb_file <- system.file("extdata", "Biomart_Ensembl_sample.sqlite",
 txdb <- loadDb(txdb_file)
 txdb
 
-## Use of seqinfo
+## Use of seqinfo():
 seqlevelsStyle(txdb)
 seqinfo(txdb)
 seqlevels(txdb)
@@ -116,17 +117,18 @@ seqlengths(txdb)  # shortcut for 'seqlengths(seqinfo(txdb))'
 isCircular(txdb)  # shortcut for 'isCircular(seqinfo(txdb))'
 names(which(isCircular(txdb)))
 
-## Can set txdb so that only chr1 and chr2 are used by using the seqlevels
+## Can set txdb so that only chr1 and chr2 are used by using the
+## seqlevels:
 seqlevels(txdb, force=TRUE) <- c("1", "2")
-## And then you can restore the default seqlevels
+## Then you can restore the default seqlevels:
 txdb <- restoreSeqlevels(txdb)
 
 
-## Use of as.list
-txdump <- as.list(txdb)
-txdump
-txdb1 <- do.call(makeTxDb, txdump)
-stopifnot(identical(as.list(txdb1), txdump))
+## Use of as.list():
+txdb_dump <- as.list(txdb)
+txdb_dump
+txdb1 <- do.call(makeTxDb, txdb_dump)
+stopifnot(identical(as.list(txdb1), txdb_dump))
 }
 
 \keyword{methods}

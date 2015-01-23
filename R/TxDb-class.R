@@ -162,46 +162,108 @@ DB_SCHEMA_VERSION <- "1.0"
 ### For internal use only (i.e. NOT exported)
 ###
 
+.format_chrominfo <- function(chrominfo, set.col.class=FALSE)
+{
+    COL2CLASS <- c(
+        chrom="character",
+        length="integer",
+        is_circular="logical"
+    )
+    if (is.null(chrominfo)) {
+        chrominfo <- makeZeroRowDataFrame(COL2CLASS)
+    } else {
+        if (set.col.class)
+            chrominfo <- setDataFrameColClass(chrominfo, COL2CLASS)
+    }
+    chrominfo
+}
+
 load_chrominfo <- function(txdb, set.col.class=FALSE)
 {
     sql <- c("SELECT chrom, length, is_circular",
              "FROM chrominfo ORDER BY _chrom_id")
-    ans <- queryAnnotationDb(txdb, sql)
-    if (set.col.class) {
-        COL2CLASS <- c(
-            chrom="character",
-            length="integer",
-            is_circular="logical"
-        )
-        ans <- setDataFrameColClass(ans, COL2CLASS)
-    }
-    ans
+    chrominfo <- queryAnnotationDb(txdb, sql)
+    .format_chrominfo(chrominfo, set.col.class=set.col.class)
 }
 
-load_transcripts <- function(txdb, drop.tx_name=FALSE, set.col.class=FALSE)
+.format_transcripts <- function(transcripts, drop.tx_name=FALSE,
+                                             set.col.class=FALSE)
+{
+    COL2CLASS <- c(
+        tx_id="integer",
+        tx_name="character",
+        tx_chrom="factor",
+        tx_strand="factor",
+        tx_start="integer",
+        tx_end="integer"
+    )
+    if (is.null(transcripts)) {
+        transcripts <- makeZeroRowDataFrame(COL2CLASS)
+    } else {
+        if (set.col.class) {
+            if (is.null(transcripts$tx_name))
+                COL2CLASS$tx_name <- NULL
+            transcripts <- setDataFrameColClass(transcripts, COL2CLASS)
+        }
+    }
+    if (drop.tx_name && !is.null(transcripts$tx_name) &&
+                        all(is.na(transcripts$tx_name)))
+        transcripts$tx_name <- NULL
+    transcripts
+}
+
+load_transcripts <- function(txdb, drop.tx_name=FALSE,
+                                   set.col.class=FALSE)
 {
     sql <- c("SELECT _tx_id AS tx_id, tx_name,",
              "  tx_chrom, tx_strand, tx_start, tx_end",
              "FROM transcript",
              "ORDER BY tx_id")
-    ans <- queryAnnotationDb(txdb, sql)
-    if (set.col.class) {
-        COL2CLASS <- c(
-            tx_id="integer",
-            tx_name="character",
-            tx_chrom="factor",
-            tx_strand="factor",
-            tx_start="integer",
-            tx_end="integer"
-        )
-        ans <- setDataFrameColClass(ans, COL2CLASS)
-    }
-    if (drop.tx_name && all(is.na(ans$tx_name)))
-        ans$tx_name <- NULL
-    ans
+    transcripts <- queryAnnotationDb(txdb, sql)
+    .format_transcripts(transcripts, drop.tx_name=drop.tx_name,
+                                     set.col.class=set.col.class)
 }
 
-load_splicings <- function(txdb, drop.exon_name=FALSE, drop.cds_name=FALSE,
+.format_splicings <- function(splicings, drop.exon_name=FALSE,
+                                         drop.cds_name=FALSE,
+                                         set.col.class=FALSE)
+{
+    COL2CLASS <- c(
+        tx_id="integer",
+        exon_rank="integer",
+        exon_id="integer",
+        exon_name="character",
+        exon_chrom="factor",
+        exon_strand="factor",
+        exon_start="integer",
+        exon_end="integer",
+        cds_id="integer",
+        cds_name="character",
+        cds_start="integer",
+        cds_end="integer"
+    )
+    if (is.null(splicings)) {
+        splicings <- makeZeroRowDataFrame(COL2CLASS)
+    } else {
+        if (set.col.class) {
+            if (is.null(splicings$exon_name))
+                COL2CLASS$exon_name <- NULL
+            if (is.null(splicings$cds_name))
+                COL2CLASS$cds_name <- NULL
+            splicings <- setDataFrameColClass(splicings, COL2CLASS)
+        }
+    }
+    if (drop.exon_name && !is.null(splicings$exon_name) &&
+                          all(is.na(splicings$exon_name)))
+        splicings$exon_name <- NULL
+    if (drop.cds_name && !is.null(splicings$cds_name) &&
+                         all(is.na(splicings$cds_name)))
+        splicings$cds_name <- NULL
+    splicings
+}
+
+load_splicings <- function(txdb, drop.exon_name=FALSE,
+                                 drop.cds_name=FALSE,
                                  set.col.class=FALSE)
 {
     sql <- c("SELECT _tx_id AS tx_id, exon_rank,",
@@ -215,29 +277,25 @@ load_splicings <- function(txdb, drop.exon_name=FALSE, drop.cds_name=FALSE,
              "  LEFT JOIN cds",
              "    ON (cds_id=cds._cds_id)",
              "ORDER BY tx_id, exon_rank")
-    ans <- queryAnnotationDb(txdb, sql)
-    if (set.col.class) {
-        COL2CLASS <- c(
-            tx_id="integer",
-            exon_rank="integer",
-            exon_id="integer",
-            exon_name="character",
-            exon_chrom="factor",
-            exon_strand="factor",
-            exon_start="integer",
-            exon_end="integer",
-            cds_id="integer",
-            cds_name="character",
-            cds_start="integer",
-            cds_end="integer"
-        )
-        ans <- setDataFrameColClass(ans, COL2CLASS)
+    splicings <- queryAnnotationDb(txdb, sql)
+    .format_splicings(splicings, drop.exon_name=drop.exon_name,
+                                 drop.cds_name=drop.cds_name,
+                                 set.col.class=set.col.class)
+}
+
+.format_genes <- function(genes, set.col.class=FALSE)
+{
+    COL2CLASS <- c(
+        tx_id="integer",
+        gene_id="character"
+    )
+    if (is.null(genes)) {
+        genes <- makeZeroRowDataFrame(COL2CLASS)
+    } else {
+        if (set.col.class)
+            genes <- setDataFrameColClass(genes, COL2CLASS)
     }
-    if (drop.exon_name && all(is.na(ans$exon_name)))
-        ans$exon_name <- NULL
-    if (drop.cds_name && all(is.na(ans$cds_name)))
-        ans$cds_name <- NULL
-    ans
+    genes
 }
 
 load_genes <- function(txdb, set.col.class=FALSE)
@@ -247,15 +305,8 @@ load_genes <- function(txdb, set.col.class=FALSE)
              "  INNER JOIN gene",
              "    ON (transcript._tx_id=gene._tx_id)",
              "ORDER BY tx_id, gene_id")
-    ans <- queryAnnotationDb(txdb, sql)
-    if (set.col.class) {
-        COL2CLASS <- c(
-            tx_id="integer",
-            gene_id="character"
-        )
-        ans <- setDataFrameColClass(ans, COL2CLASS)
-    }
-    ans
+    genes <- queryAnnotationDb(txdb, sql)
+    .format_genes(genes, set.col.class=set.col.class)
 }
 
 
@@ -561,22 +612,36 @@ setReplaceMethod("isActiveSeq","TxDb",
 ### Comparing 2 TxDb objects.
 ###
 
-### Dump the entire db into a list of data frames 'txdump' that can be used
-### in 'do.call(makeTxDb, txdump)' to make the db again with no loss of
-### information.
+### Used in unit tests for makeTxDbFromGRanges().
+.format_txdb_dump <- function(transcripts=NULL,
+                              splicings=NULL,
+                              genes=NULL,
+                              chrominfo=NULL)
+{
+    transcripts <- .format_transcripts(transcripts, drop.tx_name=TRUE,
+                                                    set.col.class=TRUE)
+    splicings <- .format_splicings(splicings, drop.exon_name=TRUE,
+                                              drop.cds_name=TRUE,
+                                              set.col.class=TRUE)
+    genes <- .format_genes(genes, set.col.class=TRUE)
+    chrominfo <- .format_chrominfo(chrominfo, set.col.class=TRUE)
+    list(transcripts=transcripts, splicings=splicings,
+         genes=genes, chrominfo=chrominfo)
+}
+
+### Dump the entire db into a list of data frames, say 'txdb_dump', that can
+### then be used to recreate the original db with 'do.call(makeTxDb, txdb_dump)'
+### with no loss of information (except possibly for some of the metadata).
 ### Note that the transcripts are dumped in the same order in all the
 ### data frames.
 setMethod("as.list", "TxDb",
     function(x, ...)
     {
-        transcripts <- load_transcripts(x, drop.tx_name=TRUE,
-                                           set.col.class=TRUE)
-        splicings <- load_splicings(x, drop.exon_name=TRUE, drop.cds_name=TRUE,
-                                       set.col.class=TRUE)
-        genes <- load_genes(x, set.col.class=TRUE)
-        chrominfo <- load_chrominfo(x, set.col.class=TRUE)
-        list(transcripts=transcripts, splicings=splicings,
-             genes=genes, chrominfo=chrominfo)
+        transcripts <- load_transcripts(x)
+        splicings <- load_splicings(x)
+        genes <- load_genes(x)
+        chrominfo <- load_chrominfo(x)
+        .format_txdb_dump(transcripts, splicings, genes, chrominfo)
     }
 )
 
@@ -584,9 +649,9 @@ compareTxDbs <- function(txdb1, txdb2)
 {
     if (!is(txdb1, "TxDb") || !is(txdb2, "TxDb"))
         stop("'txdb1' and 'txdb2' must be TxDb objects")
-    txdump1 <- as.list(txdb1)
-    txdump2 <- as.list(txdb2)
-    identical(txdump1, txdump2)
+    txdb1_dump <- as.list(txdb1)
+    txdb2_dump <- as.list(txdb2)
+    identical(txdb1_dump, txdb2_dump)
 }
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
