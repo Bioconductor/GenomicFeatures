@@ -36,8 +36,8 @@
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Get the metadata columns of interest
 ###
-### Required metadata columns: type, ID, Parent
-### Optional metadata columns: Name, Dbxref
+### Required: type, ID, Parent
+### Optional: Name, Dbxref
 ###
 
 .get_type <- function(gr_mcols)
@@ -65,13 +65,8 @@
     Parent <- gr_mcols$Parent
     if (is.null(Parent))
         stop("'gr' must have a \"Parent\" metadata column")
-    if (is(Parent, "List") || is.list(Parent)) {
-        if (!is(Parent, "CompressedCharacterList"))
-            Parent <- as(Parent, "CompressedCharacterList")
-    } else {
-        if (!is.character(Parent))
-            Parent <- as.character(Parent)
-    }
+    if (!is(Parent, "CompressedCharacterList"))
+        Parent <- as(Parent, "CompressedCharacterList")
     Parent
 }
 

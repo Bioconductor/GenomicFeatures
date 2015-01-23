@@ -32,7 +32,6 @@ test_makeTxDbFromGRanges_no_splicings <- function()
         is_circular=NA
     )
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
-                                         splicings=NULL,
                                          genes=target_genes,
                                          chrominfo=target_chrominfo)
 
@@ -48,8 +47,6 @@ test_makeTxDbFromGRanges_no_splicings <- function()
     gr4 <- gr[-3L]  # remove the gene
 
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
-                                         splicings=NULL,
-                                         genes=NULL,
                                          chrominfo=target_chrominfo)
 
     current_txdb <- makeTxDbFromGRanges(gr4)
@@ -62,11 +59,15 @@ test_makeTxDbFromGRanges_no_splicings <- function()
     target_transcripts2$tx_id <- 1:2
 
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts2,
-                                         splicings=NULL,
-                                         genes=NULL,
                                          chrominfo=target_chrominfo)
 
     current_txdb <- makeTxDbFromGRanges(gr2)
+    checkIdentical(target_txdb_dump, as.list(current_txdb))
+
+    ## 1 gene with no children
+    gr3 <- gr[c(-1L, -4L)]
+
+    current_txdb <- makeTxDbFromGRanges(gr3)
     checkIdentical(target_txdb_dump, as.list(current_txdb))
 
     ## 0 transcript
@@ -75,10 +76,80 @@ test_makeTxDbFromGRanges_no_splicings <- function()
     target_txdb_dump <- format_txdb_dump(chrominfo=target_chrominfo)
 
     current_txdb <- makeTxDbFromGRanges(gr0)
+    checkIdentical(target_txdb_dump, as.list(current_txdb))   
+}
+
+test_makeTxDbFromGRanges_with_dup_tx_ids <- function()
+{
+}
+
+test_makeTxDbFromGRanges_with_exons <- function()
+{
+    ## 2 exons for tx1a, 1 exon for tx1b, 0 exon for tx2, 3 exons for tx3
+    tx_ID       <- c( "tx1a", "tx1b", "tx2", "tx3")
+    tx_start    <- c(    101,    145,   201,     5)
+    tx_end      <- c(    160,    160,   250,    35)
+    exon_Parent <- rep.int(tx_ID, c(2L, 1L, 0L, 3L))
+    exon_start  <- c(101, 145, 145,  5, 18, 31)
+    exon_end    <- c(134, 160, 160, 12, 28, 35)
+
+    tx_gr <- GRanges("chr1", IRanges(tx_start, tx_end), "+",
+                     type="mRNA", ID=tx_ID, Parent=NA)
+    exon_gr <- GRanges("chr1", IRanges(exon_start, exon_end), "+",
+                       type="exon", ID=NA, Parent=exon_Parent)
+    gr <- c(tx_gr, exon_gr)
+
+    tx_oo <- c(4L, 1:3)
+    target_transcripts <- data.frame(
+        tx_id=1:4,
+        tx_name=tx_ID[tx_oo],
+        tx_chrom="chr1",
+        tx_strand="+",
+        tx_start=tx_start[tx_oo],
+        tx_end=tx_end[tx_oo]
+    )
+    exon_oo <- c(4:6, 1:3)
+    target_splicings <- data.frame(
+        tx_id=rep.int(1:3, 3:1),
+        exon_rank=c(1:3, 1:2, 1),
+        exon_id=c(1:5, 5),
+        exon_chrom="chr1",
+        exon_strand="+",
+        exon_start=exon_start[exon_oo],
+        exon_end=exon_end[exon_oo]
+    )
+    target_chrominfo <- data.frame(
+        chrom="chr1",
+        length=NA,
+        is_circular=NA
+    )
+    target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
+                                         splicings=target_splicings,
+                                         chrominfo=target_chrominfo)
+
+    current_txdb <- makeTxDbFromGRanges(gr)
+    checkIdentical(target_txdb_dump, as.list(current_txdb))
+
+    ## naming exons thru ID
+    exon_ID <- paste0("ex", seq_along(exon_gr))
+    mcols(exon_gr)$ID <- exon_ID
+    gr <- c(tx_gr, exon_gr)
+
+    target_splicings$exon_id <- 1:6
+    target_splicings$exon_name <- exon_ID[exon_oo]
+    target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
+                                         splicings=target_splicings,
+                                         chrominfo=target_chrominfo)
+
+    current_txdb <- makeTxDbFromGRanges(gr)
     checkIdentical(target_txdb_dump, as.list(current_txdb))
 }
 
-test_makeTxDbFromGRanges_dup_tx_ids <- function()
+test_makeTxDbFromGRanges_with_exons_and_cds <- function()
+{
+}
+
+test_makeTxDbFromGRanges_cds_with_gene_parents <- function()
 {
 }
 

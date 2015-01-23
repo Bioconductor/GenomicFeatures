@@ -172,6 +172,10 @@ DB_SCHEMA_VERSION <- "1.0"
     if (is.null(chrominfo)) {
         chrominfo <- makeZeroRowDataFrame(COL2CLASS)
     } else {
+        if (!is.data.frame(chrominfo))
+            stop("'chrominfo' must be a data frame")
+        if (!identical(names(chrominfo), names(COL2CLASS)))
+            chrominfo <- chrominfo[names(COL2CLASS)]
         if (set.col.class)
             chrominfo <- setDataFrameColClass(chrominfo, COL2CLASS)
     }
@@ -200,13 +204,16 @@ load_chrominfo <- function(txdb, set.col.class=FALSE)
     if (is.null(transcripts)) {
         transcripts <- makeZeroRowDataFrame(COL2CLASS)
     } else {
-        if (set.col.class) {
-            if (is.null(transcripts$tx_name))
-                COL2CLASS$tx_name <- NULL
+        if (!is.data.frame(transcripts))
+            stop("'transcripts' must be a data frame")
+        if (!hasCol(transcripts, "tx_name"))
+            COL2CLASS <- COL2CLASS[names(COL2CLASS) != "tx_name"]
+        if (!identical(names(transcripts), names(COL2CLASS)))
+            transcripts <- transcripts[names(COL2CLASS)]
+        if (set.col.class)
             transcripts <- setDataFrameColClass(transcripts, COL2CLASS)
-        }
     }
-    if (drop.tx_name && !is.null(transcripts$tx_name) &&
+    if (drop.tx_name && hasCol(transcripts, "tx_name") &&
                         all(is.na(transcripts$tx_name)))
         transcripts$tx_name <- NULL
     transcripts
@@ -245,18 +252,27 @@ load_transcripts <- function(txdb, drop.tx_name=FALSE,
     if (is.null(splicings)) {
         splicings <- makeZeroRowDataFrame(COL2CLASS)
     } else {
-        if (set.col.class) {
-            if (is.null(splicings$exon_name))
-                COL2CLASS$exon_name <- NULL
-            if (is.null(splicings$cds_name))
-                COL2CLASS$cds_name <- NULL
+        if (!is.data.frame(splicings))
+            stop("'splicings' must be a data frame")
+        if (!hasCol(splicings, "cds_id"))
+            splicings$cds_id <- NA
+        if (!hasCol(splicings, "cds_start"))
+            splicings$cds_start <- NA
+        if (!hasCol(splicings, "cds_end"))
+            splicings$cds_end <- NA
+        if (!hasCol(splicings, "exon_name"))
+            COL2CLASS <- COL2CLASS[names(COL2CLASS) != "exon_name"]
+        if (!hasCol(splicings, "cds_name"))
+            COL2CLASS <- COL2CLASS[names(COL2CLASS) != "cds_name"]
+        if (!identical(names(splicings), names(COL2CLASS)))
+            splicings <- splicings[names(COL2CLASS)]
+        if (set.col.class)
             splicings <- setDataFrameColClass(splicings, COL2CLASS)
-        }
     }
-    if (drop.exon_name && !is.null(splicings$exon_name) &&
+    if (drop.exon_name && hasCol(splicings, "exon_name") &&
                           all(is.na(splicings$exon_name)))
         splicings$exon_name <- NULL
-    if (drop.cds_name && !is.null(splicings$cds_name) &&
+    if (drop.cds_name && hasCol(splicings, "cds_name") &&
                          all(is.na(splicings$cds_name)))
         splicings$cds_name <- NULL
     splicings
@@ -292,6 +308,10 @@ load_splicings <- function(txdb, drop.exon_name=FALSE,
     if (is.null(genes)) {
         genes <- makeZeroRowDataFrame(COL2CLASS)
     } else {
+        if (!is.data.frame(genes))
+            stop("'genes' must be a data frame")
+        if (!identical(names(genes), names(COL2CLASS)))
+            genes <- genes[names(COL2CLASS)]
         if (set.col.class)
             genes <- setDataFrameColClass(genes, COL2CLASS)
     }
