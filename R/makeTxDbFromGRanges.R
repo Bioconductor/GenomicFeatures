@@ -4,6 +4,107 @@
 ###
 
 
+### TODO: Move this to IRanges and make it the S4 "rank" method for
+### CompressedList objects. Note that the same trick can be used to implement
+### a fast "rank" method for list and SimpleList objects. So it would be
+### great to implement a .rank.List() in S4Vectors that does the same as
+### below but without using IRanges idioms like PartitioningByEnd() and
+### togroup().
+.rank.CompressedList <- function(x, na.last=TRUE,
+                                 ties.method=c("average", "first",
+                                               "random", "max", "min"))
+{
+    ties.method <- match.arg(ties.method)
+    if (!identical(ties.method, "first"))
+        stop(wmsg("\"rank\" method for CompressedList objects ",
+                  "only supports 'ties.method=\"first\"' at the moment"))
+    x_partitioning <- PartitioningByEnd(x)
+    unlisted_x <- unlist(x, use.names=FALSE)
+    oo <- S4Vectors:::orderIntegerPairs(togroup(x_partitioning), unlisted_x)
+    unlisted_ans <- integer(length(oo))
+    unlisted_ans[oo] <- seq_along(oo)
+    ans <- relist(unlisted_ans, x_partitioning)
+    x_len <- length(x)
+    if (x_len != 0L) {
+        offsets <- c(0L, end(x_partitioning)[-x_len])
+        ans <- ans - offsets
+    }
+    ans
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Get the metadata columns of interest
+###
+### Required metadata columns: type, ID, Parent
+### Optional metadata columns: Name, Dbxref
+###
+
+.get_type <- function(gr_mcols)
+{
+    type <- gr_mcols$type
+    if (is.null(type))
+        stop("'gr' must have a \"type\" metadata column")
+    if (!is.factor(type))
+        type <- as.factor(type)
+    type
+}
+
+.get_ID <- function(gr_mcols)
+{
+    ID <- gr_mcols$ID
+    if (is.null(ID))
+        stop("'gr' must have a \"ID\" metadata column")
+    if (!is.character(ID))
+        ID <- as.character(ID)
+    ID
+}
+
+.get_Parent <- function(gr_mcols)
+{
+    Parent <- gr_mcols$Parent
+    if (is.null(Parent))
+        stop("'gr' must have a \"Parent\" metadata column")
+    if (is(Parent, "List") || is.list(Parent)) {
+        if (!is(Parent, "CompressedCharacterList"))
+            Parent <- as(Parent, "CompressedCharacterList")
+    } else {
+        if (!is.character(Parent))
+            Parent <- as.character(Parent)
+    }
+    Parent
+}
+
+.get_Name <- function(gr_mcols, ID)
+{
+    Name <- gr_mcols$Name
+    if (is.null(Name))
+        return(ID)
+    if (!is.character(Name))
+        Name <- as.character(Name)
+    Name
+}
+
+.get_Dbxref <- function(gr_mcols)
+{
+    Dbxref <- gr_mcols$Dbxref
+    if (is.null(Dbxref))
+        return(NULL)
+    if (is(Dbxref, "List") || is.list(Dbxref)) {
+        if (!is(Dbxref, "CompressedCharacterList"))
+            Dbxref <- as(Dbxref, "CompressedCharacterList")
+    } else {
+        if (!is.character(Dbxref))
+            Dbxref <- as.character(Dbxref)
+    }
+    Dbxref
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Get the transcript, exon, cds, and gene indices
+###
+
 .GENE_TYPES <- "gene"
 .TX_TYPES <- c("mRNA", "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
 .EXON_TYPES <- "exon"
@@ -44,34 +145,6 @@
     sort(c(which(type %in% .TX_TYPES), gene_as_tx_IDX))
 }
 
-### TODO: Move this to IRanges and make it the S4 "rank" method for
-### CompressedList objects. Note that the same trick can be used to implement
-### a fast "rank" method for list and SimpleList objects. So it would be
-### great to implement a .rank.List() in S4Vectors that does the same as
-### below but without using IRanges idioms like PartitioningByEnd() and
-### togroup().
-.rank.CompressedList <- function(x, na.last=TRUE,
-                                 ties.method=c("average", "first",
-                                               "random", "max", "min"))
-{
-    ties.method <- match.arg(ties.method)
-    if (!identical(ties.method, "first"))
-        stop(wmsg("\"rank\" method for CompressedList objects ",
-                  "only supports 'ties.method=\"first\"' at the moment"))
-    x_partitioning <- PartitioningByEnd(x)
-    unlisted_x <- unlist(x, use.names=FALSE)
-    oo <- S4Vectors:::orderIntegerPairs(togroup(x_partitioning), unlisted_x)
-    unlisted_ans <- integer(length(oo))
-    unlisted_ans[oo] <- seq_along(oo)
-    ans <- relist(unlisted_ans, x_partitioning)
-    x_len <- length(x)
-    if (x_len != 0L) {
-        offsets <- c(0L, end(x_partitioning)[-x_len])
-        ans <- ans - offsets
-    }
-    ans
-}
-
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extract the 'transcripts' data frame
@@ -92,6 +165,7 @@
         stringsAsFactors=FALSE
     )
 }
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extract the 'splicings' data frame
@@ -256,14 +330,12 @@
 .extract_genes_from_GRanges <- function(gene_IDX, tx_IDX, ID, Name,
                                         Parent, Dbxref)
 {
-    geneID2Name <- Name[gene_IDX]
-    names(geneID2Name) <- ID[gene_IDX]
-
+    tx_id <- ID[tx_IDX]
     tx2genes <- Parent[tx_IDX]
 
     ## Genes that we consider transcripts are therefore their own parents.
     idx0 <- which(tx_IDX %in% gene_IDX)
-    tx2genes[idx0] <- ID[tx_IDX][idx0]
+    tx2genes[idx0] <- tx_id[idx0]
 
     ## Transcripts with no parents are sometimes linked to a gene via the
     ## Dbxref tag.
@@ -282,11 +354,14 @@
                                  as(hits, "PartitioningByEnd"))
     }
 
-    tx_id <- rep.int(factor(ID[tx_IDX]), elementLengths(tx2genes))
+    tx_id <- rep.int(factor(tx_id), elementLengths(tx2genes))
+    geneID2Name <- Name[gene_IDX]
+    names(geneID2Name) <- ID[gene_IDX]
     gene_id <- unname(geneID2Name[unlist(tx2genes, use.names=FALSE)])
+    keep_idx <- which(!is.na(gene_id))
     data.frame(
-        tx_id=tx_id,
-        gene_id=gene_id,
+        tx_id=tx_id[keep_idx],
+        gene_id=gene_id[keep_idx],
         stringsAsFactors=FALSE
     )
 }
@@ -313,9 +388,11 @@
 ###
 
 ### Tags we care about:
-### o If GRanges obtained from GFF3: type, ID, Name, Parent, Dbxref
-### o If GRanges obtained from GTF:
-###     type, gene_id, transcript_id, exon_number, gene_name, transcript_name
+###   o If GRanges obtained from GFF3:
+###       required: type, ID, Parent
+###       optional: Name, Dbxref
+###   o if GRanges obtained from GTF:
+###       type, gene_id, transcript_id, exon_number, gene_name, transcript_name
 makeTxDbFromGRanges <- function(gr, metadata=NULL)
 {
     if (!is(gr, "GenomicRanges"))
@@ -335,14 +412,15 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
         metadata <- rbind(metadata, df1)
     }
     gr_mcols <- mcols(gr)
-    type <- gr_mcols[ , "type"]
-    ID <- gr_mcols[ , "ID"]
-    Name <- gr_mcols$Name  # optional tag
-    if (is.null(Name))
-        Name <- ID
-    Parent <- gr_mcols[ , "Parent"]
-    Dbxref <- gr_mcols$Dbxref  # optional tag
 
+    ## Get the metadata columns of interest.
+    type <- .get_type(gr_mcols)
+    ID <- .get_ID(gr_mcols)
+    Parent <- .get_Parent(gr_mcols)
+    Name <- .get_Name(gr_mcols, ID)
+    Dbxref <- .get_Dbxref(gr_mcols)
+
+    ## Get the transcript, exon, cds, and gene indices.
     gene_IDX <- .get_gene_IDX(type)
     cds_IDX <- .get_cds_IDX(type)
     cds_as_exon_IDX <- .get_cds_as_exon_IDX(cds_IDX, Parent, gene_IDX, ID)
@@ -358,7 +436,7 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     chrominfo <- .extract_chrominfo_from_GRanges(gr)
 
     ## Turn 'tx_id' into an integer vector.
-    ## TODO: makeTxDb() should take care of this.
+    ## TODO: Maybe makeTxDb() could take care of this.
     splicings_tx_id <- match(splicings$tx_id, transcripts$tx_id)
     if (any(is.na(splicings_tx_id)))
         stop(wmsg("some exons are linked to transcripts ",
@@ -414,6 +492,13 @@ file5 <- file.path(GFF3_files, "NC_011025.gff")
 gr5 <- import(file5, format="gff3", feature.type=feature.type)
 txdb5 <- makeTxDbFromGRanges(gr5)
 txdb5
+
+genome <- "GCA_000364345.1_Macaca_fascicularis_5.0"
+filename <- paste0(genome, "_genomic.gff.gz")
+url <- paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/", genome, "/", filename)
+file6 <- file.path(tempdir(), file6)
+download.file(url, file6)
+gr6 <- import(file6, format="gff3", feature.type=feature.type)
 
 ## Compared with makeTxDbFromGFF():
 ##
