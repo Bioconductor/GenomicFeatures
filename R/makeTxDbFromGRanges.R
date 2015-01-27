@@ -115,24 +115,31 @@
     which(type %in% .CDS_TYPES)
 }
 
-### Returns the index of CDS that are direct children of genes (this happens
-### with some GFF files e.g. inst/extdata/GFF3_files/NC_011025.gff). These CDS
-### will also be considered exons (i.e. added to the set of exons).
-.get_cds_as_exon_IDX <- function(cds_IDX, Parent, gene_IDX, ID)
+### Returns the index of CDS whose Parent is a gene (this happens with some
+### GFF files e.g. inst/extdata/GFF3_files/NC_011025.gff). These CDS will
+### also be considered exons (i.e. added to the set of exons).
+.get_cds_with_gene_parent_IDX <- function(cds_IDX, Parent, gene_IDX, ID)
 {
     cds_IDX[as.logical(unique(Parent[cds_IDX] %in% ID[gene_IDX]))]
 }
 
-.get_exon_IDX <- function(type, cds_as_exon_IDX)
+.get_exon_IDX <- function(type, cds_with_gene_parent_IDX)
 {
-    sort(c(which(type %in% .EXON_TYPES), cds_as_exon_IDX))
+    sort(c(which(type %in% .EXON_TYPES), cds_with_gene_parent_IDX))
 }
 
-### Returns the index of genes that have CDS as direct children. These genes
-### will also be considered transcripts (i.e. added to the set of transcripts).
-.get_gene_as_tx_IDX <- function(gene_IDX, ID, cds_as_exon_IDX, Parent)
+### Returns the index of exons whose Parent is a gene.
+.get_exon_with_gene_parent_IDX <- function(exon_IDX, Parent, gene_IDX, ID)
 {
-    gene_IDX[ID[gene_IDX] %in% unlist(Parent[cds_as_exon_IDX], use.names=FALSE)]
+    exon_IDX[as.logical(unique(Parent[exon_IDX] %in% ID[gene_IDX]))]
+}
+
+### Returns the index of genes that have exons as direct children. These genes
+### will also be considered transcripts (i.e. added to the set of transcripts).
+.get_gene_as_tx_IDX <- function(gene_IDX, ID, exon_with_gene_parent_IDX, Parent)
+{
+    gene_IDX[ID[gene_IDX] %in% unlist(Parent[exon_with_gene_parent_IDX],
+                                      use.names=FALSE)]
 }
 
 .get_tx_IDX <- function(type, gene_as_tx_IDX)
@@ -476,9 +483,13 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     ## Get the transcript, exon, cds, and gene indices.
     gene_IDX <- .get_gene_IDX(type)
     cds_IDX <- .get_cds_IDX(type)
-    cds_as_exon_IDX <- .get_cds_as_exon_IDX(cds_IDX, Parent, gene_IDX, ID)
-    exon_IDX <- .get_exon_IDX(type, cds_as_exon_IDX)
-    gene_as_tx_IDX <- .get_gene_as_tx_IDX(gene_IDX, ID, cds_as_exon_IDX, Parent)
+    cds_with_gene_parent_IDX <- .get_cds_with_gene_parent_IDX(cds_IDX,
+                                                     Parent, gene_IDX, ID)
+    exon_IDX <- .get_exon_IDX(type, cds_with_gene_parent_IDX)
+    exon_with_gene_parent_IDX <- .get_exon_with_gene_parent_IDX(exon_IDX,
+                                                     Parent, gene_IDX, ID)
+    gene_as_tx_IDX <- .get_gene_as_tx_IDX(gene_IDX, ID,
+                                          exon_with_gene_parent_IDX, Parent)
     tx_IDX <- .get_tx_IDX(type, gene_as_tx_IDX)
 
     transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr, ID, Name)
