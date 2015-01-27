@@ -147,6 +147,38 @@ test_makeTxDbFromGRanges_with_exons <- function()
 
     current_txdb <- makeTxDbFromGRanges(gr)
     checkIdentical(target_txdb_dump, as.list(current_txdb))
+
+    ## with exons not separated by introns
+    exon_end[c(1, 5)] <- c(144, 36)
+    end(exon_gr) <- exon_end
+    gr <- c(tx_gr, exon_gr)
+
+    tx_oo <- 2:3
+    target_transcripts <- data.frame(
+        tx_id=1:2,
+        tx_name=tx_ID[tx_oo],
+        tx_chrom="chr1",
+        tx_strand="+",
+        tx_start=tx_start[tx_oo],
+        tx_end=tx_end[tx_oo]
+    )
+    target_splicings <- data.frame(
+        tx_id=1,
+        exon_rank=1,
+        exon_id=1,
+        exon_name="ex3",
+        exon_chrom="chr1",
+        exon_strand="+",
+        exon_start=145,
+        exon_end=160
+    )
+
+    target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
+                                         splicings=target_splicings,
+                                         chrominfo=target_chrominfo)
+
+    current_txdb <- suppressWarnings(makeTxDbFromGRanges(gr))
+    checkIdentical(target_txdb_dump, as.list(current_txdb))
 }
 
 test_makeTxDbFromGRanges_with_exons_and_cds <- function()
