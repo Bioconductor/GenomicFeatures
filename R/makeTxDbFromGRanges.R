@@ -145,12 +145,60 @@
 ### Extract the 'transcripts' data frame
 ###
 
+.merge_transcript_parts <- function(transcripts)
+{
+    tx_id <- transcripts$tx_id
+    if (!is.character(tx_id))
+        tx_id <- as.character(tx_id)
+    transcripts_by_id <- splitAsList(transcripts, tx_id, drop=TRUE)
+
+    tx_id <- names(transcripts_by_id)
+
+    tx_name <- unique(transcripts_by_id[ , "tx_name"])
+    bad_tx <- names(which(elementLengths(tx_name) != 1L))
+    if (length(bad_tx) != 0L) {
+        in1string <- paste0(sort(bad_tx), collapse=", ")
+        stop(wmsg("The following transcripts have parts that cannot ",
+                  "be merged because of incompatible Name: ", in1string))
+    }
+    tx_name <- as.character(tx_name)
+
+    tx_chrom <- unique(transcripts_by_id[ , "tx_chrom"])
+    bad_tx <- names(which(elementLengths(tx_chrom) != 1L))
+    if (length(bad_tx) != 0L) {
+        in1string <- paste0(sort(bad_tx), collapse=", ")
+        stop(wmsg("The following transcripts have parts that cannot ",
+                  "be merged because of incompatible seqnames: ", in1string))
+    }
+    tx_chrom <- as.character(tx_chrom)
+
+    tx_strand <- unique(transcripts_by_id[ , "tx_strand"])
+    bad_tx <- names(which(elementLengths(tx_strand) != 1L))
+    if (length(bad_tx) != 0L) {
+        in1string <- paste0(sort(bad_tx), collapse=", ")
+        stop(wmsg("The following transcripts have parts that cannot ",
+                  "be merged because of incompatible strand: ", in1string))
+    }
+    tx_strand <- as.character(tx_strand)
+
+    tx_start <- min(transcripts_by_id[ , "tx_start"])
+    tx_end <- max(transcripts_by_id[ , "tx_end"])
+    
+    data.frame(
+        tx_id=tx_id,
+        tx_name=tx_name,
+        tx_chrom=tx_chrom,
+        tx_strand=tx_strand,
+        tx_start=tx_start,
+        tx_end=tx_end,
+        stringsAsFactors=FALSE
+    )
+}
+
 .extract_transcripts_from_GRanges <- function(tx_IDX, gr, ID, Name)
 {
     tx_id <- ID[tx_IDX]
-    if (anyDuplicated(tx_id))
-        stop(wmsg("transcript IDs are not unique"))
-    data.frame(
+    transcripts <- data.frame(
         tx_id=tx_id,
         tx_name=Name[tx_IDX],
         tx_chrom=seqnames(gr)[tx_IDX],
@@ -159,14 +207,22 @@
         tx_end=end(gr)[tx_IDX],
         stringsAsFactors=FALSE
     )
+    bad_tx <- unique(tx_id[duplicated(tx_id)])
+    if (length(bad_tx)) {
+        transcripts <- .merge_transcript_parts(transcripts)
+        in1string <- paste0(sort(bad_tx), collapse=", ")
+        warning(wmsg("The following transcripts have parts that were ",
+                     "merged: ", in1string))
+    }
+    transcripts
 }
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Extract the 'splicings' data frame
+### Make the 'splicings' data frame
 ###
 
-.extract_rank_from_id <- function(id, parent_id, for.cds=FALSE)
+.extract_rank_from_id <- function(id, parent_id)
 {
     id_parts <- strsplit(id, "\\.|:")
     idx <- cumsum(elementLengths(id_parts))
@@ -178,8 +234,6 @@
     tmp <- unname(splitAsList(rank, parent_id))
     if (any(any(duplicated(tmp))))
         return(NULL)
-    if (for.cds)
-        return(rank)
     if (!(all(min(tmp) == 1L) && all(max(tmp) == elementLengths(tmp))))
         return(NULL)
     rank
@@ -188,34 +242,34 @@
 .infer_rank_from_position <- function(tx_id, exon_chrom, exon_strand,
                                              exon_start, exon_end)
 {
-    chrom_per_tx <- split(Rle(exon_chrom), tx_id)
-    tx_chrom <- runValue(chrom_per_tx)
-    bad_tx1 <- unique(names(which(elementLengths(tx_chrom) > 1L)))
+    chrom_by_tx <- split(Rle(exon_chrom), tx_id)
+    tx_chrom <- runValue(chrom_by_tx)
+    bad_tx1 <- names(which(elementLengths(tx_chrom) > 1L))
 
-    strand_per_tx <- split(Rle(exon_strand), tx_id)
-    tx_strand <- runValue(strand_per_tx)
+    strand_by_tx <- split(Rle(exon_strand), tx_id)
+    tx_strand <- runValue(strand_by_tx)
     is_bad <- elementLengths(tx_strand) > 1L
-    bad_tx2 <- unique(names(which(is_bad)))
+    bad_tx2 <- names(which(is_bad))
     tx_strand[is_bad] <- "*"
     minus_idx <- which(as.character(tx_strand) == "-")
 
-    ex_per_tx <- split(IRanges(exon_start, exon_end), tx_id)
-    bad_tx3 <- unique(names(which(elementLengths(reduce(ex_per_tx)) !=
-                                  elementLengths(ex_per_tx))))
+    ex_by_tx <- split(IRanges(exon_start, exon_end), tx_id)
+    bad_tx3 <- names(which(elementLengths(reduce(ex_by_tx)) !=
+                           elementLengths(ex_by_tx)))
 
     bad_tx <- unique(c(bad_tx1, bad_tx2, bad_tx3))
     if (length(bad_tx)) {
-        bad_tx <- paste0(bad_tx, collapse=", ")
+        in1string <- paste0(sort(bad_tx), collapse=", ")
         warning(wmsg(
             "The following transcripts were dropped because their exon ",
             "ranks could not be inferred (either because the exons are ",
             "not on the same chromosome/strand or because they are not ",
-            "separated by introns): ", sort(bad_tx)))
+            "separated by introns): ", in1string))
     }
 
-    start_per_tx <- start(ex_per_tx)
-    start_per_tx[minus_idx] <- start_per_tx[minus_idx] * (-1L)
-    rank <- .rank.CompressedList(start_per_tx, ties.method="first")
+    start_by_tx <- start(ex_by_tx)
+    start_by_tx[minus_idx] <- start_by_tx[minus_idx] * (-1L)
+    rank <- .rank.CompressedList(start_by_tx, ties.method="first")
     ans <- unsplit(rank, tx_id)
     ans[tx_id %in% bad_tx] <- NA_integer_
     ans
@@ -251,7 +305,7 @@
     if (for.cds) {
         colnames(ans) <- sub("^exon", "cds", colnames(ans))
     } else {
-        exon_rank <- .extract_rank_from_id(exon_id, tx_id, for.cds=for.cds)
+        exon_rank <- .extract_rank_from_id(exon_id, tx_id)
         if (is.null(exon_rank))
             exon_rank <- .infer_rank_from_position(tx_id,
                                                    exon_chrom, exon_strand,
@@ -276,35 +330,31 @@
 
     bad_tx <- unique(cds$tx_id[q_hits[duplicated(q_hits)]])
     if (length(bad_tx)) {
-        bad_tx <- paste0(bad_tx, collapse=", ")
+        in1string <- paste0(sort(bad_tx), collapse=", ")
         stop(wmsg("The following transcripts have CDS that are mapped ",
-                  "to more than one exon: ", sort(bad_tx)))
+                  "to more than one exon: ", in1string))
     }
 
     cds2exon <- selectHits(hits, select="arbitrary")
     bad_tx <- unique(cds$tx_id[is.na(cds2exon)])
     if (length(bad_tx)) {
-        bad_tx <- paste0(bad_tx, collapse=", ")
+        in1string <- paste0(sort(bad_tx), collapse=", ")
         stop(wmsg("The following transcripts have CDS that cannot ",
-                  "be mapped to an exon: ", sort(bad_tx)))
+                  "be mapped to an exon: ", in1string))
     }
 
     bad_tx <- unique(exons$tx_id[s_hits[duplicated(s_hits)]])
     if (length(bad_tx)) {
-        bad_tx <- paste0(bad_tx, collapse=", ")
+        in1string <- paste0(sort(bad_tx), collapse=", ")
         warning(wmsg("The following transcripts have exons containing ",
                      "more than one CDS (only the first CDS was kept ",
-                     "for each exon): ", sort(bad_tx)))
+                     "for each exon): ", in1string))
     }
     selectHits(t(hits), select="first")
 }
 
-.extract_splicings_from_GRanges <- function(exon_IDX, cds_IDX,
-                                            gr, ID, Name, Parent)
+.make_splicings <- function(exons, cds)
 {
-    exons <- .extract_exons(exon_IDX, gr, ID, Name, Parent)
-    cds <- .extract_exons(cds_IDX, gr, ID, Name, Parent, for.cds=TRUE)
-
     cds_tx_id <- factor(cds$tx_id, levels=levels(exons$tx_id))
     if (any(is.na(cds_tx_id)))
         stop(wmsg("some CDS cannot be mapped to an exon"))
@@ -382,20 +432,8 @@
 ### makeTxDbFromGRanges()
 ###
 
-### Tags we care about:
-###   o If GRanges obtained from GFF3:
-###       required: type, ID, Parent
-###       optional: Name, Dbxref
-###   o if GRanges obtained from GTF:
-###       type, gene_id, transcript_id, exon_number, gene_name, transcript_name
-makeTxDbFromGRanges <- function(gr, metadata=NULL)
+.normarg_metadata <- function(metadata, Genome)
 {
-    if (!is(gr, "GenomicRanges"))
-        stop("'gr' must be a GRanges object")
-    Genome <- unique(genome(gr))
-    if (length(Genome) != 1L)
-        stop("all the sequences in 'seqinfo(gr)' must belong ",
-             "to the same genome")
     if (!is.null(metadata)) {
         if (!is.data.frame(metadata))
             stop("'metadata' must be NULL or a data.frame")
@@ -406,6 +444,26 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
         df1 <- data.frame(name="Genome", value=Genome, stringsAsFactors=FALSE)
         metadata <- rbind(metadata, df1)
     }
+    metadata
+}
+
+### Tags we care about:
+###   o if GRanges obtained from GFF3:
+###       required: type, ID, Parent
+###       optional: Name, Dbxref
+###   o if GRanges obtained from GTF:
+###       type, gene_id, transcript_id, exon_number, gene_name, transcript_name
+makeTxDbFromGRanges <- function(gr, metadata=NULL)
+{
+    if (!is(gr, "GenomicRanges"))
+        stop("'gr' must be a GRanges object")
+
+    Genome <- unique(genome(gr))
+    if (length(Genome) != 1L)
+        stop("all the sequences in 'seqinfo(gr)' must belong ",
+             "to the same genome")
+    metadata <- .normarg_metadata(metadata, Genome)
+
     gr_mcols <- mcols(gr)
 
     ## Get the metadata columns of interest.
@@ -424,8 +482,18 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     tx_IDX <- .get_tx_IDX(type, gene_as_tx_IDX)
 
     transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr, ID, Name)
-    splicings <- .extract_splicings_from_GRanges(exon_IDX, cds_IDX,
-                                                 gr, ID, Name, Parent)
+    exons <- .extract_exons(exon_IDX, gr, ID, Name, Parent)
+    cds <- .extract_exons(cds_IDX, gr, ID, Name, Parent, for.cds=TRUE)
+
+    ## Drop transcripts for which the exon ranks could not be inferred.
+    drop_tx <- unique(as.character(exons$tx_id[is.na(exons$exon_rank)]))
+    if (length(drop_tx) != 0L) {
+        transcripts <- transcripts[!(transcripts$tx_id %in% drop_tx), ]
+        exons <- exons[!(exons$tx_id %in% drop_tx), ]
+        cds <- cds[!(cds$tx_id %in% drop_tx), ]
+    }
+
+    splicings <- .make_splicings(exons, cds)
     genes <- .extract_genes_from_GRanges(gene_IDX, tx_IDX,
                                          ID, Name, Parent, Dbxref)
     chrominfo <- .extract_chrominfo_from_GRanges(gr)
