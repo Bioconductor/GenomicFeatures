@@ -65,8 +65,14 @@
     Parent <- gr_mcols$Parent
     if (is.null(Parent))
         stop("'gr' must have a \"Parent\" metadata column")
-    if (!is(Parent, "CompressedCharacterList"))
+    if (!is(Parent, "CompressedCharacterList")) {
+        Parent0 <- Parent
         Parent <- as(Parent, "CompressedCharacterList")
+        if (is.atomic(Parent0)) {
+            na_idx <- which(is.na(Parent0))
+            Parent[na_idx] <- CharacterList(character(0))
+        }
+    }
     Parent
 }
 
@@ -100,7 +106,7 @@
 ### Get the transcript, exon, cds, and gene indices
 ###
 
-.GENE_TYPES <- "gene"
+.GENE_TYPES <- c("gene", "pseudogene")
 .TX_TYPES <- c("mRNA", "transcript", "primary_transcript",
                "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
 .EXON_TYPES <- "exon"
@@ -146,6 +152,46 @@
 .get_tx_IDX <- function(type, gene_as_tx_IDX)
 {
     sort(c(which(type %in% .TX_TYPES), gene_as_tx_IDX))
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Management of rejected transcripts
+###
+
+.rejected_tx_envir <- new.env(hash=TRUE, parent=emptyenv())
+
+.ls_rejected_tx_envir <- function()
+    ls(envir=.rejected_tx_envir, all.names=TRUE, sorted=FALSE)
+
+.flush_rejected_tx_envir <- function()
+{
+    objnames <- .ls_rejected_tx_envir()
+    rm(list=objnames, envir=.rejected_tx_envir)
+}
+
+.reject_transcripts <- function(tx_ids, because)
+{
+    tx_ids <- sort(as.character(tx_ids))
+    in1string <- paste0(tx_ids, collapse=", ")
+    warning(wmsg("The following transcripts were rejected because ",
+                 because, ": ", in1string))
+
+    objnames <- .ls_rejected_tx_envir()
+    nobj <- length(objnames)
+    if (nobj == 0L) {
+        new_objname <- 1L
+    } else {
+        new_objname <- as.integer(objnames[nobj]) + 1L
+    }
+    new_objname <- sprintf("%08d", new_objname)
+    assign(new_objname, tx_ids, envir=.rejected_tx_envir)
+}
+
+.get_rejected_transcripts <- function()
+{
+    objnames <- .ls_rejected_tx_envir()
+    unique(unlist(mget(objnames, envir=.rejected_tx_envir), use.names=FALSE))
 }
 
 
@@ -215,10 +261,10 @@
         tx_end=end(gr)[tx_IDX],
         stringsAsFactors=FALSE
     )
-    bad_tx <- unique(tx_id[duplicated(tx_id)])
-    if (length(bad_tx)) {
+    merged_tx <- unique(tx_id[duplicated(tx_id)])
+    if (length(merged_tx) != 0L) {
         transcripts <- .merge_transcript_parts(transcripts)
-        in1string <- paste0(sort(bad_tx), collapse=", ")
+        in1string <- paste0(sort(merged_tx), collapse=", ")
         warning(wmsg("The following transcripts have multiple parts that ",
                      "were merged: ", in1string))
     }
@@ -265,13 +311,14 @@
     bad_tx3 <- names(which(elementLengths(reduce(ex_by_tx)) !=
                            elementLengths(ex_by_tx)))
 
-    bad_tx <- unique(c(bad_tx1, bad_tx2, bad_tx3))
-
     start_by_tx <- start(ex_by_tx)
     start_by_tx[minus_idx] <- start_by_tx[minus_idx] * (-1L)
     rank <- .rank.CompressedList(start_by_tx, ties.method="first")
     ans <- unsplit(rank, tx_id)
+
+    bad_tx <- unique(c(bad_tx1, bad_tx2, bad_tx3))
     ans[tx_id %in% bad_tx] <- NA_integer_
+
     ans
 }
 
@@ -294,7 +341,22 @@
     exon_start <- rep.int(start(gr)[exon_IDX], nparent_per_ex)
     exon_end <- rep.int(end(gr)[exon_IDX], nparent_per_ex)
 
-    ans <- data.frame(
+    ## Drop orphan exons (or cds).
+    is_orphan <- !(tx_id %in% ID)
+    norphan <- sum(is_orphan)
+    if (norphan != 0L) {
+        keep_idx <- which(!is_orphan)
+        tx_id <- tx_id[keep_idx]
+        exon_id <- exon_id[keep_idx]
+        exon_name <- exon_name[keep_idx]
+        exon_chrom <- exon_chrom[keep_idx]
+        exon_strand <- exon_strand[keep_idx]
+        exon_start <- exon_start[keep_idx]
+        exon_end <- exon_end[keep_idx]
+        warning(wmsg(norphan, " orphan ", feature.type, "s were dropped"))
+    }
+
+    exons <- data.frame(
         tx_id=tx_id,
         exon_name=exon_name,
         exon_chrom=exon_chrom,
@@ -303,17 +365,18 @@
         exon_end=exon_end,
         stringsAsFactors=FALSE
     )
+
     if (for.cds) {
-        colnames(ans) <- sub("^exon", "cds", colnames(ans))
+        colnames(exons) <- sub("^exon", "cds", colnames(exons))
     } else {
         exon_rank <- .extract_rank_from_id(exon_id, tx_id)
         if (is.null(exon_rank))
             exon_rank <- .infer_rank_from_position(tx_id,
                                                    exon_chrom, exon_strand,
                                                    exon_start, exon_end)
-        ans$exon_rank <- exon_rank
+        exons$exon_rank <- exon_rank
     }
-    ans
+    exons
 }
 
 
@@ -335,22 +398,18 @@
     s_hits <- subjectHits(hits)
 
     bad_tx <- unique(cds$tx_id[q_hits[duplicated(q_hits)]])
-    if (length(bad_tx)) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have CDS that are mapped ",
-                  "to more than one exon: ", in1string))
-    }
+    if (length(bad_tx) != 0L)
+        .reject_transcripts(bad_tx,
+            "they have CDS that are mapped to more than one exon")
 
     cds2exon <- selectHits(hits, select="arbitrary")
     bad_tx <- unique(cds$tx_id[is.na(cds2exon)])
-    if (length(bad_tx)) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have CDS that cannot ",
-                  "be mapped to an exon: ", in1string))
-    }
+    if (length(bad_tx) != 0L)
+        .reject_transcripts(bad_tx,
+            "they have CDS that cannot be mapped to an exon")
 
     bad_tx <- unique(exons$tx_id[s_hits[duplicated(s_hits)]])
-    if (length(bad_tx)) {
+    if (length(bad_tx) != 0L) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
         warning(wmsg("The following transcripts have exons that contain ",
                      "more than one CDS (only the first CDS was kept ",
@@ -513,7 +572,14 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
             "separated by introns): ", in1string))
     }
 
+    .flush_rejected_tx_envir()
     splicings <- .make_splicings(exons, cds)
+    drop_tx <- .get_rejected_transcripts()
+    if (length(drop_tx) != 0L) {
+        transcripts <- transcripts[!(transcripts$tx_id %in% drop_tx), ]
+        splicings <- splicings[!(splicings$tx_id %in% drop_tx), ]
+        genes <- genes[!(genes$tx_id %in% drop_tx), ]
+    }
 
     ## Turn the "tx_id" column in 'splicings', 'genes', and 'transcripts' into
     ## an integer vector. TODO: Maybe makeTxDb() could take care of this.
