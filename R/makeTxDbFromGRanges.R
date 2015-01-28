@@ -101,7 +101,8 @@
 ###
 
 .GENE_TYPES <- "gene"
-.TX_TYPES <- c("mRNA", "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
+.TX_TYPES <- c("mRNA", "transcript", "primary_transcript",
+               "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
 .EXON_TYPES <- "exon"
 .CDS_TYPES <- "CDS"
 
@@ -165,7 +166,7 @@
     bad_tx <- names(which(elementLengths(tx_name) != 1L))
     if (length(bad_tx) != 0L) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have parts that cannot ",
+        stop(wmsg("The following transcripts have multiple parts that cannot ",
                   "be merged because of incompatible Name: ", in1string))
     }
     tx_name <- as.character(tx_name)
@@ -174,7 +175,7 @@
     bad_tx <- names(which(elementLengths(tx_chrom) != 1L))
     if (length(bad_tx) != 0L) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have parts that cannot ",
+        stop(wmsg("The following transcripts have multiple parts that cannot ",
                   "be merged because of incompatible seqnames: ", in1string))
     }
     tx_chrom <- as.character(tx_chrom)
@@ -183,7 +184,7 @@
     bad_tx <- names(which(elementLengths(tx_strand) != 1L))
     if (length(bad_tx) != 0L) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have parts that cannot ",
+        stop(wmsg("The following transcripts have multiple parts that cannot ",
                   "be merged because of incompatible strand: ", in1string))
     }
     tx_strand <- as.character(tx_strand)
@@ -218,15 +219,15 @@
     if (length(bad_tx)) {
         transcripts <- .merge_transcript_parts(transcripts)
         in1string <- paste0(sort(bad_tx), collapse=", ")
-        warning(wmsg("The following transcripts have parts that were ",
-                     "merged: ", in1string))
+        warning(wmsg("The following transcripts have multiple parts that ",
+                     "were merged: ", in1string))
     }
     transcripts
 }
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Make the 'splicings' data frame
+### Extract the 'exons' and 'cds' data frames
 ###
 
 .extract_rank_from_id <- function(id, parent_id)
@@ -265,14 +266,6 @@
                            elementLengths(ex_by_tx)))
 
     bad_tx <- unique(c(bad_tx1, bad_tx2, bad_tx3))
-    if (length(bad_tx)) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        warning(wmsg(
-            "The following transcripts were dropped because their exon ",
-            "ranks could not be inferred (either because the exons are ",
-            "not on the same chromosome/strand or because they are not ",
-            "separated by introns): ", in1string))
-    }
 
     start_by_tx <- start(ex_by_tx)
     start_by_tx[minus_idx] <- start_by_tx[minus_idx] * (-1L)
@@ -283,7 +276,8 @@
 }
 
 ### Can be used to extract exons or cds.
-.extract_exons <- function(exon_IDX, gr, ID, Name, Parent, for.cds=FALSE)
+.extract_exons_from_GRanges <- function(exon_IDX, gr, ID, Name, Parent,
+                                        for.cds=FALSE)
 {
     feature.type <- if (for.cds) "CDS" else "exon"
     exon_Parent <- Parent[exon_IDX]
@@ -322,6 +316,11 @@
     ans
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Make the 'splicings' data frame
+###
+
 .find_exon_cds <- function(exons, cds)
 {
     query <- GRanges(cds$cds_chrom,
@@ -353,7 +352,7 @@
     bad_tx <- unique(exons$tx_id[s_hits[duplicated(s_hits)]])
     if (length(bad_tx)) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
-        warning(wmsg("The following transcripts have exons containing ",
+        warning(wmsg("The following transcripts have exons that contain ",
                      "more than one CDS (only the first CDS was kept ",
                      "for each exon): ", in1string))
     }
@@ -493,8 +492,11 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     tx_IDX <- .get_tx_IDX(type, gene_as_tx_IDX)
 
     transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr, ID, Name)
-    exons <- .extract_exons(exon_IDX, gr, ID, Name, Parent)
-    cds <- .extract_exons(cds_IDX, gr, ID, Name, Parent, for.cds=TRUE)
+    exons <- .extract_exons_from_GRanges(exon_IDX, gr, ID, Name, Parent)
+    cds <- .extract_exons_from_GRanges(cds_IDX, gr, ID, Name, Parent,
+                                       for.cds=TRUE)
+    genes <- .extract_genes_from_GRanges(gene_IDX, tx_IDX,
+                                         ID, Name, Parent, Dbxref)
 
     ## Drop transcripts for which the exon ranks could not be inferred.
     drop_tx <- unique(as.character(exons$tx_id[is.na(exons$exon_rank)]))
@@ -502,15 +504,19 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
         transcripts <- transcripts[!(transcripts$tx_id %in% drop_tx), ]
         exons <- exons[!(exons$tx_id %in% drop_tx), ]
         cds <- cds[!(cds$tx_id %in% drop_tx), ]
+        genes <- genes[!(genes$tx_id %in% drop_tx), ]
+        in1string <- paste0(sort(drop_tx), collapse=", ")
+        warning(wmsg(
+            "The following transcripts were dropped because their exon ",
+            "ranks could not be inferred (either because the exons are ",
+            "not on the same chromosome/strand or because they are not ",
+            "separated by introns): ", in1string))
     }
 
     splicings <- .make_splicings(exons, cds)
-    genes <- .extract_genes_from_GRanges(gene_IDX, tx_IDX,
-                                         ID, Name, Parent, Dbxref)
-    chrominfo <- .extract_chrominfo_from_GRanges(gr)
 
-    ## Turn 'tx_id' into an integer vector.
-    ## TODO: Maybe makeTxDb() could take care of this.
+    ## Turn the "tx_id" column in 'splicings', 'genes', and 'transcripts' into
+    ## an integer vector. TODO: Maybe makeTxDb() could take care of this.
     splicings_tx_id <- match(splicings$tx_id, transcripts$tx_id)
     if (any(is.na(splicings_tx_id)))
         stop(wmsg("some exons are linked to transcripts ",
@@ -522,6 +528,8 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
                   "not found in the file"))
     genes$tx_id <- genes_tx_id
     transcripts$tx_id <- seq_along(transcripts$tx_id)
+
+    chrominfo <- .extract_chrominfo_from_GRanges(gr)
 
     makeTxDb(transcripts, splicings,
              genes=genes, chrominfo=chrominfo,
