@@ -1,6 +1,5 @@
 ###
 
-makeTxDbFromGRanges <- GenomicFeatures:::makeTxDbFromGRanges
 format_txdb_dump <- GenomicFeatures:::.format_txdb_dump
 
 test_makeTxDbFromGRanges_no_splicings <- function()

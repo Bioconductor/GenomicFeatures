@@ -398,15 +398,17 @@
     s_hits <- subjectHits(hits)
 
     bad_tx <- unique(cds$tx_id[q_hits[duplicated(q_hits)]])
-    if (length(bad_tx) != 0L)
-        .reject_transcripts(bad_tx,
-            "they have CDS that are mapped to more than one exon")
+    if (length(bad_tx) != 0L) {
+        because <- "they have CDS that are mapped to more than one exon"
+        .reject_transcripts(bad_tx, because)
+    }
 
     cds2exon <- selectHits(hits, select="arbitrary")
     bad_tx <- unique(cds$tx_id[is.na(cds2exon)])
-    if (length(bad_tx) != 0L)
-        .reject_transcripts(bad_tx,
-            "they have CDS that cannot be mapped to an exon")
+    if (length(bad_tx) != 0L) {
+        because <- "they have CDS that cannot be mapped to an exon"
+        .reject_transcripts(bad_tx, because)
+    }
 
     bad_tx <- unique(exons$tx_id[s_hits[duplicated(s_hits)]])
     if (length(bad_tx) != 0L) {

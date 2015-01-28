@@ -43,6 +43,7 @@ export(
   makeTxDbFromUCSC,
   getChromInfoFromBiomart,
   makeTxDbFromBiomart,
+  makeTxDbFromGRanges,
   makeTxDbFromGFF,
   transcripts, exons, cds, genes,
   disjointExons,
