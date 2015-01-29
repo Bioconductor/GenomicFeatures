@@ -42,7 +42,6 @@
 ###
 ### Expected metadata columns for GRanges in GTF format:
 ###   - type, gene_id, transcript_id, exon_id
-###     gene_name, transcript_name, exon_name
 ###
 
 .GENE_TYPES <- c("gene", "pseudogene")
@@ -125,9 +124,10 @@
 {
     Name <- gr_mcols$Name
     if (is.null(Name))
-        return(ID)
+        Name <- ID
     if (!is.character(Name))
         Name <- as.character(Name)
+    Name[Name %in% ""] <- NA_character_
     Name
 }
 
@@ -237,83 +237,6 @@
 {
     objnames <- .ls_rejected_tx_envir()
     unique(unlist(mget(objnames, envir=.rejected_tx_envir), use.names=FALSE))
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Extract the 'transcripts' data frame
-###
-
-.merge_transcript_parts <- function(transcripts)
-{
-    tx_id <- transcripts$tx_id
-    if (!is.character(tx_id))
-        tx_id <- as.character(tx_id)
-    transcripts_by_id <- splitAsList(transcripts, tx_id, drop=TRUE)
-
-    tx_id <- names(transcripts_by_id)
-
-    tx_name <- unique(transcripts_by_id[ , "tx_name"])
-    bad_tx <- names(which(elementLengths(tx_name) != 1L))
-    if (length(bad_tx) != 0L) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have multiple parts that cannot ",
-                  "be merged because of incompatible Name: ", in1string))
-    }
-    tx_name <- as.character(tx_name)
-
-    tx_chrom <- unique(transcripts_by_id[ , "tx_chrom"])
-    bad_tx <- names(which(elementLengths(tx_chrom) != 1L))
-    if (length(bad_tx) != 0L) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have multiple parts that cannot ",
-                  "be merged because of incompatible seqnames: ", in1string))
-    }
-    tx_chrom <- as.character(tx_chrom)
-
-    tx_strand <- unique(transcripts_by_id[ , "tx_strand"])
-    bad_tx <- names(which(elementLengths(tx_strand) != 1L))
-    if (length(bad_tx) != 0L) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have multiple parts that cannot ",
-                  "be merged because of incompatible strand: ", in1string))
-    }
-    tx_strand <- as.character(tx_strand)
-
-    tx_start <- min(transcripts_by_id[ , "tx_start"])
-    tx_end <- max(transcripts_by_id[ , "tx_end"])
-    
-    data.frame(
-        tx_id=tx_id,
-        tx_name=tx_name,
-        tx_chrom=tx_chrom,
-        tx_strand=tx_strand,
-        tx_start=tx_start,
-        tx_end=tx_end,
-        stringsAsFactors=FALSE
-    )
-}
-
-.extract_transcripts_from_GRanges <- function(tx_IDX, gr, ID, Name)
-{
-    tx_id <- ID[tx_IDX]
-    transcripts <- data.frame(
-        tx_id=tx_id,
-        tx_name=Name[tx_IDX],
-        tx_chrom=seqnames(gr)[tx_IDX],
-        tx_strand=strand(gr)[tx_IDX],
-        tx_start=start(gr)[tx_IDX],
-        tx_end=end(gr)[tx_IDX],
-        stringsAsFactors=FALSE
-    )
-    merged_tx <- unique(tx_id[duplicated(tx_id)])
-    if (length(merged_tx) != 0L) {
-        transcripts <- .merge_transcript_parts(transcripts)
-        in1string <- paste0(sort(merged_tx), collapse=", ")
-        warning(wmsg("The following transcripts have multiple parts that ",
-                     "were merged: ", in1string))
-    }
-    transcripts
 }
 
 
@@ -430,6 +353,136 @@
         exons$exon_rank <- exon_rank
     }
     exons
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Extract the 'transcripts' data frame
+###
+
+.merge_transcript_parts <- function(transcripts)
+{
+    tx_id <- transcripts$tx_id
+    if (!is.character(tx_id))
+        tx_id <- as.character(tx_id)
+    transcripts_by_id <- splitAsList(transcripts, tx_id, drop=TRUE)
+
+    tx_id <- names(transcripts_by_id)
+
+    tx_name <- unique(transcripts_by_id[ , "tx_name"])
+    bad_tx <- names(which(elementLengths(tx_name) != 1L))
+    if (length(bad_tx) != 0L) {
+        in1string <- paste0(sort(bad_tx), collapse=", ")
+        stop(wmsg("The following transcripts have multiple parts that cannot ",
+                  "be merged because of incompatible Name: ", in1string))
+    }
+    tx_name <- as.character(tx_name)
+
+    tx_chrom <- unique(transcripts_by_id[ , "tx_chrom"])
+    bad_tx <- names(which(elementLengths(tx_chrom) != 1L))
+    if (length(bad_tx) != 0L) {
+        in1string <- paste0(sort(bad_tx), collapse=", ")
+        stop(wmsg("The following transcripts have multiple parts that cannot ",
+                  "be merged because of incompatible seqnames: ", in1string))
+    }
+    tx_chrom <- as.character(tx_chrom)
+
+    tx_strand <- unique(transcripts_by_id[ , "tx_strand"])
+    bad_tx <- names(which(elementLengths(tx_strand) != 1L))
+    if (length(bad_tx) != 0L) {
+        in1string <- paste0(sort(bad_tx), collapse=", ")
+        stop(wmsg("The following transcripts have multiple parts that cannot ",
+                  "be merged because of incompatible strand: ", in1string))
+    }
+    tx_strand <- as.character(tx_strand)
+
+    tx_start <- unname(min(transcripts_by_id[ , "tx_start"]))
+    tx_end <- unname(max(transcripts_by_id[ , "tx_end"]))
+    
+    data.frame(
+        tx_id=tx_id,
+        tx_name=tx_name,
+        tx_chrom=tx_chrom,
+        tx_strand=tx_strand,
+        tx_start=tx_start,
+        tx_end=tx_end,
+        stringsAsFactors=FALSE
+    )
+}
+
+.extract_transcripts_from_GRanges <- function(tx_IDX, gr, ID, Name)
+{
+    tx_id <- ID[tx_IDX]
+    transcripts <- data.frame(
+        tx_id=tx_id,
+        tx_name=Name[tx_IDX],
+        tx_chrom=seqnames(gr)[tx_IDX],
+        tx_strand=strand(gr)[tx_IDX],
+        tx_start=start(gr)[tx_IDX],
+        tx_end=end(gr)[tx_IDX],
+        stringsAsFactors=FALSE
+    )
+    merged_tx <- unique(tx_id[duplicated(tx_id)])
+    if (length(merged_tx) != 0L) {
+        transcripts <- .merge_transcript_parts(transcripts)
+        in1string <- paste0(sort(merged_tx), collapse=", ")
+        warning(wmsg("The following transcripts have multiple parts that ",
+                     "were merged: ", in1string))
+    }
+    transcripts
+}
+
+.infer_transcripts_from_exons <- function(exons)
+{
+    exons_tx_id <- exons$tx_id
+    if (!is.character(exons_tx_id))
+        exons_tx_id <- as.character(exons_tx_id)
+    exons_by_id <- splitAsList(exons, exons_tx_id, drop=TRUE)
+
+    tx_id <- names(exons_by_id)
+
+    tx_chrom <- unique(exons_by_id[ , "exon_chrom"])
+    bad_tx <- names(which(elementLengths(tx_chrom) != 1L))
+    if (length(bad_tx) != 0L) {
+        in1string <- paste0(sort(bad_tx), collapse=", ")
+        stop(wmsg("No genomic ranges found for the following transcripts ",
+                  "and the ranges could not be inferred from their exons ",
+                  "(because the transcripts have exons on more than one ",
+                  "chromosome): ", in1string))
+    }
+    tx_chrom <- as.character(tx_chrom)
+
+    tx_strand <- unique(exons_by_id[ , "exon_strand"])
+    bad_tx <- names(which(elementLengths(tx_strand) != 1L))
+    if (length(bad_tx) != 0L) {
+        in1string <- paste0(sort(bad_tx), collapse=", ")
+        stop(wmsg("No genomic ranges found for the following transcripts ",
+                  "and the ranges could not be inferred from their exons ",
+                  "(because the transcripts have exons on both strands): ",
+                  in1string))
+    }
+    tx_strand <- as.character(tx_strand)
+
+    tx_start <- unname(min(exons_by_id[ , "exon_start"]))
+    tx_end <- unname(max(exons_by_id[ , "exon_end"]))
+    
+    data.frame(
+        tx_id=tx_id,
+        tx_name=tx_id,
+        tx_chrom=tx_chrom,
+        tx_strand=tx_strand,
+        tx_start=tx_start,
+        tx_end=tx_end,
+        stringsAsFactors=FALSE
+    )
+}
+
+.add_missing_transcripts <- function(transcripts, exons)
+{
+    is_orphan <- !(exons$tx_id %in% transcripts$tx_id)
+    orphan_exons <- exons[is_orphan, ]
+    missing_transcripts <- .infer_transcripts_from_exons(orphan_exons)
+    rbind(transcripts, missing_transcripts)
 }
 
 
@@ -602,20 +655,23 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
                                           exon_with_gene_parent_IDX, Parent)
     tx_IDX <- .get_tx_IDX(type, gene_as_tx_IDX)
 
-    transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr, ID, Name)
+    ## Extract the 'exons', 'cds', 'transcripts', and 'genes' data frames.
     exons <- .extract_exons_from_GRanges(exon_IDX, gr, ID, Name, Parent,
                                          gtf.format=gtf.format)
     cds <- .extract_exons_from_GRanges(cds_IDX, gr, ID, Name, Parent,
                                          gtf.format=gtf.format, for.cds=TRUE)
+    transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr, ID, Name)
+    if (gtf.format)
+        transcripts <- .add_missing_transcripts(transcripts, exons)
     genes <- .extract_genes_from_GRanges(gene_IDX, tx_IDX,
                                          ID, Name, Parent, Dbxref)
 
     ## Drop transcripts for which the exon ranks could not be inferred.
     drop_tx <- unique(as.character(exons$tx_id[is.na(exons$exon_rank)]))
     if (length(drop_tx) != 0L) {
-        transcripts <- transcripts[!(transcripts$tx_id %in% drop_tx), ]
         exons <- exons[!(exons$tx_id %in% drop_tx), ]
         cds <- cds[!(cds$tx_id %in% drop_tx), ]
+        transcripts <- transcripts[!(transcripts$tx_id %in% drop_tx), ]
         genes <- genes[!(genes$tx_id %in% drop_tx), ]
         in1string <- paste0(sort(drop_tx), collapse=", ")
         warning(wmsg(
@@ -715,7 +771,6 @@ gr6 <- import(file6, format="gff3", feature.type=feature.type)
 
 file <- system.file("extdata", "Aedes_aegypti.partial.gtf",
                     package="GenomicFeatures")
-feature.type <- c("gene", "transcript", "exon", "CDS")
 gr <- import(file, format="gtf", feature.type=feature.type)
 txdb <- makeTxDbFromGRanges(gr)
 txdb
