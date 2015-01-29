@@ -49,6 +49,7 @@
                "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
 .EXON_TYPES <- "exon"
 .CDS_TYPES <- "CDS"
+.STOP_CODON_TYPES <- "stop_codon"
 
 .get_type <- function(gr_mcols)
 {
@@ -121,7 +122,7 @@
         Parent <- character(nrow(gr_mcols))
         idx1 <- which(type %in% .TX_TYPES)
         Parent[idx1] <- gene_id[idx1]
-        idx2 <- which(type %in% c(.EXON_TYPES, .CDS_TYPES))
+        idx2 <- which(type %in% c(.EXON_TYPES, .CDS_TYPES, .STOP_CODON_TYPES))
         Parent[idx2] <- transcript_id[idx2]
     } else {
         Parent <- gr_mcols$Parent
@@ -165,7 +166,7 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Get the transcript, exon, cds, and gene indices
+### Get the gene, cds, stop_codon, exon, and transcript indices.
 ###
 
 .get_gene_IDX <- function(type)
@@ -187,6 +188,11 @@
     if (gtf.format)
         return(integer(0))
     cds_IDX[as.logical(unique(Parent[cds_IDX] %in% ID[gene_IDX]))]
+}
+
+.get_stop_codon_IDX <- function(type)
+{
+    which(type %in% .STOP_CODON_TYPES)
 }
 
 .get_exon_IDX <- function(type, cds_with_gene_parent_IDX)
@@ -258,7 +264,7 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Extract the 'exons' and 'cds' data frames
+### Extract the 'exons', 'cds', and 'stop_codons' data frames
 ###
 
 .extract_rank_from_id <- function(id, parent_id)
@@ -313,15 +319,16 @@
     ans
 }
 
-### Can be used to extract exons or cds.
+### Can be used to extract exons, cds, or stop codons.
 .extract_exons_from_GRanges <- function(exon_IDX, gr, ID, Name, Parent,
-                                        gtf.format=FALSE, for.cds=FALSE)
+                                        feature=c("exon", "cds", "stop_codon"),
+                                        gtf.format=FALSE)
 {
-    feature.type <- if (for.cds) "CDS" else "exon"
+    feature <- match.arg(feature)
+    what <- switch(feature, exon="exon", cds="CDS", stop_codon="stop codon")
     exon_Parent <- Parent[exon_IDX]
     if (any(any(duplicated(exon_Parent))))
-        stop(wmsg("some ", feature.type, "s are mapped twice ",
-                  "to the same transcript"))
+        stop(wmsg("some ", what, "s are mapped twice to the same transcript"))
 
     tx_id <- factor(unlist(exon_Parent, use.names=FALSE))
     nparent_per_ex <- elementLengths(exon_Parent)
@@ -333,7 +340,7 @@
     exon_end <- rep.int(end(gr)[exon_IDX], nparent_per_ex)
 
     if (!gtf.format) {
-        ## Drop orphan exons (or cds).
+        ## Drop orphan exons (or orphan cds or stop codons).
         is_orphan <- !(tx_id %in% ID)
         norphan <- sum(is_orphan)
         if (norphan != 0L) {
@@ -345,7 +352,7 @@
             exon_strand <- exon_strand[keep_idx]
             exon_start <- exon_start[keep_idx]
             exon_end <- exon_end[keep_idx]
-            warning(wmsg(norphan, " orphan ", feature.type, "s were dropped"))
+            warning(wmsg(norphan, " orphan ", what, "s were dropped"))
         }
     }
 
@@ -359,15 +366,15 @@
         stringsAsFactors=FALSE
     )
 
-    if (for.cds) {
-        colnames(exons) <- sub("^exon", "cds", colnames(exons))
-    } else {
+    if (feature == "exon") {
         exon_rank <- .extract_rank_from_id(exon_id, tx_id)
         if (is.null(exon_rank))
             exon_rank <- .infer_rank_from_position(tx_id,
                                                    exon_chrom, exon_strand,
                                                    exon_start, exon_end)
         exons$exon_rank <- exon_rank
+    } else {
+        colnames(exons) <- sub("^exon_", "", colnames(exons))
     }
     exons
 }
@@ -509,9 +516,9 @@
 
 .find_exon_cds <- function(exons, cds)
 {
-    query <- GRanges(cds$cds_chrom,
-                     IRanges(cds$cds_start, cds$cds_end),
-                     cds$cds_strand)
+    query <- GRanges(cds$chrom,
+                     IRanges(cds$start, cds$end),
+                     cds$strand)
     subject <- GRanges(exons$exon_chrom,
                        IRanges(exons$exon_start, exons$exon_end),
                        exons$exon_strand)
@@ -543,7 +550,7 @@
     selectHits(t(hits), select="first")
 }
 
-.make_splicings <- function(exons, cds)
+.make_splicings <- function(exons, cds, stop_codons=NULL)
 {
     cds_tx_id <- factor(cds$tx_id, levels=levels(exons$tx_id))
     if (any(is.na(cds_tx_id)))
@@ -551,9 +558,37 @@
     cds$tx_id <- cds_tx_id
 
     exon2cds <- .find_exon_cds(exons, cds)
-    cds_name <- cds$cds_name[exon2cds]
-    cds_start <- cds$cds_start[exon2cds]
-    cds_end <- cds$cds_end[exon2cds]
+    cds_name <- cds$name[exon2cds]
+    cds_start <- cds$start[exon2cds]
+    cds_end <- cds$end[exon2cds]
+    if (!is.null(stop_codons)) {
+        exon2stop_codon <- .find_exon_cds(exons, stop_codons)
+        stop_codon_name <- stop_codons$name[exon2stop_codon]
+        stop_codon_start <- stop_codons$start[exon2stop_codon]
+        stop_codon_end <- stop_codons$end[exon2stop_codon]
+
+        ## Exons with no CDS get the stop codon as CDS.
+        replace_idx <- which(is.na(exon2cds) & !is.na(exon2stop_codon))
+        cds_name[replace_idx] <- stop_codon_name[replace_idx]
+        cds_start[replace_idx] <- stop_codon_start[replace_idx]
+        cds_end[replace_idx] <- stop_codon_end[replace_idx]
+
+        ## Exons with a CDS and a stop codon have the latter merged into the
+        ## former.
+        merge_idx <- which(!is.na(exon2cds) & !is.na(exon2stop_codon))
+        start1 <- cds_start[merge_idx]
+        end1 <- cds_end[merge_idx]
+        start2 <- stop_codon_start[merge_idx]
+        end2 <- stop_codon_end[merge_idx]
+        gap <- pmax.int(start1, start2) - pmin.int(end1, end2) - 1L
+        bad_tx <- unique(exons$tx_id[merge_idx[gap != 0L]])
+        if (length(bad_tx) != 0L) {
+            because <- "they have incompatible CDS and stop codons"
+            .reject_transcripts(bad_tx, because)
+        }
+        cds_start[merge_idx] <- pmin.int(start1, start2)
+        cds_end[merge_idx] <- pmax.int(end1, end2)
+    }
     cbind(exons, cds_name, cds_start, cds_end, stringsAsFactors=FALSE)
 }
 
@@ -658,7 +693,9 @@
     metadata
 }
 
-makeTxDbFromGRanges <- function(gr, metadata=NULL)
+### If 'with.stop.codons' is TRUE then the stop codons will be merged to the
+### CDS. Otherwise they're ignored.
+makeTxDbFromGRanges <- function(gr, with.stop.codons=FALSE, metadata=NULL)
 {
     if (!is(gr, "GenomicRanges"))
         stop("'gr' must be a GRanges object")
@@ -667,6 +704,10 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     if (length(Genome) != 1L)
         stop("all the sequences in 'seqinfo(gr)' must belong ",
              "to the same genome")
+
+    if (!isTRUEorFALSE(with.stop.codons))
+        stop("'with.stop.codons' must be TRUE or FALSE")
+
     metadata <- .normarg_metadata(metadata, Genome)
 
     gr_mcols <- mcols(gr)
@@ -682,12 +723,14 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     Name <- .get_Name(gr_mcols, ID)
     Dbxref <- .get_Dbxref(gr_mcols)
 
-    ## Get the transcript, exon, cds, and gene indices.
+    ## Get the gene, cds, stop_codon, exon, and transcript indices.
     gene_IDX <- .get_gene_IDX(type)
     cds_IDX <- .get_cds_IDX(type)
     cds_with_gene_parent_IDX <- .get_cds_with_gene_parent_IDX(cds_IDX,
                                           Parent, gene_IDX, ID,
                                           gtf.format=gtf.format)
+    if (with.stop.codons)
+        stop_codon_IDX <- .get_stop_codon_IDX(type)
     exon_IDX <- .get_exon_IDX(type, cds_with_gene_parent_IDX)
     exon_with_gene_parent_IDX <- .get_exon_with_gene_parent_IDX(exon_IDX,
                                           Parent, gene_IDX, ID,
@@ -696,11 +739,19 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
                                           exon_with_gene_parent_IDX, Parent)
     tx_IDX <- .get_tx_IDX(type, gene_as_tx_IDX)
 
-    ## Extract the 'exons', 'cds', 'transcripts', and 'genes' data frames.
+    ## Extract the 'exons', 'cds', 'stop_codons', 'transcripts',
+    ## and 'genes' data frames.
     exons <- .extract_exons_from_GRanges(exon_IDX, gr, ID, Name, Parent,
-                                         gtf.format=gtf.format)
+                                   feature="exon", gtf.format=gtf.format)
     cds <- .extract_exons_from_GRanges(cds_IDX, gr, ID, Name, Parent,
-                                         gtf.format=gtf.format, for.cds=TRUE)
+                                   feature="cds", gtf.format=gtf.format)
+    if (with.stop.codons) {
+        stop_codons <- .extract_exons_from_GRanges(stop_codon_IDX,
+                                   gr, ID, Name, Parent,
+                                   feature="stop_codon", gtf.format=gtf.format)
+    } else {
+        stop_codons <- NULL
+    }
     transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr, ID, Name)
     if (gtf.format) {
         transcripts <- .add_missing_transcripts(transcripts, exons)
@@ -716,6 +767,7 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     if (length(drop_tx) != 0L) {
         exons <- exons[!(exons$tx_id %in% drop_tx), ]
         cds <- cds[!(cds$tx_id %in% drop_tx), ]
+        stop_codons <- stop_codons[!(stop_codons$tx_id %in% drop_tx), ]
         transcripts <- transcripts[!(transcripts$tx_id %in% drop_tx), ]
         genes <- genes[!(genes$tx_id %in% drop_tx), ]
         in1string <- paste0(sort(drop_tx), collapse=", ")
@@ -727,7 +779,7 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     }
 
     .flush_rejected_tx_envir()
-    splicings <- .make_splicings(exons, cds)
+    splicings <- .make_splicings(exons, cds, stop_codons)
     drop_tx <- .get_rejected_transcripts()
     if (length(drop_tx) != 0L) {
         transcripts <- transcripts[!(transcripts$tx_id %in% drop_tx), ]
