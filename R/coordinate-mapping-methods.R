@@ -88,7 +88,7 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
             neg <- as.vector(strand(flat)[txHits] == "-")
             negstart <- end(bounds)[neg] - end(xrange)[neg] + 1L
             xrange[neg] <- IRanges(negstart, width=width(xrange)[neg])
-            xrange[!neg] <- shift(xrange, - start(bounds) + 1L)
+            xrange[!neg] <- shift(xrange[!neg], - start(bounds)[!neg] + 1L)
         }
         ## location wrt start of concatenated list elements
         if (length(flat) > length(transcripts)) {
@@ -164,7 +164,7 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"),
             return(GRanges(xHits=integer(), transcriptsHits=integer()))
 
         if (!ignore.strand)
-            if (!all(elementLengths(runLength(strand(transcripts))) == 1))
+            if (any(elementLengths(runValue(strand(transcripts))) > 1))
                 stop(paste0("when ignore.strand=TRUE all inner list ",
                             "elements of 'transcripts' must be the ",
                             "same strand"))
