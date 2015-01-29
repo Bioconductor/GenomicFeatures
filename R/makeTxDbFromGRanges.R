@@ -36,9 +36,20 @@
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Get the metadata columns of interest
 ###
-### Required: type, ID, Parent
-### Optional: Name, Dbxref
+### Expected metadata columns for GRanges in GFF3 format:
+###   - required: type, ID, Parent
+###   - optional: Name, Dbxref
 ###
+### Expected metadata columns for GRanges in GTF format:
+###   - type, gene_id, transcript_id, exon_id
+###     gene_name, transcript_name, exon_name
+###
+
+.GENE_TYPES <- c("gene", "pseudogene")
+.TX_TYPES <- c("mRNA", "transcript", "primary_transcript",
+               "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
+.EXON_TYPES <- "exon"
+.CDS_TYPES <- "CDS"
 
 .get_type <- function(gr_mcols)
 {
@@ -50,21 +61,55 @@
     type
 }
 
-.get_ID <- function(gr_mcols)
+.get_ID <- function(gr_mcols, type)
 {
     ID <- gr_mcols$ID
-    if (is.null(ID))
-        stop("'gr' must have a \"ID\" metadata column")
+    if (is.null(ID)) {
+        ## If there's no ID column then we assume the GRanges object is in
+        ## GTF format.
+        gene_id <- gr_mcols$gene_id
+        transcript_id <- gr_mcols$transcript_id
+        if (is.null(gene_id) || is.null(transcript_id))
+            stop("'gr' must have an \"ID\" metadata column, ",
+                 "or a \"gene_id\" and \"transcript_id\" metadata column")
+        ID <- character(nrow(gr_mcols))
+        idx1 <- which(type %in% .GENE_TYPES)
+        ID[idx1] <- gene_id[idx1]
+        idx2 <- which(type %in% .TX_TYPES)
+        ID[idx2] <- transcript_id[idx2]
+        exon_id <- gr_mcols$exon_id
+        if (!is.null(exon_id)) {
+            idx3 <- which(type %in% .EXON_TYPES)
+            ID[idx3] <- exon_id[idx3]
+        }
+        return(ID)
+    }
     if (!is.character(ID))
         ID <- as.character(ID)
     ID
 }
 
-.get_Parent <- function(gr_mcols)
+### If there's no Parent column then we assume the GRanges object is in
+### GTF format.
+.is_gtf_format <- function(gr_mcols)
+    is.null(gr_mcols$Parent)
+
+.get_Parent <- function(gr_mcols, type, gtf.format=FALSE)
 {
-    Parent <- gr_mcols$Parent
-    if (is.null(Parent))
-        stop("'gr' must have a \"Parent\" metadata column")
+    if (gtf.format) {
+        gene_id <- gr_mcols$gene_id
+        transcript_id <- gr_mcols$transcript_id
+        if (is.null(gene_id) || is.null(transcript_id))
+            stop("'gr' must have a \"Parent\" metadata column, ",
+                 "or a \"gene_id\" and \"transcript_id\" metadata column")
+        Parent <- character(nrow(gr_mcols))
+        idx1 <- which(type %in% .TX_TYPES)
+        Parent[idx1] <- gene_id[idx1]
+        idx2 <- which(type %in% c(.EXON_TYPES, .CDS_TYPES))
+        Parent[idx2] <- transcript_id[idx2]
+    } else {
+        Parent <- gr_mcols$Parent
+    }
     if (!is(Parent, "CompressedCharacterList")) {
         Parent0 <- Parent
         Parent <- as(Parent, "CompressedCharacterList")
@@ -106,12 +151,6 @@
 ### Get the transcript, exon, cds, and gene indices
 ###
 
-.GENE_TYPES <- c("gene", "pseudogene")
-.TX_TYPES <- c("mRNA", "transcript", "primary_transcript",
-               "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
-.EXON_TYPES <- "exon"
-.CDS_TYPES <- "CDS"
-
 .get_gene_IDX <- function(type)
 {
     which(type %in% .GENE_TYPES)
@@ -125,8 +164,11 @@
 ### Returns the index of CDS whose Parent is a gene (this happens with some
 ### GFF files e.g. inst/extdata/GFF3_files/NC_011025.gff). These CDS will
 ### also be considered exons (i.e. added to the set of exons).
-.get_cds_with_gene_parent_IDX <- function(cds_IDX, Parent, gene_IDX, ID)
+.get_cds_with_gene_parent_IDX <- function(cds_IDX, Parent, gene_IDX, ID,
+                                          gtf.format=FALSE)
 {
+    if (gtf.format)
+        return(integer(0))
     cds_IDX[as.logical(unique(Parent[cds_IDX] %in% ID[gene_IDX]))]
 }
 
@@ -136,8 +178,11 @@
 }
 
 ### Returns the index of exons whose Parent is a gene.
-.get_exon_with_gene_parent_IDX <- function(exon_IDX, Parent, gene_IDX, ID)
+.get_exon_with_gene_parent_IDX <- function(exon_IDX, Parent, gene_IDX, ID,
+                                           gtf.format=FALSE)
 {
+    if (gtf.format)
+        return(integer(0))
     exon_IDX[as.logical(unique(Parent[exon_IDX] %in% ID[gene_IDX]))]
 }
 
@@ -278,9 +323,14 @@
 
 .extract_rank_from_id <- function(id, parent_id)
 {
+    if (length(id) == 0L)
+        return(integer(0))
     id_parts <- strsplit(id, "\\.|:")
+    ## Fix non-sensical output of strsplit() on empty strings.
+    id_parts[elementLengths(id_parts) == 0L] <- ""
+    unlisted_id_parts <- unlist(id_parts, use.names=FALSE)
     idx <- cumsum(elementLengths(id_parts))
-    rank <- unlist(id_parts, use.names=FALSE)[idx]
+    rank <- unlisted_id_parts[idx]
     rank <- suppressWarnings(as.integer(rank))
     if (any(is.na(rank)))
         return(NULL)
@@ -308,7 +358,8 @@
     minus_idx <- which(as.character(tx_strand) == "-")
 
     ex_by_tx <- split(IRanges(exon_start, exon_end), tx_id)
-    bad_tx3 <- names(which(elementLengths(reduce(ex_by_tx)) !=
+    reduced_ex_by_tx <- reduce(ex_by_tx, min.gapwidth=0L)
+    bad_tx3 <- names(which(elementLengths(reduced_ex_by_tx) !=
                            elementLengths(ex_by_tx)))
 
     start_by_tx <- start(ex_by_tx)
@@ -324,7 +375,7 @@
 
 ### Can be used to extract exons or cds.
 .extract_exons_from_GRanges <- function(exon_IDX, gr, ID, Name, Parent,
-                                        for.cds=FALSE)
+                                        gtf.format=FALSE, for.cds=FALSE)
 {
     feature.type <- if (for.cds) "CDS" else "exon"
     exon_Parent <- Parent[exon_IDX]
@@ -341,19 +392,21 @@
     exon_start <- rep.int(start(gr)[exon_IDX], nparent_per_ex)
     exon_end <- rep.int(end(gr)[exon_IDX], nparent_per_ex)
 
-    ## Drop orphan exons (or cds).
-    is_orphan <- !(tx_id %in% ID)
-    norphan <- sum(is_orphan)
-    if (norphan != 0L) {
-        keep_idx <- which(!is_orphan)
-        tx_id <- tx_id[keep_idx]
-        exon_id <- exon_id[keep_idx]
-        exon_name <- exon_name[keep_idx]
-        exon_chrom <- exon_chrom[keep_idx]
-        exon_strand <- exon_strand[keep_idx]
-        exon_start <- exon_start[keep_idx]
-        exon_end <- exon_end[keep_idx]
-        warning(wmsg(norphan, " orphan ", feature.type, "s were dropped"))
+    if (!gtf.format) {
+        ## Drop orphan exons (or cds).
+        is_orphan <- !(tx_id %in% ID)
+        norphan <- sum(is_orphan)
+        if (norphan != 0L) {
+            keep_idx <- which(!is_orphan)
+            tx_id <- tx_id[keep_idx]
+            exon_id <- exon_id[keep_idx]
+            exon_name <- exon_name[keep_idx]
+            exon_chrom <- exon_chrom[keep_idx]
+            exon_strand <- exon_strand[keep_idx]
+            exon_start <- exon_start[keep_idx]
+            exon_end <- exon_end[keep_idx]
+            warning(wmsg(norphan, " orphan ", feature.type, "s were dropped"))
+        }
     }
 
     exons <- data.frame(
@@ -514,12 +567,6 @@
     metadata
 }
 
-### Tags we care about:
-###   o if GRanges obtained from GFF3:
-###       required: type, ID, Parent
-###       optional: Name, Dbxref
-###   o if GRanges obtained from GTF:
-###       type, gene_id, transcript_id, exon_number, gene_name, transcript_name
 makeTxDbFromGRanges <- function(gr, metadata=NULL)
 {
     if (!is(gr, "GenomicRanges"))
@@ -535,8 +582,9 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
 
     ## Get the metadata columns of interest.
     type <- .get_type(gr_mcols)
-    ID <- .get_ID(gr_mcols)
-    Parent <- .get_Parent(gr_mcols)
+    ID <- .get_ID(gr_mcols, type)
+    gtf.format <- .is_gtf_format(gr_mcols)
+    Parent <- .get_Parent(gr_mcols, type, gtf.format=gtf.format)
     Name <- .get_Name(gr_mcols, ID)
     Dbxref <- .get_Dbxref(gr_mcols)
 
@@ -544,18 +592,21 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     gene_IDX <- .get_gene_IDX(type)
     cds_IDX <- .get_cds_IDX(type)
     cds_with_gene_parent_IDX <- .get_cds_with_gene_parent_IDX(cds_IDX,
-                                                     Parent, gene_IDX, ID)
+                                          Parent, gene_IDX, ID,
+                                          gtf.format=gtf.format)
     exon_IDX <- .get_exon_IDX(type, cds_with_gene_parent_IDX)
     exon_with_gene_parent_IDX <- .get_exon_with_gene_parent_IDX(exon_IDX,
-                                                     Parent, gene_IDX, ID)
+                                          Parent, gene_IDX, ID,
+                                          gtf.format=gtf.format)
     gene_as_tx_IDX <- .get_gene_as_tx_IDX(gene_IDX, ID,
                                           exon_with_gene_parent_IDX, Parent)
     tx_IDX <- .get_tx_IDX(type, gene_as_tx_IDX)
 
     transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr, ID, Name)
-    exons <- .extract_exons_from_GRanges(exon_IDX, gr, ID, Name, Parent)
+    exons <- .extract_exons_from_GRanges(exon_IDX, gr, ID, Name, Parent,
+                                         gtf.format=gtf.format)
     cds <- .extract_exons_from_GRanges(cds_IDX, gr, ID, Name, Parent,
-                                       for.cds=TRUE)
+                                         gtf.format=gtf.format, for.cds=TRUE)
     genes <- .extract_genes_from_GRanges(gene_IDX, tx_IDX,
                                          ID, Name, Parent, Dbxref)
 
