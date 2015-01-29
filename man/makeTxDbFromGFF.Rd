@@ -119,7 +119,7 @@ saveDb(txdb,file="TESTGFF.sqlite")
 }
 
 ## TESTING GTF, this time specifying the chrominfo
-gtfFile <- system.file("extdata","Aedes_aegypti.partial.gtf",
+gtfFile <- system.file("extdata","GTF_files","Aedes_aegypti.partial.gtf",
                        package="GenomicFeatures")
 chrominfo <- data.frame(chrom = c('supercont1.1','supercont1.2'),
                         length=c(5220442, 5300000),

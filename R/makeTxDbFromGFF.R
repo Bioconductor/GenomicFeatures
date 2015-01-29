@@ -790,7 +790,7 @@ makeTxDbFromGFF <- function(file,
 ## saveDb(txdb,file="TESTGFF.sqlite")
 
 ## ## TESTING GTF
-## gtfFile=system.file("extdata","Aedes_aegypti.partial.gtf")
+## gtfFile=system.file("extdata","GTF_files","Aedes_aegypti.partial.gtf")
 ## txdb <- makeTxDbFromGFF(file=gtfFile,
 ##                         format="gtf",
 ##                         dataSource="ftp://ftp.ensemblgenomes.org/pub/metazoa/release-13/gtf/aedes_aegypti/",

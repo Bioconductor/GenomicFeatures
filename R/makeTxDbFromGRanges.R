@@ -821,9 +821,9 @@ gr1 <- import(file1, format="gtf", feature.type=feature.type)
 txdb1 <- makeTxDbFromGRanges(gr1)
 txdb1
 
-file <- system.file("extdata", "Aedes_aegypti.partial.gtf",
-                    package="GenomicFeatures")
-txdb <- makeTxDbFromGRanges(gr)
-txdb
+file2 <- file.path(GTF_files, "Aedes_aegypti.partial.gtf")
+gr2 <- import(file2, format="gtf", feature.type=feature.type)
+txdb2 <- makeTxDbFromGRanges(gr2)
+txdb2
 }
 

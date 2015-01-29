@@ -16,7 +16,7 @@ gff3 <- rtracklayer:::import(gffFile, format="gff3", asRangedData=FALSE)
 gff3 <- GenomicFeatures:::.makeSelectedFieldsLowerCase(gff3,
                                fieldsToCast=c('id','parent'))
 
-gtfFile <- system.file("extdata","Aedes_aegypti.partial.gtf",
+gtfFile <- system.file("extdata","GTF_files","Aedes_aegypti.partial.gtf",
                        package="GenomicFeatures")
 
 gtf <- rtracklayer:::import(gtfFile, format="gtf", asRangedData=FALSE)
