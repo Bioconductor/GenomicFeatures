@@ -760,13 +760,11 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
 if (FALSE) {
 library(GenomicFeatures)
 source("GenomicFeatures/R/makeTxDbFromGRanges.R")
-
+feature.type <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES, .CDS_TYPES)
 library(rtracklayer)
 
 ## Test with GRanges obtained from GFF3 files
 ## ==========================================
-
-feature.type <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES, .CDS_TYPES)
 
 GFF3_files <- system.file("extdata", "GFF3_files", package="GenomicFeatures")
 
@@ -814,9 +812,17 @@ gr6 <- import(file6, format="gff3", feature.type=feature.type)
 ## Test with GRanges obtained from GTF files
 ## =========================================
 
+GTF_files <- system.file("extdata", "GTF_files", package="GenomicFeatures")
+
+## test1.gtf grabbed from http://mblab.wustl.edu/GTF22.html (5 exon gene with
+## 3 translated exons).
+file1 <- file.path(GTF_files, "test1.gtf")
+gr1 <- import(file1, format="gtf", feature.type=feature.type)
+txdb1 <- makeTxDbFromGRanges(gr1)
+txdb1
+
 file <- system.file("extdata", "Aedes_aegypti.partial.gtf",
                     package="GenomicFeatures")
-gr <- import(file, format="gtf", feature.type=feature.type)
 txdb <- makeTxDbFromGRanges(gr)
 txdb
 }
