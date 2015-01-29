@@ -56,18 +56,36 @@
     if (is.null(type))
         stop("'gr' must have a \"type\" metadata column")
     if (!is.factor(type))
-        type <- as.factor(type)
+        type <- factor(type, levels=unique(type))
     type
 }
 
-.get_ID <- function(gr_mcols, type)
+.get_gene_id <- function(gr_mcols)
+{
+    gene_id <- gr_mcols$gene_id
+    if (is.null(gene_id))
+        return(NULL)
+    if (!is.character(gene_id))
+        gene_id <- as.character(gene_id)
+    gene_id
+}
+
+.get_transcript_id <- function(gr_mcols)
+{
+    transcript_id <- gr_mcols$transcript_id
+    if (is.null(transcript_id))
+        return(NULL)
+    if (!is.character(transcript_id))
+        transcript_id <- as.character(transcript_id)
+    transcript_id
+}
+
+.get_ID <- function(gr_mcols, type, gene_id, transcript_id)
 {
     ID <- gr_mcols$ID
     if (is.null(ID)) {
         ## If there's no ID column then we assume the GRanges object is in
         ## GTF format.
-        gene_id <- gr_mcols$gene_id
-        transcript_id <- gr_mcols$transcript_id
         if (is.null(gene_id) || is.null(transcript_id))
             stop("'gr' must have an \"ID\" metadata column, ",
                  "or a \"gene_id\" and \"transcript_id\" metadata column")
@@ -93,11 +111,10 @@
 .is_gtf_format <- function(gr_mcols)
     is.null(gr_mcols$Parent)
 
-.get_Parent <- function(gr_mcols, type, gtf.format=FALSE)
+.get_Parent <- function(gr_mcols, type, gene_id, transcript_id,
+                        gtf.format=FALSE)
 {
     if (gtf.format) {
-        gene_id <- gr_mcols$gene_id
-        transcript_id <- gr_mcols$transcript_id
         if (is.null(gene_id) || is.null(transcript_id))
             stop("'gr' must have a \"Parent\" metadata column, ",
                  "or a \"gene_id\" and \"transcript_id\" metadata column")
@@ -545,8 +562,8 @@
 ### Extract the 'genes' data frame
 ###
 
-.extract_genes_from_GRanges <- function(gene_IDX, tx_IDX, ID, Name,
-                                        Parent, Dbxref)
+.extract_genes_from_gff3_GRanges <- function(gene_IDX, tx_IDX, ID, Name,
+                                             Parent, Dbxref)
 {
     tx_id <- ID[tx_IDX]
     tx2genes <- Parent[tx_IDX]
@@ -572,16 +589,37 @@
                                  as(hits, "PartitioningByEnd"))
     }
 
-    tx_id <- rep.int(factor(tx_id), elementLengths(tx2genes))
+    tx_id <- rep.int(tx_id, elementLengths(tx2genes))
     geneID2Name <- Name[gene_IDX]
     names(geneID2Name) <- ID[gene_IDX]
     gene_id <- unname(geneID2Name[unlist(tx2genes, use.names=FALSE)])
     keep_idx <- which(!is.na(gene_id))
-    data.frame(
-        tx_id=tx_id[keep_idx],
-        gene_id=gene_id[keep_idx],
-        stringsAsFactors=FALSE
-    )
+    tx_id <- tx_id[keep_idx]
+    gene_id <- gene_id[keep_idx]
+    data.frame(tx_id=tx_id, gene_id=gene_id, stringsAsFactors=FALSE)
+}
+
+.extract_genes_from_gtf_GRanges <- function(transcript_id, gene_id,
+                                            transcripts)
+{
+    if (is.null(transcript_id) || is.null(gene_id)) {
+        transcript_id <- character(0)
+        gene_id <- character(0)
+    }
+
+    ## Keep only unique (tx_id, gene_id) pairs.
+    tx_id <- factor(transcript_id, levels=unique(transcript_id))
+    gene_id <- factor(gene_id, levels=unique(gene_id))
+    keep_idx <- which(!S4Vectors:::duplicatedIntegerPairs(tx_id, gene_id))
+    tx_id <- tx_id[keep_idx]
+    gene_id <- gene_id[keep_idx]
+
+    ## Keep only (tx_id, gene_id) pairs that point to a row in 'transcripts'.
+    keep_idx <- which(tx_id %in% transcripts$tx_id)
+    tx_id <- tx_id[keep_idx]
+    gene_id <- gene_id[keep_idx]
+
+    data.frame(tx_id=tx_id, gene_id=gene_id, stringsAsFactors=FALSE)
 }
 
 
@@ -635,9 +673,12 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
 
     ## Get the metadata columns of interest.
     type <- .get_type(gr_mcols)
-    ID <- .get_ID(gr_mcols, type)
+    gene_id <- .get_gene_id(gr_mcols)
+    transcript_id <- .get_transcript_id(gr_mcols)
+    ID <- .get_ID(gr_mcols, type, gene_id, transcript_id)
     gtf.format <- .is_gtf_format(gr_mcols)
-    Parent <- .get_Parent(gr_mcols, type, gtf.format=gtf.format)
+    Parent <- .get_Parent(gr_mcols, type, gene_id, transcript_id,
+                          gtf.format=gtf.format)
     Name <- .get_Name(gr_mcols, ID)
     Dbxref <- .get_Dbxref(gr_mcols)
 
@@ -661,10 +702,14 @@ makeTxDbFromGRanges <- function(gr, metadata=NULL)
     cds <- .extract_exons_from_GRanges(cds_IDX, gr, ID, Name, Parent,
                                          gtf.format=gtf.format, for.cds=TRUE)
     transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr, ID, Name)
-    if (gtf.format)
+    if (gtf.format) {
         transcripts <- .add_missing_transcripts(transcripts, exons)
-    genes <- .extract_genes_from_GRanges(gene_IDX, tx_IDX,
-                                         ID, Name, Parent, Dbxref)
+        genes <- .extract_genes_from_gtf_GRanges(transcript_id, gene_id,
+                                                 transcripts)
+    } else {
+        genes <- .extract_genes_from_gff3_GRanges(gene_IDX, tx_IDX,
+                                                  ID, Name, Parent, Dbxref)
+    }
 
     ## Drop transcripts for which the exon ranks could not be inferred.
     drop_tx <- unique(as.character(exons$tx_id[is.na(exons$exon_rank)]))
@@ -774,6 +819,5 @@ file <- system.file("extdata", "Aedes_aegypti.partial.gtf",
 gr <- import(file, format="gtf", feature.type=feature.type)
 txdb <- makeTxDbFromGRanges(gr)
 txdb
-
 }
 
