@@ -907,13 +907,13 @@ test_makeTxDbFromGRanges_on_Ensembl_gtf <- function(all=FALSE)
         txdb2 <- makeTxDbFromBiomart("ensembl", dataset)
         cat("\n")
 
-        cat("'txdb1' and 'txdb2' have the same transcripts, exons, CDS: ")
+        cat("'txdb1' and 'txdb2' have the same transcripts, exons, and CDS: ")
         dump1 <- .light_txdb_dump(txdb1)
         dump2 <- .light_txdb_dump(txdb2)
         if (identical(dump1, dump2)) {
-            cat("YES")
+            cat("YES\n")
         } else {
-            cat("NO!\n")
+            cat("NO!!!\n")
         }
     }
     cat("\n")
