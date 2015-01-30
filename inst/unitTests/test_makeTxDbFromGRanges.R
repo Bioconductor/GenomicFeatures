@@ -176,24 +176,25 @@ test_makeTxDbFromGRanges_with_exons_and_cds <- function()
     end(exon_gr) <- exon_end
     gr <- c(tx_gr, exon_gr)
 
-    tx_oo <- 2:3
+    tx_oo <- 1:3
     target_transcripts <- data.frame(
-        tx_id=1:2,
+        tx_id=1:3,
         tx_name=tx_ID[tx_oo],
         tx_chrom="chr1",
         tx_strand="+",
         tx_start=tx_start[tx_oo],
         tx_end=tx_end[tx_oo]
     )
+    exon_oo <- 1:3
     target_splicings <- data.frame(
-        tx_id=1,
-        exon_rank=1,
-        exon_id=1,
-        exon_name="ex3",
+        tx_id=c(1, 1, 2),
+        exon_rank=c(1, 2, 1),
+        exon_id=1:3,
+        exon_name=exon_ID[exon_oo],
         exon_chrom="chr1",
         exon_strand="+",
-        exon_start=145,
-        exon_end=160
+        exon_start=exon_start[exon_oo],
+        exon_end=exon_end[exon_oo]
     )
 
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
