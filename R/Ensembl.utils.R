@@ -22,13 +22,11 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### .Ensembl_getMySQLCoreUrl()
+### Very low-level internal utils used here and in other files
 ###
 
-.ENSEMBL.PUB_FTP_URL <- "ftp://ftp.ensembl.org/pub/"
-
 ### Uses RCurl to access and list the content of an FTP dir.
-.lsFtpUrl <- function(url)
+ls_ftp_url <- function(url)
 {
     doc <- getURL(url)
     listing <- strsplit(doc, "\n", fixed=TRUE)[[1L]]
@@ -39,7 +37,9 @@
     sub("[[:space:]].*$", "", listing)
 }
 
-.Ensembl_getFtpUrlToMySQL <- function(release=NA)
+.ENSEMBL.PUB_FTP_URL <- "ftp://ftp.ensembl.org/pub/"
+
+ftp_url_to_Ensembl_mysql <- function(release=NA)
 {
     if (is.na(release))
         pub_subdir <- "current_mysql"
@@ -48,11 +48,25 @@
     paste0(.ENSEMBL.PUB_FTP_URL, pub_subdir, "/")
 }
 
+ftp_url_to_Ensembl_gtf <- function(release=NA)
+{
+    if (is.na(release))
+        pub_subdir <- "current_gtf"
+    else
+        pub_subdir <- paste0("release-", release, "/gtf")
+    paste0(.ENSEMBL.PUB_FTP_URL, pub_subdir, "/")
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### .Ensembl_getMySQLCoreUrl()
+###
+
 .Ensembl_listMySQLCoreDirs <- function(release=NA, url=NA)
 {
     if (is.na(url))
-        url <- .Ensembl_getFtpUrlToMySQL(release)
-    core_dirs <- .lsFtpUrl(url)
+        url <- ftp_url_to_Ensembl_mysql(release)
+    core_dirs <- ls_ftp_url(url)
     pattern <- "_core_"
     if (!is.na(release))
         pattern <- paste0(pattern, release, "_")
@@ -62,7 +76,7 @@
 .Ensembl_getMySQLCoreDir <- function(dataset, release=NA, url=NA)
 {
     if (is.na(url))
-        url <- .Ensembl_getFtpUrlToMySQL(release)
+        url <- ftp_url_to_Ensembl_mysql(release)
     core_dirs <- .Ensembl_listMySQLCoreDirs(release=release, url=url)
     shortnames <- sapply(strsplit(core_dirs, "_", fixed=TRUE),
                          function(x)
@@ -79,7 +93,7 @@
 .Ensembl_getMySQLCoreUrl <- function(dataset, release=NA, url=NA)
 {
     if (is.na(url))
-        url <- .Ensembl_getFtpUrlToMySQL(release)
+        url <- ftp_url_to_Ensembl_mysql(release)
     core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release, url=url)
     paste0(url, core_dir, "/")
 }

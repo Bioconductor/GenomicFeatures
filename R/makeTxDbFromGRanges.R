@@ -562,6 +562,7 @@
     cds_name <- cds$name[exon2cds]
     cds_start <- cds$start[exon2cds]
     cds_end <- cds$end[exon2cds]
+
     if (!is.null(stop_codons)) {
         stop_codons_tx_id <- factor(stop_codons$tx_id,
                                     levels=levels(exons$tx_id))
@@ -589,7 +590,7 @@
         start2 <- stop_codon_start[merge_idx]
         end2 <- stop_codon_end[merge_idx]
         gap <- pmax.int(start1, start2) - pmin.int(end1, end2) - 1L
-        bad_tx <- unique(exons$tx_id[merge_idx[gap != 0L]])
+        bad_tx <- unique(exons$tx_id[merge_idx[gap > 0L]])
         if (length(bad_tx) != 0L) {
             because <- "they have incompatible CDS and stop codons"
             .reject_transcripts(bad_tx, because)
@@ -818,6 +819,108 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
 }
 
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Some non-exported tools to test makeTxDbFromGRanges() on real data.
+###
+### IMPORTANT NOTE: These tests takes too long to be part of the formal
+### unit tests!
+###
+
+.light_txdb_dump <- function(txdb)
+{
+    txdb_dump <- as.list(txdb)
+
+    keep_cols <- c("tx_name", "tx_chrom", "tx_strand", "tx_start", "tx_end")
+    transcripts <- txdb_dump$transcripts[keep_cols]
+    oo <- order(transcripts$tx_chrom,
+                transcripts$tx_start, transcripts$tx_end,
+                transcripts$tx_strand,
+                transcripts$tx_name)
+    transcripts <- transcripts[oo, , drop=FALSE]
+    rownames(transcripts) <- NULL
+
+    keep_cols <- c("exon_rank", "exon_name", "exon_chrom", "exon_strand",
+                   "exon_start", "exon_end", "cds_start", "cds_end")
+    splicings <- txdb_dump$splicings[keep_cols]
+    oo <- order(splicings$exon_chrom,
+                splicings$exon_start, splicings$exon_end,
+                splicings$exon_strand,
+                splicings$exon_name)
+    splicings <- splicings[oo, , drop=FALSE]
+    rownames(splicings) <- NULL
+
+    list(transcripts=transcripts, splicings=splicings)
+}
+
+test_makeTxDbFromGRanges_on_Ensembl_gtf <- function(all=FALSE)
+{
+    gtf_url <- ftp_url_to_Ensembl_gtf()
+    if (all) {
+        organisms <- ls_ftp_url(gtf_url)
+    } else {
+        organisms <- c("caenorhabditis_elegans",
+                       "ciona_intestinalis",
+                       "danio_rerio",
+                       "drosophila_melanogaster",
+                       "gallus_gallus",
+                       "homo_sapiens",
+                       "mus_musculus",
+                       "rattus_norvegicus",
+                       "saccharomyces_cerevisiae")
+    }
+    norganism <- length(organisms)
+    for (i in seq_len(norganism)) {
+        organism <- organisms[[i]]
+        cat("\n")
+        cat("*************************************************************\n")
+        cat("[", i , "/", norganism, "] Testing makeTxDbFromGRanges() on ",
+            organism, "\n", sep="")
+        cat("*************************************************************\n")
+        cat("\n")
+
+        cat("Download GTF file ... ")
+        url <- paste0(gtf_url, organism, "/")
+        organism_files <- ls_ftp_url(url)
+        gtf_file <- grep("gtf", organism_files, ignore.case=TRUE, value=TRUE)
+        if (length(gtf_file) != 1L) {
+            cat("SKIPPED (0 or more than 1 GTF file found)\n")
+            next
+        }
+        url <- paste0(url, gtf_file)
+        local_gtf_file <- file.path(tempdir(), gtf_file)
+        download.file(url, local_gtf_file)
+
+        cat("Import ", local_gtf_file, " as GRanges object 'gr' ... ", sep="")
+        gr <- import(local_gtf_file)
+        cat("\n")
+
+        cat("txdb1 <- makeTxDbFromGRanges(gr) ... ", sep="")
+        txdb1 <- makeTxDbFromGRanges(gr)
+        cat("\n")
+
+        dataset <- strsplit(organism, "_", fixed=TRUE)[[1L]]
+        dataset <- paste0(substr(dataset[[1L]], 1L, 1L),
+                          dataset[[2L]],
+                          "_gene_ensembl")
+        cat("txdb2 <- makeTxDbFromBiomart(\"ensembl\", ",
+                                         "\"", dataset, "\") ... ", sep="")
+        txdb2 <- makeTxDbFromBiomart("ensembl", dataset)
+        cat("\n")
+
+        cat("'txdb1' and 'txdb2' have the same transcripts, exons, CDS: ")
+        dump1 <- .light_txdb_dump(txdb1)
+        dump2 <- .light_txdb_dump(txdb2)
+        if (identical(dump1, dump2)) {
+            cat("YES")
+        } else {
+            cat("NO!\n")
+        }
+    }
+    cat("\n")
+    cat("DONE.\n")
+}
+
+
 if (FALSE) {
 library(GenomicFeatures)
 source("GenomicFeatures/R/makeTxDbFromGRanges.R")
@@ -886,18 +989,5 @@ file2 <- file.path(GTF_files, "Aedes_aegypti.partial.gtf")
 gr2 <- import(file2, format="gtf", feature.type=feature.type)
 txdb2 <- makeTxDbFromGRanges(gr2)
 txdb2
-
-ensembl78_gtf_url <- "ftp://ftp.ensembl.org/pub/release-78/gtf/"
-filename <- "Saccharomyces_cerevisiae.R64-1-1.78.gtf.gz"
-url <- paste0(ensembl78_gtf_url, filename)
-file3 <- file.path(tempdir(), filename)
-download.file(url, file3)
-gr3 <- import(file3, format="gtf", feature.type=feature.type)
-txdb3 <- makeTxDbFromGRanges(gr3)
-txdb3
-
-txdb3b <- makeTxDbFromBiomart(biomart="ensembl",
-                              dataset="scerevisiae_gene_ensembl")
-txdb3b
 }
 
