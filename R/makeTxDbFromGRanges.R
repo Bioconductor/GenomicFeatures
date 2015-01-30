@@ -461,30 +461,20 @@
     exons_tx_id <- exons$tx_id
     if (!is.character(exons_tx_id))
         exons_tx_id <- as.character(exons_tx_id)
+    if (!is.character(exons$exon_chrom))
+        exons$exon_chrom <- as.character(exons$exon_chrom)
+    if (!is.character(exons$exon_strand))
+        exons$exon_strand <- as.character(exons$exon_strand)
     exons_by_id <- splitAsList(exons, exons_tx_id, drop=TRUE)
 
     tx_id <- names(exons_by_id)
 
     tx_chrom <- unique(exons_by_id[ , "exon_chrom"])
-    bad_tx <- names(which(elementLengths(tx_chrom) != 1L))
-    if (length(bad_tx) != 0L) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("No genomic ranges found for the following transcripts ",
-                  "and their ranges could not be inferred from their exons ",
-                  "(because the transcripts have exons on more than one ",
-                  "chromosome): ", in1string))
-    }
+    tx_chrom[elementLengths(tx_chrom) != 1L] <- NA_character_
     tx_chrom <- as.character(tx_chrom)
 
     tx_strand <- unique(exons_by_id[ , "exon_strand"])
-    bad_tx <- names(which(elementLengths(tx_strand) != 1L))
-    if (length(bad_tx) != 0L) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("No genomic ranges found for the following transcripts ",
-                  "and the ranges could not be inferred from their exons ",
-                  "(because the transcripts have exons on both strands): ",
-                  in1string))
-    }
+    tx_strand[elementLengths(tx_strand) != 1L] <- NA_character_
     tx_strand <- as.character(tx_strand)
 
     tx_start <- unname(min(exons_by_id[ , "exon_start"]))
@@ -772,20 +762,43 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
                                                   ID, Name, Parent, Dbxref)
     }
 
-    ## Drop transcripts for which the exon ranks could not be inferred.
-    drop_tx <- unique(as.character(exons$tx_id[is.na(exons$exon_rank)]))
+    ## Drop hopeless transcripts.
+    drop1_tx <- as.character(exons$tx_id[is.na(exons$exon_rank)])
+    drop2_tx <- as.character(transcripts$tx_id[is.na(transcripts$tx_chrom)])
+    drop3_tx <- as.character(transcripts$tx_id[is.na(transcripts$tx_strand)])
+    drop1_tx <- unique(drop1_tx)
+    drop2_tx <- unique(drop2_tx)
+    drop3_tx <- unique(drop3_tx)
+    drop_tx <- unique(c(drop1_tx, drop2_tx, drop3_tx))
     if (length(drop_tx) != 0L) {
         exons <- exons[!(exons$tx_id %in% drop_tx), ]
         cds <- cds[!(cds$tx_id %in% drop_tx), ]
         stop_codons <- stop_codons[!(stop_codons$tx_id %in% drop_tx), ]
         transcripts <- transcripts[!(transcripts$tx_id %in% drop_tx), ]
         genes <- genes[!(genes$tx_id %in% drop_tx), ]
-        in1string <- paste0(sort(drop_tx), collapse=", ")
-        warning(wmsg(
-            "The following transcripts were dropped because their exon ",
-            "ranks could not be inferred (either because the exons are ",
-            "not on the same chromosome/strand or because they are not ",
-            "separated by introns): ", in1string))
+        if (length(drop1_tx) != 0L) {
+            in1string <- paste0(sort(drop1_tx), collapse=", ")
+            warning(wmsg(
+                "The following transcripts were dropped because their exon ",
+                "ranks could not be inferred (either because the exons are ",
+                "not on the same chromosome/strand or because they are not ",
+                "separated by introns): ", in1string))
+        }
+        if (length(drop2_tx) != 0L) {
+            in1string <- paste0(sort(drop2_tx), collapse=", ")
+            warning(wmsg(
+                "The following transcripts were dropped because no genomic ",
+                "ranges could be found for them and they have exons on more ",
+                "than one chromosome so their ranges could not be inferred: ",
+                in1string))
+        }
+        if (length(drop3_tx) != 0L) {
+            in1string <- paste0(sort(drop3_tx), collapse=", ")
+            warning(wmsg(
+                "The following transcripts were dropped because no genomic ",
+                "ranges could be found for them and they have exons on both ",
+                "strands so their ranges could not be inferred: ", in1string))
+        }
     }
 
     .flush_rejected_tx_envir()
