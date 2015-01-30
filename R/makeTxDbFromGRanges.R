@@ -514,7 +514,7 @@
 ### Make the 'splicings' data frame
 ###
 
-.find_exon_cds <- function(exons, cds)
+.find_exon_cds <- function(exons, cds, what="CDS")
 {
     query <- GRanges(cds$chrom,
                      IRanges(cds$start, cds$end),
@@ -529,14 +529,15 @@
 
     bad_tx <- unique(cds$tx_id[q_hits[duplicated(q_hits)]])
     if (length(bad_tx) != 0L) {
-        because <- "they have CDS that are mapped to more than one exon"
+        because <- c("they have ", what, "s that are mapped to ",
+                     "more than one exon")
         .reject_transcripts(bad_tx, because)
     }
 
     cds2exon <- selectHits(hits, select="arbitrary")
     bad_tx <- unique(cds$tx_id[is.na(cds2exon)])
     if (length(bad_tx) != 0L) {
-        because <- "they have CDS that cannot be mapped to an exon"
+        because <- c("they have ", what, "s that cannot be mapped to an exon")
         .reject_transcripts(bad_tx, because)
     }
 
@@ -544,8 +545,8 @@
     if (length(bad_tx) != 0L) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
         warning(wmsg("The following transcripts have exons that contain ",
-                     "more than one CDS (only the first CDS was kept ",
-                     "for each exon): ", in1string))
+                     "more than one ", what, " (only the first ", what,
+                     " was kept for each exon): ", in1string))
     }
     selectHits(t(hits), select="first")
 }
@@ -562,7 +563,14 @@
     cds_start <- cds$start[exon2cds]
     cds_end <- cds$end[exon2cds]
     if (!is.null(stop_codons)) {
-        exon2stop_codon <- .find_exon_cds(exons, stop_codons)
+        stop_codons_tx_id <- factor(stop_codons$tx_id,
+                                    levels=levels(exons$tx_id))
+        if (any(is.na(stop_codons_tx_id)))
+            stop(wmsg("some stop codons cannot be mapped to an exon"))
+        stop_codons$tx_id <- stop_codons_tx_id
+
+        exon2stop_codon <- .find_exon_cds(exons, stop_codons,
+                                          what="stop codon")
         stop_codon_name <- stop_codons$name[exon2stop_codon]
         stop_codon_start <- stop_codons$start[exon2stop_codon]
         stop_codon_end <- stop_codons$end[exon2stop_codon]
@@ -693,9 +701,10 @@
     metadata
 }
 
-### If 'with.stop.codons' is TRUE then the stop codons will be merged to the
-### CDS. Otherwise they're ignored.
-makeTxDbFromGRanges <- function(gr, with.stop.codons=FALSE, metadata=NULL)
+### If 'drop.stop.codons' is TRUE then the "stop_codon" lines are ignored.
+### Otherwise (the default) the stop codons are considered to be part of the
+### CDS and merged to them.
+makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
 {
     if (!is(gr, "GenomicRanges"))
         stop("'gr' must be a GRanges object")
@@ -705,8 +714,8 @@ makeTxDbFromGRanges <- function(gr, with.stop.codons=FALSE, metadata=NULL)
         stop("all the sequences in 'seqinfo(gr)' must belong ",
              "to the same genome")
 
-    if (!isTRUEorFALSE(with.stop.codons))
-        stop("'with.stop.codons' must be TRUE or FALSE")
+    if (!isTRUEorFALSE(drop.stop.codons))
+        stop("'drop.stop.codons' must be TRUE or FALSE")
 
     metadata <- .normarg_metadata(metadata, Genome)
 
@@ -729,7 +738,7 @@ makeTxDbFromGRanges <- function(gr, with.stop.codons=FALSE, metadata=NULL)
     cds_with_gene_parent_IDX <- .get_cds_with_gene_parent_IDX(cds_IDX,
                                           Parent, gene_IDX, ID,
                                           gtf.format=gtf.format)
-    if (with.stop.codons)
+    if (!drop.stop.codons)
         stop_codon_IDX <- .get_stop_codon_IDX(type)
     exon_IDX <- .get_exon_IDX(type, cds_with_gene_parent_IDX)
     exon_with_gene_parent_IDX <- .get_exon_with_gene_parent_IDX(exon_IDX,
@@ -745,7 +754,7 @@ makeTxDbFromGRanges <- function(gr, with.stop.codons=FALSE, metadata=NULL)
                                    feature="exon", gtf.format=gtf.format)
     cds <- .extract_exons_from_GRanges(cds_IDX, gr, ID, Name, Parent,
                                    feature="cds", gtf.format=gtf.format)
-    if (with.stop.codons) {
+    if (!drop.stop.codons) {
         stop_codons <- .extract_exons_from_GRanges(stop_codon_IDX,
                                    gr, ID, Name, Parent,
                                    feature="stop_codon", gtf.format=gtf.format)
@@ -877,5 +886,18 @@ file2 <- file.path(GTF_files, "Aedes_aegypti.partial.gtf")
 gr2 <- import(file2, format="gtf", feature.type=feature.type)
 txdb2 <- makeTxDbFromGRanges(gr2)
 txdb2
+
+ensembl78_gtf_url <- "ftp://ftp.ensembl.org/pub/release-78/gtf/"
+filename <- "Saccharomyces_cerevisiae.R64-1-1.78.gtf.gz"
+url <- paste0(ensembl78_gtf_url, filename)
+file3 <- file.path(tempdir(), filename)
+download.file(url, file3)
+gr3 <- import(file3, format="gtf", feature.type=feature.type)
+txdb3 <- makeTxDbFromGRanges(gr3)
+txdb3
+
+txdb3b <- makeTxDbFromBiomart(biomart="ensembl",
+                              dataset="scerevisiae_gene_ensembl")
+txdb3b
 }
 
