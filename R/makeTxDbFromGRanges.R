@@ -470,7 +470,7 @@
     if (length(bad_tx) != 0L) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
         stop(wmsg("No genomic ranges found for the following transcripts ",
-                  "and the ranges could not be inferred from their exons ",
+                  "and their ranges could not be inferred from their exons ",
                   "(because the transcripts have exons on more than one ",
                   "chromosome): ", in1string))
     }
@@ -852,6 +852,54 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
     list(transcripts=transcripts, splicings=splicings)
 }
 
+test_makeTxDbFromGRanges_on_Ensembl_organism_gtf <- function(organism)
+{
+    cat("Download GTF file ... ")
+    gtf_url <- ftp_url_to_Ensembl_gtf()
+    url <- paste0(gtf_url, organism, "/")
+    organism_files <- ls_ftp_url(url)
+    gtf_file <- grep("gtf", organism_files, ignore.case=TRUE, value=TRUE)
+    if (length(gtf_file) != 1L) {
+        cat("ABORT (0 or more than 1 GTF file found)\n")
+        return(NA)
+    }
+    url <- paste0(url, gtf_file)
+    local_gtf_file <- file.path(tempdir(), gtf_file)
+    download.file(url, local_gtf_file)
+
+    cat("Import ", local_gtf_file, " as GRanges object 'gr' ... ", sep="")
+    gr <- import(local_gtf_file)
+    cat("\n")
+
+    cat("txdb1 <- makeTxDbFromGRanges(gr) ... ", sep="")
+    txdb1 <- makeTxDbFromGRanges(gr)
+    cat("\n")
+
+    dataset <- strsplit(organism, "_", fixed=TRUE)[[1L]]
+    dataset <- paste0(substr(dataset[[1L]], 1L, 1L),
+                      dataset[[2L]],
+                      "_gene_ensembl")
+    cat("txdb2 <- makeTxDbFromBiomart(\"ensembl\", ",
+                                     "\"", dataset, "\") ... ", sep="")
+    txdb2 <- try(makeTxDbFromBiomart("ensembl", dataset))
+    if (is(txdb2, "try-error")) {
+        cat("ABORT\n")
+        return(NA)
+    }
+    cat("\n")
+
+    cat("'txdb1' and 'txdb2' have the same transcripts, exons, and CDS: ")
+    dump1 <- .light_txdb_dump(txdb1)
+    dump2 <- .light_txdb_dump(txdb2)
+    OK <- identical(dump1, dump2)
+    if (OK) {
+        cat("YES\n")
+    } else {
+        cat("NO!!!!!!\n")
+    }
+    return(OK)
+}
+
 test_makeTxDbFromGRanges_on_Ensembl_gtf <- function(all=FALSE)
 {
     gtf_url <- ftp_url_to_Ensembl_gtf()
@@ -873,48 +921,11 @@ test_makeTxDbFromGRanges_on_Ensembl_gtf <- function(all=FALSE)
         organism <- organisms[[i]]
         cat("\n")
         cat("*************************************************************\n")
-        cat("[", i , "/", norganism, "] Testing makeTxDbFromGRanges() on ",
-            organism, "\n", sep="")
+        cat("[", i , "/", norganism, "] ",
+            "Testing makeTxDbFromGRanges() on ", organism, "\n", sep="")
         cat("*************************************************************\n")
         cat("\n")
-
-        cat("Download GTF file ... ")
-        url <- paste0(gtf_url, organism, "/")
-        organism_files <- ls_ftp_url(url)
-        gtf_file <- grep("gtf", organism_files, ignore.case=TRUE, value=TRUE)
-        if (length(gtf_file) != 1L) {
-            cat("SKIPPED (0 or more than 1 GTF file found)\n")
-            next
-        }
-        url <- paste0(url, gtf_file)
-        local_gtf_file <- file.path(tempdir(), gtf_file)
-        download.file(url, local_gtf_file)
-
-        cat("Import ", local_gtf_file, " as GRanges object 'gr' ... ", sep="")
-        gr <- import(local_gtf_file)
-        cat("\n")
-
-        cat("txdb1 <- makeTxDbFromGRanges(gr) ... ", sep="")
-        txdb1 <- makeTxDbFromGRanges(gr)
-        cat("\n")
-
-        dataset <- strsplit(organism, "_", fixed=TRUE)[[1L]]
-        dataset <- paste0(substr(dataset[[1L]], 1L, 1L),
-                          dataset[[2L]],
-                          "_gene_ensembl")
-        cat("txdb2 <- makeTxDbFromBiomart(\"ensembl\", ",
-                                         "\"", dataset, "\") ... ", sep="")
-        txdb2 <- makeTxDbFromBiomart("ensembl", dataset)
-        cat("\n")
-
-        cat("'txdb1' and 'txdb2' have the same transcripts, exons, and CDS: ")
-        dump1 <- .light_txdb_dump(txdb1)
-        dump2 <- .light_txdb_dump(txdb2)
-        if (identical(dump1, dump2)) {
-            cat("YES\n")
-        } else {
-            cat("NO!!!\n")
-        }
+        test_makeTxDbFromGRanges_on_Ensembl_organism_gtf(organism)
     }
     cat("\n")
     cat("DONE.\n")
