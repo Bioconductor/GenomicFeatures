@@ -8,6 +8,7 @@
 \alias{cds,TxDb-method}
 \alias{genes}
 \alias{genes,TxDb-method}
+\alias{promoters}
 \alias{promoters,TxDb-method}
 \alias{disjointExons}
 \alias{disjointExons,TxDb-method}
@@ -38,7 +39,6 @@ cds(x, ...)
 genes(x, ...)
 \S4method{genes}{TxDb}(x, vals=NULL, columns="gene_id", single.strand.genes.only=TRUE)
 
-#promoters(x, upstream=2000, downstream=200, ...)
 \S4method{promoters}{TxDb}(x, upstream=2000, downstream=200, ...)
 
 disjointExons(x, ...)
@@ -57,7 +57,12 @@ tRNAs(x)
     A \link{TxDb} object.
   }
   \item{...}{
-    Arguments to be passed to or from methods.
+    For the \code{transcripts}, \code{exons}, \code{cds}, \code{genes},
+    and \code{disjointExons} generic functions: arguments to be passed to
+    methods.
+
+    For the \code{promoters} method for \link{TxDb} objects: arguments
+    to be passed to the internal call to \code{transcripts}.
   }
   \item{vals}{
     Either \code{NULL} or a named list of vectors to be used to
@@ -99,12 +104,12 @@ tRNAs(x)
   \item{upstream}{
     For \code{promoters} : An \code{integer(1)} value indicating the
     number of bases upstream from the transcription start site. For
-    additional details see ?\code{'promoters,GRanges-method'}.
+    additional details see \code{?`promoters,GRanges-method`}.
   }
   \item{downstream}{
     For \code{promoters} : An \code{integer(1)} value indicating the 
     number of bases downstream from the transcription start site. For 
-    additional details see ?\code{'promoters,GRanges-method'}.
+    additional details see \code{?`promoters,GRanges-method`}.
   }
   \item{aggregateGenes}{
     For \code{disjointExons} : A \code{logical}. When \code{FALSE}
@@ -134,7 +139,7 @@ tRNAs(x)
   site the span of which is defined by \code{upstream} and \code{downstream}.
   For additional details on how the promoter range is computed and the
   handling of \code{+} and \code{-} strands see 
-  ?\code{'promoters,GRanges-method'}.
+  \code{?`promoters,GRanges-method`}.
 
   \code{disjointExons} creates a \code{GRanges} of non-overlapping
   exon parts with metadata columns of gene_id and exonic_part.
@@ -172,16 +177,27 @@ tRNAs(x)
 }
 
 \examples{
-## transcripts(), exons(), genes():
 txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite",
                            package="GenomicFeatures"))
-vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
 
+## ---------------------------------------------------------------------
+## transcripts()
+## ---------------------------------------------------------------------
+
+vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
 transcripts(txdb, vals)
+
+## ---------------------------------------------------------------------
+## exons()
+## ---------------------------------------------------------------------
 
 exons(txdb, vals=list(exon_id=1), columns=c("EXONID", "TXNAME"))
 exons(txdb, vals=list(tx_name="uc009vip.1"), columns=c("EXONID",
       "TXNAME"))
+
+## ---------------------------------------------------------------------
+## genes()
+## ---------------------------------------------------------------------
 
 genes(txdb)  # a GRanges object
 cols <- c("tx_id", "tx_chrom", "tx_strand",
@@ -208,14 +224,30 @@ multiple_strand_genes <- all_genes[elementLengths(all_genes) >= 2]
 multiple_strand_genes
 mcols(multiple_strand_genes)
 
-## microRNAs() :
+## ---------------------------------------------------------------------
+## promoters()
+## ---------------------------------------------------------------------
+
+## This:
+promoters(txdb, upstream=100, downstream=50)
+## is equivalent to:
+promoters(transcripts(txdb), upstream=100, downstream=50)
+
+## Extra arguments are passed to transcripts() so this:
+promoters(txdb, upstream=100, downstream=50,
+          columns=c("tx_name", "gene_id"))
+## is equivalent to:
+promoters(transcripts(txdb, columns=c("tx_name", "gene_id")),
+          upstream=100, downstream=50)
+
+## ---------------------------------------------------------------------
+## microRNAs()
+## ---------------------------------------------------------------------
+
 \dontrun{library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(mirbase.db)
 microRNAs(TxDb.Hsapiens.UCSC.hg19.knownGene)
 }
-
-## promoters() :
-head(promoters(txdb, 100, 50))
 }
 
 \keyword{methods}
