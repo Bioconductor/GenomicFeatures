@@ -177,8 +177,9 @@ tRNAs(x)
 }
 
 \examples{
-txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite",
-                           package="GenomicFeatures"))
+txdb_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
+                         package="GenomicFeatures")
+txdb <- loadDb(txdb_file)
 
 ## ---------------------------------------------------------------------
 ## transcripts()
@@ -233,7 +234,7 @@ promoters(txdb, upstream=100, downstream=50)
 ## is equivalent to:
 promoters(transcripts(txdb), upstream=100, downstream=50)
 
-## Extra arguments are passed to transcripts() so this:
+## Extra arguments are passed to transcripts(). So this:
 promoters(txdb, upstream=100, downstream=50,
           columns=c("tx_name", "gene_id"))
 ## is equivalent to:
