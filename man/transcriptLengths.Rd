@@ -21,8 +21,8 @@ transcriptLengths(txdb, with.cds_len=FALSE,
     A \link{TxDb} object.
   }
   \item{with.cds_len, with.utr5_len, with.utr3_len}{
-    \code{TRUE} or \code{FALSE}. Whether or not the CDS length, 5' UTR length,
-     and 3' UTR length, should also be returned for each transcript.
+    \code{TRUE} or \code{FALSE}. Whether or not to also extract and return
+     the CDS, 5' UTR, and 3' UTR lengths for each transcript.
   }
 }
 
@@ -38,10 +38,12 @@ transcriptLengths(txdb, with.cds_len=FALSE,
   A data frame with 1 row per transcript. The rows are guaranteed to by in
   the same order as the elements in the \link[GenomicRanges]{GRanges} object
   returned by \code{\link{transcripts}(txdb)}.
-  There are 5 to 8 columns, depending on how many additional information the
-  user requested via the \code{with.cds_len}, \code{with.utr5_len}, and
-  \code{with.utr3_len} arguments. The first 3 columns are the same as the
-  metadata columns on the object returned by
+  The data frame have from 5 to 8 columns, depending on what the user
+  requested via the \code{with.cds_len}, \code{with.utr5_len}, and
+  \code{with.utr3_len} arguments.
+
+  The first 3 columns are the same as the metadata columns on the object
+  returned by
   \code{\link{transcripts}(txdb, columns=c("tx_id", "tx_name", "gene_id"))}:
   \itemize{
     \item \code{tx_id}: The internal transcript ID. This ID is unique within
@@ -49,12 +51,11 @@ transcriptLengths(txdb, with.cds_len=FALSE,
           ID (like an Ensembl or FlyBase ID) or an Accession number, so it
           cannot be used to lookup the transcript in public data bases or in
           other \link{TxDb} objects. Furthermore, this ID could change when
-          re-running the exact same code that was used to make the \link{TxDb}
-          object.
+          re-running the code that was used to make the \link{TxDb} object.
     \item \code{tx_name}: An official/public transcript name or ID that can
           be used to lookup the transcript in public data bases or in other
-          \link{TxDb} objects. This column is not guaranteed to be unique and
-          can even contain NAs.
+          \link{TxDb} objects. This column is not guaranteed to contain unique
+          values and can even contain NAs.
     \item \code{gene_id}: The official/public ID of the gene that the
           transcript belongs to. Can be NA if the gene is unknown or if the
           transcript is not considered to belong to a gene.
