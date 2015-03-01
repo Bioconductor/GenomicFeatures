@@ -8,7 +8,7 @@
 \description{
   The \code{transcriptLengths} function extracts the transcript lengths from
   a \link{TxDb} object. It will also return the CDS and UTR lengths for each
-  transcript if the user requests it.
+  transcript if the user requests them.
 }
 
 \usage{
@@ -28,23 +28,26 @@ transcriptLengths(txdb, with.cds_len=FALSE,
 
 \details{
   All the lengths are counted in number of nucleotides.
+
   The length of a processed transcript is just the sum of the lengths of its
   exons. This should not be confounded with the length of the stretch of DNA
-  transcribed into RNA (a.k.a. "transcription unit"), which can be obtained
+  transcribed into RNA (a.k.a. transcription unit), which can be obtained
   with \code{width(transcripts(txdb))}.
 }
 
 \value{
-  A data frame with 1 row per transcript. The rows are guaranteed to by in
-  the same order as the elements in the \link[GenomicRanges]{GRanges} object
+  A data frame with 1 row per transcript. The rows are guaranteed to be in
+  the same order as the elements of the \link[GenomicRanges]{GRanges} object
   returned by \code{\link{transcripts}(txdb)}.
-  The data frame have from 5 to 8 columns, depending on what the user
+  The data frame has between 5 and 8 columns, depending on what the user
   requested via the \code{with.cds_len}, \code{with.utr5_len}, and
   \code{with.utr3_len} arguments.
 
-  The first 3 columns are the same as the metadata columns on the object
+  The first 3 columns are the same as the metadata columns of the object
   returned by
-  \code{\link{transcripts}(txdb, columns=c("tx_id", "tx_name", "gene_id"))}:
+\preformatted{  transcripts(txdb, columns=c("tx_id", "tx_name", "gene_id"))
+}
+  that is:
   \itemize{
     \item \code{tx_id}: The internal transcript ID. This ID is unique within
           the scope of the \link{TxDb} object. It is not an official or public
@@ -55,11 +58,12 @@ transcriptLengths(txdb, with.cds_len=FALSE,
     \item \code{tx_name}: An official/public transcript name or ID that can
           be used to lookup the transcript in public data bases or in other
           \link{TxDb} objects. This column is not guaranteed to contain unique
-          values and can even contain NAs.
+          values and it can contain NAs.
     \item \code{gene_id}: The official/public ID of the gene that the
           transcript belongs to. Can be NA if the gene is unknown or if the
           transcript is not considered to belong to a gene.
   }
+
   The other columns are quantitative:
   \itemize{
     \item \code{nexon}: The number of exons in the transcript.
@@ -104,12 +108,12 @@ dm3_txlens <- transcriptLengths(txdb, with.cds_len=TRUE,
 head(dm3_txlens)
 
 ## When cds_len is 0 (non-coding transcript), utr5_len and utr3_len
-## must also be 0.
+## must also be 0:
 non_coding <- dm3_txlens[dm3_txlens$cds_len == 0, ]
 stopifnot(all(non_coding[6:8] == 0))
 
 ## When cds_len is not 0 (coding transcript), cds_len + utr5_len +
-## utr3_len must be equal to tx_len.
+## utr3_len must be equal to tx_len:
 coding <- dm3_txlens[dm3_txlens$cds_len != 0, ]
 stopifnot(all(rowSums(coding[6:8]) == coding[[5]]))
 }
