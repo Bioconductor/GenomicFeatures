@@ -33,46 +33,82 @@ importFrom(AnnotationDbi, loadDb, saveDb)
 exportClasses(TxDb, FeatureDb)
 
 export(
+  ## utils.R:
   DEFAULT_CIRC_SEQS,
+
+  ## makeTxDb.R:
   makeTxDb,
+
+  ## makeTxDbFromUCSC.R:
   supportedUCSCtables,
+  getChromInfoFromUCSC,
+  makeTxDbFromUCSC,
+
+  ## makeTxDbFromBiomart.R:
+  getChromInfoFromBiomart,
+  makeTxDbFromBiomart,
+
+  ## makeTxDbFromGRanges.R:
+  makeTxDbFromGRanges,
+
+  ## makeTxDbFromGFF.R:
+  makeTxDbFromGFF,
+
+  ## makeFeatureDbFromUCSC.R:
   supportedUCSCFeatureDbTracks,
   supportedUCSCFeatureDbTables,
   UCSCFeatureDbTableSchema,
-  getChromInfoFromUCSC,
-  makeTxDbFromUCSC,
-  getChromInfoFromBiomart,
-  makeTxDbFromBiomart,
-  makeTxDbFromGRanges,
-  makeTxDbFromGFF,
+  makeFeatureDbFromUCSC,
+
+  ## id2name.R:
+  id2name,
+
+  ## transcripts.R:
   transcripts, exons, cds, genes,
   disjointExons,
   microRNAs,
   tRNAs,
-  transcriptsByOverlaps,
-  exonsByOverlaps,
-  cdsByOverlaps,
-  id2name,
+
+  ## transcriptsBy.R:
   transcriptsBy,
   exonsBy,
   cdsBy,
   intronsByTranscript,
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
-  extractUpstreamSeqs,
+
+  ## transcriptsByOverlaps.R:
+  transcriptsByOverlaps,
+  exonsByOverlaps,
+  cdsByOverlaps,
+
+  ## transcriptLengths.R:
+  transcriptLengths,
+
+  ## features.R:
+  features,
+
+  ## extractTranscriptSeqs.R:
   extractTranscriptSeqs,
-  transcriptLocs2refLocs,
-  transcriptWidths,
-  makeFeatureDbFromUCSC,
+
+  ## extractUpstreamSeqs.R:
+  extractUpstreamSeqs,
+
+  ## getPromoterSeq-methods.R:
+  getPromoterSeq,
+
+  ## makeTxDbPackage.R:
   makeTxDbPackage,
   makeTxDbPackageFromUCSC,
   makeTxDbPackageFromBiomart,
   makeFDbPackageFromUCSC,
-  features,
   supportedMiRBaseBuildValues,
-  getPromoterSeq,
   mapToTranscripts, pmapToTranscripts,
   mapFromTranscripts, pmapFromTranscripts,
+
+  ## transcriptLocs2refLocs.R:
+  transcriptLocs2refLocs,
+  transcriptWidths,
 
   # Deprecated:
   makeTranscriptDb,
