@@ -102,6 +102,7 @@ makeTxDbFromGFF(file,
   \code{\link{DEFAULT_CIRC_SEQS}},
   \code{\link{makeTxDbFromUCSC}},
   \code{\link{makeTxDbFromBiomart}},
+  \code{\link{makeTxDbFromGRanges}},
   \code{\link{makeTxDb}},
   \code{\link{supportedMiRBaseBuildValues}}
 }

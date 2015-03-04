@@ -116,6 +116,7 @@ getChromInfoFromBiomart(biomart="ensembl",
   \code{\link[biomaRt]{listDatasets}},
   \code{\link{DEFAULT_CIRC_SEQS}},
   \code{\link{makeTxDbFromUCSC}},
+  \code{\link{makeTxDbFromGRanges}},
   \code{\link{makeTxDbFromGFF}},
   \code{\link{makeTxDb}},
   \code{\link{supportedMiRBaseBuildValues}}

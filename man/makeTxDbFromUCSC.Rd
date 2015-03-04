@@ -73,6 +73,7 @@ makeTxDbFromUCSC(
   \code{\link[rtracklayer]{ucscGenomes}},
   \code{\link{DEFAULT_CIRC_SEQS}},
   \code{\link{makeTxDbFromBiomart}},
+  \code{\link{makeTxDbFromGRanges}},
   \code{\link{makeTxDbFromGFF}},
   \code{\link{makeTxDb}},
   \code{\link{supportedMiRBaseBuildValues}}
