@@ -70,13 +70,27 @@ makeTxDbFromUCSC(
 }
 
 \seealso{
-  \code{\link[rtracklayer]{ucscGenomes}},
-  \code{\link{DEFAULT_CIRC_SEQS}},
-  \code{\link{makeTxDbFromBiomart}},
-  \code{\link{makeTxDbFromGRanges}},
-  \code{\link{makeTxDbFromGFF}},
-  \code{\link{makeTxDb}},
-  \code{\link{supportedMiRBaseBuildValues}}
+  \itemize{
+    \item \code{\link{makeTxDbFromBiomart}}, \code{\link{makeTxDbFromGRanges}},
+          and \code{\link{makeTxDbFromGFF}}, for convenient ways to make a
+          \link{TxDb} object from BioMart online resources, or from a
+          \link[GenomicRanges]{GRanges} object, or from a GFF or GTF file.
+
+    \item \code{\link[rtracklayer]{ucscGenomes}} in the \pkg{rtracklayer}
+          package.
+
+    \item \code{\link{DEFAULT_CIRC_SEQS}}.
+
+    \item The \code{\link{supportedMiRBaseBuildValues}} function for
+          listing all the possible values for the \code{miRBaseBuild}
+          argument.
+
+    \item The \link{TxDb} class.
+
+    \item \code{\link{makeTxDb}} for the low-level function used by the
+          \code{makeTxDbFrom*} functions to make the \link{TxDb} object
+          returned to the user.
+  }
 }
 
 \examples{

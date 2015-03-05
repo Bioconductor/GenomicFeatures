@@ -111,21 +111,34 @@ getChromInfoFromBiomart(biomart="ensembl",
 }
 
 \seealso{
-  \code{\link[biomaRt]{listMarts}},
-  \code{\link[biomaRt]{useMart}},
-  \code{\link[biomaRt]{listDatasets}},
-  \code{\link{DEFAULT_CIRC_SEQS}},
-  \code{\link{makeTxDbFromUCSC}},
-  \code{\link{makeTxDbFromGRanges}},
-  \code{\link{makeTxDbFromGFF}},
-  \code{\link{makeTxDb}},
-  \code{\link{supportedMiRBaseBuildValues}}
+  \itemize{
+    \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromGRanges}},
+          and \code{\link{makeTxDbFromGFF}}, for convenient ways to make a
+          \link{TxDb} object from UCSC online resources, or from a
+          \link[GenomicRanges]{GRanges} object, or from a GFF or GTF file.
+
+    \item The \code{\link[biomaRt]{listMarts}}, \code{\link[biomaRt]{useMart}},
+          and \code{\link[biomaRt]{listDatasets}} functions in the
+          \pkg{biomaRt} package.
+
+    \item \code{\link{DEFAULT_CIRC_SEQS}}.
+
+    \item The \code{\link{supportedMiRBaseBuildValues}} function for
+          listing all the possible values for the \code{miRBaseBuild}
+          argument.
+
+    \item The \link{TxDb} class.
+
+    \item \code{\link{makeTxDb}} for the low-level function used by the
+          \code{makeTxDbFrom*} functions to make the \link{TxDb} object
+          returned to the user.
+  }
 }
 
 \examples{
 ## Discover which datasets are available in the "ensembl" BioMart
 ## database:
-library("biomaRt")
+library(biomaRt)
 head(listDatasets(useMart("ensembl")))
 
 ## Retrieving an incomplete transcript dataset for Human from the

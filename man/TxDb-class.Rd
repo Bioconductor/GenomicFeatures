@@ -83,23 +83,29 @@
 
 \seealso{
   \itemize{
-    \item \code{\link{makeTxDbFromUCSC}} and
-          \code{\link{makeTxDbFromBiomart}} for convenient ways to
-          make TxDb objects from UCSC or BioMart online resources.
-    \item \code{\link{makeTxDbFromGFF}} for making a TxDb
-          object from annotations available as a GFF3 or GTF file.
+    \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromBiomart}},
+          \code{\link{makeTxDbFromGRanges}}, and \code{\link{makeTxDbFromGFF}},
+          for convenient ways to make a \link{TxDb} object from UCSC or BioMart
+          online resources, or from a \link[GenomicRanges]{GRanges} object,
+          or from a GFF or GTF file.
+
     \item \code{\link{saveDb}} and \code{\link{loadDb}} for
           saving and loading the database content of a TxDb object.
+
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
           and \code{\link{transcriptsByOverlaps}},
           for how to extract genomic features from a TxDb object.
+
     \item \code{\link{transcriptLengths}} for extracting the transcript
           lengths from a \link{TxDb} object.
+
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
           TxDb object.
+
     \item The \link{FeatureDb} class for storing genomic locations
           of an arbitrary type of genomic features.
+
     \item The \link[GenomeInfoDb]{Seqinfo} class in the \pkg{GenomeInfoDb}
           package.
   }

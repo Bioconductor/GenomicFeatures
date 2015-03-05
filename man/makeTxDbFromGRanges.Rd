@@ -51,19 +51,26 @@ makeTxDbFromGRanges(gr, drop.stop.codons=FALSE, metadata=NULL)
           \link{TxDb} object from UCSC or BioMart online resources, or
           directly from a GFF or GTF file.
 
+    \item The \code{\link[rtracklayer]{import}} function in the
+          \pkg{rtracklayer} package.
+
     \item The \code{asGFF} method for \link{TxDb} objects
           (\link{asGFF,TxDb-method}) for the reverse of
           \code{makeTxDbFromGRanges}, that is, for turning a \link{TxDb}
           object into a \link[GenomicRanges]{GRanges} object structured as
           GFF.
 
+    \item The \link{TxDb} class.
+
     \item \code{\link{makeTxDb}} for the low-level function used by the
-          above functions for making the \link{TxDb} object returned to the
-          user.
+          \code{makeTxDbFrom*} functions to make the \link{TxDb} object
+          returned to the user.
   }
 }
 
 \examples{
+library(rtracklayer)  # for the import() function
+
 ## ---------------------------------------------------------------------
 ## WITH A GRanges OBJECT STRUCTURED AS GFF3
 ## ---------------------------------------------------------------------
@@ -84,5 +91,17 @@ stopifnot(identical(as.list(txdb), as.list(makeTxDbFromGRanges(gr2))))
 ## ---------------------------------------------------------------------
 ## WITH A GRanges OBJECT STRUCTURED AS GTF
 ## ---------------------------------------------------------------------
+GTF_files <- system.file("extdata", "GTF_files", package="GenomicFeatures")
 
+## test1.gtf was grabbed from http://mblab.wustl.edu/GTF22.html (5 exon
+## gene with 3 translated exons):
+path <- file.path(GTF_files, "test1.gtf")
+gr <- import(path)
+txdb <- makeTxDbFromGRanges(gr)
+txdb
+
+path <- file.path(GTF_files, "Aedes_aegypti.partial.gtf")
+gr <- import(path)
+txdb <- makeTxDbFromGRanges(gr)
+txdb
 }
