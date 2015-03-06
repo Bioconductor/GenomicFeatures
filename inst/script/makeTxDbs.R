@@ -81,7 +81,7 @@ makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
 			destDir=TxDbOutDir,
-                        genome="dm3",
+                        genome="dm6",
                         tablename="ensGene")
                         
 ## Arabidopsis biomaRt
@@ -89,7 +89,7 @@ makeTxDbPackageFromBiomart(version=version,
                           maintainer=maintainer,
                           author=author,
 		 	  destDir=TxDbOutDir,
-                          biomart="plants_mart_22",
+                          biomart="plants_mart_25",
                           dataset="athaliana_eg_gene")
                                          
 
