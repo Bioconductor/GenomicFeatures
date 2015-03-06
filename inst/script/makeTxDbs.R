@@ -68,7 +68,7 @@ makeTxDbPackageFromUCSC(version=version,
                         tablename="knownGene")
 
 
-## c elegans enseble trac
+## c elegans enseble track
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -81,7 +81,7 @@ makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
 			destDir=TxDbOutDir,
-                        genome="dm6",
+                        genome="dm3",
                         tablename="ensGene")
                         
 ## Arabidopsis biomaRt
