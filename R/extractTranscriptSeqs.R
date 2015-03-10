@@ -77,8 +77,13 @@ setMethod("extractTranscriptSeqs", "DNAString",
 
 .normarg_transcripts <- function(transcripts)
 {
-    if (is(transcripts, "TxDb")) {
-        transcripts <- exonsBy(transcripts, by="tx", use.names=TRUE)
+    if (!is(transcripts, "GRangesList")) {
+        transcripts <- try(exonsBy(transcripts, by="tx", use.names=TRUE),
+                           silent=TRUE)
+        if (is(transcripts, "try-error")){
+            wmsg(paste0("unable to coerce ", transcripts,
+                    " to a GRangesList by using exonsBy. \n"))
+        }
     } else if (!is(transcripts, "GRangesList")) {
         stop("'transcripts' must be a GRangesList or\n  TxDb object")
     }

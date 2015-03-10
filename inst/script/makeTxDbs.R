@@ -83,7 +83,10 @@ makeTxDbPackageFromUCSC(version=version,
 			destDir=TxDbOutDir,
                         genome="dm3",
                         tablename="ensGene")
-                        
+
+
+## There is apparently a problem with this resource here:
+## It looks like the for the splicing is has missing fields...
 ## Arabidopsis biomaRt
 makeTxDbPackageFromBiomart(version=version,
                           maintainer=maintainer,
