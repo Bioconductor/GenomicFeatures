@@ -33,10 +33,12 @@ extractTranscriptSeqs(x, transcripts, ...)
     It must be an \link[IRanges]{RangesList} object when \code{x} is a
     \link[Biostrings]{DNAString} object.
 
-    It must be a \link[GenomicRanges]{GRangesList} or \link{TxDb}
-    object when \code{x} is a \link[BSgenome]{BSgenome} object.
-    If the latter, it's first turned into a \link[GenomicRanges]{GRangesList}
-    object with \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
+    It must be a \link[GenomicRanges]{GRangesList} object or any
+    object for which \code{\link{exonsBy}} is implemented (e.g. a \link{TxDb}
+    object) when \code{x} is a \link[BSgenome]{BSgenome} object.
+    If the latter, then it's first turned into a
+    \link[GenomicRanges]{GRangesList} object with
+    \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
   }
   \item{...}{
     Additional arguments, for use in specific methods.
@@ -84,6 +86,13 @@ extractTranscriptSeqs(x, transcripts, ...)
           \pkg{BSgenome} package for checking avaibility of BSgenome
           data packages (and installing the desired one).
           
+    \item The \link[Biostrings]{DNAString} and \link[Biostrings]{DNAStringSet}
+          classes defined and documented in the \pkg{Biostrings} package.
+
+    \item The \code{\link[Biostrings]{translate}} function in the
+          \pkg{Biostrings} package for translating DNA or RNA sequences
+          into amino acid sequences.
+
     \item The \link[GenomicRanges]{GRangesList} class defined and documented
           in the \pkg{GenomicRanges} package.
 
@@ -93,12 +102,7 @@ extractTranscriptSeqs(x, transcripts, ...)
     \item The \code{\link{exonsBy}} function for extracting exon ranges
           grouped by transcript.
 
-    \item The \link[Biostrings]{DNAString} and \link[Biostrings]{DNAStringSet}
-          classes defined and documented in the \pkg{Biostrings} package.
-
-    \item The \code{\link[Biostrings]{translate}} function in the
-          \pkg{Biostrings} package for translating DNA or RNA sequences
-          into amino acid sequences.
+    \item The \link{TxDb} class.
   }
 }
 
