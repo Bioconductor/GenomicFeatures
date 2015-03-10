@@ -236,6 +236,10 @@ makeTxDbPackageFromBiomart <- function(
   dataset="hsapiens_gene_ensembl",
   transcript_ids=NULL,   ## optional
   circ_seqs=DEFAULT_CIRC_SEQS, 
+  filters="",
+  id_prefix="ensembl_",
+  host="www.biomart.org",
+  port=80,
   miRBaseBuild=NA){
     ## checks
     if(missing(version) || !isSingleString(version)){
@@ -269,6 +273,10 @@ makeTxDbPackageFromBiomart <- function(
                                 dataset=dataset,
                                 transcript_ids=transcript_ids,
                                 circ_seqs=circ_seqs,
+                                filters=filters,
+                                id_prefix=id_prefix,
+                                host=host,
+                                port=port,
                                 miRBaseBuild=miRBaseBuild)
     ## Make the Package
     makeTxDbPackage(txdb,
