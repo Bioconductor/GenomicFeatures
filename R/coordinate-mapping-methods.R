@@ -182,8 +182,10 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"),
 
 setMethod("mapToTranscripts", c("ANY", "TxDb"), 
     function(x, transcripts, ignore.strand=TRUE, 
-             extractor.fun = transcripts, ...) 
+             extractor.fun = GenomicFeatures::transcripts, ...) 
     {
+        if (!is.function(extractor.fun))
+            stop("'extractor.fun' must be a function")
         group1 <- c("transcripts", "exons", "cds", "genes", "promoters",
                     "disjointExons", "microRNAs", "tRNAs") 
         group2 <- c("transcriptsBy", "exonsBy", "cdsBy", "intronsByTranscript", 
@@ -191,9 +193,9 @@ setMethod("mapToTranscripts", c("ANY", "TxDb"),
 
         fname <- extractor.fun@generic 
         if (fname %in% group1) {
-            features <- extractor.fun(transcripts, ...)
-            if (is.null(names(features)))
-                names(features) <- mcols(features)[1]
+            transcripts <- extractor.fun(transcripts, ...)
+            if (is.null(names(transcripts)))
+                names(transcripts) <- mcols(transcripts)[,1]
         } else if (fname %in% group2) {
             transcripts <- extractor.fun(transcripts, ...)
         } else {

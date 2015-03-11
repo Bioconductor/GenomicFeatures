@@ -33,7 +33,7 @@
 \S4method{mapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
           ignore.strand = TRUE, ...) 
 \S4method{mapToTranscripts}{ANY,TxDb}(x, transcripts, ignore.strand = TRUE, 
-          extractor.fun = transcripts, ...) 
+          extractor.fun = GenomicFeatures::transcripts, ...) 
 \S4method{pmapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
           ignore.strand = TRUE, ...) 
 
