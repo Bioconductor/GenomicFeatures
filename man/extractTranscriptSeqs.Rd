@@ -8,10 +8,8 @@
 \title{Extract transcript sequences from chromosomes}
 
 \description{
-  \code{extractTranscriptSeqs} is a generic function for extracting
-  transcript sequences from an object representing a single chromosome
-  (e.g. a \link[Biostrings]{DNAString} object) or a collection of
-  chromosomes (e.g. a \link[BSgenome]{BSgenome} object).
+  \code{extractTranscriptSeqs} extracts transcript or CDS sequences from
+  an object representing a single chromosome or a collection of chromosomes.
 }
 
 \usage{
@@ -24,21 +22,32 @@ extractTranscriptSeqs(x, transcripts, ...)
 
 \arguments{
   \item{x}{
-    A \link[Biostrings]{DNAString} or \link[BSgenome]{BSgenome} object
-    or any object with a \code{\link[Biostrings]{getSeq}} method.
+    An object representing a single chromosome or a collection of chromosomes.
+    More precisely, \code{x} can be a \link[Biostrings]{DNAString} object
+    (single chromosome), or a \link[BSgenome]{BSgenome} object (collection
+    of chromosomes).
+
+    Other objects representing a collection of chromosomes are supported
+    (e.g. \link[Rsamtools]{FaFile} objects in the \pkg{Rsamtools} package)
+    as long as \code{\link[GenomeInfoDb]{seqinfo}} and
+    \code{\link[Biostrings]{getSeq}} work on them.
   }
   \item{transcripts}{
     An object representing the exon ranges of each transcript to extract.
- 
-    It must be an \link[IRanges]{RangesList} object when \code{x} is a
-    \link[Biostrings]{DNAString} object.
 
-    It must be a \link[GenomicRanges]{GRangesList} object or any
-    object for which \code{\link{exonsBy}} is implemented (e.g. a \link{TxDb}
-    object) when \code{x} is a \link[BSgenome]{BSgenome} object.
-    If the latter, then it's first turned into a
-    \link[GenomicRanges]{GRangesList} object with
-    \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
+    More precisely:
+    \itemize{
+      \item If \code{x} is a \link[Biostrings]{DNAString} object, then
+            \code{transcripts} must be an \link[IRanges]{RangesList} object.
+
+      \item If \code{x} is a \link[BSgenome]{BSgenome} object or any object
+            representing a collection of chromosomes, then \code{transcripts}
+            must be a \link[GenomicRanges]{GRangesList} object or any object
+            for which \code{\link{exonsBy}} is implemented (e.g. a \link{TxDb}
+            object). If the latter, then it's first turned into a
+            \link[GenomicRanges]{GRangesList} object with
+            \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
+    }
   }
   \item{...}{
     Additional arguments, for use in specific methods.
@@ -108,7 +117,28 @@ extractTranscriptSeqs(x, transcripts, ...)
 
 \examples{
 ## ---------------------------------------------------------------------
-## A FIRST EXAMPLE
+## 1. A TOY EXAMPLE
+## ---------------------------------------------------------------------
+
+library(Biostrings)
+
+## A chromosome of length 30:
+x <- DNAString("ATTTAGGACACTCCCTGAGGACAAGACCCC")
+
+## 2 transcripts on 'x':
+tx1 <- IRanges(1, 8)            # 1 exon
+tx2 <- c(tx1, IRanges(12, 30))  # 2 exons
+transcripts <- IRangesList(tx1=tx1, tx2=tx2)
+extractTranscriptSeqs(x, transcripts)
+
+## By default, all the exons were considered to be on the plus strand.
+## We can use the 'strand' argument to tell extractTranscriptSeqs()
+## to extract them from the minus strand:
+extractTranscriptSeqs(x, transcripts, strand="-")
+extractTranscriptSeqs(x, IRangesList(tx1=tx1, tx2=rev(tx2)), strand="-")
+
+## ---------------------------------------------------------------------
+## 2. A REAL EXAMPLE
 ## ---------------------------------------------------------------------
 
 ## Load a genome:
@@ -134,7 +164,7 @@ tx_seqs
 stopifnot(identical(width(tx_seqs), unname(sum(width(transcripts)))))
 
 ## ---------------------------------------------------------------------
-## USING extractTranscriptSeqs() TO EXTRACT CDS SEQUENCES
+## 3. USING extractTranscriptSeqs() TO EXTRACT CDS SEQUENCES
 ## ---------------------------------------------------------------------
 
 cds <- cdsBy(txdb, by="tx", use.names=TRUE)
@@ -158,7 +188,7 @@ cds_seqs2 <- narrow(tx_seqs[names(cds_seqs)],
 stopifnot(identical(as.character(cds_seqs), as.character(cds_seqs2)))
 
 ## ---------------------------------------------------------------------
-## TRANSLATE THE CDS SEQUENCES
+## 4. TRANSLATE THE CDS SEQUENCES
 ## ---------------------------------------------------------------------
 
 prot_seqs <- translate(cds_seqs, if.fuzzy.codon="solve")

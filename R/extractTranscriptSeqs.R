@@ -9,15 +9,15 @@
         ## 'strand' is a list-like object.
         if (!identical(unname(elementLengths(strand)),
                        unname(elementLengths(transcripts))))
-            stop("when 'strand' is a list-like object, it must have ",
-                 "the same \"shape\" as\n  'transcripts' (i.e. same length ",
-                 "plus 'strand[[i]]' must have the same\n  length as ",
-                 "'transcripts[[i]]' for all 'i')")
+            stop(wmsg("when 'strand' is a list-like object, it must have ",
+                      "the same \"shape\" as 'transcripts' (i.e. same length ",
+                      "plus 'strand[[i]]' must have the same length as ",
+                      "'transcripts[[i]]' for all 'i')"))
         return(strand(unlist(strand, use.names=FALSE)))
     }
     if (!(is.vector(strand) || is.factor(strand) || is(strand, "Rle")))
-        stop("'strand' must be an atomic vector, a factor, an Rle object, ",
-             "or a list-like object")
+        stop(wmsg("'strand' must be an atomic vector, a factor, ",
+                  "an Rle object, or a list-like object"))
     strand <- strand(strand)
     strand <- S4Vectors:::V_recycle(strand, transcripts,
                                     "strand", "transcripts")
@@ -32,12 +32,12 @@ setMethod("extractTranscriptSeqs", "DNAString",
     function(x, transcripts, strand="+")
     {
         if (!is(transcripts, "RangesList"))
-            stop("when 'x' is a DNAString object, ",
-                 "'transcripts' must be an RangesList object")
+            stop(wmsg("when 'x' is a DNAString object, ",
+                      "'transcripts' must be an RangesList object"))
         unlisted_strand <- .unlist_strand(strand, transcripts)
         if (!all(unlisted_strand %in% c("+", "-")))
-            stop("'strand' can only contain \"+\" and/or \"-\" values. ",
-                 "\"*\" is not allowed.")
+            stop(wmsg("'strand' can only contain \"+\" and/or \"-\" values. ",
+                      "\"*\" is not allowed."))
         idx <- which(unlisted_strand == "-")
         exons <- extractList(x, unlist(transcripts, use.names=FALSE))
         exons[idx] <- reverseComplement(exons[idx])
@@ -45,18 +45,50 @@ setMethod("extractTranscriptSeqs", "DNAString",
     }
 )
 
-## When 'transcripts' contains CDSs (instead of exons) grouped by transcript,
-## some of the lowest or/and highest exon ranks can be missing.
-.check_exon_rank <- function(exon_rank, partitioning)
+### Check for transcripts that have exons located on more than one
+### chromosome.
+.check_exon_chrom <- function(tx1)
 {
+    run_lens <- runLength(seqnames(tx1))
+    idx <- which(elementLengths(run_lens) != 1L)
+    if (length(idx) == 0L)
+        return()
+    tx1_names <- names(tx1)
+    if (is.null(tx1_names)) {
+        some_in1string <- ""
+    } else {
+        some_idx <- head(idx, n=2L)
+        some_names <- tx1_names[some_idx]
+        some_in1string <- paste0(some_names, collapse=", ")
+        if (length(idx) > length(some_idx))
+            some_in1string <- paste0("e.g. ", some_in1string, ", etc...")
+        some_in1string <- paste0(" (", some_in1string, ")")
+    }
+    stop(wmsg("Some transcripts", some_in1string, " have exons located on ",
+              "more than one chromosome. This is not supported yet."))
+}
+
+### Check the "exon_rank" inner metadata column if present. When 'transcripts'
+### contains CDSs (instead of exons) grouped by transcript, some of the lowest
+### or/and highest exon ranks can be missing.
+.check_exon_rank <- function(tx1)
+{
+    exon_rank <- mcols(tx1@unlistData)$exon_rank
+    if (is.null(exon_rank))
+        return()
     if (!is.numeric(exon_rank))
-        stop("\"exon_rank\" column in GRangesList object 'transcripts' ",
-             "is not numeric")
+        stop(wmsg("\"exon_rank\" inner metadata column in GRangesList ",
+                  "object 'transcripts' is not numeric"))
     if (!is.integer(exon_rank)) {
-        warning("\"exon_rank\" column in GRangesList object 'transcripts' ",
-                "is not integer")
+        warning(wmsg("\"exon_rank\" inner metadata column in GRangesList ",
+                     "object 'transcripts' is not integer"))
         exon_rank <- as.integer(exon_rank)
     }
+    if (any(is.na(exon_rank)))
+        stop(wmsg("\"exon_rank\" inner metadata column in GRangesList ",
+                  "object 'transcripts' contains NAs"))
+
+    partitioning <- PartitioningByEnd(tx1)
     ## The 2 lines below are equivalent to:
     ##   tmp <- relist(exon_rank, partitioning)
     ##   min_rank <- min(tmp)
@@ -64,53 +96,15 @@ setMethod("extractTranscriptSeqs", "DNAString",
     v <- Views(exon_rank, partitioning)
     min_rank <- viewMins(v)
     if (any(min_rank < 1L))
-        stop("\"exon_rank\" column in GRangesList object 'transcripts' ",
-             "contains ranks < 1")
-    transcripts_eltlens <- elementLengths(partitioning)
-    target <- S4Vectors:::fancy_mseq(transcripts_eltlens,
+        stop(wmsg("\"exon_rank\" inner metadata column in GRangesList ",
+                  "object 'transcripts' contains ranks < 1"))
+    tx1_eltlens <- elementLengths(partitioning)
+    target <- S4Vectors:::fancy_mseq(tx1_eltlens,
                                      offset=min_rank - 1L)
     if (!identical(target, unname(exon_rank)))
-        stop("\"exon_rank\" column in GRangesList object 'transcripts' ",
-             "does not contain\n  increasing consecutive ranks ",
-             "for some transcripts")
-}
-
-.normarg_transcripts <- function(transcripts)
-{
-    if (!is(transcripts, "GRangesList")) {
-        transcripts <- try(exonsBy(transcripts, by="tx", use.names=TRUE),
-                           silent=TRUE)
-        if (is(transcripts, "try-error")){
-            wmsg(paste0("unable to coerce ", transcripts,
-                    " to a GRangesList by using exonsBy. \n"))
-        }
-    } else if (!is(transcripts, "GRangesList")) {
-        stop("'transcripts' must be a GRangesList or\n  TxDb object")
-    }
-    ## Check for transcripts that have exons located on more than one
-    ## chromosome.
-    run_lens <- runLength(seqnames(transcripts))
-    idx <- which(elementLengths(run_lens) != 1L)
-    if (length(idx) != 0L) {
-        transcripts_names <- names(transcripts)
-        if (is.null(transcripts_names)) {
-            some_in1string <- ""
-        } else {
-            some_idx <- head(idx, n=2L)
-            some_names <- transcripts_names[some_idx]
-            some_in1string <- paste0(some_names, collapse=", ")
-            if (length(idx) > length(some_idx))
-                some_in1string <- paste0("e.g. ", some_in1string, ", etc...")
-            some_in1string <- paste0(" (", some_in1string, ")")
-        }
-        stop("Some transcripts", some_in1string, " have exons located on ",
-             "more than one chromosome.\n  This is not supported yet.")
-    }
-    ## Check the "rank" metadata column if present.
-    exon_rank <- mcols(transcripts@unlistData)$exon_rank
-    if (!is.null(exon_rank))
-        .check_exon_rank(exon_rank, PartitioningByEnd(transcripts))
-    transcripts
+        stop(wmsg("\"exon_rank\" inner metadata column in GRangesList ",
+                  "object 'transcripts' does not contain increasing ",
+                  "consecutive ranks for some transcripts"))
 }
 
 ### TODO: Incorporate this fast path to "unlist" method for XStringSet objects.
@@ -147,23 +141,22 @@ if (FALSE) {
 .extract_and_combine <- function(x, seqname, ranges)
     .fast_XStringSet_unlist(getSeq(x, GRanges(seqname, ranges)))
 
-.extractTranscriptSeqsFromOneSeq <-
-    function(seqname, x, transcripts)
+.extractTranscriptSeqsFromOneSeq <- function(seqlevel, x, transcripts)
 {
-    seqlevels(transcripts, force=TRUE) <- seqname
+    seqlevels(transcripts, force=TRUE) <- seqlevel
     strand <- strand(transcripts)
     transcripts <- ranges(transcripts)
-    if (seqname %in% seqnames(x)) {
+    if (seqlevel %in% seqlevels(x)) {
         ## We try to load the less stuff possible i.e. only the nucleotides
         ## that participate in at least one exon.
         exons <- unlist(transcripts, use.names=FALSE)
         ranges_to_load <- reduce(exons, with.inframe.attrib=TRUE)
-        x <- .extract_and_combine(x, seqname, ranges_to_load)
+        x <- .extract_and_combine(x, seqlevel, ranges_to_load)
         exons <- attr(ranges_to_load, "inframe")
         transcripts <- relist(exons, transcripts)
     } else {
         ## Why do we need this?
-        regex <- paste0("^", seqname, "$")
+        regex <- paste0("^", seqlevel, "$")
         x <- getSeq(x, regex, as.character=FALSE)
     }
     extractTranscriptSeqs(x, transcripts, strand=strand)
@@ -172,18 +165,29 @@ if (FALSE) {
 setMethod("extractTranscriptSeqs", "ANY",
     function(x, transcripts)
     {
-        transcripts <- .normarg_transcripts(transcripts)
-        seqlevels(transcripts) <- seqlevelsInUse(transcripts)
-        ## 'seqnames0' is just an ordinary factor (not Rle) parallel to
-        ## 'transcripts'.
-        seqnames0 <- unlist(runValue(seqnames(transcripts)), use.names=FALSE)
-        dnaset_list <- lapply(levels(seqnames0),
-                              .extractTranscriptSeqsFromOneSeq,
-                              x, transcripts)
-        ans <- unsplit_list_of_XVectorList("DNAStringSet",
-                                           dnaset_list,
-                                           seqnames0)
+        if (!is(transcripts, "GRangesList")) {
+            transcripts <- try(exonsBy(transcripts, by="tx", use.names=TRUE),
+                               silent=TRUE)
+            if (is(transcripts, "try-error"))
+                stop(wmsg("failed to extract the exon ranges ",
+                          "from 'transcripts' with ",
+                          "exonsBy(transcripts, by=\"tx\", use.names=TRUE)"))
+        }
+        idx1 <- which(elementLengths(transcripts) != 0L)
+        tx1 <- transcripts[idx1]
+        .check_exon_chrom(tx1)
+        .check_exon_rank(tx1)
+
+        seqlevels(tx1) <- seqlevelsInUse(tx1)
+        ## 'seqnames1' is just an ordinary factor (not Rle) parallel to 'tx1'.
+        seqnames1 <- unlist(runValue(seqnames(tx1)), use.names=FALSE)
+        dnaset_list <- lapply(levels(seqnames1),
+                              .extractTranscriptSeqsFromOneSeq, x, tx1)
+        ans <- rep.int(DNAStringSet(""), length(transcripts))
         names(ans) <- names(transcripts)
+        ans[idx1] <- unsplit_list_of_XVectorList("DNAStringSet",
+                                                 dnaset_list,
+                                                 seqnames1)
         ans 
     }
 )
