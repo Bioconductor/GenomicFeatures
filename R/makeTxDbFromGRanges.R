@@ -402,6 +402,15 @@
     }
     tx_name <- as.character(tx_name)
 
+    tx_type <- unique(transcripts_by_id[ , "tx_type"])
+    bad_tx <- names(which(elementLengths(tx_type) != 1L))
+    if (length(bad_tx) != 0L) {
+        in1string <- paste0(sort(bad_tx), collapse=", ")
+        stop(wmsg("The following transcripts have multiple parts that cannot ",
+                  "be merged because of incompatible type: ", in1string))
+    }
+    tx_type <- as.character(tx_type)
+
     tx_chrom <- unique(transcripts_by_id[ , "tx_chrom"])
     bad_tx <- names(which(elementLengths(tx_chrom) != 1L))
     if (length(bad_tx) != 0L) {
@@ -426,6 +435,7 @@
     data.frame(
         tx_id=tx_id,
         tx_name=tx_name,
+        tx_type=tx_type,
         tx_chrom=tx_chrom,
         tx_strand=tx_strand,
         tx_start=tx_start,
@@ -434,12 +444,13 @@
     )
 }
 
-.extract_transcripts_from_GRanges <- function(tx_IDX, gr, ID, Name)
+.extract_transcripts_from_GRanges <- function(tx_IDX, gr, type, ID, Name)
 {
     tx_id <- ID[tx_IDX]
     transcripts <- data.frame(
         tx_id=tx_id,
         tx_name=Name[tx_IDX],
+        tx_type=type[tx_IDX],
         tx_chrom=seqnames(gr)[tx_IDX],
         tx_strand=strand(gr)[tx_IDX],
         tx_start=start(gr)[tx_IDX],
@@ -469,6 +480,8 @@
 
     tx_id <- names(exons_by_id)
 
+    tx_type <- rep.int("inferred_from_exons", length(tx_id))
+
     tx_chrom <- unique(exons_by_id[ , "exon_chrom"])
     tx_chrom[elementLengths(tx_chrom) != 1L] <- NA_character_
     tx_chrom <- as.character(tx_chrom)
@@ -483,6 +496,7 @@
     data.frame(
         tx_id=tx_id,
         tx_name=tx_id,
+        tx_type=tx_type,
         tx_chrom=tx_chrom,
         tx_strand=tx_strand,
         tx_start=tx_start,
@@ -752,7 +766,8 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
     } else {
         stop_codons <- NULL
     }
-    transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr, ID, Name)
+    transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr,
+                                                     type, ID, Name)
     if (gtf.format) {
         transcripts <- .add_missing_transcripts(transcripts, exons)
         genes <- .extract_genes_from_gtf_GRanges(transcript_id, gene_id,
