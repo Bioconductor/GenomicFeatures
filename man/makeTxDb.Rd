@@ -56,6 +56,8 @@ makeTxDb(transcripts, splicings,
   \item \code{tx_id}: Transcript ID. Integer vector. No NAs. No duplicates. 
   \item \code{tx_name}: [optional] Transcript name. Character vector (or
         factor). NAs and/or duplicates are ok.
+  \item \code{tx_type}: [optional] Transcript type (e.g. mRNA, ncRNA, snoRNA,
+        etc...). Character vector (or factor). NAs and/or duplicates are ok.
   \item \code{tx_chrom}: Transcript chromosome. Character vector (or factor)
         with no NAs.
   \item \code{tx_strand}: Transcript strand. Character vector (or factor)

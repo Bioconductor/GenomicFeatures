@@ -54,7 +54,7 @@
 .normarg_makeTxDb_transcripts <- function(transcripts)
 {
     .REQUIRED_COLS <- c("tx_id", "tx_chrom", "tx_strand", "tx_start", "tx_end")
-    .OPTIONAL_COLS <- "tx_name"
+    .OPTIONAL_COLS <- c("tx_name", "tx_type")
     .checkargColnames(transcripts, .REQUIRED_COLS, .OPTIONAL_COLS,
                       "transcripts")
     ## Check 'tx_id'.
@@ -66,6 +66,10 @@
     if (hasCol(transcripts, "tx_name")
      && !.isCharacterVectorOrFactor(transcripts$tx_name))
         stop("'transcripts$tx_name' must be a character vector (or factor)")
+    ## Check 'tx_type'.
+    if (hasCol(transcripts, "tx_type")
+     && !.isCharacterVectorOrFactor(transcripts$tx_type))
+        stop("'transcripts$tx_type' must be a character vector (or factor)")
     ## Check 'tx_chrom'.
     if (!.isCharacterVectorOrFactor(transcripts$tx_chrom)
      || any(is.na(transcripts$tx_chrom)))
@@ -340,7 +344,8 @@
     makeFeatureIds(chrom_ids, transcripts$tx_strand,
                    transcripts$tx_start,
                    transcripts$tx_end,
-                   name=transcripts$tx_name)
+                   name=transcripts$tx_name,
+                   type=transcripts$tx_type)
 }
 
 .makeSplicingsInternalExonId <- function(splicings, reassign.ids,
@@ -403,27 +408,26 @@
     dbEasyPreparedQuery(conn, sql, table)
 }
 
-.writeFeatureTable <- function(conn,
-                               tablename,
-                               internal_id,
-                               name,
-                               chrom,
-                               strand,
-                               start,
-                               end,
+.writeFeatureTable <- function(conn, tablename,
+                               internal_id, name, type,
+                               chrom, strand,
+                               start, end,
                                feature_shortname=NA)
 {
-    if (is.null(name))
-        name <- rep.int(NA_character_, length(internal_id))
     if (is.na(feature_shortname))
         feature_shortname <- tablename
     colnames <- makeFeatureColnames(feature_shortname)
+    if (is.null(name))
+        name <- rep.int(NA_character_, length(internal_id))
     table <- data.frame(
         internal_id=internal_id,
         name=name,
         check.names=FALSE, stringsAsFactors=FALSE)
-    if ("type" %in% names(colnames))
-        table$type <- rep.int(NA_character_, nrow(table))
+    if ("type" %in% names(colnames)) {
+        if (is.null(type))
+            type <- rep.int(NA_character_, length(internal_id))
+        table$type <- type
+    }
     table <- cbind(table,
                    data.frame(
                        chrom=chrom,
@@ -553,7 +557,7 @@
 .importTranscripts <- function(conn, transcripts, internal_tx_id)
 {
     .writeFeatureTable(conn, "transcript",
-        internal_tx_id, transcripts$tx_name,
+        internal_tx_id, transcripts$tx_name, transcripts$tx_type,
         transcripts$tx_chrom, transcripts$tx_strand,
         transcripts$tx_start, transcripts$tx_end,
         feature_shortname="tx")
@@ -562,7 +566,7 @@
 .importExons <- function(conn, splicings, internal_exon_id)
 {
     .writeFeatureTable(conn, "exon",
-        internal_exon_id, splicings$exon_name,
+        internal_exon_id, splicings$exon_name, NULL,
         splicings$exon_chrom, splicings$exon_strand,
         splicings$exon_start, splicings$exon_end)
 }
@@ -577,7 +581,7 @@
     cds_start <- splicings$cds_start[not_NA]
     cds_end <- splicings$cds_end[not_NA]
     .writeFeatureTable(conn, "cds",
-        internal_cds_id, cds_name,
+        internal_cds_id, cds_name, NULL,
         cds_chrom, cds_strand,
         cds_start, cds_end)
 }

@@ -261,6 +261,44 @@ makeIdsForUniqueDataFrameRows <- function(x)
     as.integer(factor(prov_ids, levels=unique(prov_ids)))
 }
 
+### 'name' and 'type' each must be either NULL, or an integer or character
+### vector, or a factor. Possibly with NAs. One of them can be NULL but not
+### both of them. If none of them is NULL, they must have the same length N.
+### Returns an integer vector of length N.
+.rank_name_type <- function(name, type)
+{
+    prev_locale <- Sys.getlocale("LC_COLLATE")
+    Sys.setlocale("LC_COLLATE", "C")
+    on.exit(Sys.setlocale("LC_COLLATE", prev_locale))
+    if (!is.integer(name)) {
+        if (is.null(name)) {
+            name <- integer(length(type))
+        } else if (is.numeric(name)) {
+            name <- as.integer(name)
+        } else {
+            if (!is.character(name))
+                name <- as.character(name)
+            name <- rank(name, na.last=FALSE, ties.method="min")
+        }
+    }
+    if (!is.integer(type)) {
+        if (is.null(type)) {
+            type <- integer(length(name))
+        } else if (is.numeric(type)) {
+            type <- as.integer(type)
+        } else {
+            if (!is.character(type))
+                type <- as.character(type)
+            type <- rank(type, na.last=FALSE, ties.method="min")
+        }
+    }
+    oo <- S4Vectors:::orderIntegerPairs(name, type)
+    ans <- integer(length(oo))
+    ans[oo] <- seq_along(oo)
+    sm <- S4Vectors:::selfmatchIntegerPairs(name, type)
+    ans[sm]
+}
+
 ### 'chrom_ids' (integer vector, no NAs), 'strand' (character vector, factor,
 ### or anything supported by a "strand" method, no NAs), 'start' (integer
 ### vector, no NAs), and 'end' (integer vector, no NAs) must have the same
@@ -268,7 +306,8 @@ makeIdsForUniqueDataFrameRows <- function(x)
 ### If 'name' is not NULL, it must be character vector or factor of length N,
 ### possibly with NAs.
 ### Returns an integer vector of length N containing one id per feature.
-makeFeatureIds <- function(chrom_ids, strand, start, end, name=NULL,
+makeFeatureIds <- function(chrom_ids, strand, start, end,
+                           name=NULL, type=NULL,
                            same.id.for.dups=FALSE)
 {
     if (is.factor(strand)) {
@@ -285,18 +324,11 @@ makeFeatureIds <- function(chrom_ids, strand, start, end, name=NULL,
     b <- as.integer(strand)
     c <- start
     d <- end
-    if (!is.null(name)) {
-        if (!is.factor(name)) {
-            prev_locale <- Sys.getlocale("LC_COLLATE")
-            Sys.setlocale("LC_COLLATE", "C")
-            on.exit(Sys.setlocale("LC_COLLATE", prev_locale))
-            name <- as.factor(name)
-        }
+    if (!(is.null(name) && is.null(type))) {
         a <- 3L * a + b
         b <- c
         c <- d
-        d <- as.integer(name)
-        d[is.na(d)] <- 0L
+        d <- .rank_name_type(name, type)
     }
     if (!same.id.for.dups) {
         oo <- S4Vectors:::orderIntegerQuads(a, b, c, d)
