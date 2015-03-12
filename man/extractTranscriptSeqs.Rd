@@ -131,11 +131,19 @@ tx2 <- c(tx1, IRanges(12, 30))  # 2 exons
 transcripts <- IRangesList(tx1=tx1, tx2=tx2)
 extractTranscriptSeqs(x, transcripts)
 
-## By default, all the exons were considered to be on the plus strand.
+## By default, all the exons are considered to be on the plus strand.
 ## We can use the 'strand' argument to tell extractTranscriptSeqs()
-## to extract them from the minus strand:
+## to extract them from the minus strand.
+
+## Extract all the exons from the minus strand:
 extractTranscriptSeqs(x, transcripts, strand="-")
 extractTranscriptSeqs(x, IRangesList(tx1=tx1, tx2=rev(tx2)), strand="-")
+
+## Extract the exon of the 1st transcript from the minus strand:
+extractTranscriptSeqs(x, transcripts, strand=c("-", "+"))
+
+## Extract the 2nd exon of the 2nd transcript from the minus strand:
+extractTranscriptSeqs(x, transcripts, strand=list("-", c("+", "-")))
 
 ## ---------------------------------------------------------------------
 ## 2. A REAL EXAMPLE
