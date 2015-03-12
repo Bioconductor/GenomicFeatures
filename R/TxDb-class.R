@@ -3,10 +3,40 @@
 ### -------------------------------------------------------------------------
 
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### TxDb schema
+###
+
+### Not exported.
+DB_TYPE_NAME <- "Db type"
+DB_TYPE_VALUE <- "TxDb"  # same as the name of the class below
+DB_SCHEMA_VERSION <- "1.1"  # DON'T FORGET TO BUMP THIS WHEN YOU CHANGE THE
+                            # SCHEMA
+
+.schema_version <- function(conn)
+    numeric_version(AnnotationDbi:::.getMetaValue(conn, "DBSCHEMAVERSION"))
+
+makeFeatureColnames <- function(feature_shortname=c("tx", "exon", "cds"),
+                                no.tx_type=FALSE)
+{
+    feature_shortname <- match.arg(feature_shortname)
+    suffixes <- "name"
+    if (feature_shortname == "tx" && !no.tx_type)
+        suffixes <- c(suffixes, "type")
+    suffixes <- c(suffixes, "chrom", "strand", "start", "end")
+    ans <- c(paste0("_", feature_shortname, "_id"),
+             paste0(feature_shortname, "_", suffixes))
+    names(ans) <- c("id", suffixes)
+    ans
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### TxDb class definition
+###
+
 ## This is to try and tidy up before setRefClass()
 gc()
-
-
 
 ## planned fix for seqinfo(): (so it can support the force argument).
 ## 1) Add a character vector slot to hold seqnames and their "altered"
@@ -69,14 +99,8 @@ gc()
 ## 6) add seqlevels? Nope
 ## 7) reorder seqlevels? Yes
 
-
-
 ## To just add #2, option 1, IOW a translation slot (not a full blown
 ## seqinfo object) should be enough to do the trick.
-
-
-
-
 
 
 ### Changing the names works
@@ -95,7 +119,6 @@ gc()
 ## seqlevels(txdb, force=TRUE) <- c(chr4 = "4", chr5 = "5", chr6="6")
 ## But this doesn't: (needs to go based on match internally)
 ## seqlevels(txdb, force=TRUE) <- c(chr5 = "5", chr6="6", chr4="4")
-
 
 
 ## Some unit tests needed for the following:
@@ -125,7 +148,6 @@ gc()
 ## seqinfo(txdb, new2old=1:93) <- foo
 
 
-
 ### Concrete GenomicFeatures types
 .TxDb <-
     setRefClass("TxDb", contains="AnnotationDb",
@@ -149,11 +171,6 @@ gc()
               }
           .self
       }))
-
-### Not exported.
-DB_TYPE_NAME <- "Db type"
-DB_TYPE_VALUE <- "TxDb"  # same as the name of the class
-DB_SCHEMA_VERSION <- "1.0"
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -191,11 +208,13 @@ load_chrominfo <- function(txdb, set.col.class=FALSE)
 }
 
 .format_transcripts <- function(transcripts, drop.tx_name=FALSE,
+                                             drop.tx_type=FALSE,
                                              set.col.class=FALSE)
 {
     COL2CLASS <- c(
         tx_id="integer",
         tx_name="character",
+        tx_type="character",
         tx_chrom="factor",
         tx_strand="factor",
         tx_start="integer",
@@ -208,6 +227,8 @@ load_chrominfo <- function(txdb, set.col.class=FALSE)
             stop("'transcripts' must be a data frame")
         if (!hasCol(transcripts, "tx_name"))
             COL2CLASS <- COL2CLASS[names(COL2CLASS) != "tx_name"]
+        if (!hasCol(transcripts, "tx_type"))
+            COL2CLASS <- COL2CLASS[names(COL2CLASS) != "tx_type"]
         if (!identical(names(transcripts), names(COL2CLASS)))
             transcripts <- transcripts[names(COL2CLASS)]
         if (set.col.class)
@@ -216,18 +237,26 @@ load_chrominfo <- function(txdb, set.col.class=FALSE)
     if (drop.tx_name && hasCol(transcripts, "tx_name") &&
                         all(is.na(transcripts$tx_name)))
         transcripts$tx_name <- NULL
+    if (drop.tx_type && hasCol(transcripts, "tx_type") &&
+                        all(is.na(transcripts$tx_type)))
+        transcripts$tx_type <- NULL
     transcripts
 }
 
 load_transcripts <- function(txdb, drop.tx_name=FALSE,
+                                   drop.tx_type=FALSE,
                                    set.col.class=FALSE)
 {
-    sql <- c("SELECT _tx_id AS tx_id, tx_name,",
-             "  tx_chrom, tx_strand, tx_start, tx_end",
+    sql <- "SELECT _tx_id AS tx_id, tx_name, "
+    has_tx_type <- .schema_version(dbconn(txdb)) == "1.1"
+    if (has_tx_type)
+        sql <- c(sql, "tx_type, ")
+    sql <- c(sql, "tx_chrom, tx_strand, tx_start, tx_end",
              "FROM transcript",
              "ORDER BY tx_id")
     transcripts <- queryAnnotationDb(txdb, sql)
     .format_transcripts(transcripts, drop.tx_name=drop.tx_name,
+                                     drop.tx_type=drop.tx_type,
                                      set.col.class=set.col.class)
 }
 
@@ -334,14 +363,6 @@ load_genes <- function(txdb, set.col.class=FALSE)
 ### Validity of a TxDb object.
 ###
 
-### Not exported.
-makeFeatureColnames <- function(feature_shortname)
-{
-    suffixes <- c("_id", "_name", "_chrom", "_strand", "_start", "_end")
-    prefixes <- c("_", rep.int("", length(suffixes) - 1L))
-    paste0(prefixes, feature_shortname, suffixes)
-}
-
 ### The table specified in a call to .valid.table.colnames() must have at
 ### least the cols specified in 'colnames'. It's OK if it has more cols or
 ### if it has them in a different order.
@@ -349,7 +370,8 @@ makeFeatureColnames <- function(feature_shortname)
 ### TODO: Add more checks!
 .valid.transcript.table <- function(conn)
 {
-    colnames <- makeFeatureColnames("tx")
+    no_tx_type <- .schema_version(conn) < "1.1"
+    colnames <- makeFeatureColnames("tx", no_tx_type)
     msg <- AnnotationDbi:::.valid.table.colnames(conn, "transcript", colnames)
     if (!is.null(msg))
         return(msg)
@@ -639,6 +661,7 @@ setReplaceMethod("isActiveSeq","TxDb",
                               chrominfo=NULL)
 {
     transcripts <- .format_transcripts(transcripts, drop.tx_name=TRUE,
+                                                    drop.tx_type=TRUE,
                                                     set.col.class=TRUE)
     splicings <- .format_splicings(splicings, drop.exon_name=TRUE,
                                               drop.cds_name=TRUE,

@@ -421,28 +421,37 @@
     table <- data.frame(
         internal_id=internal_id,
         name=name,
-        chrom=chrom,
-        strand=strand,
-        start=start,
-        end=end,
         check.names=FALSE, stringsAsFactors=FALSE)
+    if ("type" %in% names(colnames))
+        table$type <- rep.int(NA_character_, nrow(table))
+    table <- cbind(table,
+                   data.frame(
+                       chrom=chrom,
+                       strand=strand,
+                       start=start,
+                       end=end,
+                       check.names=FALSE, stringsAsFactors=FALSE))
     table <- unique(table)
 
     ## Create the '<tablename>' table.
     sql <- c(
         "CREATE TABLE ", tablename, " (\n",
-        "  ", colnames[1L], " INTEGER PRIMARY KEY,\n",
-        "  ", colnames[2L], " TEXT NULL,\n",
-        "  ", colnames[3L], " TEXT NOT NULL,\n",
-        "  ", colnames[4L], " TEXT NOT NULL,\n",
-        "  ", colnames[5L], " INTEGER NOT NULL,\n",
-        "  ", colnames[6L], " INTEGER NOT NULL,\n",
-        "  FOREIGN KEY (", colnames[3L], ") REFERENCES chrominfo (chrom)\n",
+        "  ", colnames[["id"]], " INTEGER PRIMARY KEY,\n",
+        "  ", colnames[["name"]], " TEXT NULL,\n")
+    if ("type" %in% names(colnames))
+        sql <- c(sql, "  ", colnames[["type"]], " TEXT NULL,\n")
+    sql <- c(sql,
+        "  ", colnames[["chrom"]], " TEXT NOT NULL,\n",
+        "  ", colnames[["strand"]], " TEXT NOT NULL,\n",
+        "  ", colnames[["start"]], " INTEGER NOT NULL,\n",
+        "  ", colnames[["end"]], " INTEGER NOT NULL,\n",
+        "  FOREIGN KEY (", colnames[["chrom"]], ") REFERENCES chrominfo (chrom)\n",
         ")")
     dbEasyQuery(conn, paste(sql, collapse=""))
 
     ## Fill the '<tablename>' table.
-    sql <- c("INSERT INTO ", tablename, " VALUES (?,?,?,?,?,?)")
+    values <- paste0(rep.int("?", ncol(table)), collapse=",")
+    sql <- c("INSERT INTO ", tablename, " VALUES (", values, ")")
     dbEasyPreparedQuery(conn, paste(sql, collapse=""), table)
 }
 
