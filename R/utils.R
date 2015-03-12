@@ -278,20 +278,24 @@ makeIdsForUniqueDataFrameRows <- function(x)
         } else {
             if (!is.character(name))
                 name <- as.character(name)
-            name <- rank(name, na.last=FALSE, ties.method="min")
+            name <- rank(name, na.last="keep", ties.method="min")
         }
     }
+    ## Features with no name (e.g. tx_name is NA) go last.
+    name[is.na(name)] <- .Machine$integer.max
     if (!is.integer(type)) {
         if (is.null(type)) {
             type <- integer(length(name))
-        } else if (is.numeric(type)) {
+        } else if (is.factor(type) || is.numeric(type)) {
             type <- as.integer(type)
         } else {
             if (!is.character(type))
                 type <- as.character(type)
-            type <- rank(type, na.last=FALSE, ties.method="min")
+            type <- rank(type, na.last="keep", ties.method="min")
         }
     }
+    ## Features with no type (e.g. tx_type is NA) go last.
+    type[is.na(type)] <- .Machine$integer.max
     oo <- S4Vectors:::orderIntegerPairs(name, type)
     ans <- integer(length(oo))
     ans[oo] <- seq_along(oo)
