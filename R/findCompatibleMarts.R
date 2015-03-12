@@ -21,6 +21,7 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
         ## These attributes are REQUIRED.
         T=c(
             tx_name="<id_prefix>transcript_id",
+            tx_type="transcript_biotype",
             tx_chrom="chromosome_name",
             tx_strand="strand",
             tx_start="transcript_start",

@@ -46,7 +46,7 @@
     message("Download and preprocess the 'transcripts' data frame ... ",
             appendLF=FALSE)
     bm_result <- getBM(recognized_attribs[['T']], filters=filters,
-                      values=values, mart=mart, bmHeader=FALSE)
+                       values=values, mart=mart, bmHeader=FALSE)
     tx_id_colname <- paste0(id_prefix, "transcript_id")
     if (!is.null(transcript_ids)) {
         idx <- !(transcript_ids %in% bm_result[[tx_id_colname]])
@@ -76,6 +76,7 @@
     ##               "'transcript_id' attribute contains duplicated values"))
     if (any(duplicated(bm_result)))
       stop("The 'transcripts' data frame from biomart contains duplicated rows.")
+    tx_type <- as.character(bm_result$transcript_biotype)
     tx_chrom <- as.character(bm_result$chromosome_name)
     tx_strand <- ifelse(bm_result$strand == 1, "+", "-")
     tx_start <- bm_result$transcript_start
@@ -83,6 +84,7 @@
     transcripts <- data.frame(
         tx_id=tx_id,
         tx_name=tx_name,
+        tx_type=tx_type,
         tx_chrom=tx_chrom,
         tx_strand=tx_strand,
         tx_start=tx_start,
@@ -478,7 +480,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     get_groups <- c("E1", names(has_group)[has_group])
     attributes <- unlist(recognized_attribs[get_groups], use.names=FALSE)
     bm_result <- getBM(attributes, filters=filters, values=values, mart=mart,
-                      bmHeader=FALSE)
+                       bmHeader=FALSE)
     tx_id_colname <- paste0(id_prefix, "transcript_id")
     splicings_tx_id <- transcripts_tx_id[bm_result[[tx_id_colname]]]
     exon_id_col_name <- paste0(id_prefix, "exon_id")
@@ -511,7 +513,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     attributes <- c(recognized_attribs[['G']],
                     paste0(id_prefix, "transcript_id"))
     bm_result <- getBM(attributes, filters=filters, values=values, mart=mart,
-                      bmHeader=FALSE)
+                       bmHeader=FALSE)
     tx_id_colname <- paste0(id_prefix, "transcript_id")
     genes_tx_id <- transcripts_tx_id[bm_result[[tx_id_colname]]]
     message("OK")

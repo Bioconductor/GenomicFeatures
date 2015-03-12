@@ -152,7 +152,7 @@ transcript_ids <- c(
     "ENST00000478783"
 )
 txdb <- makeTxDbFromBiomart(transcript_ids=transcript_ids)
-txdb  # note that these annotations match the GRCh37 genome assembly
+txdb  # note that these annotations match the GRCh38 genome assembly
 
 ## Now what if we want to use another mirror?  We might make use of the
 ## new host argument.  But wait!  If we use biomaRt, we can see that
