@@ -73,7 +73,8 @@
     COLMAP=list(
         exon=c("exon_id", makeFeatureColnames("exon")),
         splicing=c("tx_id", "_tx_id", "exon_rank", "cds_id", "_cds_id"),
-        transcript=c("tx_name", "tx_chrom", "tx_strand", "tx_start", "tx_end"),
+        transcript=c("tx_name", "tx_chrom", "tx_strand", "tx_start", "tx_end",
+          "tx_type"),
         gene="gene_id",
         cds=c("cds_name", "cds_chrom", "cds_strand", "cds_start", "cds_end")
     ),
@@ -110,7 +111,8 @@
     COLMAP=list(
         cds=c("cds_id", makeFeatureColnames("cds")),
         splicing=c("tx_id", "_tx_id", "exon_rank", "exon_id", "_exon_id"),
-        transcript=c("tx_name", "tx_chrom", "tx_strand", "tx_start", "tx_end"),
+        transcript=c("tx_name", "tx_chrom", "tx_strand", "tx_start", "tx_end",
+          "tx_type"),
         gene="gene_id",
         exon=c("exon_name", "exon_chrom", "exon_strand",
                "exon_start", "exon_end")
