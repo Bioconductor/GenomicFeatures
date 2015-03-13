@@ -112,7 +112,6 @@ makeTxDbFromGFF(file,
 gffFile <- system.file("extdata","GFF3_files","a.gff3",package="GenomicFeatures")
 txdb <- makeTxDbFromGFF(file=gffFile,
             format="gff3",
-            exonRankAttributeName=NA,
             dataSource="partial gtf file for Tomatoes for testing",
             species="Solanum lycopersicum")
 if(interactive()) {
@@ -127,7 +126,6 @@ chrominfo <- data.frame(chrom = c('supercont1.1','supercont1.2'),
                         is_circular=c(FALSE, FALSE))
 txdb2 <- makeTxDbFromGFF(file=gtfFile,
              format="gtf",
-             exonRankAttributeName="exon_number",
              chrominfo=chrominfo,
              dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
                               "release-13/gtf/aedes_aegypti/",sep=""),

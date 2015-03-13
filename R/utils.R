@@ -370,6 +370,8 @@ makeFeatureIds <- function(chrom_ids, strand, start, end,
 ### TODO: still need to get the new parameter passed along to where this is called...  :P
 matchCircularity <- function(seqnames, circ_seqs)
 {
+    if (!is.character(circ_seqs))
+        stop(wmsg("'circ_seqs' must be a character vector"))
     ## shorten and put to lowercase (for simplicity in subsequent comparisons)
     seqs <- tolower(seqnames)
     circs <- tolower(circ_seqs)
