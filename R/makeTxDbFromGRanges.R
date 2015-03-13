@@ -38,7 +38,7 @@
 ###
 ### Expected metadata columns for GRanges in GFF3 format:
 ###   - required: type, ID, Parent
-###   - optional: Name, Dbxref
+###   - optional: Name, Dbxref, geneID
 ###
 ### Expected metadata columns for GRanges in GTF format:
 ###   - type, gene_id, transcript_id, exon_id
@@ -162,6 +162,19 @@
             Dbxref <- as.character(Dbxref)
     }
     Dbxref
+}
+
+### The FlyBase people use the geneID tag to assign an external gene id to
+### each of their transcripts in their GFF3 files. There is no corresponding
+### "gene" line in the file.
+.get_geneID <- function(gr_mcols)
+{
+    geneID <- gr_mcols$geneID
+    if (is.null(geneID))
+        return(NULL)
+    if (!is.character(geneID))
+        geneID <- as.character(geneID)
+    geneID
 }
 
 
@@ -610,8 +623,9 @@
 ### Extract the 'genes' data frame
 ###
 
-.extract_genes_from_gff3_GRanges <- function(gene_IDX, tx_IDX, ID, Name,
-                                             Parent, Dbxref)
+.extract_genes_from_gff3_GRanges <- function(gene_IDX, tx_IDX,
+                                             ID, Name, Parent,
+                                             Dbxref=NULL, geneID=NULL)
 {
     tx_id <- ID[tx_IDX]
     tx2genes <- Parent[tx_IDX]
@@ -621,10 +635,12 @@
     tx2genes[idx0] <- tx_id[idx0]
 
     ## Transcripts with no parents are sometimes linked to a gene via the
-    ## Dbxref tag.
+    ## Dbxref or geneID tag.
+
+    ## First we try to find their parent via the Dbxref tag, if present.
     if (!is.null(Dbxref)) {
         idx0 <- which(elementLengths(tx2genes) == 0L)
-        tx_Dbxref <- Dbxref[tx_IDX][idx0]
+        tx_Dbxref <- Dbxref[tx_IDX[idx0]]
         gene_Dbxref <- Dbxref[gene_IDX]
         tx_Dbxref_unlisted <- unlist(tx_Dbxref, use.names=FALSE)
         gene_Dbxref_unlisted <- unlist(gene_Dbxref, use.names=FALSE)
@@ -637,13 +653,23 @@
                                  as(hits, "PartitioningByEnd"))
     }
 
+    ## Replace gene IDs by gene Names and remove NAs.
+    tmp <- unlist(tx2genes, use.names=FALSE) 
+    ID2Name <- Name[gene_IDX]
+    names(ID2Name) <- ID[gene_IDX]
+    tx2genes <- relist(unname(ID2Name[tmp]), tx2genes)
+    tx2genes <- tx2genes[!is.na(tx2genes)]
+
+    ## Then, if we still have transcripts with no parent, we use the geneID
+    ## tag (if present) to assign them an external gene id.
+    if (!is.null(geneID)) {
+        idx0 <- which(elementLengths(tx2genes) == 0L)
+        tx2genes[idx0] <- geneID[tx_IDX[idx0]]
+        tx2genes <- tx2genes[!is.na(tx2genes)]
+    }
+
     tx_id <- rep.int(tx_id, elementLengths(tx2genes))
-    geneID2Name <- Name[gene_IDX]
-    names(geneID2Name) <- ID[gene_IDX]
-    gene_id <- unname(geneID2Name[unlist(tx2genes, use.names=FALSE)])
-    keep_idx <- which(!is.na(gene_id))
-    tx_id <- tx_id[keep_idx]
-    gene_id <- gene_id[keep_idx]
+    gene_id <- unlist(tx2genes, use.names=FALSE)
     data.frame(tx_id=tx_id, gene_id=gene_id, stringsAsFactors=FALSE)
 }
 
@@ -735,7 +761,6 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
     Parent <- .get_Parent(gr_mcols, type, gene_id, transcript_id,
                           gtf.format=gtf.format)
     Name <- .get_Name(gr_mcols, ID)
-    Dbxref <- .get_Dbxref(gr_mcols)
 
     ## Get the gene, cds, stop_codon, exon, and transcript indices.
     gene_IDX <- .get_gene_IDX(type)
@@ -773,8 +798,11 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
         genes <- .extract_genes_from_gtf_GRanges(transcript_id, gene_id,
                                                  transcripts)
     } else {
+        Dbxref <- .get_Dbxref(gr_mcols)
+        geneID <- .get_geneID(gr_mcols)
         genes <- .extract_genes_from_gff3_GRanges(gene_IDX, tx_IDX,
-                                                  ID, Name, Parent, Dbxref)
+                                                  ID, Name, Parent,
+                                                  Dbxref, geneID)
     }
 
     ## Drop hopeless transcripts.
