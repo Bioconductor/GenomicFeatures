@@ -70,13 +70,13 @@ makeTxDbFromGFF <- function(file,
                             gffTxName="mRNA")             # deprecated
 {
     if (!identical(exonRankAttributeName, NA))
-        .Deprecated(msg="'exonRankAttributeName' is deprecated and ignored")
+        .Deprecated(msg="'exonRankAttributeName' is ignored and deprecated")
     if (!identical(gffGeneIdAttributeName, NA))
-        .Deprecated(msg="'gffGeneIdAttributeName' is deprecated and ignored")
+        .Deprecated(msg="'gffGeneIdAttributeName' is ignored and deprecated")
     if (!identical(useGenesAsTranscripts, FALSE))
-        .Deprecated(msg="'useGenesAsTranscripts' is deprecated and ignored")
+        .Deprecated(msg="'useGenesAsTranscripts' is ignored and deprecated")
     if (!identical(gffTxName, "mRNA"))
-        .Deprecated(msg="'gffTxName' is deprecated and ignored")
+        .Deprecated(msg="'gffTxName' is ignored and deprecated")
 
     format <- match.arg(format)
     gr <- import(file, format=format)
