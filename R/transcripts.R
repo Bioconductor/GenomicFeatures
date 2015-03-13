@@ -155,6 +155,9 @@ translateCols <- function(columns, txdb){
     oriLen <- length(columns) ## not always the same as length(oriCols)
     ## get the available abbreviations as a translation vector (exp)
     names <- .makeColAbbreviations(txdb)
+    if(("TXTYPE" %in% columns) && !.dbSchemaHasTxType(txdb)){
+        names <- c(names, c(tx_type='TXTYPE'))
+    }
     exp <- sub("^_","", names(names))
     names(exp) <- names
 
@@ -260,11 +263,35 @@ translateCols <- function(columns, txdb){
     paste("WHERE", paste(unlist(sql), collapse = " AND "))
 }
 
+
+.dbSchemaHasTxType <- function(txdb){
+    txFields <- dbListFields(dbconn(txdb),"transcript")
+    "tx_type" %in% txFields
+}
+
+.getSQL_What <- function(root_table, txdb, what_cols){
+    if( ("tx_type" %in% what_cols) && !.dbSchemaHasTxType(txdb) ){
+        ## Only THEN do we adjust the result
+        what <- .asQualifiedColnames(root_table, what_cols)    
+        old <- paste0(root_table,'.tx_type')
+        new <- "NULL AS tx_type"
+        ## then replace old with new
+        what[what %in% old] <- new
+        what <- paste(what, collapse=", ")
+    }else{
+        what <- paste(.asQualifiedColnames(root_table, what_cols),
+                      collapse=", ")
+    }
+    what
+}
+
+
 .extractData <- function(root_table, txdb, what_cols, child_tables, vals,
                          orderby_cols=NULL)
 {
-    SQL_what <- paste(.asQualifiedColnames(root_table, what_cols),
-                      collapse=", ")
+    ## SQL_what <- paste(.asQualifiedColnames(root_table, what_cols),
+    ##                   collapse=", ")
+    SQL_what <- .getSQL_What(root_table, txdb, what_cols)
     SQL_from <- .joinRootToChildTables(root_table, child_tables)
     SQL_where <- .sqlWhereIn(vals)
     if (length(orderby_cols) == 0L)
@@ -366,7 +393,7 @@ translateCols <- function(columns, txdb){
     ans
 }
 
-## make a named list from the metadata data.frame
+## me a named list from the metadata data.frame
 .makeMetadataList <- function(meta){
     lst <- as.list(meta[,2])
     names(lst) <- meta[,1]
@@ -394,7 +421,7 @@ translateCols <- function(columns, txdb){
     columns <- translateCols(columns, txdb)
     ## Then proceed with checking
     CORECOLS <- .DBDESC[[root_table]]$CORECOLS
-    assigned_columns <- .assignColToClosestTable(root_table, columns)
+    assigned_columns <- .assignColToClosestTable(root_table, columns) 
     root_columns <- assigned_columns[[root_table]]
     ## Extract the data from the db.
     root_data <- .extractRootData(root_table, txdb, vals, root_columns)
@@ -766,4 +793,16 @@ setMethod("microRNAs", "TxDb", function(x){.microRNAs(x)} )
 setGeneric("tRNAs", function(x) standardGeneric("tRNAs"))
 
 setMethod("tRNAs", "TxDb", function(x){.tRNAs(x)} )
+
+
+
+
+
+## Test code for new TXTYPE support (BC vs new code)
+## library(TxDb.Hsapiens.BioMart.ensembl.GRCh38);txdb2= TxDb.Hsapiens.BioMart.ensembl.GRCh38;transcripts(txdb2, columns='TXTYPE')
+## exons(txdb2, columns='TXTYPE')
+## And this one works now
+## library(TxDb.Hsapiens.UCSC.hg19.knownGene);txdb  = TxDb.Hsapiens.UCSC.hg19.knownGene;transcripts(txdb, columns='TXTYPE')
+## But this still fails (argh):
+## exons(txdb, columns='TXTYPE')
 
