@@ -269,29 +269,40 @@ translateCols <- function(columns, txdb){
     "tx_type" %in% txFields
 }
 
-.getSQL_What <- function(root_table, txdb, what_cols){
-    if( ("tx_type" %in% what_cols) && !.dbSchemaHasTxType(txdb) ){
+.getSQL_OrderBy <- function(root_table, txdb, what_cols){
+    if( ("transcript.tx_type" %in% what_cols) && !.dbSchemaHasTxType(txdb) ){
         ## Only THEN do we adjust the result
-        what <- .asQualifiedColnames(root_table, what_cols)    
-        old <- paste0(root_table,'.tx_type')
+        ## Then drop that string
+        what_cols <- what_cols[!(what_cols %in% "transcript.tx_type")]
+        what <- paste(what_cols, collapse=", ")
+    }else{
+        what <- paste(what_cols, collapse=", ")
+    }
+    what
+}
+
+.getSQL_What <- function(root_table, txdb, what_cols){
+    if( ("transcript.tx_type" %in% what_cols) && !.dbSchemaHasTxType(txdb) ){
+        ## Only THEN do we adjust the result
+        what <- what_cols    
+        old <- "transcript.tx_type"  ###paste0(root_table,'.tx_type')
         new <- "NULL AS tx_type"
         ## then replace old with new
         what[what %in% old] <- new
         what <- paste(what, collapse=", ")
     }else{
-        what <- paste(.asQualifiedColnames(root_table, what_cols),
-                      collapse=", ")
+        what <- paste(what_cols, collapse=", ")
     }
     what
 }
-
 
 .extractData <- function(root_table, txdb, what_cols, child_tables, vals,
                          orderby_cols=NULL)
 {
     ## SQL_what <- paste(.asQualifiedColnames(root_table, what_cols),
     ##                   collapse=", ")
-    SQL_what <- .getSQL_What(root_table, txdb, what_cols)
+    what <- .asQualifiedColnames(root_table, what_cols)
+    SQL_what <- .getSQL_What(root_table, txdb, what)
     SQL_from <- .joinRootToChildTables(root_table, child_tables)
     SQL_where <- .sqlWhereIn(vals)
     if (length(orderby_cols) == 0L)
@@ -345,14 +356,17 @@ translateCols <- function(columns, txdb){
 {
     ans_names <- c(primary_key, child_columns)
     primary_key <- paste0("_", primary_key)
-    what_cols <- c(primary_key,
+    what <- c(primary_key,
                    .asQualifiedColnames(root_table, child_columns))
-    SQL_what <- paste(what_cols, collapse=", ")
+    
+##    SQL_what <- paste(what, collapse=", ")
+    SQL_what <- .getSQL_What(root_table, txdb, what)
     SQL_from <- .joinPrimaryKeyToChildTable(root_table, child_table)
     vals <- list(ids)
     names(vals) <- primary_key
     SQL_where <- .sqlWhereIn(vals)
-    SQL_orderby <- SQL_what
+    ## SQL_orderby <- SQL_what ## similar fix here to the SQL_what
+    SQL_orderby <- .getSQL_OrderBy(root_table, txdb, what)
     SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from,
                  SQL_where, "ORDER BY", SQL_orderby)
     ans <- dbEasyQuery(AnnotationDbi:::dbconn(txdb), SQL)
