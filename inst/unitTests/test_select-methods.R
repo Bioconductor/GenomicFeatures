@@ -15,7 +15,7 @@ test_getTableColMapping <- function(){
                 "exon_start","exon_end"),
               gene=c("gene_id","_tx_id"),
               splicing=c("_tx_id","exon_rank","_exon_id","_cds_id"),
-              transcript=c("_tx_id","tx_name","tx_chrom","tx_strand",
+              transcript=c("_tx_id","tx_name","tx_type","tx_chrom","tx_strand",
                 "tx_start","tx_end"))
   checkIdentical(res, exp)
 }
@@ -24,7 +24,7 @@ test_makeColAbbreviations <- function(){
   res <- GenomicFeatures:::.makeColAbbreviations(txdb)
   checkTrue(res[["_cds_id"]]=="CDSID")
   res2 <- GenomicFeatures:::.getTableColMapping(txdb)
-  checkTrue(length(res)==20, length(unique(unlist(res2))))
+  checkTrue(length(res)==21, length(unique(unlist(res2))))
 }
 
 test_reverseColAbbreviations <- function(){
