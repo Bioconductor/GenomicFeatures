@@ -267,6 +267,14 @@ makeIdsForUniqueDataFrameRows <- function(x)
 ### Returns an integer vector of length N.
 .rank_name_type <- function(name, type)
 {
+    ## We set LC_COLLATE to C so (1) the ouput of rank() on a character vector
+    ## is platform/country independent, and (2) it will behave the same way
+    ## when called in the context of the unit tests run by 'R CMD check'
+    ## ('R CMD check' also sets the LC_COLLATE to C when running the tests)
+    ## vs when called in the context of an interactive session.
+    ## TODO: Maybe we should have a strrank() function in
+    ## S4Vectors/R/str-utils.R for portable/deterministic ranking of a
+    ## character vector.
     prev_locale <- Sys.getlocale("LC_COLLATE")
     Sys.setlocale("LC_COLLATE", "C")
     on.exit(Sys.setlocale("LC_COLLATE", prev_locale))
