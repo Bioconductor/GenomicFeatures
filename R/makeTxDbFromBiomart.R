@@ -323,35 +323,47 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     no_utr3 <- .utrIsNa(utr3_start, utr3_end, exon_start, exon_end,
                         "3", bm_result, id_prefix)
 
-    idx <- strand == 1 & !no_utr5
-    if (!all(utr5_start[idx] == exon_start[idx])) {
-        msg <- c("located on the plus strand, the 5' UTRs don't start",
-                 "where their corresponding exon starts")
-        .stopWithBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
+    idx <- which(strand == 1 & !no_utr5)
+    bad_idx2 <- which(utr5_start[idx] != exon_start[idx])
+    if (length(bad_idx2) != 0L) {
+        msg <- c("located on the plus strand, the start of some 5' UTRs ",
+                 "(5_utr_start) doesn't match the start of the exon ",
+                 "(exon_chrom_start)")
+        .stopWithBioMartDataAnomalyReport(bm_result, idx[bad_idx2],
+                                          id_prefix, msg)
     }
     cds_start[idx] <- utr5_end[idx] + 1L
 
-    idx <- strand == 1 & !no_utr3
-    if (!all(utr3_end[idx] == exon_end[idx])) {
-        msg <- c("located on the plus strand, the 3' UTRs don't end",
-                 "where their corresponding exon ends")
-        .stopWithBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
+    idx <- which(strand == 1 & !no_utr3)
+    bad_idx2 <- which(utr3_end[idx] != exon_end[idx])
+    if (length(bad_idx2) != 0L) {
+        msg <- c("located on the plus strand, the end of some 3' UTRs ",
+                 "(3_utr_end) doesn't match the end of the exon ",
+                 "(exon_chrom_end)")
+        .stopWithBioMartDataAnomalyReport(bm_result, idx[bad_idx2],
+                                          id_prefix, msg)
     }
     cds_end[idx] <- utr3_start[idx] - 1L
 
-    idx <- strand == -1 & !no_utr3
-    if (!all(utr3_start[idx] == exon_start[idx])) {
-        msg <- c("located on the minus strand, the 3' UTRs don't start",
-                 "where their corresponding exon starts")
-        .stopWithBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
+    idx <- which(strand == -1 & !no_utr3)
+    bad_idx2 <- which(utr3_start[idx] != exon_start[idx])
+    if (length(bad_idx2) != 0L) {
+        msg <- c("located on the minus strand, the start of some 3' UTRs ",
+                 "(3_utr_start) doesn't match the start of the exon ",
+                 "(exon_chrom_start)")
+        .stopWithBioMartDataAnomalyReport(bm_result, idx[bad_idx2],
+                                          id_prefix, msg)
     }
     cds_start[idx] <- utr3_end[idx] + 1L
 
-    idx <- strand == -1 & !no_utr5
-    if (!all(utr5_end[idx] == exon_end[idx])) {
-        msg <- c("located on the minus strand, the 5' UTRs don't end",
-                 "where their corresponding exon ends")
-        .stopWithBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
+    idx <- which(strand == -1 & !no_utr5)
+    bad_idx2 <- which(utr5_end[idx] != exon_end[idx])
+    if (length(bad_idx2) != 0L) {
+        msg <- c("located on the minus strand, the end of some 5' UTRs ",
+                 "(5_utr_end) doesn't match the end of the exon ",
+                 "(exon_chrom_end)")
+        .stopWithBioMartDataAnomalyReport(bm_result, idx[bad_idx2],
+                                          id_prefix, msg)
     }
     cds_end[idx] <- utr5_start[idx] - 1L
 
