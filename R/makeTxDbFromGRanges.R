@@ -878,8 +878,7 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Some non-exported tools to test makeTxDbFromGRanges() on real data.
 ###
-### IMPORTANT NOTE: These tests takes too long to be part of the formal
-### unit tests!
+### NOTE: These tests take too long to be part of the formal unit tests!
 ###
 
 .light_txdb_dump <- function(txdb)

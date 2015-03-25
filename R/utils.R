@@ -1,8 +1,13 @@
 ### =========================================================================
 ### Miscellaneous low-level utils
 ### -------------------------------------------------------------------------
+###
+### Unless stated otherwise, nothing in this file is exported.
+###
+
 
 ## Global character vector to hold default names for circular sequences.
+## This is exported!
 DEFAULT_CIRC_SEQS = c("chrM","MT","mit","2micron","2-micron");
 
 
@@ -11,7 +16,6 @@ DEFAULT_CIRC_SEQS = c("chrM","MT","mit","2micron","2-micron");
 ###
 ### Most of this stuff was copy/pasted from AnnotationDbi (trying to avoid
 ### depending on AnnotationDbi for now).
-### It is NOT exported (to avoid collisions with AnnotationDbi).
 ###
 
 ### Environment for storing run-time objects
@@ -128,7 +132,7 @@ queryAnnotationDb <- function(annotationdb, sql)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Data frame related (NOT exported).
+### Data frame related.
 ###
 ### TODO: Find a better home for these low-level data.frame utils.
 ###
@@ -224,7 +228,7 @@ joinDataFrameWithName2Val <- function(x, join_colname, name2val, vals_colname)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### ID assignment and/or reassignment (NOT exported).
+### ID assignment and/or reassignment.
 ###
 
 ### Mimicking the interface of chartr().
@@ -364,7 +368,7 @@ makeFeatureIds <- function(chrom_ids, strand, start, end,
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Miscellaneous (NOT exported).
+### Miscellaneous.
 ###
 
 ### AFAIK UCSC doesn't flag circular sequences.

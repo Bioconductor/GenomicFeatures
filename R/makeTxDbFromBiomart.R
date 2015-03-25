@@ -32,7 +32,11 @@
 }
 
 .extractEnsemblReleaseFromDbVersion <- function(db_version)
-    sub("^ENSEMBL GENES ([^[:space:]]+) \\(SANGER UK\\)", "\\1", db_version)
+{
+    db_version <- tolower(db_version)
+    #sub("^ensembl genes ([^[:space:]]+) \\(sanger uk\\)", "\\1", db_version)
+    sub("^ensembl genes ([0-9]+).*$", "\\1", db_version)
+}
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -47,13 +51,14 @@
             appendLF=FALSE)
     bm_result <- getBM(recognized_attribs[['T']], filters=filters,
                        values=values, mart=mart, bmHeader=FALSE)
-    tx_id_colname <- paste0(id_prefix, "transcript_id")
+    tx_name_colname <- paste0(id_prefix, "transcript_id")
+    tx_name <- bm_result[[tx_name_colname]]
     if (!is.null(transcript_ids)) {
-        idx <- !(transcript_ids %in% bm_result[[tx_id_colname]])
+        idx <- !(transcript_ids %in% tx_name)
         if (any(idx)) {
             bad_ids <- transcript_ids[idx]
-            stop("invalid transcript ids: ",
-                 paste0(bad_ids, collapse=", "))
+            stop(wmsg("invalid transcript ids: ",
+                      paste0(bad_ids, collapse=", ")))
         }
     }
     ## Those are the strictly required fields.
@@ -69,13 +74,13 @@
         return(transcripts0)
     }
     tx_id <- seq_len(nrow(bm_result))
-    tx_name <- bm_result[[tx_id_colname]]
     ##if (any(duplicated(tx_name)))
-    ##    stop(paste("the '",
-    ##               tx_id_colname,
-    ##               "'transcript_id' attribute contains duplicated values"))
+    ##    stop(wmsg("the '",
+    ##              tx_name_colname,
+    ##              "'transcript_id' attribute contains duplicated values"))
     if (any(duplicated(bm_result)))
-      stop("The 'transcripts' data frame from biomart contains duplicated rows.")
+        stop(wmsg("the 'transcripts' data frame obtained from biomart ",
+                  "contains duplicated rows"))
     tx_type <- as.character(bm_result$transcript_biotype)
     tx_chrom <- as.character(bm_result$chromosome_name)
     tx_strand <- ifelse(bm_result$strand == 1, "+", "-")
@@ -106,10 +111,13 @@
 {
     biomart <- biomaRt:::martBM(mart)
     dataset <- biomaRt:::martDataset(mart)
-    if (biomart == "ensembl" || substr(biomart, 1, 12) == "plants_mart_") {
+    is_ensembl_mart <- tolower(substr(biomart, 1, 7)) == "ensembl"
+    is_plants_mart <- tolower(substr(biomart, 1, 12)) == "plants_mart_"
+    if (is_ensembl_mart || is_plants_mart) {
         message("Download and preprocess the 'chrominfo' data frame ... ",
                 appendLF=FALSE)
-        if (biomart == "ensembl") {
+        if (is_ensembl_mart) {
+            ## Ensembl mart
             db_version <- .getBiomartDbVersion(mart, host, port, biomart)
             ensembl_release <- .extractEnsemblReleaseFromDbVersion(db_version)
             chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
@@ -117,6 +125,7 @@
                                     extra_seqnames=extra_seqnames),
                                 silent=TRUE)
         } else {
+            ## Plants mart
             chromlengths <- try(fetchChromLengthsFromEnsemblPlants(dataset,
                                     extra_seqnames=extra_seqnames),
                                 silent=TRUE)
@@ -172,29 +181,31 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 ### Download and preprocess the 'splicings' data frame.
 ###
 
-.extractNumAttrib <- function(bm_result, attrib)
+.extract_numeric_attrib <- function(bm_result, attrib)
 {
     ans <- bm_result[[attrib]]
     if (is.numeric(ans))
         return(ans)
     if (is.logical(ans) && all(is.na(ans)))
         return(as.integer(ans))
-    stop("BioMart data anomaly: \"", attrib, "\" attribute is not numeric")
+    stop(wmsg("BioMart fatal data anomaly: ",
+              "\"", attrib, "\" attribute is not numeric"))
 }
 
-.generateBioMartDataAnomalyReport <- function(bm_result, idx, id_prefix, msg)
+.generate_BioMart_data_anomaly_report <- function(error_type, bm_result, idx,
+                                                  id_prefix, msg)
 {
     ## Part 3.
-    tx_id_colname <- paste0(id_prefix, "transcript_id")
-    tx_ids <- bm_result[[tx_id_colname]]
-    first_tx_ids <- unique(tx_ids[idx])
-    total_nb_tx <- length(first_tx_ids)
-    first_six_only <- total_nb_tx > 6L
-    if (first_six_only)
-        first_tx_ids <- first_tx_ids[1:6]
-    bm_result <- bm_result[tx_ids %in% first_tx_ids, , drop=FALSE]
-    bm_result0 <- bm_result[-match(tx_id_colname, names(bm_result))]
-    f <- factor(bm_result[[tx_id_colname]], levels=first_tx_ids)
+    tx_name_colname <- paste0(id_prefix, "transcript_id")
+    tx_name <- bm_result[[tx_name_colname]]
+    first_tx_names <- unique(tx_name[idx])
+    total_nb_tx <- length(first_tx_names)
+    first_three_only <- total_nb_tx > 3L
+    if (first_three_only)
+        first_tx_names <- first_tx_names[1:3]
+    bm_result <- bm_result[tx_name %in% first_tx_names, , drop=FALSE]
+    bm_result0 <- bm_result[-match(tx_name_colname, names(bm_result))]
+    f <- factor(bm_result[[tx_name_colname]], levels=first_tx_names)
     first_tx_tables <- split(bm_result0, f)
     .DETAILS_INDENT <- "     "
     options(width=getOption("width")-nchar(.DETAILS_INDENT))
@@ -214,14 +225,14 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                     })
     options(width=getOption("width")+nchar(.DETAILS_INDENT))
     part3 <- unlist(part3, use.names=FALSE)
-    if (first_six_only)
-        part3 <- c(paste("  (Showing only the first 6 out of",
+    if (first_three_only)
+        part3 <- c(paste("  (Showing only the first 3 out of",
                           total_nb_tx,
                           "transcripts.)"),
                    part3)
 
     ## Part 1.
-    part1 <- "BioMart data anomaly: in the following transcripts, "
+    part1 <- paste0(error_type, ": in the following transcripts, ")
 
     ## Part 2.
     msg[length(msg)] <- paste0(msg[length(msg)], ".")
@@ -231,9 +242,10 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     paste(c(part1, part2, part3), collapse="\n")
 }
 
-.stopWithBioMartDataAnomalyReport <- function(bm_result, idx, id_prefix, msg)
+.stop_on_BioMart_data_anomaly <- function(bm_result, idx, id_prefix, msg)
 {
-    msg <- .generateBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
+    msg <- .generate_BioMart_data_anomaly_report("BioMart fatal data anomaly",
+                                                 bm_result, idx, id_prefix, msg)
     new_length <- nchar(msg) + 5L
     ## 8170L seems to be the maximum possible value for the 'warning.length'
     ## option on my machine (R-2.15 r58124, 64-bit Ubuntu).
@@ -247,9 +259,10 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     stop(msg)
 }
 
-.warningWithBioMartDataAnomalyReport <- function(bm_result, idx, id_prefix, msg)
+.warning_on_BioMart_data_anomaly <- function(bm_result, idx, id_prefix, msg)
 {
-    msg <- .generateBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
+    msg <- .generate_BioMart_data_anomaly_report("BioMart data anomaly",
+                                                 bm_result, idx, id_prefix, msg)
     new_length <- nchar(msg) + 5L
     ## 8170L seems to be the maximum possible value for the 'warning.length'
     ## option on my machine (R-2.15 r58124, 64-bit Ubuntu).
@@ -263,37 +276,37 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     warning(msg)
 }
 
-.utrIsNa <- function(utr_start, utr_end, exon_start, exon_end,
+.has_utr <- function(utr_start, utr_end, exon_start, exon_end,
                      what_utr, bm_result, id_prefix="ensembl_")
 {
     is_na <- is.na(utr_start)
     if (!identical(is_na, is.na(utr_end)))
-        stop("BioMart data anomaly: ",
-             "NAs in \"", what_utr, "_utr_start\" attribute don't match ",
-             "NAs in \"", what_utr, "_utr_end\" attribute")
+        stop(wmsg("BioMart fatal data anomaly: ",
+                  "NAs in \"", what_utr, "_utr_start\" attribute don't match ",
+                  "NAs in \"", what_utr, "_utr_end\" attribute"))
     idx <- which(utr_start > utr_end + 1L)
     if (length(idx) != 0L) {
         msg <- paste0("the ", what_utr, "' UTRs have a start > end + 1")
-        .stopWithBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
+        .stop_on_BioMart_data_anomaly(bm_result, idx, id_prefix, msg)
     }
     idx <- which(utr_start < exon_start | exon_end < utr_end)
     if (length(idx) != 0L) {
         msg <- paste0("the ", what_utr, "' UTRs ",
                       "are not within the exon limits")
-        .stopWithBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
+        .stop_on_BioMart_data_anomaly(bm_result, idx, id_prefix, msg)
     }
-    is_na | utr_start == utr_end + 1L
+    !(is_na | utr_start == utr_end + 1L)
 }
 
-.extractCdsRangesFromC1 <- function(bm_result, id_prefix="ensembl_")
+.extract_cds_ranges_from_C1 <- function(bm_result, id_prefix="ensembl_")
 {
-    cds_start <- .extractNumAttrib(bm_result, "genomic_coding_start")
-    cds_end <- .extractNumAttrib(bm_result, "genomic_coding_end")
+    cds_start <- .extract_numeric_attrib(bm_result, "genomic_coding_start")
+    cds_end <- .extract_numeric_attrib(bm_result, "genomic_coding_end")
     is_na <- is.na(cds_start)
     if (!identical(is_na, is.na(cds_end)))
-        stop("BioMart data anomaly: ",
-             "NAs in \"genomic_coding_start\" attribute don't match ",
-             "NAs in \"genomic_coding_end\" attribute")
+        stop(wmsg("BioMart fatal data anomaly: ",
+                  "NAs in \"genomic_coding_start\" attribute don't match ",
+                  "NAs in \"genomic_coding_end\" attribute"))
 
     ## Exons with no CDS get a CDS of width 0.
     no_cds_idx <- which(is_na)
@@ -304,67 +317,70 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     IRanges(start=cds_start, end=cds_end)
 }
 
-.extractCdsRangesFromC2 <- function(bm_result, id_prefix="ensembl_")
+### These errors in UTR representation are non fatal but trigger rejection of
+### the corresponding transcripts with a warning.
+.BIOMART_UTR_ERROR <- c(
+    "located on the + strand, \"5_utr_start\" must match \"exon_chrom_start\"",
+    "located on the + strand, \"3_utr_end\" must match \"exon_chrom_end\"",
+    "located on the - strand, \"3_utr_start\" must match \"exon_chrom_start\"",
+    "located on the - strand, \"5_utr_end\" must match \"exon_chrom_end\""
+)
+
+.warning_on_BioMart_utr_anomaly <- function(bm_result, idx, id_prefix,
+                                            utr_anomaly)
+{
+    msg <- c(.BIOMART_UTR_ERROR[[utr_anomaly]],
+             " (these transcripts were dropped)")
+    .warning_on_BioMart_data_anomaly(bm_result, idx, id_prefix, msg)
+}
+
+.extract_cds_ranges_from_C2 <- function(bm_result, id_prefix="ensembl_")
 {
     strand <- bm_result[["strand"]]
     if (!all(strand %in% c(1, -1)))
-        stop("BioMart data anomaly: \"strand\" attribute should be 1 or -1")
+        stop(wmsg("BioMart fatal data anomaly: ",
+                  "\"strand\" attribute should be 1 or -1"))
 
     cds_start <- exon_start <- bm_result[["exon_chrom_start"]]
     cds_end <- exon_end <- bm_result[["exon_chrom_end"]]
+    utr_anomaly <- integer(nrow(bm_result))
 
-    utr5_start <- .extractNumAttrib(bm_result, "5_utr_start")
-    utr5_end <- .extractNumAttrib(bm_result, "5_utr_end")
-    utr3_start <- .extractNumAttrib(bm_result, "3_utr_start")
-    utr3_end <- .extractNumAttrib(bm_result, "3_utr_end")
+    utr5_start <- .extract_numeric_attrib(bm_result, "5_utr_start")
+    utr5_end <- .extract_numeric_attrib(bm_result, "5_utr_end")
+    utr3_start <- .extract_numeric_attrib(bm_result, "3_utr_start")
+    utr3_end <- .extract_numeric_attrib(bm_result, "3_utr_end")
 
-    no_utr5 <- .utrIsNa(utr5_start, utr5_end, exon_start, exon_end,
-                        "5", bm_result, id_prefix)
-    no_utr3 <- .utrIsNa(utr3_start, utr3_end, exon_start, exon_end,
-                        "3", bm_result, id_prefix)
+    has_utr5 <- .has_utr(utr5_start, utr5_end, exon_start, exon_end,
+                         "5", bm_result, id_prefix)
+    has_utr3 <- .has_utr(utr3_start, utr3_end, exon_start, exon_end,
+                         "3", bm_result, id_prefix)
 
-    idx <- which(strand == 1 & !no_utr5)
-    bad_idx2 <- which(utr5_start[idx] != exon_start[idx])
-    if (length(bad_idx2) != 0L) {
-        msg <- c("located on the plus strand, the start of some 5' UTRs ",
-                 "(5_utr_start) doesn't match the start of the exon ",
-                 "(exon_chrom_start)")
-        .stopWithBioMartDataAnomalyReport(bm_result, idx[bad_idx2],
-                                          id_prefix, msg)
-    }
+    idx <- which(strand == 1 & has_utr5)
+    bad_idx <- idx[utr5_start[idx] != exon_start[idx]]
+    if (length(bad_idx) != 0L)
+        .warning_on_BioMart_utr_anomaly(bm_result, bad_idx, id_prefix,
+                                        utr_anomaly[bad_idx] <- 1L)
     cds_start[idx] <- utr5_end[idx] + 1L
 
-    idx <- which(strand == 1 & !no_utr3)
-    bad_idx2 <- which(utr3_end[idx] != exon_end[idx])
-    if (length(bad_idx2) != 0L) {
-        msg <- c("located on the plus strand, the end of some 3' UTRs ",
-                 "(3_utr_end) doesn't match the end of the exon ",
-                 "(exon_chrom_end)")
-        .stopWithBioMartDataAnomalyReport(bm_result, idx[bad_idx2],
-                                          id_prefix, msg)
-    }
+    idx <- which(strand == 1 & has_utr3)
+    bad_idx <- idx[utr3_end[idx] != exon_end[idx]]
+    if (length(bad_idx) != 0L)
+        .warning_on_BioMart_utr_anomaly(bm_result, bad_idx, id_prefix,
+                                        utr_anomaly[bad_idx] <- 2L)
     cds_end[idx] <- utr3_start[idx] - 1L
 
-    idx <- which(strand == -1 & !no_utr3)
-    bad_idx2 <- which(utr3_start[idx] != exon_start[idx])
-    if (length(bad_idx2) != 0L) {
-        msg <- c("located on the minus strand, the start of some 3' UTRs ",
-                 "(3_utr_start) doesn't match the start of the exon ",
-                 "(exon_chrom_start)")
-        .stopWithBioMartDataAnomalyReport(bm_result, idx[bad_idx2],
-                                          id_prefix, msg)
-    }
+    idx <- which(strand == -1 & has_utr3)
+    bad_idx <- idx[utr3_start[idx] != exon_start[idx]]
+    if (length(bad_idx) != 0L)
+        .warning_on_BioMart_utr_anomaly(bm_result, bad_idx, id_prefix,
+                                        utr_anomaly[bad_idx] <- 3L)
     cds_start[idx] <- utr3_end[idx] + 1L
 
-    idx <- which(strand == -1 & !no_utr5)
-    bad_idx2 <- which(utr5_end[idx] != exon_end[idx])
-    if (length(bad_idx2) != 0L) {
-        msg <- c("located on the minus strand, the end of some 5' UTRs ",
-                 "(5_utr_end) doesn't match the end of the exon ",
-                 "(exon_chrom_end)")
-        .stopWithBioMartDataAnomalyReport(bm_result, idx[bad_idx2],
-                                          id_prefix, msg)
-    }
+    idx <- which(strand == -1 & has_utr5)
+    bad_idx <- idx[utr5_end[idx] != exon_end[idx]]
+    if (length(bad_idx) != 0L)
+        .warning_on_BioMart_utr_anomaly(bm_result, bad_idx, id_prefix,
+                                        utr_anomaly[bad_idx] <- 4L)
     cds_end[idx] <- utr5_start[idx] - 1L
 
     ## Exons with no CDS get a CDS of width 0.
@@ -372,10 +388,48 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     no_cds_idx <- which(is.na(cds_relative_start))
     cds_end[no_cds_idx] <- cds_start[no_cds_idx] - 1L
 
-    IRanges(start=cds_start, end=cds_end)
+    ans <- IRanges(start=cds_start, end=cds_end)
+    mcols(ans) <- DataFrame(utr_anomaly=utr_anomaly)
+    ans
 }
 
-.extractCdsRangesFromBiomartResult <- function(bm_result, id_prefix="ensembl_")
+.check_cds <- function(cds_ranges, cds_width, bm_result, id_prefix="ensembl_")
+{
+    idx <- which(width(cds_ranges) != cds_width)
+    if (length(idx) != 0L) {
+        msg <- c("the CDS/UTR genomic coordinates are inconsistent with the ",
+                 "\"cds_start\" and \"cds_end\" attributes")
+        .warning_on_BioMart_data_anomaly(bm_result, idx, id_prefix, msg)
+    }
+
+    tx_name_colname <- paste0(id_prefix, "transcript_id")
+    tx_name <- bm_result[ , tx_name_colname]
+    cds_length2 <- sapply(split(width(cds_ranges), tx_name), sum)
+    cds_length2 <- cds_length2[as.character(tx_name)]
+
+    cds_length <- bm_result[ , "cds_length"]
+    if (!is.null(cds_length)) { 
+        idx <- which(cds_length2 != cds_length)
+        if (length(idx) != 0L) {
+            msg <- c("the CDS length inferred from the CDS/UTR genomic ",
+                     "coordinates doesn't match the \"cds_length\" attribute")
+            .warning_on_BioMart_data_anomaly(bm_result, idx, id_prefix, msg)
+        }
+    }
+
+    ## Too many transcripts in the ensembl/hsapiens_gene_ensembl dataset don't
+    ## pass the sanity check below (20256 transcripts in Ensembl release 75).
+    ## This makes makeTxDbFromBiomart() a little bit too noisy so we
+    ## comment this out for now.
+    #idx <- which(cds_length2 %% 3L != 0L)
+    #if (length(idx) != 0L) {
+    #    msg <- c("the CDS length inferred from the CDS/UTR genomic ",
+    #             "coordinates is not a multiple of 3")
+    #    .warning_on_BioMart_data_anomaly(bm_result, idx, id_prefix, msg)
+    #}
+}
+
+.extract_cds_ranges_from_bm_result <- function(bm_result, id_prefix="ensembl_")
 {
     if (nrow(bm_result) == 0L)
         return(IRanges())
@@ -390,8 +444,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     ## from BioMart are the CDS coordinates relative to the coding mRNA!
     ## See IMPORTANT NOTE ABOUT GROUP D1 in findCompatibleMarts.R for more
     ## information.
-    cds_relative_start <- .extractNumAttrib(bm_result, "cds_start")
-    cds_relative_end <- .extractNumAttrib(bm_result, "cds_end")
+    cds_relative_start <- .extract_numeric_attrib(bm_result, "cds_start")
+    cds_relative_end <- .extract_numeric_attrib(bm_result, "cds_end")
     is_na <- is.na(cds_relative_start)
     if (!identical(is_na, is.na(cds_relative_end)))
         stop("BioMart data anomaly: ",
@@ -407,69 +461,51 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     has_C2_attribs <- all(C2_attribs %in% colnames(bm_result))
 
     if (has_C1_attribs)
-        ans <- .extractCdsRangesFromC1(bm_result, id_prefix)
-
+        ans1 <- .extract_cds_ranges_from_C1(bm_result, id_prefix)
     if (has_C2_attribs) {
-        ans2 <- .extractCdsRangesFromC2(bm_result, id_prefix)
+        ans2 <- .extract_cds_ranges_from_C2(bm_result, id_prefix)
+        utr_anomaly <- mcols(ans2)$utr_anomaly
+        tx_name_colname <- paste0(id_prefix, "transcript_id")
+        tx_name <- bm_result[ , tx_name_colname]
+        invalid_tx <- unique(tx_name[utr_anomaly != 0L])
+        valid_tx_idx <- !(tx_name %in% invalid_tx)
         if (has_C1_attribs) {
-            ## Sanity checks.
-            if (!identical(width(ans), width(ans2)))
-                stop("BioMart data anomaly: ",
-                     "CDS genomic coordinates are inconsistent with ",
-                     "UTR genomic coordinates")
-            no_cds_idx <- which(width(ans) != 0L)
-            if (!identical(start(ans)[no_cds_idx], start(ans2)[no_cds_idx]))
-                stop("BioMart data anomaly: ",
-                     "CDS genomic coordinates are inconsistent with ",
-                     "UTR genomic coordinates")
-        } else {
-            ans <- ans2
+            ## Check that 'ans1' agrees with 'ans2'.
+            if (!identical(width(ans1)[valid_tx_idx],
+                           width(ans2)[valid_tx_idx]))
+                stop(wmsg("BioMart fatal data anomaly: ",
+                          "CDS genomic coordinates are inconsistent with ",
+                          "UTR genomic coordinates"))
+            cds_idx <- which(valid_tx_idx & width(ans1) != 0L)
+            if (!identical(start(ans1)[cds_idx], start(ans2)[cds_idx]))
+                stop(wmsg("BioMart fatal data anomaly: ",
+                          "CDS genomic coordinates are inconsistent with ",
+                          "UTR genomic coordinates"))
         }
+        ans1 <- ans2
+    } else {
+        valid_tx_idx <- seq_along(nrow(bm_result))
     }
 
-    ## More sanity checks.
-    idx <- which(width(ans) != cds_width)
-    if (length(idx) != 0L) {
-        msg <- c("the CDS/UTR genomic coordinates are inconsistent with the ",
-                 "\"cds_start\" and \"cds_end\" attributes")
-        .warningWithBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
-    }
-
-    tx_id_colname <- paste0(id_prefix, "transcript_id")
-    cds_length2 <- sapply(split(width(ans), bm_result[[tx_id_colname]]), sum)
-    cds_length2 <- cds_length2[as.character(bm_result[[tx_id_colname]])]
-
-    cds_length <- bm_result[["cds_length"]]
-    if (!is.null(cds_length)) { 
-        idx <- which(cds_length2 != cds_length)
-        if (length(idx) != 0L) {
-            msg <- c("the CDS length inferred from the CDS/UTR genomic ",
-                     "coordinates doesn't match the \"cds_length\" attribute")
-            .warningWithBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
-        }
-    }
-
-    ## Too many transcripts in the ensembl/hsapiens_gene_ensembl dataset don't
-    ## pass the sanity check below (20256 transcripts in Ensembl release 75).
-    ## This makes makeTxDbFromBiomart() a little bit too noisy so we
-    ## comment this out for now.
-    #idx <- which(cds_length2 %% 3L != 0L)
-    #if (length(idx) != 0L) {
-    #     msg <- c("the CDS length inferred from the CDS/UTR genomic ",
-    #              "coordinates is not a multiple of 3")
-    #    .warningWithBioMartDataAnomalyReport(bm_result, idx, id_prefix, msg)
-    #}
-    ans
+    ## More checking of the CDS of the "valid" transcripts ("valid" here means
+    ## with no UTR anomalies).
+    .check_cds(ans1[valid_tx_idx], cds_width[valid_tx_idx],
+               bm_result[valid_tx_idx, , drop=FALSE], id_prefix="ensembl_")
+    ans1
 }
 
-.makeCdsDataFrameFromRanges <- function(cds_ranges)
+.make_cds_df_from_ranges <- function(cds_ranges)
 {
     no_cds_idx <- which(width(cds_ranges) == 0L)
     cds_start <- start(cds_ranges)
     cds_start[no_cds_idx] <- NA_integer_
     cds_end <- end(cds_ranges)
     cds_end[no_cds_idx] <- NA_integer_
-    data.frame(cds_start=cds_start, cds_end=cds_end)
+    ans <- data.frame(cds_start=cds_start, cds_end=cds_end)
+    utr_anomaly <- mcols(cds_ranges)$utr_anomaly
+    if (!is.null(utr_anomaly))
+        ans$utr_anomaly <- utr_anomaly
+    ans
 }
 
 .makeBiomartSplicings <- function(filters, values, mart, transcripts_tx_id,
@@ -493,19 +529,20 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     attributes <- unlist(recognized_attribs[get_groups], use.names=FALSE)
     bm_result <- getBM(attributes, filters=filters, values=values, mart=mart,
                        bmHeader=FALSE)
-    tx_id_colname <- paste0(id_prefix, "transcript_id")
-    splicings_tx_id <- transcripts_tx_id[bm_result[[tx_id_colname]]]
-    exon_id_col_name <- paste0(id_prefix, "exon_id")
+    tx_name_colname <- paste0(id_prefix, "transcript_id")
+    tx_name <- bm_result[[tx_name_colname]]
+    splicings_tx_id <- transcripts_tx_id[tx_name]
+    exon_name_colname <- paste0(id_prefix, "exon_id")
     splicings <- data.frame(
         tx_id=splicings_tx_id,
         exon_rank=bm_result$rank,
-        exon_name=bm_result[[exon_id_col_name]],
+        exon_name=bm_result[[exon_name_colname]],
         exon_start=bm_result$exon_chrom_start,
         exon_end=bm_result$exon_chrom_end
     )
     if ((has_group[['C1']] || has_group[['C2']]) && has_group[['D1']]) {
-        cds_ranges <- .extractCdsRangesFromBiomartResult(bm_result, id_prefix)
-        splicings <- cbind(splicings, .makeCdsDataFrameFromRanges(cds_ranges))
+        cds_ranges <- .extract_cds_ranges_from_bm_result(bm_result, id_prefix)
+        splicings <- cbind(splicings, .make_cds_df_from_ranges(cds_ranges))
     }
     message("OK")
     splicings  
@@ -526,13 +563,17 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                     paste0(id_prefix, "transcript_id"))
     bm_result <- getBM(attributes, filters=filters, values=values, mart=mart,
                        bmHeader=FALSE)
-    tx_id_colname <- paste0(id_prefix, "transcript_id")
-    genes_tx_id <- transcripts_tx_id[bm_result[[tx_id_colname]]]
+    tx_name_colname <- paste0(id_prefix, "transcript_id")
+    gene_id_colname <- paste0(id_prefix, "gene_id")
+    tx_name <- bm_result[[tx_name_colname]]
+    gene_id <- bm_result[[gene_id_colname]]
+    keep_idx <- which(tx_name %in% names(transcripts_tx_id))
+    tx_id <- transcripts_tx_id[tx_name[keep_idx]]
+    gene_id <- gene_id[keep_idx]
     message("OK")
-    gene_id_col_name <- paste0(id_prefix, "gene_id")
     data.frame(
-        tx_id=genes_tx_id,
-        gene_id=bm_result[[gene_id_col_name]]
+        tx_id=tx_id,
+        gene_id=gene_id
     )
 }
 
@@ -557,13 +598,13 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     ## This should never happen (the above call to useMart() would have failed
     ## in the first place).
     if (length(dataset_rowidx) != 1L)
-        stop("the BioMart database \"", biomaRt:::martBM(mart),
-             "\" has no (or more than one) \"", dataset, "\" datasets")
+        stop(wmsg("the BioMart database \"", biomaRt:::martBM(mart),
+                  "\" has no (or more than one) \"", dataset, "\" datasets"))
     description <- as.character(datasets$description)[dataset_rowidx]
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
     organism <- .extractOrganismFromDatasetDesc(description)
     if (!isSingleStringOrNA(miRBaseBuild))
-        stop("'miRBaseBuild' must be a a single string or NA")
+        stop(wmsg("'miRBaseBuild' must be a a single string or NA"))
     message("OK")
     data.frame(
         name=c("Data source",
@@ -741,6 +782,25 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
                                        transcripts_tx_id,
                                        recognized_attribs,
                                        id_prefix=id_prefix)
+
+    ## Drop transcripts with UTR anomalies.
+    utr_anomaly <- splicings$utr_anomaly
+    if (!is.null(utr_anomaly)) {
+        invalid_tx <- unique(splicings[utr_anomaly != 0L, "tx_id"])
+        if (length(invalid_tx) != 0L) {
+            message("Drop transcripts with UTR anomalies (",
+                    length(invalid_tx), " transcripts) ... ",
+                    appendLF=FALSE)
+            keep_idx1 <- !(transcripts$tx_id %in% invalid_tx)
+            transcripts <- transcripts[keep_idx1, ]
+            transcripts_tx_id <- transcripts_tx_id[keep_idx1]
+            keep_idx2 <- !(splicings$tx_id %in% invalid_tx)
+            splicings <- splicings[keep_idx2, , drop=FALSE]
+            message("OK")
+        }
+        splicings$utr_anomaly <- NULL
+    }
+
     genes <- .makeBiomartGenes(filters, values, mart, transcripts_tx_id,
                                recognized_attribs, id_prefix)
     metadata <- .prepareBiomartMetadata(mart, is.null(transcript_ids), host,
