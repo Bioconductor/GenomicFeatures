@@ -27,15 +27,15 @@
     gr
 }
 
-.prepareGFFMetadata <- function(file, dataSource=NA, species=NA,
+.prepareGFFMetadata <- function(file, dataSource=NA, organism=NA,
                                       miRBaseBuild=NA)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
     if (!isSingleStringOrNA(dataSource))
         stop("'dataSource' must be a a single string or NA")
-    if (!isSingleStringOrNA(species))
-        stop("'species' must be a a single string or NA")
+    if (!isSingleStringOrNA(organism))
+        stop("'organism' must be a a single string or NA")
     if (!isSingleStringOrNA(miRBaseBuild))
         stop("'miRBaseBuild' must be a a single string or NA")
     if (identical(dataSource, NA)) {
@@ -50,7 +50,7 @@
                    name=c("Data source",
                           "Organism",
                           "miRBase build ID"),
-                   value=c(dataSource, species, miRBaseBuild)
+                   value=c(dataSource, organism, miRBaseBuild)
                    )
     message("metadata: OK")
     metadata
@@ -63,11 +63,12 @@ makeTxDbFromGFF <- function(file,
                             gffGeneIdAttributeName=NA,    # deprecated
                             chrominfo=NA,
                             dataSource=NA,
-                            species=NA,
+                            organism=NA,
                             circ_seqs=DEFAULT_CIRC_SEQS,
                             miRBaseBuild=NA,
                             useGenesAsTranscripts=FALSE,  # deprecated
-                            gffTxName="mRNA")             # deprecated
+                            gffTxName="mRNA",             # deprecated
+                            species=NA)                   # deprecated
 {
     if (!identical(exonRankAttributeName, NA))
         .Deprecated(msg="'exonRankAttributeName' is ignored and deprecated")
@@ -77,11 +78,20 @@ makeTxDbFromGFF <- function(file,
         .Deprecated(msg="'useGenesAsTranscripts' is ignored and deprecated")
     if (!identical(gffTxName, "mRNA"))
         .Deprecated(msg="'gffTxName' is ignored and deprecated")
+    if (!identical(species, NA)) {
+        if (!identical(organism, NA))
+            stop("only one of 'organism' or 'species' can be specified, ",
+                 "but not both")
+        msg <- c("The 'species' argument is deprecated. ",
+                 "Please use 'organism' instead.")
+        .Deprecated(msg=msg)
+        organism <- species
+    }
 
     format <- match.arg(format)
     gr <- import(file, format=format)
     gr <- .set_seqinfo(gr, chrominfo, circ_seqs)
-    metadata <- .prepareGFFMetadata(file, dataSource, species, miRBaseBuild)
+    metadata <- .prepareGFFMetadata(file, dataSource, organism, miRBaseBuild)
     makeTxDbFromGRanges(gr, metadata=metadata)
 }
 

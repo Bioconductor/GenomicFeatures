@@ -21,11 +21,12 @@ makeTxDbFromGFF(file,
                 gffGeneIdAttributeName=NA,
                 chrominfo=NA,
                 dataSource=NA,
-                species=NA,
+                organism=NA,
                 circ_seqs=DEFAULT_CIRC_SEQS,
                 miRBaseBuild=NA,
                 useGenesAsTranscripts=FALSE,
-                gffTxName="mRNA")
+                gffTxName="mRNA",
+                species=NA)
 }
 \arguments{
   \item{file}{path/file to be processed}
@@ -38,7 +39,7 @@ makeTxDbFromGFF(file,
   \code{\link{makeTxDb}}. See \code{?\link{makeTxDb}} for the details.}
   \item{dataSource}{Where did this data file originate?  Please be as
   specific as possible.}
-  \item{species}{What is the Genus and species of this organism. Please
+  \item{organism}{What is the Genus and species of this organism. Please
   use proper scientific nomenclature for example: "Homo sapiens" or
   "Canis familiaris" and not "human" or "my fuzzy buddy".  If properly
   written, this information may be used by the software to help you out
@@ -52,6 +53,7 @@ makeTxDbFromGFF(file,
     \code{microRNAs} accessor.}
   \item{useGenesAsTranscripts}{ignored and deprecated}
   \item{gffTxName}{ignored and deprecated}
+  \item{species}{deprecated in favor of \code{organism}}
 }
 \details{
   \code{makeTxDbFromGFF} is a convenience function that feeds
@@ -99,7 +101,7 @@ gffFile <- system.file("extdata","GFF3_files","a.gff3",package="GenomicFeatures"
 txdb <- makeTxDbFromGFF(file=gffFile,
             format="gff3",
             dataSource="partial gtf file for Tomatoes for testing",
-            species="Solanum lycopersicum")
+            organism="Solanum lycopersicum")
 
 ## TESTING GTF, this time specifying the chrominfo
 gtfFile <- system.file("extdata","GTF_files","Aedes_aegypti.partial.gtf",
@@ -112,5 +114,5 @@ txdb2 <- makeTxDbFromGFF(file=gtfFile,
              chrominfo=chrominfo,
              dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
                               "release-13/gtf/aedes_aegypti/",sep=""),
-             species="Aedes aegypti")
+             organism="Aedes aegypti")
 }

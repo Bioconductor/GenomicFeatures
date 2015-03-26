@@ -4,6 +4,8 @@
 \alias{class:TxDb}
 \alias{TxDb}
 
+\alias{species,TxDb-method}
+\alias{organism,TxDb-method}
 \alias{seqinfo,TxDb-method}
 \alias{seqinfo<-,TxDb-method}
 \alias{isActiveSeq}

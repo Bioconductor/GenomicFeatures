@@ -121,7 +121,7 @@ export(
 )
 
 exportMethods(
-  metadata,
+  species, organism,
   show,
   as.list,
   seqinfo, "seqinfo<-",

@@ -31,7 +31,7 @@ makeTxDb(transcripts, splicings,
   \item{chrominfo}{data frame containing information about the chromosomes
     hosting the set of transcripts}
   \item{metadata}{2-column data frame containing meta information about
-    this set of transcripts like species, organism, genome, UCSC table, etc...
+    this set of transcripts like organism, genome, UCSC table, etc...
     The names of the columns must be \code{"name"} and \code{"value"}
     and their type must be character.}
   \item{reassign.ids}{controls how internal ids should be assigned for each

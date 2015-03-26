@@ -462,6 +462,29 @@ TxDb <- function(conn)
 ### Accessors.
 ###
 
+### The "species" method currently defined in AnnotationDbi (1.29.20) for
+### AnnotationDb objects is too messed up so here we overwrite it for TxDb
+### objects and deprecate it in favor of organism(). Once things are fixed
+### in AnnotationDbi, we won't need this anymore and can remove it.
+setMethod("species", "TxDb",
+    function(object)
+    {
+         msg <- c("  Calling species() on a ", class(object), " object ",
+                  "is *deprecated*.\n  Please use organism() instead.")
+        .Deprecated(msg=msg)
+        organism(object)
+    }
+)
+setMethod("organism", "TxDb",
+    function(object)
+    {
+        metadata <- metadata(object)
+        metadata <- setNames(metadata[ , "value"],
+                             tolower(metadata[ , "name"]))
+        metadata[["organism"]]
+    }
+)
+
 ## seqinfo getter needs to rename and re-sort things based on new2old
 ## integers every single time it is accessed
 .seqinfo.TxDb <- function(x)
