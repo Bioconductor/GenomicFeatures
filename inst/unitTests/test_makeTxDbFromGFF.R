@@ -25,7 +25,7 @@ test_makeTxDbFromGFF <- function(){
   txdb <- makeTxDbFromGFF(file=gffFile,
          format="gff3",
          dataSource="partial GFF file for Tomatoes for testing",
-         species="Solanum lycopersicum")
+         organism="Solanum lycopersicum")
 
   ## test
   checkTrue(GenomicFeatures:::compareTxDbs(txdb, txdb_gff))
@@ -47,7 +47,7 @@ test_makeTxDbFromGFF <- function(){
          chrominfo= chrominfo,
          dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
                           "release-13/gtf/aedes_aegypti/",sep=""),
-         species="Aedes aegypti")
+         organism="Aedes aegypti")
 
   ## test
   checkTrue(GenomicFeatures:::compareTxDbs(txdb2, txdb_gtf))
@@ -62,7 +62,7 @@ test_makeTxDbFromGFF <- function(){
   txdb3 <- makeTxDbFromGFF(file=flyFile,
                                    format="gff3",
                                    dataSource="gff file from flybase",
-                                   species="Drosophila melanogaster")
+                                   organism="Drosophila melanogaster")
   
   checkTrue(GenomicFeatures:::compareTxDbs(txdb3, txdb_fly))
 
@@ -77,7 +77,7 @@ test_makeTxDbFromGFF <- function(){
   txdb_bac <- makeTxDbFromGFF(file = gffB, format = "gff",
                                       chrominfo = chrominfoBac,
                                       dataSource = "NCBI",
-                                      species = "Mycoplasma arthritidis")
+                                      organism = "Mycoplasma arthritidis")
 
   ## Tests
   checkTrue(class(txdb_bac)=="TxDb")
