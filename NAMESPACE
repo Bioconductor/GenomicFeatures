@@ -28,7 +28,7 @@ importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
 importFrom(rtracklayer, browserSession, ucscTableQuery,
            tableNames, getTable, trackNames, ucscSchema, asBED, asGFF, import)
 
-importFrom(AnnotationDbi, loadDb, saveDb)
+importFrom(AnnotationDbi, dbconn, loadDb, saveDb)
 
 exportClasses(TxDb, FeatureDb)
 
