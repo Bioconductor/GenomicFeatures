@@ -163,7 +163,7 @@ gc()
                   ## set up initial new2old slot:
 ##                   n2o <- 
 ##                   names(n2o) <- chrominfo$chrom
-                  .self$new2old <- as.integer(1:length(chrominfo$chrom))
+                  .self$new2old <- seq_along(chrominfo$chrom)
                   ## deprecate .chrom and isActiveSeq
                   .self$.chrom <- chrominfo$chrom 
                   .self$isActiveSeq <- !logical(length(.self$.chrom)) 
@@ -481,7 +481,7 @@ setMethod("organism", "TxDb",
         metadata <- metadata(object)
         metadata <- setNames(metadata[ , "value"],
                              tolower(metadata[ , "name"]))
-        metadata[["organism"]]
+        unname(metadata["organism"])
     }
 )
 

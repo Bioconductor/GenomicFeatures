@@ -2,6 +2,23 @@
 
 format_txdb_dump <- GenomicFeatures:::.format_txdb_dump
 
+test_makeTxDbFromGRanges_empty <- function()
+{
+    ## The GFF3 way
+    gr1 <- GRanges(type=character(0), ID=character(0))
+    txdb1 <- makeTxDbFromGRanges(gr1)
+    checkTrue(validObject(txdb1))
+    checkTrue(all(elementLengths(as.list(txdb1)) == 0L))
+    checkIdentical(0L, length(seqinfo(txdb1)))
+    checkIdentical(NA_character_, organism(txdb1))
+
+    ## The GTF way
+    gr2 <- GRanges(type=character(0),
+                   gene_id=character(0), transcript_id=character(0))
+    txdb2 <- makeTxDbFromGRanges(gr2)
+    checkIdentical(as.list(txdb1), as.list(txdb2))
+}
+
 test_makeTxDbFromGRanges_no_splicings <- function()
 {
     ## 2 transcripts linked to a gene + 2 orphan transcripts

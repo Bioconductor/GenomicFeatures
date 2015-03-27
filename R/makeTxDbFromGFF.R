@@ -89,7 +89,7 @@ makeTxDbFromGFF <- function(file,
     }
 
     format <- match.arg(format)
-    gr <- import(file, format=format)
+    gr <- import(file, format=format, feature.type=GFF_FEATURE_TYPES)
     gr <- .set_seqinfo(gr, chrominfo, circ_seqs)
     metadata <- .prepareGFFMetadata(file, dataSource, organism, miRBaseBuild)
     makeTxDbFromGRanges(gr, metadata=metadata)
