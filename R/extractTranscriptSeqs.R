@@ -152,12 +152,13 @@ if (FALSE) {
         exons <- unlist(transcripts, use.names=FALSE)
         ranges_to_load <- reduce(exons, with.inframe.attrib=TRUE)
         x <- .extract_and_combine(x, seqlevel, ranges_to_load)
+        if (is.character(x)) {
+            x <- DNAString(x)
+        }
         exons <- attr(ranges_to_load, "inframe")
         transcripts <- relist(exons, transcripts)
     } else {
-        ## Why do we need this?
-        regex <- paste0("^", seqlevel, "$")
-        x <- getSeq(x, regex, as.character=FALSE)
+        stop("seqlevel '", seqlevel, "' not found in 'x'")
     }
     extractTranscriptSeqs(x, transcripts, strand=strand)
 }
