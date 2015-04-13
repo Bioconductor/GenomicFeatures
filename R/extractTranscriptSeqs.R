@@ -139,7 +139,14 @@ if (FALSE) {
 }
 
 .extract_and_combine <- function(x, seqname, ranges)
-    .fast_XStringSet_unlist(getSeq(x, GRanges(seqname, ranges)))
+{
+    seqs <- getSeq(x, GRanges(seqname, ranges))
+    ## For "getSeq" methods (like the method for GmapGenome objects) that
+    ## return a character vector.
+    if (is.character(seqs))
+        seqs <- DNAStringSet(seqs)
+    .fast_XStringSet_unlist(seqs)
+}
 
 .extractTranscriptSeqsFromOneSeq <- function(seqlevel, x, transcripts)
 {
@@ -152,13 +159,12 @@ if (FALSE) {
         exons <- unlist(transcripts, use.names=FALSE)
         ranges_to_load <- reduce(exons, with.inframe.attrib=TRUE)
         x <- .extract_and_combine(x, seqlevel, ranges_to_load)
-        if (is.character(x)) {
-            x <- DNAString(x)
-        }
         exons <- attr(ranges_to_load, "inframe")
         transcripts <- relist(exons, transcripts)
     } else {
-        stop("seqlevel '", seqlevel, "' not found in 'x'")
+        ## Why do we need this?
+        regex <- paste0("^", seqlevel, "$")
+        x <- getSeq(x, regex, as.character=FALSE)
     }
     extractTranscriptSeqs(x, transcripts, strand=strand)
 }
