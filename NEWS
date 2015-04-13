@@ -1,3 +1,92 @@
+CHANGES IN VERSION 1.20
+-----------------------
+
+NEW FEATURES
+
+    o Add makeTxDbFromGRanges() for extracting gene, transcript, exon, and CDS
+      information from a GRanges object structured as GFF3 or GTF, and
+      returning that information as a TxDb object.
+
+    o TxDb objects have a new column ("tx_type" in the "transcripts" table)
+      that the user can request thru the 'columns' arg of the transcripts()
+      extractor. This column is populated when the user makes a TxDb object
+      from Ensembl (using makeTxDbFromBiomart()) or from a GFF3/GTF file (using
+      makeTxDbFromGFF()), but not yet (i.e. it's set to NA) when s/he makes it
+      from a UCSC track (using makeTxDbFromUCSC()). However it seems that UCSC
+      is also providing that information for some tracks so we're planning to
+      have makeTxDbFromUCSC() get it from these tracks in the near future.
+      Also low-level makeTxDb() now imports the "tx_type" column if supplied.
+
+    o Add transcriptLengths() for extracting the transcript lengths from a
+      TxDb object. It also returns the CDS and UTR lengths for each transcript
+      if the user requests them.
+
+    o extractTranscriptSeqs() now works on a FaFile object or any object that
+      supports seqinfo() and getSeq().
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Renamed makeTranscriptDbFromUCSC(), makeTranscriptDbFromBiomart(),
+      makeTranscriptDbFromGFF(), and makeTranscriptDb() -> makeTxDbFromUCSC(),
+      makeTxDbFromBiomart(), makeTxDbFromGFF(), and makeTxDb(). Old names
+      still work but are deprecated.
+
+    o Many changes and improvements to makeTxDbFromGFF():
+      - Re-implemented it on top of makeTxDbFromGRanges().
+      - The geneID tag, if present, is now used to assign an external gene id
+        to transcripts that couldn't otherwise be linked to a gene. This is
+        for compatibility with some GFF3 files from FlyBase (see for example
+        dmel-1000-r5.11.filtered.gff included in this package).
+      - Arguments 'exonRankAttributeName', 'gffGeneIdAttributeName',
+        'useGenesAsTranscripts', and 'gffTxName', are not needed anymore so
+        they are now ignored and deprecated.  
+      - Deprecated 'species' arg in favor of new 'organism' arg.
+
+    o Some tweaks to makeTxDbFromBiomart():
+      - Drop transcripts with UTR anomalies with a warning instead of failing.
+        We've started to see these hopeless transcripts with the release 79 of
+        Ensembl in the dmelanogaster_gene_ensembl dataset (based on FlyBase
+        r6.02 / FB2014_05). With this change, the user can still make a TxDb
+        for dmelanogaster_gene_ensembl but some transcripts will be dropped
+        with a warning.
+      - BioMart data anomaly warnings and errors now show the first 3
+        problematic transcripts instead of 6.
+
+    o 'gene_id' metadata column returned by genes() is now a character vector
+      instead of a CharacterList object.
+
+    o Use # prefix instead of | in "show" method for TxDb objects.
+
+DEPRECATED AND DEFUNCT
+
+    o Deprecated makeTranscriptDbFromUCSC(), makeTranscriptDbFromBiomart(),
+      makeTranscriptDbFromGFF(), and makeTranscriptDb(), in favor of
+      makeTxDbFromUCSC(), makeTxDbFromBiomart(), and makeTxDbFromGFF(), and
+      makeTxDb().
+
+    o Deprecated species() accessor in favor of organism() on TxDb objects.
+
+    o sortExonsByRank() is now defunct (was deprecated in GenomicFeatures
+      1.18)
+
+    o Removed extractTranscriptsFromGenome(), extractTranscripts(),
+      determineDefaultSeqnameStyle() (were defunct in GenomicFeatures 1.18).
+
+BUG FIXES
+
+    o makeTxDbFromBiomart():
+      - Fix issue causing the download of 'chrominfo' data frame to fail when
+        querying the primary Ensembl mart (with host="ensembl.org" and
+        biomart="ENSEMBL_MART_ENSEMBL").
+      - Fix issue with error reporting code: when some transcripts failed to
+        pass the sanity checks, the error message was displaying the wrong
+        transcripts. More precisely, many good transcripts were mistakenly
+        added to the set of bad transcripts and included in the error message.
+
+    o extractTranscriptSeqs(): fix error message when internal call to
+      exonsBy() fails on 'transcripts'.
+
+
 CHANGES IN VERSION 1.18
 -----------------------
 
@@ -66,7 +155,6 @@ BUG FIXES
     o better argument checking for makeTranscriptDbFromGFF()
 
     o cols arguments and methods will now be columns arguments and methods
-
 
 
 CHANGES IN VERSION 1.12
