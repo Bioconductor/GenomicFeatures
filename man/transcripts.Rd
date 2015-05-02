@@ -12,10 +12,6 @@
 \alias{promoters,TxDb-method}
 \alias{disjointExons}
 \alias{disjointExons,TxDb-method}
-\alias{microRNAs}
-\alias{microRNAs,TxDb-method}
-\alias{tRNAs}
-\alias{tRNAs,TxDb-method}
 
 \title{
   Extract genomic features from an object
@@ -44,12 +40,6 @@ genes(x, ...)
 disjointExons(x, ...)
 \S4method{disjointExons}{TxDb}(x, aggregateGenes=FALSE, 
               includeTranscripts=TRUE, ...) 
-
-microRNAs(x)
-\S4method{microRNAs}{TxDb}(x)
-
-tRNAs(x)
-\S4method{tRNAs}{TxDb}(x)
 }
 
 \arguments{ 
@@ -126,9 +116,8 @@ tRNAs(x)
 
 \details{
   These are the main functions for extracting transcript information
-  from a \link{TxDb} object. With the exception of
-  \code{microRNAs}, these methods can restrict the output based on
-  categorical information. To restrict the output based on interval
+  from a \link{TxDb} object. These methods can restrict the output based
+  on categorical information. To restrict the output based on interval
   information, use the \code{\link{transcriptsByOverlaps}},
   \code{\link{exonsByOverlaps}}, and \code{\link{cdsByOverlaps}}
   functions.
@@ -172,6 +161,8 @@ tRNAs(x)
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
           \link{TxDb} object.
+    \item \code{\link{microRNAs}} and \code{\link{tRNAs}} for extracting
+          microRNA or tRNA genomic ranges from a \link{TxDb} object.
     \item \code{\link{id2name}} for mapping \link{TxDb} internal ids
           to external names for a given feature type.
     \item The \link{TxDb} class.
@@ -242,15 +233,6 @@ promoters(txdb, upstream=100, downstream=50,
 ## is equivalent to:
 promoters(transcripts(txdb, columns=c("tx_name", "gene_id")),
           upstream=100, downstream=50)
-
-## ---------------------------------------------------------------------
-## microRNAs()
-## ---------------------------------------------------------------------
-
-\dontrun{library(TxDb.Hsapiens.UCSC.hg19.knownGene)
-library(mirbase.db)
-microRNAs(TxDb.Hsapiens.UCSC.hg19.knownGene)
-}
 }
 
 \keyword{methods}

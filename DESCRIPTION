@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.21.0
+Version: 1.21.1
 Author: M. Carlson, H. Pages, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
 License: Artistic-2.0
@@ -48,6 +48,7 @@ Collate: utils.R Ensembl.utils.R findCompatibleMarts.R
         transcriptsByOverlaps.R
         transcriptLengths.R
         features.R
+        microRNAs.R
         extractTranscriptSeqs.R
         extractUpstreamSeqs.R
         getPromoterSeq-methods.R

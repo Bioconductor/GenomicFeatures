@@ -71,7 +71,7 @@
     This argument is only applicable to \code{mapToTranscripts} when 
     \code{transcripts} is a \code{TxDb} object. The \code{extractor} should
     be the name of a function (not a character()) described on the 
-    ?\code{transcripts} or ?\code{transcriptsBy} man page.
+    \code{?transcripts}, \code{?transcriptsBy}, or \code{?microRNAs} man page.
 
     Valid \code{extractor} functions:
     \itemize{
@@ -81,14 +81,14 @@
       \item{genes}
       \item{promoters}
       \item{disjointExons}
-      \item{microRNAs}
-      \item{tRNAs}
       \item{transcriptsBy}
       \item{exonsBy}
       \item{cdsBy}
       \item{intronsByTranscript}
       \item{fiveUTRsByTranscript}
       \item{threeUTRsByTranscript}
+      \item{microRNAs}
+      \item{tRNAs}
     }    
   }
   \item{\dots}{

@@ -66,8 +66,6 @@ export(
   ## transcripts.R:
   transcripts, exons, cds, genes,
   disjointExons,
-  microRNAs,
-  tRNAs,
 
   ## transcriptsBy.R:
   transcriptsBy,
@@ -87,6 +85,10 @@ export(
 
   ## features.R:
   features,
+
+  ## microRNAs.R:
+  microRNAs,
+  tRNAs,
 
   ## extractTranscriptSeqs.R:
   extractTranscriptSeqs,
@@ -128,8 +130,6 @@ exportMethods(
   transcripts, exons, cds, genes,
   promoters,
   disjointExons,
-  microRNAs,
-  tRNAs,
   transcriptsByOverlaps,
   exonsByOverlaps,
   cdsByOverlaps,
@@ -139,12 +139,14 @@ exportMethods(
   intronsByTranscript,
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
-  extractUpstreamSeqs,
+  microRNAs,
+  tRNAs,
   extractTranscriptSeqs,
+  extractUpstreamSeqs,
+  getPromoterSeq,
   isActiveSeq,
   "isActiveSeq<-",
   asBED, asGFF,
-  getPromoterSeq,
   distance,
   mapToTranscripts, pmapToTranscripts,
   mapFromTranscripts, pmapFromTranscripts
