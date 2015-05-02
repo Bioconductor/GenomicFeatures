@@ -859,9 +859,5 @@ makeTxDbFromUCSC <- function(genome="hg19",
                              miRBaseBuild=miRBaseBuild)
 }
 
-makeTranscriptDbFromUCSC <- function(...)
-{
-    .Deprecated("makeTxDbFromUCSC")
-    makeTxDbFromUCSC(...)
-}
+makeTranscriptDbFromUCSC <- function(...) .Defunct("makeTxDbFromUCSC")
 

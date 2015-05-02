@@ -4,7 +4,7 @@
 \alias{getChromInfoFromUCSC}
 \alias{makeTxDbFromUCSC}
 
-% deprecated
+% defunct
 \alias{makeTranscriptDbFromUCSC}
 
 \title{

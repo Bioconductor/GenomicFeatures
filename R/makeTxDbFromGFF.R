@@ -59,34 +59,28 @@
 ### Based on makeTxDbFromGRanges().
 makeTxDbFromGFF <- function(file,
                             format=c("gff3", "gtf"),
-                            exonRankAttributeName=NA,     # deprecated
-                            gffGeneIdAttributeName=NA,    # deprecated
+                            exonRankAttributeName=NA,     # defunct
+                            gffGeneIdAttributeName=NA,    # defunct
                             chrominfo=NA,
                             dataSource=NA,
                             organism=NA,
                             circ_seqs=DEFAULT_CIRC_SEQS,
                             miRBaseBuild=NA,
-                            useGenesAsTranscripts=FALSE,  # deprecated
-                            gffTxName="mRNA",             # deprecated
-                            species=NA)                   # deprecated
+                            useGenesAsTranscripts=FALSE,  # defunct
+                            gffTxName="mRNA",             # defunct
+                            species=NA)                   # defunct
 {
     if (!identical(exonRankAttributeName, NA))
-        .Deprecated(msg="'exonRankAttributeName' is ignored and deprecated")
+        .Defunct(msg="the 'exonRankAttributeName' argument is defunct")
     if (!identical(gffGeneIdAttributeName, NA))
-        .Deprecated(msg="'gffGeneIdAttributeName' is ignored and deprecated")
+        .Defunct(msg="the 'gffGeneIdAttributeName' argument is defunct")
     if (!identical(useGenesAsTranscripts, FALSE))
-        .Deprecated(msg="'useGenesAsTranscripts' is ignored and deprecated")
+        .Defunct(msg="the 'useGenesAsTranscripts' argument is defunct")
     if (!identical(gffTxName, "mRNA"))
-        .Deprecated(msg="'gffTxName' is ignored and deprecated")
-    if (!identical(species, NA)) {
-        if (!identical(organism, NA))
-            stop("only one of 'organism' or 'species' can be specified, ",
-                 "but not both")
-        msg <- c("The 'species' argument is deprecated. ",
-                 "Please use 'organism' instead.")
-        .Deprecated(msg=msg)
-        organism <- species
-    }
+        .Defunct(msg="the 'gffTxName' argument is defunct")
+    if (!identical(species, NA))
+        .Defunct(msg=wmsg("The 'species' argument is defunct. ",
+                          "Please use 'organism' instead."))
 
     format <- match.arg(format)
     gr <- import(file, format=format, feature.type=GFF_FEATURE_TYPES)
@@ -95,9 +89,5 @@ makeTxDbFromGFF <- function(file,
     makeTxDbFromGRanges(gr, metadata=metadata)
 }
 
-makeTranscriptDbFromGFF <- function(...)
-{
-    .Deprecated("makeTxDbFromGFF")
-    makeTxDbFromGFF(...)
-}
+makeTranscriptDbFromGFF <- function(...) .Defunct("makeTxDbFromGFF")
 

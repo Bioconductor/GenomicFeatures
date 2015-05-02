@@ -3,7 +3,7 @@
 \alias{makeTxDbFromBiomart}
 \alias{getChromInfoFromBiomart}
 
-% deprecated
+% defunct
 \alias{makeTranscriptDbFromBiomart}
 
 \title{

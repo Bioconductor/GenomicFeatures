@@ -643,11 +643,7 @@ makeTxDb <- function(transcripts, splicings,
     TxDb(conn)
 }
 
-makeTranscriptDb <- function(...)
-{
-    .Deprecated("makeTxDb")
-    makeTxDb(...)
-}
+makeTranscriptDb <- function(...) .Defunct("makeTxDb")
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

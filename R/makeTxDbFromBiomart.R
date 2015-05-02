@@ -814,9 +814,5 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
     txdb
 }
 
-makeTranscriptDbFromBiomart <- function(...)
-{
-    .Deprecated("makeTxDbFromBiomart")
-    makeTxDbFromBiomart(...)
-}
+makeTranscriptDbFromBiomart <- function(...) .Defunct("makeTxDbFromBiomart")
 

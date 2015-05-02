@@ -2,7 +2,7 @@
 
 \alias{makeTxDb}
 
-% deprecated
+% defunct
 \alias{makeTranscriptDb}
 
 \title{

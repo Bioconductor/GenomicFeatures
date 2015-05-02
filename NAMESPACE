@@ -112,13 +112,11 @@ export(
   transcriptLocs2refLocs,
   transcriptWidths,
 
-  # Deprecated:
+  ## Defunct:
   makeTranscriptDb,
   makeTranscriptDbFromUCSC,
   makeTranscriptDbFromBiomart,
   makeTranscriptDbFromGFF
-
-  ## Defunct:
 )
 
 exportMethods(

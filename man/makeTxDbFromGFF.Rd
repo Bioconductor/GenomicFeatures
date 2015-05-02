@@ -2,7 +2,7 @@
 
 \alias{makeTxDbFromGFF}
 
-% deprecated
+% defunct
 \alias{makeTranscriptDbFromGFF}
 
 \title{
@@ -32,8 +32,8 @@ makeTxDbFromGFF(file,
   \item{file}{path/file to be processed}
   \item{format}{"gff3" or "gtf" depending on which file format you have
   to process}
-  \item{exonRankAttributeName}{ignored and deprecated}
-  \item{gffGeneIdAttributeName}{ignored and deprecated}
+  \item{exonRankAttributeName}{this argument is defunct}
+  \item{gffGeneIdAttributeName}{this argument is defunct}
   \item{chrominfo}{data frame containing information about the
   chromosomes.  Will be passed to the internal call to
   \code{\link{makeTxDb}}. See \code{?\link{makeTxDb}} for the details.}
@@ -51,9 +51,10 @@ makeTxDbFromGFF(file,
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
     this value will be set to \code{NA}, which will inactivate the
     \code{microRNAs} accessor.}
-  \item{useGenesAsTranscripts}{ignored and deprecated}
-  \item{gffTxName}{ignored and deprecated}
-  \item{species}{deprecated in favor of \code{organism}}
+  \item{useGenesAsTranscripts}{this argument is defunct}
+  \item{gffTxName}{this argument is defunct}
+  \item{species}{this argument was replaced with the \code{organism} argument
+                 and is now defunct}
 }
 \details{
   \code{makeTxDbFromGFF} is a convenience function that feeds
