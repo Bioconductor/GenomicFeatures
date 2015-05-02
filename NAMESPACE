@@ -116,10 +116,9 @@ export(
   makeTranscriptDb,
   makeTranscriptDbFromUCSC,
   makeTranscriptDbFromBiomart,
-  makeTranscriptDbFromGFF,
+  makeTranscriptDbFromGFF
 
   ## Defunct:
-  sortExonsByRank
 )
 
 exportMethods(

@@ -57,7 +57,6 @@ Collate: utils.R Ensembl.utils.R findCompatibleMarts.R
         nearest-methods.R
         transcriptLocs2refLocs.R
         coordinate-mapping-methods.R
-        sortExonsByRank.R
         test_GenomicFeatures_package.R
 VignetteBuilder: knitr
 biocViews: Genetics, Infrastructure, Annotation, Sequencing,
