@@ -407,7 +407,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     cds_length2 <- sapply(split(width(cds_ranges), tx_name), sum)
     cds_length2 <- cds_length2[as.character(tx_name)]
 
-    cds_length <- bm_result[ , "cds_length"]
+    cds_length <- bm_result$cds_length
     if (!is.null(cds_length)) { 
         idx <- which(cds_length2 != cds_length)
         if (length(idx) != 0L) {
