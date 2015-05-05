@@ -734,34 +734,43 @@ setMethod("asBED", "TxDb", function(x) {
 })
 
 setMethod("asGFF", "TxDb", function(x) {
-  tx_gene <- transcriptsBy(x)
-  gene <- unlist(range(tx_gene))
-  mcols(gene)$Parent <- CharacterList(character())
   addPrefix <- function(ids, prefix) {
     if (is(ids, "List"))
       ids <- as(ids, "CharacterList")
     prefix <- paste(prefix, ":", sep = "")
     sub(paste("^|^", prefix, sep = ""), prefix, ids)
   }
+
+  ## Make 'gene' GRanges.
+  tx_gene <- transcriptsBy(x)
+  gene <- unlist(range(tx_gene))
+  mcols(gene)$Parent <- CharacterList(character())
   mcols(gene)$ID <- addPrefix(names(gene), "GeneID")
   mcols(gene)$Name <- names(gene)
   mcols(gene)$type <- "gene"
+
+  ## Make 'tx' GRanges.
   tx <- transcripts(x, columns = c(Parent = "gene_id", ID = "tx_id",
                          Name = "tx_name"))
   mcols(tx)$Parent <- addPrefix(mcols(tx)$Parent, "GeneID")
   mcols(tx)$ID <- addPrefix(mcols(tx)$ID, "TxID")
   mcols(tx)$type <- "mRNA"
-  exon <- exons(x, columns = c(Parent = "tx_id"))
+
+  ## Make 'exon' GRanges.
+  exon <- exons(x, columns = c(Parent = "tx_id", Name = "exon_name"))
   mcols(exon)$Parent <- addPrefix(mcols(exon)$Parent, "TxID")
   mcols(exon)$ID <- NA
-  mcols(exon)$Name <- NA
   mcols(exon)$type <- "exon"
   mcols(exon)$Parent <- as(mcols(exon)$Parent, "CharacterList")
-  cds <- cds(x, columns = c(Parent = "tx_id"))
+  mcols(exon) <- mcols(exon)[ , colnames(mcols(gene))]
+
+  ## Make 'cds' GRanges.
+  cds <- cds(x, columns = c(Parent = "tx_id", Name = "cds_name"))
   mcols(cds)$Parent <- addPrefix(mcols(cds)$Parent, "TxID")
   mcols(cds)$ID <- NA
-  mcols(cds)$Name <- NA
   mcols(cds)$type <- "CDS"
+  mcols(cds) <- mcols(cds)[ , colnames(mcols(gene))]
+
   gff <- c(gene, tx, exon, cds)
   names(gff) <- NULL
   gff
