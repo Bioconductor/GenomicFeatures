@@ -20,7 +20,7 @@ importFrom(RCurl, getURL)
 importFrom(Biobase, createPackage)
 
 importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
-importFrom(Biostrings, getSeq)
+importFrom(Biostrings, DNAStringSet, getSeq)
 
 importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
            useDataset, useMart)
