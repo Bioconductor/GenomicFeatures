@@ -65,7 +65,6 @@ export(
 
   ## transcripts.R:
   transcripts, exons, cds, genes,
-  disjointExons,
 
   ## transcriptsBy.R:
   transcriptsBy,
@@ -82,6 +81,9 @@ export(
 
   ## transcriptLengths.R:
   transcriptLengths,
+
+  ## disjointExons.R:
+  disjointExons,
 
   ## features.R:
   features,
@@ -126,7 +128,6 @@ exportMethods(
   seqinfo, "seqinfo<-",
   transcripts, exons, cds, genes,
   promoters,
-  disjointExons,
   transcriptsByOverlaps,
   exonsByOverlaps,
   cdsByOverlaps,
@@ -136,6 +137,7 @@ exportMethods(
   intronsByTranscript,
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
+  disjointExons,
   microRNAs,
   tRNAs,
   extractTranscriptSeqs,

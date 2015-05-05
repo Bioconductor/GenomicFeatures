@@ -10,8 +10,6 @@
 \alias{genes,TxDb-method}
 \alias{promoters}
 \alias{promoters,TxDb-method}
-\alias{disjointExons}
-\alias{disjointExons,TxDb-method}
 
 \title{
   Extract genomic features from an object
@@ -36,10 +34,6 @@ genes(x, ...)
 \S4method{genes}{TxDb}(x, vals=NULL, columns="gene_id", single.strand.genes.only=TRUE)
 
 \S4method{promoters}{TxDb}(x, upstream=2000, downstream=200, ...)
-
-disjointExons(x, ...)
-\S4method{disjointExons}{TxDb}(x, aggregateGenes=FALSE, 
-              includeTranscripts=TRUE, ...) 
 }
 
 \arguments{ 
@@ -47,9 +41,8 @@ disjointExons(x, ...)
     A \link{TxDb} object.
   }
   \item{...}{
-    For the \code{transcripts}, \code{exons}, \code{cds}, \code{genes},
-    and \code{disjointExons} generic functions: arguments to be passed to
-    methods.
+    For the \code{transcripts}, \code{exons}, \code{cds}, and \code{genes}
+    generic functions: arguments to be passed to methods.
 
     For the \code{promoters} method for \link{TxDb} objects: arguments
     to be passed to the internal call to \code{transcripts}.
@@ -101,17 +94,6 @@ disjointExons(x, ...)
     number of bases downstream from the transcription start site. For 
     additional details see \code{?`promoters,GRanges-method`}.
   }
-  \item{aggregateGenes}{
-    For \code{disjointExons} : A \code{logical}. When \code{FALSE}
-    (default) exon fragments that overlap multiple genes are dropped.
-    When \code{TRUE}, all fragments are kept and the \code{gene_id}
-    metadata column includes all gene ids that overlap the exon fragment.
-  }
-  \item{includeTranscripts}{
-    For \code{disjointExons} : A \code{logical}. When \code{TRUE}
-    (default) a \code{tx_name} metadata column is included that 
-    lists all transcript names that overlap the exon fragment. 
-  }
 }
 
 \details{
@@ -129,15 +111,6 @@ disjointExons(x, ...)
   For additional details on how the promoter range is computed and the
   handling of \code{+} and \code{-} strands see 
   \code{?`promoters,GRanges-method`}.
-
-  \code{disjointExons} creates a \code{GRanges} of non-overlapping
-  exon parts with metadata columns of gene_id and exonic_part.
-  Exon parts that overlap more than 1 gene can be dropped with 
-  \code{aggregateGenes=FALSE}. When \code{includeTranscripts=TRUE} 
-  a \code{tx_name} metadata column is included that lists all 
-  transcript names that overlap the exon fragment. This function 
-  replaces \code{prepareAnnotationForDEXSeq} in the \code{DEXSeq} 
-  package.
 }
 
 \value{
@@ -147,8 +120,7 @@ disjointExons(x, ...)
 }
 
 \author{
-  M. Carlson, P. Aboyoun and H. Pages. \code{disjointExons} was contributed
-  by Mike Love and Alejandro Reyes.
+  M. Carlson, P. Aboyoun and H. Pages
 }
 
 \seealso{
@@ -158,6 +130,8 @@ disjointExons(x, ...)
           from a \link{TxDb} object.
     \item \code{\link{transcriptLengths}} for extracting the transcript
           lengths from a \link{TxDb} object.
+    \item \code{\link{disjointExons}} for extracting the non-overlapping
+          exon parts from a \link{TxDb} object.
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
           \link{TxDb} object.
