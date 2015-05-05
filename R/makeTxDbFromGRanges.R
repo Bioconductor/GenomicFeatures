@@ -61,9 +61,16 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     type <- gr_mcols$type
     if (is.null(type))
         stop("'gr' must have a \"type\" metadata column")
-    if (!is.factor(type))
-        type <- factor(type, levels=unique(type))
-    type
+    ## Return a factor where all levels are in use.
+    if (is.factor(type)) {
+        levels_in_use <- levels(type)[tabulate(type, nbins=nlevels(type)) != 0L]
+    } else {
+        if (!is.character(type))
+            stop(wmsg("the \"type\" metadata column must be ",
+                      "a character vector or factor"))
+        levels_in_use <- unique(type)
+    }
+    factor(type, levels=levels_in_use)
 }
 
 .get_gene_id <- function(gr_mcols)
@@ -96,7 +103,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 {
     if (gtf.format) {
         ## GTF format
-        ID <- character(nrow(gr_mcols))
+        ID <- rep.int(NA_character_, nrow(gr_mcols))
         idx1 <- which(type %in% .GENE_TYPES)
         ID[idx1] <- gene_id[idx1]
         idx2 <- which(type %in% .TX_TYPES)
@@ -106,14 +113,15 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
             idx3 <- which(type %in% .EXON_TYPES)
             ID[idx3] <- exon_id[idx3]
         }
-        return(ID)
+    } else {
+        ## GFF3 format
+        ID <- gr_mcols$ID
+        if (is.null(ID))
+            ID <- rep.int(NA_character_, nrow(gr_mcols))
+        if (!is.character(ID))
+            ID <- as.character(ID)
+        ID[ID %in% ""] <- NA_character_
     }
-    ## GFF3 format
-    ID <- gr_mcols$ID
-    if (is.null(ID))
-        ID <- rep.int(NA_character_, nrow(gr_mcols))
-    if (!is.character(ID))
-        ID <- as.character(ID)
     ID
 }
 
@@ -144,14 +152,32 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     Parent
 }
 
-.get_Name <- function(gr_mcols, ID)
+### Remove "<type_level>:" prefix (like in "gene:Si016158m.g" and
+### "CDS:Si016158m") if present in *all* non-NA elements of 'ID'.
+.infer_Name_from_ID <- function(ID, type_level)
+{
+    prefix <- paste0(type_level, ":")
+    if (!all(substr(ID, start=1L, stop=nchar(prefix)) == prefix, na.rm=TRUE))
+        return(ID)
+    substr(ID, start=nchar(prefix)+1L, stop=nchar(ID))
+}
+
+.get_Name <- function(gr_mcols, type, ID)
 {
     Name <- gr_mcols$Name
     if (is.null(Name))
-        Name <- ID
+        Name <- rep.int(NA_character_, nrow(gr_mcols))
     if (!is.character(Name))
         Name <- as.character(Name)
     Name[Name %in% ""] <- NA_character_
+    ## If, for a given type (e.g. "exon"), none of the features of that type
+    ## has a Name (i.e. Name is NA for all the features of that type), then we
+    ## infer their Name from their ID.
+    for (type_level in levels(type)) {
+        idx <- which(type == type_level)
+        if (all(is.na(Name[idx])))
+            Name[idx] <- .infer_Name_from_ID(ID[idx], type_level)
+    }
     Name
 }
 
@@ -660,7 +686,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     }
 
     ## Replace gene IDs by gene Names and remove NAs.
-    tmp <- unlist(tx2genes, use.names=FALSE) 
+    tmp <- unlist(tx2genes, use.names=FALSE)
     ID2Name <- Name[gene_IDX]
     names(ID2Name) <- ID[gene_IDX]
     tx2genes <- relist(unname(ID2Name[tmp]), tx2genes)
@@ -764,7 +790,7 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
                   gtf.format=gtf.format)
     Parent <- .get_Parent(gr_mcols, type, gene_id, transcript_id,
                           gtf.format=gtf.format)
-    Name <- .get_Name(gr_mcols, ID)
+    Name <- .get_Name(gr_mcols, type, ID)
 
     ## Get the gene, cds, stop_codon, exon, and transcript indices.
     gene_IDX <- .get_gene_IDX(type)
