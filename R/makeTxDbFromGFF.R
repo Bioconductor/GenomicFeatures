@@ -49,8 +49,11 @@
     metadata <- data.frame(
                    name=c("Data source",
                           "Organism",
+                          "TaxID",
                           "miRBase build ID"),
-                   value=c(dataSource, organism, miRBaseBuild)
+                   value=c(dataSource, organism,
+                     GenomeInfoDb:::.taxonomyId(organism),
+                     miRBaseBuild)
                    )
     message("metadata: OK")
     metadata
