@@ -182,11 +182,19 @@
   paste(sqlCol, "IN (", chrs,")")
 }
 
-.select <- function(x, keys, columns, keytype){
+.select <- function(x, keys, columns, keytype, ...){
+  extraArgs <- list(...)
   if(missing(keys)){stop("'keys' must be a character vector")}
   if(missing(columns)){stop("'columns' must be a character vector")}
   ## Some argument checking
-  AnnotationDbi:::.testSelectArgs(x, keys=keys, cols=columns, keytype=keytype)
+  if('fks' %in% names(extraArgs)){
+      ## if there is an extra 'fks' arg, then use it...
+      AnnotationDbi:::.testSelectArgs(x, keys=keys, cols=columns,
+                                      keytype=keytype, fks=extraArgs[["fks"]])
+    }else{
+      AnnotationDbi:::.testSelectArgs(x, keys=keys, cols=columns,
+                                      keytype=keytype)
+    }
   ## 1st we check the keytype to see if it is valid:
   if(is.na(keys(x, keytype)[1]) & length(keys(x, keytype))==1){ 
     stop(paste("There do not appear to be any keys",
@@ -275,30 +283,30 @@
 }
 
 
-##  Remove this select warning function after 2.13 has released
-.selectWarnTxDb <- function(x, keys, columns, keytype, ...){
+## ##  Remove this select warning function after 2.13 has released
+## .selectWarnTxDb <- function(x, keys, columns, keytype, ...){
     
-    ## remove condition after 2.13
-    extraArgs <- list(...)
-    if("cols" %in% names(extraArgs)){
-        ## warn the user about the old argument
-        AnnotationDbi:::.colsArgumentWarning()
-        ## ## then call it using cols in place of columns    
-        ## if(missing(keytype)){
-        ##     .select(x, keys, columns=extraArgs[["cols"]], keytype = columns)
-        ## }else{
-        ##     .select(x, keys, columns=extraArgs[["cols"]], keytype = keytype)
-        ## }        
-    }else{
-        .select(x, keys, columns, keytype)
-    }
-}
+##     ## remove condition after 2.13
+##     extraArgs <- list(...)
+##     if("cols" %in% names(extraArgs)){
+##         ## warn the user about the old argument
+##         AnnotationDbi:::.colsArgumentWarning()
+##         ## ## then call it using cols in place of columns    
+##         ## if(missing(keytype)){
+##         ##     .select(x, keys, columns=extraArgs[["cols"]], keytype = columns)
+##         ## }else{
+##         ##     .select(x, keys, columns=extraArgs[["cols"]], keytype = keytype)
+##         ## }        
+##     }else{
+##         .select(x, keys, columns, keytype)
+##     }
+## }
 
 
 setMethod("select", "TxDb",
     function(x, keys, columns, keytype, ...) {
-          .selectWarnTxDb(x, keys, columns, keytype, ...)
-##           .select(x, keys, columns, keytype)
+##          .selectWarnTxDb(x, keys, columns, keytype, ...)
+           .select(x, keys, columns, keytype, ...)
         }
 )
 
