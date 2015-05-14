@@ -734,7 +734,7 @@ getChromInfoFromUCSC <- function(genome,
     if (!isSingleStringOrNA(miRBaseBuild))
         stop("'miRBaseBuild' must be a a single string or NA")
     metadata <- data.frame(
-        name=c("Data source", "Genome", "Organism", "TaxID", "UCSC Table",
+        name=c("Data source", "Genome", "Organism", "Taxonomy ID", "UCSC Table",
                "Resource URL", "Type of Gene ID", "Full dataset",
                "miRBase build ID"),
         value=c("UCSC", genome, UCSCGenomeToOrganism(genome),

@@ -609,7 +609,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     data.frame(
         name=c("Data source",
                "Organism",
-               "TaxID", 
+               "Taxonomy ID", 
                "Resource URL",
                "BioMart database",
                "BioMart database version",
