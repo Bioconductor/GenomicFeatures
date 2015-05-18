@@ -4,11 +4,33 @@
 
 
 ## Separate helper function for abbreviating the genus and species name strings
+.capitalizeFirstLetter <- function(str){
+    paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
+}
+
+## And now the name can be any length (as long as there are at least 2 strings)
 .abbrevOrganismName <- function(organism){
   spc <- unlist(strsplit(organism, " "))
-  ## this assumes a binomial nomenclature has been maintained.
-  paste0( substr(spc[[1]], 1, 1), spc[[2]])
+  if(length(spc)<2){
+      stop(strwrap(paste0("Organism should have a genus and species separated",
+                          " by a space,")))}
+  if(length(spc)==2){
+      res <- paste0( substr(spc[[1]], 1, 1), spc[[2]])
+  }
+  if(length(spc)>2){
+      res <- paste0(toupper(substr(spc[[1]], 1, 1)), ## capital of genus
+                    spc[[2]],                        ## species
+                    ## and any subspecies as camelcase
+                    paste0(unlist(lapply(spc[3:length(spc)],
+                                         .capitalizeFirstLetter)),
+                           collapse=""),
+                    collapse="")
+  }
+  res
 }
+## usage
+## .abbrevOrganismName('Homo sapiens neanderthalensis subtype1 subsubtype2 23')
+## "HsapiensNeanderthalensisSubtype1Subsubtype223"
 
 ## simplify DB retrievals from metadata table
 .getMetaDataValue <- function(txdb, name){
