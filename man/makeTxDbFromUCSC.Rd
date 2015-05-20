@@ -30,8 +30,8 @@ makeTxDbFromUCSC(
         circ_seqs=DEFAULT_CIRC_SEQS,
         url="http://genome.ucsc.edu/cgi-bin/",
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-        miRBaseBuild=NA,
-        taxonomyId=NULL)
+        taxonomyId=NA,
+        miRBaseBuild=NA)
 }
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
@@ -50,14 +50,14 @@ makeTxDbFromUCSC(
     should be marked as circular.}
   \item{url,goldenPath_url}{use to specify the location of an
     alternate UCSC Genome Browser.}
+  \item{taxonomyId}{By default this value is NA and the organism
+    inferred will be used to look up the correct value for this.  But
+    you can use this argument to supply your own valid taxId here.}
   \item{miRBaseBuild}{specify the string for the appropriate build
     Information from mirbase.db to use for microRNAs.  This can be
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
     this value will be set to \code{NA}, which will inactivate the
     \code{microRNAs} accessor.}
-  \item{taxonomyId}{By default this value is NULL and the organism
-    inferred will be used to look up the correct value for this.  But
-    you can use this argument to supply your own valid taxId here.}
 }
 \details{
   \code{makeTxDbFromUCSC} is a convenience function that feeds

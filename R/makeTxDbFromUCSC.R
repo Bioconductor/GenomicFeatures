@@ -727,13 +727,13 @@ getChromInfoFromUCSC <- function(genome,
 ###
 
 .prepareUCSCMetadata <- function(genome, tablename, gene_id_type, full_dataset,
-                                 taxonomyId=NULL, miRBaseBuild=NA)
+                                 taxonomyId=NA, miRBaseBuild=NA)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
     if (!isSingleStringOrNA(miRBaseBuild))
         stop("'miRBaseBuild' must be a a single string or NA")
-    if(is.null(taxonomyId)){
+    if(is.na(taxonomyId)){
         taxonomyId <- GenomeInfoDb:::.taxonomyId(UCSCGenomeToOrganism(genome))
     }else{
         GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
@@ -761,7 +761,7 @@ getChromInfoFromUCSC <- function(genome,
         full_dataset,
         circ_seqs,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-        taxonomyId=NULL,
+        taxonomyId=NA,
         miRBaseBuild=NA)
 {
     ucsc_txtable <- setDataFrameColClass(ucsc_txtable, .UCSC_TXCOL2CLASS,
@@ -806,8 +806,8 @@ makeTxDbFromUCSC <- function(genome="hg19",
         circ_seqs=DEFAULT_CIRC_SEQS,
         url="http://genome.ucsc.edu/cgi-bin/",
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-        miRBaseBuild=NA,
-        taxonomyId=NULL)
+        taxonomyId=NA,
+        miRBaseBuild=NA)
 {
     track <- .tablename2track(tablename, genome)
     if (!is.null(transcript_ids)) {

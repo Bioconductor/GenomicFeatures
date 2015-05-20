@@ -603,7 +603,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     description <- as.character(datasets$description)[dataset_rowidx]
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
     organism <- .extractOrganismFromDatasetDesc(description)
-    if(is.null(taxonomyId)){
+    if(is.na(taxonomyId)){
         taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
     }else{
         GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
@@ -723,8 +723,8 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
                                 id_prefix="ensembl_",
                                 host="www.biomart.org",
                                 port=80,
-                                miRBaseBuild=NA,
-                                taxonomyId=NULL)
+                                taxonomyId=NA,
+                                miRBaseBuild=NA)
 {
     ## Could be that the user got the 'biomart' and/or 'dataset' values
     ## programmatically via calls to listMarts() and/or listDatasets().

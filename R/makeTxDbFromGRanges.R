@@ -753,7 +753,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
             stop("'metadata' columns must be \"name\" and \"value\"")
     }
     
-    if(is.null(taxonomyId)){
+    if(is.na(taxonomyId)){
         taxonomyId <- NA ## Don't guess in this case
         organism <- NA
     }else{
@@ -763,8 +763,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     }
     
     if (!("Genome" %in% metadata$name)) {
-        df1 <- data.frame(name=c("Genome", "Taxonomy ID", "Organism"),
-                          value=c(Genome, taxonomyId, organism),
+        df1 <- data.frame(name=c("Genome", "Organism", "Taxonomy ID"),
+                          value=c(Genome, organism, taxonomyId),
                           stringsAsFactors=FALSE)
         ## remove any duplicated rows (if they already exist)
         total <- rbind(metadata, df1) ## new stuff on the BOTTOM
@@ -777,7 +777,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 ### Otherwise (the default) the stop codons are considered to be part of the
 ### CDS and merged to them.
 makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
-                                taxonomyId=NULL)
+                                taxonomyId=NA)
 {
     if (!is(gr, "GenomicRanges"))
         stop("'gr' must be a GRanges object")

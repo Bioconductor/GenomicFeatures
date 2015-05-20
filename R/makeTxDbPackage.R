@@ -199,8 +199,8 @@ makeTxDbPackageFromUCSC <- function(
   circ_seqs=DEFAULT_CIRC_SEQS,
   url="http://genome.ucsc.edu/cgi-bin/",
   goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-  miRBaseBuild=NA,
-  taxonomyId=NULL){
+  taxonomyId=NA,
+  miRBaseBuild=NA){
     ## checks
     if(missing(version) || !isSingleString(version)){
         stop("'version' must be supplied as a single element",
@@ -242,8 +242,8 @@ makeTxDbPackageFromUCSC <- function(
                              circ_seqs=circ_seqs,
                              url=url,
                              goldenPath_url=goldenPath_url,
-                             miRBaseBuild=miRBaseBuild,
-                             taxonomyId=taxonomyId)
+                             taxonomyId=taxonomyId,
+                             miRBaseBuild=miRBaseBuild)
     ## Make the Package
     makeTxDbPackage(txdb,
                     version=version,
@@ -268,8 +268,8 @@ makeTxDbPackageFromBiomart <- function(
   id_prefix="ensembl_",
   host="www.biomart.org",
   port=80,
-  miRBaseBuild=NA,
-  taxonomyId=NULL){
+  taxonomyId=NA,
+  miRBaseBuild=NA){
     ## checks
     if(missing(version) || !isSingleString(version)){
         stop("'version' must be supplied as a single element",
@@ -306,8 +306,8 @@ makeTxDbPackageFromBiomart <- function(
                                 id_prefix=id_prefix,
                                 host=host,
                                 port=port,
-                                miRBaseBuild=miRBaseBuild,
-                                taxonomyId=taxonomyId)
+                                taxonomyId=taxonomyId,
+                                miRBaseBuild=miRBaseBuild)
     ## Make the Package
     makeTxDbPackage(txdb,
                     version=version,
@@ -335,7 +335,7 @@ makeFDbPackageFromUCSC <- function(
     chromCol=NULL,
     chromStartCol=NULL,
     chromEndCol=NULL,
-    taxonomyId=NULL){
+    taxonomyId=NA){
     ## checks
     if(missing(author) || !isSingleString(version)){
         stop("'version' must be supplied as a single element",

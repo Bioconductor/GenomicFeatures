@@ -39,8 +39,8 @@
     circ_seqs=DEFAULT_CIRC_SEQS,
     url="http://genome.ucsc.edu/cgi-bin/",
     goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-    miRBaseBuild=NA,
-    taxonomyId=NULL)
+    taxonomyId=NA,
+    miRBaseBuild=NA)
 
 makeFDbPackageFromUCSC(
     version,
@@ -57,7 +57,7 @@ makeFDbPackageFromUCSC(
     chromCol=NULL,
     chromStartCol=NULL,
     chromEndCol=NULL,
-    taxonomyId=NULL)
+    taxonomyId=NA)
 
   makeTxDbPackageFromBiomart(
     version,
@@ -73,8 +73,8 @@ makeFDbPackageFromUCSC(
     id_prefix="ensembl_",
     host="www.biomart.org",
     port=80,
-    miRBaseBuild=NA,
-    taxonomyId=NULL)
+    taxonomyId=NA,
+    miRBaseBuild=NA)
 
   makeTxDbPackage(txdb,
                   version,
@@ -149,15 +149,15 @@ makeFDbPackageFromUCSC(
     transcript database. This object type is what is returned by 
     \code{makeTxDbFromUCSC}, \code{makeTxDbFromUCSC} or 
     \code{makeTxDb}}
+  \item{taxonomyId}{By default this value is NA and the organism
+    provided (or inferred) will be used to look up the correct value for
+    this.  But you can use this argument to over-ride that and supply
+    your own valid taxId here}
   \item{miRBaseBuild}{specify the string for the appropriate build
     Information from mirbase.db to use for microRNAs.  This can be
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
     this value will be set to \code{NA}, which will inactivate the
     \code{microRNAs} accessor.}
-  \item{taxonomyId}{By default this value is NULL and the organism
-    provided (or inferred) will be used to look up the correct value for
-    this.  But you can use this argument to override that and supply
-    your own valid taxId here}
   \item{pkgname}{By default this value is NULL and does not need to be
     filled in (a package name will be generated for you).  But if you
     override this value, then the package and it's object will be

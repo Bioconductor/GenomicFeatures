@@ -28,7 +28,7 @@
 }
 
 .prepareGFFMetadata <- function(file, dataSource=NA, organism=NA,
-                                taxonomyId, miRBaseBuild=NA)
+                                taxonomyId=NA, miRBaseBuild=NA)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
@@ -46,7 +46,7 @@
                                                     "description"]
         }
     }
-    if(is.null(taxonomyId)){
+    if(is.na(taxonomyId)){
         taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
     }else{
         GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
@@ -73,8 +73,8 @@ makeTxDbFromGFF <- function(file,
                             dataSource=NA,
                             organism=NA,
                             circ_seqs=DEFAULT_CIRC_SEQS,
+                            taxonomyId=NA,
                             miRBaseBuild=NA,
-                            taxonomyId=NULL,
                             useGenesAsTranscripts=FALSE,  # defunct
                             gffTxName="mRNA",             # defunct
                             species=NA)                   # defunct
