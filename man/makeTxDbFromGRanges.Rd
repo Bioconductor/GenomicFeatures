@@ -12,7 +12,7 @@
 }
 
 \usage{
-makeTxDbFromGRanges(gr, drop.stop.codons=FALSE, metadata=NULL)
+makeTxDbFromGRanges(gr, drop.stop.codons=FALSE, metadata=NULL, taxonomyId=NULL)
 }
 
 \arguments{
@@ -33,6 +33,10 @@ makeTxDbFromGRanges(gr, drop.stop.codons=FALSE, metadata=NULL)
     \code{gr}. See \code{?\link{makeTxDb}} for more information about the
     format of \code{metadata}.
   }
+  \item{taxonomyId}{By default this value is NULL which will result in
+    an NA field since there is no reliable way to infer this from a
+    GRanges object.  But you can use this argument to supply your own
+    valid taxId here.}
 }
 
 \details{

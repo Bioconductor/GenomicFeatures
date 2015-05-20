@@ -744,7 +744,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 ### makeTxDbFromGRanges()
 ###
 
-.normarg_metadata <- function(metadata, Genome)
+.normarg_metadata <- function(metadata, Genome, taxonomyId)
 {
     if (!is.null(metadata)) {
         if (!is.data.frame(metadata))
@@ -752,8 +752,20 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         if (!setequal(colnames(metadata), c("name", "value")))
             stop("'metadata' columns must be \"name\" and \"value\"")
     }
+    
+    if(is.null(taxonomyId)){
+        taxonomyId <- NA ## Don't guess in this case
+        organism <- NA
+    }else{
+        GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
+        org <- GenomeInfoDb:::.lookupSpeciesFromTaxId(taxonomyId)
+        organism <- paste(org[1,2], org[1,3])
+    }
+    
     if (!("Genome" %in% metadata$name)) {
-        df1 <- data.frame(name="Genome", value=Genome, stringsAsFactors=FALSE)
+        df1 <- data.frame(name=c("Genome", "Taxonomy ID", "Organism"),
+                          value=c(Genome, taxonomyId, organism),
+                          stringsAsFactors=FALSE)
         metadata <- rbind(metadata, df1)
     }
     metadata
@@ -762,7 +774,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 ### If 'drop.stop.codons' is TRUE then the "stop_codon" lines are ignored.
 ### Otherwise (the default) the stop codons are considered to be part of the
 ### CDS and merged to them.
-makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
+makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
+                                taxonomyId=NULL)
 {
     if (!is(gr, "GenomicRanges"))
         stop("'gr' must be a GRanges object")
@@ -777,7 +790,7 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL)
     if (!isTRUEorFALSE(drop.stop.codons))
         stop("'drop.stop.codons' must be TRUE or FALSE")
 
-    metadata <- .normarg_metadata(metadata, Genome)
+    metadata <- .normarg_metadata(metadata, Genome, taxonomyId)
 
     gr_mcols <- mcols(gr)
 
