@@ -113,9 +113,12 @@ makeTxDbPackage <- function(txdb,
                             maintainer,
                             author,
                             destDir=".",
-                            license="Artistic-2.0"){
+                            license="Artistic-2.0",
+                            pkgname=NULL){
    ## every package has a name We will generate this according to a heuristic
-   pkgName <- .makePackageName(txdb)
+   if(is.null(pkgname)){
+       pkgname <- .makePackageName(txdb)
+   }
    dbType <- .getMetaDataValue(txdb,'Db type')
    
    ## there should only be one template
@@ -142,7 +145,8 @@ makeTxDbPackage <- function(txdb,
     RELEASEDATE= .getMetaDataValue(txdb,'Creation time'),
     SOURCEURL= .getResourceURLInfo(txdb),
     ORGANISMBIOCVIEW=gsub(" ","_",.getMetaDataValue(txdb,'Organism')),
-    TXDBOBJNAME=pkgName ## .makeObjectName(pkgName)
+    ## For now: keep conventional object names
+    TXDBOBJNAME=pkgname ## .makeObjectName(pkgname)
    )
    ## Should never happen
    if (any(duplicated(names(symvals)))) {
@@ -155,13 +159,13 @@ makeTxDbPackage <- function(txdb,
        bad_syms <- paste(names(is_OK)[!is_OK], collapse=", ")
        stop("values for symbols ", bad_syms, " are not single strings")
    }
-   createPackage(pkgname=pkgName,
+   createPackage(pkgname=pkgname,
 		             destinationDir=destDir,
                  originDir=template_path,
                  symbolValues=symvals)
    ## then copy the contents of the database into the extdata dir
-   db_path <- file.path(destDir, pkgName, "inst", "extdata", 
-     paste(pkgName,"sqlite",sep="."))
+   db_path <- file.path(destDir, pkgname, "inst", "extdata", 
+     paste(pkgname,"sqlite",sep="."))
    saveDb(txdb, file=db_path)
 }
 

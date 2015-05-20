@@ -766,7 +766,9 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         df1 <- data.frame(name=c("Genome", "Taxonomy ID", "Organism"),
                           value=c(Genome, taxonomyId, organism),
                           stringsAsFactors=FALSE)
-        metadata <- rbind(metadata, df1)
+        ## remove any duplicated rows (if they already exist)
+        total <- rbind(metadata, df1) ## new stuff on the BOTTOM
+        metadata <- total[!duplicated(total$name),]
     }
     metadata
 }

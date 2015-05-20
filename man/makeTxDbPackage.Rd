@@ -81,7 +81,8 @@ makeFDbPackageFromUCSC(
   		  maintainer,
                   author,
   	          destDir=".",
-                  license="Artistic-2.0")
+                  license="Artistic-2.0",
+                  pkgname=NULL)
 
   supportedMiRBaseBuildValues()
 }
@@ -155,8 +156,14 @@ makeFDbPackageFromUCSC(
     \code{microRNAs} accessor.}
   \item{taxonomyId}{By default this value is NULL and the organism
     provided (or inferred) will be used to look up the correct value for
-    this.  But you can use this argument to over-ride that and supply
+    this.  But you can use this argument to override that and supply
     your own valid taxId here}
+  \item{pkgname}{By default this value is NULL and does not need to be
+    filled in (a package name will be generated for you).  But if you
+    override this value, then the package and it's object will be
+    instead named after this value.  Be aware that the standard rules
+    for package names will apply, (so don't include spaces,
+    underscores or dashes)}  
 }
 \details{
   \code{makeTxDbPackageFromUCSC} is a convenience function that calls
