@@ -752,23 +752,24 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         if (!setequal(colnames(metadata), c("name", "value")))
             stop("'metadata' columns must be \"name\" and \"value\"")
     }
-    
-    if(is.na(taxonomyId)){
-        taxonomyId <- NA ## Don't guess in this case
-        organism <- NA
-    }else{
+    if (!("Genome" %in% metadata$name)) {
+        df1 <- data.frame(name="Genome", value=Genome, stringsAsFactors=FALSE)
+        metadata <- rbind(metadata, df1)
+    }
+    if (!is.na(taxonomyId)) {
         GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
         org <- GenomeInfoDb:::.lookupSpeciesFromTaxId(taxonomyId)
         organism <- paste(org[1,2], org[1,3])
-    }
-    
-    if (!("Genome" %in% metadata$name)) {
-        df1 <- data.frame(name=c("Genome", "Organism", "Taxonomy ID"),
-                          value=c(Genome, organism, taxonomyId),
+        idx <- match("Organism", metadata$name)
+        if (!is.na(idx))
+            metadata <- metadata[-idx, , drop=FALSE]
+        idx <- match("Taxonomy ID", metadata$name)
+        if (!is.na(idx))
+            metadata <- metadata[-idx, , drop=FALSE]
+        df2 <- data.frame(name=c("Organism", "Taxonomy ID"),
+                          value=c(organism, taxonomyId),
                           stringsAsFactors=FALSE)
-        ## remove any duplicated rows (if they already exist)
-        total <- rbind(metadata, df1) ## new stuff on the BOTTOM
-        metadata <- total[!duplicated(total$name),]
+        metadata <- rbind(metadata, df2)
     }
     metadata
 }
