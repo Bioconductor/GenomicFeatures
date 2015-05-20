@@ -727,18 +727,23 @@ getChromInfoFromUCSC <- function(genome,
 ###
 
 .prepareUCSCMetadata <- function(genome, tablename, gene_id_type, full_dataset,
-                                 miRBaseBuild=NA)
+                                 taxonomyId=NULL, miRBaseBuild=NA)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
     if (!isSingleStringOrNA(miRBaseBuild))
         stop("'miRBaseBuild' must be a a single string or NA")
+    if(is.null(taxonomyId)){
+        taxonomyId <- GenomeInfoDb:::.taxonomyId(UCSCGenomeToOrganism(genome))
+    }else{
+        GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
+    }
+        
     metadata <- data.frame(
         name=c("Data source", "Genome", "Organism", "Taxonomy ID", "UCSC Table",
                "Resource URL", "Type of Gene ID", "Full dataset",
                "miRBase build ID"),
-        value=c("UCSC", genome, UCSCGenomeToOrganism(genome),
-                GenomeInfoDb:::.taxonomyId(UCSCGenomeToOrganism(genome)),
+        value=c("UCSC", genome, UCSCGenomeToOrganism(genome), taxonomyId,
                 tablename, "http://genome.ucsc.edu/", gene_id_type,
                 ifelse(full_dataset, "yes", "no"), miRBaseBuild)
     )
@@ -756,6 +761,7 @@ getChromInfoFromUCSC <- function(genome,
         full_dataset,
         circ_seqs,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+        taxonomyId=NULL,
         miRBaseBuild=NA)
 {
     ucsc_txtable <- setDataFrameColClass(ucsc_txtable, .UCSC_TXCOL2CLASS,
@@ -776,7 +782,7 @@ getChromInfoFromUCSC <- function(genome,
     genes <- .makeUCSCGenes(genes, ucsc_txtable)
     chrominfo <- .makeUCSCChrominfo(genome, circ_seqs, goldenPath_url)
     metadata <- .prepareUCSCMetadata(genome, tablename, gene_id_type,
-                                     full_dataset, miRBaseBuild)
+                                     full_dataset, taxonomyId,  miRBaseBuild)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTxDb(transcripts, splicings, genes=genes,
@@ -800,7 +806,8 @@ makeTxDbFromUCSC <- function(genome="hg19",
         circ_seqs=DEFAULT_CIRC_SEQS,
         url="http://genome.ucsc.edu/cgi-bin/",
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-        miRBaseBuild=NA)
+        miRBaseBuild=NA,
+        taxonomyId=NULL)
 {
     track <- .tablename2track(tablename, genome)
     if (!is.null(transcript_ids)) {
@@ -850,13 +857,13 @@ makeTxDbFromUCSC <- function(genome="hg19",
     } else {
         stop("GenomicFeatures internal error: invalid 'mapdef'")
     }
-
     .makeTxDbFromUCSCTxTable(ucsc_txtable, txname2geneid$genes,
                              genome, tablename,
                              txname2geneid$gene_id_type,
                              full_dataset=is.null(transcript_ids),
                              circ_seqs=circ_seqs,
                              goldenPath_url=goldenPath_url,
+                             taxonomyId=taxonomyId,
                              miRBaseBuild=miRBaseBuild)
 }
 

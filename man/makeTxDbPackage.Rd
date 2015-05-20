@@ -39,7 +39,8 @@
     circ_seqs=DEFAULT_CIRC_SEQS,
     url="http://genome.ucsc.edu/cgi-bin/",
     goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-    miRBaseBuild=NA)
+    miRBaseBuild=NA,
+    taxonomyId=NULL)
 
 makeFDbPackageFromUCSC(
     version,
@@ -55,7 +56,8 @@ makeFDbPackageFromUCSC(
     goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
     chromCol=NULL,
     chromStartCol=NULL,
-    chromEndCol=NULL)
+    chromEndCol=NULL,
+    taxonomyId=NULL)
 
   makeTxDbPackageFromBiomart(
     version,
@@ -71,7 +73,8 @@ makeFDbPackageFromUCSC(
     id_prefix="ensembl_",
     host="www.biomart.org",
     port=80,
-    miRBaseBuild=NA)
+    miRBaseBuild=NA,
+    taxonomyId=NULL)
 
   makeTxDbPackage(txdb,
                   version,
@@ -150,6 +153,10 @@ makeFDbPackageFromUCSC(
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
     this value will be set to \code{NA}, which will inactivate the
     \code{microRNAs} accessor.}
+  \item{taxonomyId}{By default this value is NULL and the organism
+    provided (or inferred) will be used to look up the correct value for
+    this.  But you can use this argument to over-ride that and supply
+    your own valid taxId here}
 }
 \details{
   \code{makeTxDbPackageFromUCSC} is a convenience function that calls

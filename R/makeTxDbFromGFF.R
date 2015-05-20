@@ -28,7 +28,7 @@
 }
 
 .prepareGFFMetadata <- function(file, dataSource=NA, organism=NA,
-                                      miRBaseBuild=NA)
+                                taxonomyId, miRBaseBuild=NA)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
@@ -46,13 +46,18 @@
                                                     "description"]
         }
     }
+    if(is.null(taxonomyId)){
+        taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
+    }else{
+        GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
+    }
     metadata <- data.frame(
                    name=c("Data source",
                           "Organism",
                           "Taxonomy ID",
                           "miRBase build ID"),
                    value=c(dataSource, organism,
-                     GenomeInfoDb:::.taxonomyId(organism),
+                     taxonomyId,
                      miRBaseBuild)
                    )
     message("metadata: OK")
@@ -69,6 +74,7 @@ makeTxDbFromGFF <- function(file,
                             organism=NA,
                             circ_seqs=DEFAULT_CIRC_SEQS,
                             miRBaseBuild=NA,
+                            taxonomyId=NULL,
                             useGenesAsTranscripts=FALSE,  # defunct
                             gffTxName="mRNA",             # defunct
                             species=NA)                   # defunct
@@ -88,7 +94,8 @@ makeTxDbFromGFF <- function(file,
     format <- match.arg(format)
     gr <- import(file, format=format, feature.type=GFF_FEATURE_TYPES)
     gr <- .set_seqinfo(gr, chrominfo, circ_seqs)
-    metadata <- .prepareGFFMetadata(file, dataSource, organism, miRBaseBuild)
+    metadata <- .prepareGFFMetadata(file, dataSource, organism, taxonomyId,
+                                    miRBaseBuild)
     makeTxDbFromGRanges(gr, metadata=metadata)
 }
 

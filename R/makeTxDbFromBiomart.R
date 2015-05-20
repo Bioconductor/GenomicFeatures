@@ -583,7 +583,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 ###
 
 .prepareBiomartMetadata <- function(mart, is_full_dataset, host, port,
-                                    miRBaseBuild)
+                                    taxonomyId, miRBaseBuild)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
@@ -603,6 +603,12 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     description <- as.character(datasets$description)[dataset_rowidx]
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
     organism <- .extractOrganismFromDatasetDesc(description)
+    if(is.null(taxonomyId)){
+        taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
+    }else{
+        GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
+    }
+
     if (!isSingleStringOrNA(miRBaseBuild))
         stop(wmsg("'miRBaseBuild' must be a a single string or NA"))
     message("OK")
@@ -620,7 +626,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                "miRBase build ID"),
         value=c("BioMart",
                 organism,
-                GenomeInfoDb:::.taxonomyId(organism),
+                taxonomyId,
                 mart_url,
                 biomart,
                 db_version,
@@ -717,7 +723,8 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
                                 id_prefix="ensembl_",
                                 host="www.biomart.org",
                                 port=80,
-                                miRBaseBuild=NA)
+                                miRBaseBuild=NA,
+                                taxonomyId=NULL)
 {
     ## Could be that the user got the 'biomart' and/or 'dataset' values
     ## programmatically via calls to listMarts() and/or listDatasets().
@@ -802,11 +809,11 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
         }
         splicings$utr_anomaly <- NULL
     }
-
+        
     genes <- .makeBiomartGenes(filters, values, mart, transcripts_tx_id,
                                recognized_attribs, id_prefix)
     metadata <- .prepareBiomartMetadata(mart, is.null(transcript_ids), host,
-                                        port, miRBaseBuild)
+                                        port, taxonomyId, miRBaseBuild)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTxDb(transcripts, splicings,

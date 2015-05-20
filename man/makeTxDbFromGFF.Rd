@@ -24,6 +24,7 @@ makeTxDbFromGFF(file,
                 organism=NA,
                 circ_seqs=DEFAULT_CIRC_SEQS,
                 miRBaseBuild=NA,
+                taxonomyId=NULL,
                 useGenesAsTranscripts=FALSE,
                 gffTxName="mRNA",
                 species=NA)
@@ -54,7 +55,14 @@ makeTxDbFromGFF(file,
   \item{useGenesAsTranscripts}{this argument is defunct}
   \item{gffTxName}{this argument is defunct}
   \item{species}{this argument was replaced with the \code{organism} argument
-                 and is now defunct}
+    and is now defunct}
+  \item{taxonomyId}{By default this value is NULL and the organism
+    provided will be used to look up the correct value for this.  But
+    you can use this argument to over-ride that and supply your own
+    taxId here (which will be separately validated).  Since providing a
+    valid taxonomy id will not require us to look up one based on your
+    organism: this is one way that you can loosen the restrictions about
+    what is and isn't a valid value for the organism.}  
 }
 \details{
   \code{makeTxDbFromGFF} is a convenience function that feeds

@@ -37,7 +37,8 @@ makeFeatureDbFromUCSC(
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
         chromCol, 
         chromStartCol, 
-        chromEndCol)
+        chromEndCol,
+        taxonomyId=NULL)
 }
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
@@ -65,6 +66,10 @@ makeFeatureDbFromUCSC(
         so that their definition can be re-specified}
   \item{chromStartCol}{Same thing as chromCol, but for renames of 'chromStart'}
   \item{chromEndCol}{Same thing as chromCol, but for renames of 'chromEnd'}
+  \item{taxonomyId}{By default this value is NULL and the organism
+    inferred will be used to look up the correct value for this.  But
+    you can use this argument to over-ride that and supply your own
+    valid taxId here.}
 }
 \details{
   \code{makeFeatureDbFromUCSC} {is a convenience function that builds a

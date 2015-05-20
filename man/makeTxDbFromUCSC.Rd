@@ -30,7 +30,8 @@ makeTxDbFromUCSC(
         circ_seqs=DEFAULT_CIRC_SEQS,
         url="http://genome.ucsc.edu/cgi-bin/",
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-        miRBaseBuild=NA)
+        miRBaseBuild=NA,
+        taxonomyId=NULL)
 }
 \arguments{
   \item{genome}{genome abbreviation used by UCSC and obtained by
@@ -54,6 +55,9 @@ makeTxDbFromUCSC(
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
     this value will be set to \code{NA}, which will inactivate the
     \code{microRNAs} accessor.}
+  \item{taxonomyId}{By default this value is NULL and the organism
+    inferred will be used to look up the correct value for this.  But
+    you can use this argument to supply your own valid taxId here.}
 }
 \details{
   \code{makeTxDbFromUCSC} is a convenience function that feeds

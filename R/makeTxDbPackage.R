@@ -195,7 +195,8 @@ makeTxDbPackageFromUCSC <- function(
   circ_seqs=DEFAULT_CIRC_SEQS,
   url="http://genome.ucsc.edu/cgi-bin/",
   goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
-  miRBaseBuild=NA){
+  miRBaseBuild=NA,
+  taxonomyId=NULL){
     ## checks
     if(missing(version) || !isSingleString(version)){
         stop("'version' must be supplied as a single element",
@@ -237,7 +238,8 @@ makeTxDbPackageFromUCSC <- function(
                              circ_seqs=circ_seqs,
                              url=url,
                              goldenPath_url=goldenPath_url,
-                             miRBaseBuild=miRBaseBuild)
+                             miRBaseBuild=miRBaseBuild,
+                             taxonomyId=taxonomyId)
     ## Make the Package
     makeTxDbPackage(txdb,
                     version=version,
@@ -262,7 +264,8 @@ makeTxDbPackageFromBiomart <- function(
   id_prefix="ensembl_",
   host="www.biomart.org",
   port=80,
-  miRBaseBuild=NA){
+  miRBaseBuild=NA,
+  taxonomyId=NULL){
     ## checks
     if(missing(version) || !isSingleString(version)){
         stop("'version' must be supplied as a single element",
@@ -299,7 +302,8 @@ makeTxDbPackageFromBiomart <- function(
                                 id_prefix=id_prefix,
                                 host=host,
                                 port=port,
-                                miRBaseBuild=miRBaseBuild)
+                                miRBaseBuild=miRBaseBuild,
+                                taxonomyId=taxonomyId)
     ## Make the Package
     makeTxDbPackage(txdb,
                     version=version,
@@ -326,7 +330,8 @@ makeFDbPackageFromUCSC <- function(
     goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
     chromCol=NULL,
     chromStartCol=NULL,
-    chromEndCol=NULL){
+    chromEndCol=NULL,
+    taxonomyId=NULL){
     ## checks
     if(missing(author) || !isSingleString(version)){
         stop("'version' must be supplied as a single element",
@@ -380,7 +385,8 @@ makeFDbPackageFromUCSC <- function(
                                  goldenPath_url=goldenPath_url,
                                  chromCol=chromCol,
                                  chromStartCol=chromStartCol,
-                                 chromEndCol=chromEndCol)
+                                 chromEndCol=chromEndCol,
+                                 taxonomyId=taxonomyId)
   
     ## Make the Package (recycle functions and templates from txdb)
     makeTxDbPackage(fdb,

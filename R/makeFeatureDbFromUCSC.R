@@ -54,16 +54,21 @@
 ### prepare and write out the DB table contents 
 ###
 
-.prepareUCSCFeatureMetadata <- function(genome, tablename)
+.prepareUCSCFeatureMetadata <- function(genome, taxonomyId, tablename)
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
+    if(is.null(taxonomyId)){
+        taxonomyId <- GenomeInfoDb:::.taxonomyId(UCSCGenomeToOrganism(genome))
+    }else{
+        GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
+    }
+    
     metadata <- data.frame(
         name=c("Data source", "Genome", "UCSC Table", "Organism",
                "Taxonomy ID", "Resource URL"),
         value=c("UCSC", genome, tablename, UCSCGenomeToOrganism(genome),
-          GenomeInfoDb:::.taxonomyId(UCSCGenomeToOrganism(genome)),
-          "http://genome.ucsc.edu/")
+          taxonomyId, "http://genome.ucsc.edu/")
     )
     message("OK")
     metadata
@@ -228,7 +233,8 @@ makeFeatureDbFromUCSC <- function(genome,
          goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
          chromCol=NULL,
          chromStartCol=NULL,
-         chromEndCol=NULL)
+         chromEndCol=NULL,
+         taxonomyId=NULL)
 {
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
@@ -316,7 +322,7 @@ makeFeatureDbFromUCSC <- function(genome,
                                      drop.extra.cols=TRUE)    
     
     ## Compile some of the metadata
-    metadata <- .prepareUCSCFeatureMetadata(genome, tablename)
+    metadata <- .prepareUCSCFeatureMetadata(genome, taxonomyId, tablename)
     
     message("Make the AnnoDb object ... ")
     makeFeatureDb(table=ucsc_table, tableName=tablename,
