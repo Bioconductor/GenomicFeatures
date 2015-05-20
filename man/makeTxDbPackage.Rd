@@ -151,7 +151,7 @@ makeFDbPackageFromUCSC(
     \code{makeTxDb}}
   \item{taxonomyId}{By default this value is NA and the organism
     provided (or inferred) will be used to look up the correct value for
-    this.  But you can use this argument to over-ride that and supply
+    this.  But you can use this argument to override that and supply
     your own valid taxId here}
   \item{miRBaseBuild}{specify the string for the appropriate build
     Information from mirbase.db to use for microRNAs.  This can be

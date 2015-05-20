@@ -68,7 +68,7 @@ makeFeatureDbFromUCSC(
   \item{chromEndCol}{Same thing as chromCol, but for renames of 'chromEnd'}
   \item{taxonomyId}{By default this value is NA and the organism
     inferred will be used to look up the correct value for this.  But
-    you can use this argument to over-ride that and supply your own
+    you can use this argument to override that and supply your own
     valid taxId here.}
 }
 \details{

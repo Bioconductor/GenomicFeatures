@@ -49,7 +49,7 @@ makeTxDbFromGFF(file,
     should be marked as circular.}
   \item{taxonomyId}{By default this value is NA and the organism
     provided will be used to look up the correct value for this.  But
-    you can use this argument to over-ride that and supply your own
+    you can use this argument to override that and supply your own
     taxId here (which will be separately validated).  Since providing a
     valid taxonomy id will not require us to look up one based on your
     organism: this is one way that you can loosen the restrictions about
