@@ -54,7 +54,7 @@
     result. The ranges can be any feature in the transcriptome extracted from a
     \code{TxDb} (e.g., introns, exons, cds regions). See ?\code{transcripts} and
     ?\code{transcriptsBy} for a list of extractor functions. 
-    
+ 
     The \code{transcripts} object must have names. When mapping to the genome
     the names are used to determine mapping pairs and in the reverse direction
     they become the seqlevels of the output object.
@@ -64,6 +64,9 @@
     \code{transcripts} is a \code{GRangesList} and \code{ignore.strand =
     FALSE} all inner list elements of a common list element must have the same
     strand. 
+ 
+    Note that the default is FALSE; for stranded protocols set
+    \code{ignore.strand = FALSE}.
   }
   \item{extractor.fun}{
     Function to extract genomic features from a \code{TxDb} object.
@@ -193,20 +196,25 @@ x <- GRanges("chr2L",
 ## Map to transcript coordinates:
 mapToTranscripts(x, cds)
 
+## For stranded-protocols set 'ignore.strand = FALSE':
+strand(cds) <- "-"
+mapToTranscripts(x, cds, ignore.strand = FALSE)
+
 ## Note the seqnames of the output are the transcript names, not
 ## chromosomes. The 'xHits' and 'transcriptsHits' metadata 
 ## columns indicate which elements were involved in the mapping.
 
 ## The element-wise version returns both mapped and unmapped ranges.
+strand(cds) <- "+"
 x <- GRanges("chr2L", IRanges(c(8100, 8600), width=10, names=LETTERS[1:2]))
 pmapToTranscripts(x, cds[1:2])
 
 ## Mapping to genome space requires both 'x' and 'transcripts' to have
 ## names. A map is only attempted for ranges with matching names.
-x <- GRanges("chr1", 
-             IRanges(c(1, 20, 10, 3), width=5, names=c("A", "B", "A", "C")))
-gr <- GRanges("chr1", 
-              IRanges(c(25, 30, 3), width=10, names=c("C", "C", "A"))) 
+x <- GRanges("chr1", IRanges(c(1, 20, 10, 3), width=5, 
+                             names=c("A", "B", "A", "C")))
+gr <- GRanges("chr1", IRanges(c(25, 30, 3), width=10, 
+                              names=c("C", "C", "A"))) 
 mapFromTranscripts(x, gr)
 
 ## ---------------------------------------------------------------------
