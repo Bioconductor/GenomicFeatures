@@ -102,6 +102,13 @@
 }
 
 \details{
+
+  In GenomicFeatures >= 1.21.10, the default for \code{ignore.strand} was
+  changed to \code{FALSE} for consistency with other methods in GenomicRanges
+  and GenomicAlignments that already had the \code{ignore.strand} argument.
+  Additionally, the position of the mapped range is relative to the 
+  transcription start site (TSS) regardless of strand.
+
   \itemize{
     \item{\code{mapToTranscripts}, \code{pmapToTranscripts}}{
       The genomic range in \code{x} is mapped to the local position in the

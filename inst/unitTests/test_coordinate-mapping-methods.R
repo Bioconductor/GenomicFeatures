@@ -34,6 +34,15 @@ test_mapToTranscripts <- function()
     checkIdentical(names(ans), c("B", "B"))
     checkIdentical(seqlevels(ans), c("FBtr0300689", "FBtr0330654"))
 
+    x <- GRanges("chr3", IRanges(9, 9), strand="+")
+    transcripts <- GRangesList(tx1=GRanges("chr3", IRanges(3, 10), strand="-"))
+    ans <- mapToTranscripts(x, transcripts, ignore.strand=FALSE)
+    checkTrue(length(ans) == 0L)
+    ans <- mapToTranscripts(x, transcripts, ignore.strand=TRUE)
+    checkTrue(start(ans) == 2L)
+    checkTrue(end(ans) == 2L)
+    checkTrue(as.character(strand(ans)) == "-")
+
     ## TxDb
     x <- GRanges("chr2L", IRanges(c(7500, 8400, 9000), 
                  width=200, names=LETTERS[1:3]))

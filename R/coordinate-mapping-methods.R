@@ -71,7 +71,6 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 ### mapToTranscripts() and mapFromTranscripts()
 ###
 
-## 'hits' are for unlisted 'transcripts'
 .mapToTranscripts <- function(x, transcripts, hits, ignore.strand) 
 {
     flat <- unlist(transcripts, use.names=FALSE)
@@ -80,16 +79,11 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
         txHits <- subjectHits(hits)
         xrange <- ranges(x)[xHits]
         bounds <- ranges(flat)[txHits]
-
         ## location wrt to start of individual list elements
-        if (ignore.strand) {
-            xrange <- shift(xrange, - start(bounds) + 1L)
-        } else {
-            neg <- as.vector(strand(flat)[txHits] == "-")
-            negstart <- end(bounds)[neg] - end(xrange)[neg] + 1L
-            xrange[neg] <- IRanges(negstart, width=width(xrange)[neg])
-            xrange[!neg] <- shift(xrange[!neg], - start(bounds)[!neg] + 1L)
-        }
+        neg <- as.vector(strand(flat)[txHits] == "-")
+        negstart <- end(bounds)[neg] - end(xrange)[neg] + 1L
+        xrange[neg] <- IRanges(negstart, width=width(xrange)[neg])
+        xrange[!neg] <- shift(xrange[!neg], - start(bounds)[!neg] + 1L)
         ## location wrt start of concatenated list elements
         if (length(flat) > length(transcripts)) {
             shifted <- .listCumsumShifted(width(transcripts))
