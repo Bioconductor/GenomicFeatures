@@ -73,7 +73,7 @@ test_mapFromTranscripts <- function()
     strand(align[[1]]) <- "-"
     ans <- mapFromTranscripts(x, align, FALSE) 
     checkIdentical(mcols(ans)$transcriptsHits, c(4L, 3L, 4L))
-    ans <- mapFromTranscripts(x, align) 
+    ans <- mapFromTranscripts(x, align, ignore.strand=TRUE) 
     checkIdentical(mcols(ans)$transcriptsHits, c(4L, 1L, 3L, 4L))
     checkIdentical(seqlevels(ans), "chr1")
 }
@@ -188,21 +188,21 @@ test_pmapFromTranscripts <- function()
 
     strand(x) <- "-"
     strand(align) <- "+"
-    ans <- pmapFromTranscripts(x, align, FALSE)
+    ans <- pmapFromTranscripts(x, align)
     checkTrue(length(x) == length(x))
     checkTrue(all(width(ans) == 0L))
 
     strand(align[[2]][1]) <- "-"
-    checkException(pmapFromTranscripts(x, align, FALSE), silent=TRUE) 
+    checkException(pmapFromTranscripts(x, align), silent=TRUE) 
 
     strand(align) <- "+"
     strand(x) <- "+"
-    ans <- pmapFromTranscripts(x, align, FALSE) 
+    ans <- pmapFromTranscripts(x, align) 
     checkIdentical(start(ans), c(100L, 149L, 349L))
 
     strand(align) <- "-"
     strand(x) <- "-"
-    ans <- pmapFromTranscripts(x, align, FALSE) 
+    ans <- pmapFromTranscripts(x, align) 
     checkIdentical(start(ans), c(399L, 350L, 150L))
     checkIdentical(names(ans), names(x))
     checkIdentical(seqlevels(ans), "chr1")
@@ -210,6 +210,6 @@ test_pmapFromTranscripts <- function()
     ## out of bounds
     x <- GRanges("chr1", IRanges(rep(40, 3), width=11))
     align <- GRanges("chr1", IRanges(c(35, 45, 55), width=20))
-    ans <- pmapFromTranscripts(x, align) 
+    ans <- pmapFromTranscripts(x, align, TRUE) 
     checkIdentical(seqnames(ans), Rle(as.factor("UNMAPPED"), 3)) 
 }

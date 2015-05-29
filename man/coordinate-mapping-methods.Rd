@@ -30,17 +30,19 @@
 }
 
 \usage{
+## mapping to transcripts
 \S4method{mapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = TRUE, ...) 
-\S4method{mapToTranscripts}{ANY,TxDb}(x, transcripts, ignore.strand = TRUE, 
+          ignore.strand = FALSE, ...) 
+\S4method{mapToTranscripts}{ANY,TxDb}(x, transcripts, ignore.strand = FALSE, 
           extractor.fun = GenomicFeatures::transcripts, ...) 
 \S4method{pmapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = TRUE, ...) 
+          ignore.strand = FALSE, ...) 
 
+## mapping from transcripts
 \S4method{mapFromTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = TRUE, ...) 
+          ignore.strand = FALSE, ...) 
 \S4method{pmapFromTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = TRUE, ...) 
+          ignore.strand = FALSE, ...) 
 }
 
 \arguments{
@@ -60,13 +62,13 @@
     they become the seqlevels of the output object.
   }
   \item{ignore.strand}{
-    When TRUE, strand is ignored in overlap operations. When
-    \code{transcripts} is a \code{GRangesList} and \code{ignore.strand =
+    When TRUE, strand is ignored in overlap operations (i.e., all strands
+    are considered "+"). Strand in the output reflects strand of the input 
+    \code{transcripts} argument.
+    
+    When \code{transcripts} is a \code{GRangesList} and \code{ignore.strand =
     FALSE} all inner list elements of a common list element must have the same
-    strand. 
- 
-    Note that the default is FALSE; for stranded protocols set
-    \code{ignore.strand = FALSE}.
+    strand.
   }
   \item{extractor.fun}{
     Function to extract genomic features from a \code{TxDb} object.
@@ -189,16 +191,11 @@
 
 library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
 cds <- cdsBy(TxDb.Dmelanogaster.UCSC.dm3.ensGene, "tx", use.names=TRUE)[1:3]
-x <- GRanges("chr2L", 
-             IRanges(c(7500, 8400, 9000), width=200, 
-                     names=LETTERS[1:3])) 
+x <- GRanges("chr2L", IRanges(c(7500, 8400, 9000), width=200))
+names(x) <- LETTERS[1:3] 
 
 ## Map to transcript coordinates:
 mapToTranscripts(x, cds)
-
-## For stranded-protocols set 'ignore.strand = FALSE':
-strand(cds) <- "-"
-mapToTranscripts(x, cds, ignore.strand = FALSE)
 
 ## Note the seqnames of the output are the transcript names, not
 ## chromosomes. The 'xHits' and 'transcriptsHits' metadata 
@@ -209,8 +206,8 @@ strand(cds) <- "+"
 x <- GRanges("chr2L", IRanges(c(8100, 8600), width=10, names=LETTERS[1:2]))
 pmapToTranscripts(x, cds[1:2])
 
-## Mapping to genome space requires both 'x' and 'transcripts' to have
-## names. A map is only attempted for ranges with matching names.
+## Mapping to genome space requires that both 'x' and 'transcripts' have
+## names. Mapping is only attempted for ranges with matching names.
 x <- GRanges("chr1", IRanges(c(1, 20, 10, 3), width=5, 
                              names=c("A", "B", "A", "C")))
 gr <- GRanges("chr1", IRanges(c(25, 30, 3), width=10, 
