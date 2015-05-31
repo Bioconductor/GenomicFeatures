@@ -62,13 +62,16 @@
     they become the seqlevels of the output object.
   }
   \item{ignore.strand}{
-    When TRUE, strand is ignored in overlap operations (i.e., all strands
-    are considered "+"). Strand in the output reflects strand of the input 
-    \code{transcripts} argument.
-    
+    \code{ignore.strand} is used in overlap operations only.  When TRUE, strand
+    is ignored (i.e., all strands are considered "+"). 
+
     When \code{transcripts} is a \code{GRangesList} and \code{ignore.strand =
     FALSE} all inner list elements of a common list element must have the same
     strand.
+
+    Strand in the output is taken from the \code{transcripts} argument. Mapped
+    position is computed by counting from the transcription start site (TSS)
+    and is unaffected by the value of \code{ignore.strand}.
   }
   \item{extractor.fun}{
     Function to extract genomic features from a \code{TxDb} object.
@@ -105,10 +108,10 @@
 
   In GenomicFeatures >= 1.21.10, the default for \code{ignore.strand} was
   changed to \code{FALSE} for consistency with other methods in GenomicRanges
-  and GenomicAlignments that already had the \code{ignore.strand} argument.
-  Additionally, the position of the mapped range is relative to the 
-  transcription start site (TSS) regardless of strand.
-
+  and GenomicAlignments. Additionally, the mapped position is computed
+  from the TSS and does not depend on the \code{ignore.strand} argument.
+  See the section on \code{ignore.strand} for details.
+  
   \itemize{
     \item{\code{mapToTranscripts}, \code{pmapToTranscripts}}{
       The genomic range in \code{x} is mapped to the local position in the
@@ -358,10 +361,9 @@ cds <- cdsBy(txdb, "tx", use.names=TRUE)["uc002pct.1"]
 cds
 
 ## The 'cds' object is a GRangesList of length 1 containing all cds ranges
-## for the single transcript uc002pct.1. To map to the concatenated group
-## of ranges we leave 'cds' as a GRangesList.
+## for the single transcript uc002pct.1.
 
-## Map all 5 SNPs to the total cds region: 
+## To map to the concatenated group of ranges leave 'cds' as a GRangesList.
 mapToTranscripts(snps, cds)
 
 ## Only the second SNP could be mapped. Unlisting the 'cds' object maps the
@@ -369,12 +371,20 @@ mapToTranscripts(snps, cds)
 mapToTranscripts(snps[2], unlist(cds))
 
 ## The location is the same because the SNP hit the first cds range. If the
-## transcript had been on the negative strand the difference in mapping
+## transcript were on the "-" strand the difference in concatenated vs
+## non-concatenated position would be more obvious.
 
-## would be more obvious.
-strand(snps) <- strand(cds) <- "-"
-mapToTranscripts(snps[2], cds, ignore.strand=FALSE)
-mapToTranscripts(snps[2], unlist(cds), ignore.strand=FALSE)
+## Change the strand of 'cds':
+strand(cds) <- "-"
+
+## Re-map using 'ignore.strand'. The 'ignore.strand' argument is used
+## in overlaps operations but does not affect the mapped position.
+
+## Map to concatenated group of cds regions:
+mapToTranscripts(snps[2], cds, ignore.strand=TRUE)
+
+## Map to individual cds regions:
+mapToTranscripts(snps[2], unlist(cds), ignore.strand=TRUE)
 }
 
 \keyword{methods}

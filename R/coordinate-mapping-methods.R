@@ -32,9 +32,10 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 ###
 
 ### 'x' is a GRangesList
-### Returns a GRangesList with sorted elements. This method differs from 
-### sort() in that "-" strand elements are returned highest value to lowest.
-.orderElementsByTranscription <- function(x, ignore.strand) {
+### This function returns a GRangesList with sorted elements. It 
+### differs from sort() in that "-" strand elements are returned 
+### highest value to lowest.
+.orderElementsByTranscription <- function(x) {
     original <- unlist(sapply(elementLengths(x), function(xx) 1:xx), 
                        use.names=FALSE)
     ## order by position
@@ -46,20 +47,17 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
     pstart <- start(part)[width(part) != 0L]
     pend <- end(part)[width(part) != 0L]
 
-    if (ignore.strand) {
-        ord <- S4Vectors:::mseq(pstart, pend)
-    } else {
-        neg <- strand(gr)[pstart] == "-"
-        ord <- S4Vectors:::mseq(ifelse(neg, pend, pstart),
-                                ifelse(neg, pstart, pend))
-    }
+    neg <- strand(gr)[pstart] == "-"
+    ord <- S4Vectors:::mseq(ifelse(neg, pend, pstart),
+                            ifelse(neg, pstart, pend))
     res <- relist(gr[ord], x)
     res@unlistData$unordered <- original[idx[ord]] 
     res
 }
 
 ### 'x' is an IntegerList or NumericList
-### Returns a numeric vector of cumulative sums within list elements.
+### This function returns a numeric vector of cumulative sums within list 
+### elements.
 .listCumsumShifted <- function(x) {
     cs <- unlist(cumsum(x), use.names=FALSE)
     shifted <- c(0L, head(cs, -1))
@@ -166,7 +164,7 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"),
             stop ("'transcripts' must have names")
         ## order within list elements by strand
         transcripts <- 
-            .orderElementsByTranscription(transcripts, ignore.strand)
+            .orderElementsByTranscription(transcripts)
         ## findOverlaps determines pairs
         hits <- findOverlaps(x, unlist(transcripts, use.names=FALSE), 
                              type="within", ignore.strand=ignore.strand)
@@ -226,7 +224,7 @@ setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"),
 
         ## order within list elements by strand
         transcripts <- 
-        .orderElementsByTranscription(transcripts, ignore.strand)
+        .orderElementsByTranscription(transcripts)
         ## name matching determines pairs
         match0 <- match(txNames, txNames)
         match1 <- match(xNames, txNames)
@@ -305,7 +303,7 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
                             "same strand"))
         ## order within list elements
         transcripts <- 
-            .orderElementsByTranscription(transcripts, ignore.strand)
+            .orderElementsByTranscription(transcripts)
 
         ## map i-th elements
         hits <- findOverlaps(x, unlist(transcripts, use.names=FALSE), 
@@ -348,7 +346,7 @@ setMethod("pmapFromTranscripts", c("GenomicRanges", "GRangesList"),
                             "same strand"))
         ## order within list elements
         transcripts <- 
-            .orderElementsByTranscription(transcripts, ignore.strand)
+            .orderElementsByTranscription(transcripts)
 
         ## map i-th elements
         hits <- Hits(seq_along(x), seq_along(x), length(x), length(x))

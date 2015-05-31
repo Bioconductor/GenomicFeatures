@@ -40,8 +40,14 @@ test_mapToTranscripts <- function()
     checkTrue(length(ans) == 0L)
     ans <- mapToTranscripts(x, transcripts, ignore.strand=TRUE)
     checkTrue(start(ans) == 2L)
-    checkTrue(end(ans) == 2L)
     checkTrue(as.character(strand(ans)) == "-")
+
+    x <- GRanges("1", IRanges(248, width=1))
+    transcripts <- GRangesList(
+        foo = (GRanges("1", IRanges(c(101,201), width=50), strand="-")))
+    ans1 <- mapToTranscripts(x, transcripts, ignore.strand=TRUE)
+    ans2 <- mapToTranscripts(x, transcripts, ignore.strand=FALSE)
+    checkIdentical(ans1, ans2)
 
     ## TxDb
     x <- GRanges("chr2L", IRanges(c(7500, 8400, 9000), 
