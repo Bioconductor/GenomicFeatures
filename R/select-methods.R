@@ -187,14 +187,13 @@
   if(missing(keys)){stop("'keys' must be a character vector")}
   if(missing(columns)){stop("'columns' must be a character vector")}
   ## Some argument checking
-  if('fks' %in% names(extraArgs)){
-      ## if there is an extra 'fks' arg, then use it...
-      AnnotationDbi:::.testSelectArgs(x, keys=keys, cols=columns,
-                                      keytype=keytype, fks=extraArgs[["fks"]])
-    }else{
-      AnnotationDbi:::.testSelectArgs(x, keys=keys, cols=columns,
-                                      keytype=keytype)
-    }
+  if('skipValidKeysTest' %in% names(extraArgs)){
+      skipValidKeysTest<-extraArgs[["skipValidKeysTest"]]}else{
+          skipValidKeysTest<-FALSE}
+  AnnotationDbi:::.testSelectArgs(x, keys=keys, cols=columns,
+                                  keytype=keytype,
+                                  skipValidKeysTest=skipValidKeysTest)
+  
   ## 1st we check the keytype to see if it is valid:
   if(is.na(keys(x, keytype)[1]) & length(keys(x, keytype))==1){ 
     stop(paste("There do not appear to be any keys",
