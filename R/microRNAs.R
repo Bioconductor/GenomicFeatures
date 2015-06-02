@@ -32,7 +32,7 @@
 ## main function
 .microRNAs <- function(txdb){
   ## get the data about whether or not we have any info.
-  con <- AnnotationDbi:::dbconn(txdb)
+  con <- dbconn(txdb)
   bld <- dbGetQuery(con,
            "SELECT value FROM metadata WHERE name='miRBase build ID'")
   src <- DBI::dbGetQuery(con,

@@ -44,7 +44,7 @@ gc()
 
 .valid.FeatureDb <- function(x)
 {
-    conn <- AnnotationDbi:::dbconn(x)
+    conn <- dbconn(x)
     c(AnnotationDbi:::.valid.metadata.table(conn, "Db type",
                                             "FeatureDb"),
       .valid.feature.table(conn))

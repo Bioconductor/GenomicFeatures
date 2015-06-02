@@ -430,7 +430,7 @@ load_genes <- function(txdb, set.col.class=FALSE)
 
 .valid.TxDb <- function(x)
 {
-    conn <- AnnotationDbi:::dbconn(x)
+    conn <- dbconn(x)
 
     c(AnnotationDbi:::.valid.metadata.table(conn, DB_TYPE_NAME,
                                             DB_TYPE_VALUE),

@@ -369,7 +369,7 @@ translateCols <- function(columns, txdb){
     SQL_orderby <- .getSQL_OrderBy(root_table, txdb, what)
     SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from,
                  SQL_where, "ORDER BY", SQL_orderby)
-    ans <- dbEasyQuery(AnnotationDbi:::dbconn(txdb), SQL)
+    ans <- dbEasyQuery(dbconn(txdb), SQL)
     names(ans) <- ans_names
     ans
 }
