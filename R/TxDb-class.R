@@ -720,6 +720,7 @@ compareTxDbs <- function(txdb1, txdb2)
     identical(txdb1_dump, txdb2_dump)
 }
 
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Coercion
 ###
