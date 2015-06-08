@@ -200,12 +200,6 @@
                "for the keytype you have specified."))
     }
 
-  ## keys should NOT be NAs, but if they are, warn and then filter them.
-  if(any(is.na(keys))) {
-    warning(paste("NA keys have been dropped"))
-    keys <- keys[!is.na(keys)]
-  }
-
   ## we used to add TXID to cnames, which forces splicing to always be included
   ## Splicing is a almost always needed, but almost never requested.
   ## cnames <- unique(c(columns, "TXID", keytype))
