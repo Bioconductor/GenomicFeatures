@@ -157,6 +157,11 @@ makeTxDb(transcripts, splicings,
           or from a GFF or GTF file.
 
     \item The \link{TxDb} class.
+
+    \item \code{\link[AnnotationDbi]{saveDb}} and
+          \code{\link[AnnotationDbi]{loadDb}} in the \pkg{AnnotationDbi}
+          package for saving and loading a \link{TxDb} object as an SQLite
+          file.
   }
 }
 

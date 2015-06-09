@@ -91,8 +91,9 @@
           online resources, or from a \link[GenomicRanges]{GRanges} object,
           or from a GFF or GTF file.
 
-    \item \code{\link{saveDb}} and \code{\link{loadDb}} for
-          saving and loading the database content of a TxDb object.
+    \item \code{\link[AnnotationDbi]{saveDb}} and
+          \code{\link[AnnotationDbi]{loadDb}} in the \pkg{AnnotationDbi}
+          package for saving and loading a TxDb object as an SQLite file.
 
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
           and \code{\link{transcriptsByOverlaps}},
