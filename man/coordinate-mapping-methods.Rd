@@ -7,6 +7,7 @@
 \alias{mapToTranscripts,ANY,TxDb-method}
 \alias{pmapToTranscripts}
 \alias{pmapToTranscripts,Ranges,GenomicRanges-method}
+\alias{pmapToTranscripts,Ranges,GRangesList-method}
 \alias{pmapToTranscripts,GenomicRanges,GenomicRanges-method}
 \alias{pmapToTranscripts,GenomicRanges,GRangesList-method}
 
@@ -15,6 +16,7 @@
 \alias{mapFromTranscripts,GenomicRanges,GRangesList-method}
 \alias{pmapFromTranscripts}
 \alias{pmapFromTranscripts,Ranges,GenomicRanges-method}
+\alias{pmapFromTranscripts,Ranges,GRangesList-method}
 \alias{pmapFromTranscripts,GenomicRanges,GenomicRanges-method}
 \alias{pmapFromTranscripts,GenomicRanges,GRangesList-method}
 
@@ -48,7 +50,8 @@
 \arguments{
   \item{x}{
     \code{\linkS4class{GenomicRanges}} object of positions to be mapped.
-    \code{x} must have names when mapping to the genome.
+    The seqnames of \code{x} are used in \code{mapFromTranscripts}, i.e.,
+    when mapping from transcripts to the genome.
   }
   \item{transcripts}{
     A named \code{\linkS4class{GenomicRanges}} or
@@ -57,9 +60,9 @@
     \code{TxDb} (e.g., introns, exons, cds regions). See ?\code{transcripts} and
     ?\code{transcriptsBy} for a list of extractor functions. 
  
-    The \code{transcripts} object must have names. When mapping to the genome
-    the names are used to determine mapping pairs and in the reverse direction
-    they become the seqlevels of the output object.
+    The \code{transcripts} object must have names. When mapping from
+    transcripts to the genome, they are used to determine mapping pairs; in
+    the reverse direction they become the seqlevels of the output object.
   }
   \item{ignore.strand}{
     \code{ignore.strand} is used in overlap operations only.  When TRUE, strand
@@ -134,25 +137,25 @@
       \preformatted{
       width(transcripts) >= start(x) + width(x)
       }
-      \code{x} is aligned to \code{transcripts} by moving in
-      \code{start(x)} positions in from the beginning of the
-      \code{transcripts} range.  The seqlevels of the return object are
-      genomic chromosomes.
+      \code{x} is aligned to \code{transcripts} by moving in \code{start(x)}
+      positions in from the beginning of the \code{transcripts} range.  The
+      seqlevels of the return object are chromosome names.
 
-      When mapping to the genome, name matching is used to determine the
-      mapping pairs (vs attempting to match all possible pairs). Ranges in
-      \code{x} are only mapped to ranges in \code{transcripts} with the
-      same name. Name matching is motivated by use cases such as
-      differentially expressed regions where the expressed regions in
-      \code{x} would only be related to a subset of regions in
-      \code{transcripts}, which may contains gene or transcript ranges.
+      \code{mapFromTranscripts} only attempts to map ranges where the 
+      seqname in \code{x} matches the name in \code{transcripts}
+      (vs attempting to match all possible pairs). Name matching is motivated 
+      by use cases such as differentially expressed regions where the 
+      expressed regions in \code{x} would only be related to a subset of 
+      regions in \code{transcripts}. The element-wise version of the function
+      does not use name matching.
     }
     \item{element-wise versions}{
       \code{pmapToTranscripts} and \code{pmapFromTranscripts} are element-wise
       (aka `parallel`) versions of \code{mapToTranscripts} and 
       \code{mapFromTranscripts}. The i-th range in \code{x} is mapped to the 
-      i-th range in \code{transcripts}; \code{x} and \code{transcripts} must 
-      have the same length.
+      i-th range in \code{transcripts}. Recycling of \code{transcripts} is 
+      supported when \code{length(transcripts) == 1}, otherwise \code{x} and 
+      \code{transcipts} be the same length.
 
       Ranges in \code{x} that do not map (out of bounds or strand mismatch) 
       are returned as zero-width ranges starting at 0. These ranges are given
@@ -199,30 +202,45 @@
 ## A. Basic Use
 ## ---------------------------------------------------------------------
 
-library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
-cds <- cdsBy(TxDb.Dmelanogaster.UCSC.dm3.ensGene, "tx", use.names=TRUE)[1:3]
-x <- GRanges("chr2L", IRanges(c(7500, 8400, 9000), width=200))
-names(x) <- LETTERS[1:3] 
+## ------------------------------------
+## (i) Map from genome to transcript:
 
-## Map to transcript coordinates:
-mapToTranscripts(x, cds)
+## The seqnames of the output are the transcript names, not chromosomes. For
+## this reason 'transcripts' must be named. 
+x <- GRanges("A", IRanges(16, 18))
+gr1 <- GRanges("A", IRanges(1, 10, names="tx_a"))
+gr2 <- GRanges("A", IRanges(15, 20, names="tx_b"))
 
-## Note the seqnames of the output are the transcript names, not
-## chromosomes. The 'xHits' and 'transcriptsHits' metadata 
-## columns indicate which elements were involved in the mapping.
+## 'transcripts' as GRanges:
+mapToTranscripts(x, gr2)
 
-## The element-wise version returns both mapped and unmapped ranges.
-strand(cds) <- "+"
-x <- GRanges("chr2L", IRanges(c(8100, 8600), width=10, names=LETTERS[1:2]))
-pmapToTranscripts(x, cds[1:2])
+## 'transcripts' as GRangesList:
+mapToTranscripts(x, GRangesList("tx_c" = c(gr1, gr2)))
 
-## Mapping to genome space requires that both 'x' and 'transcripts' have
-## names. Mapping is only attempted for ranges with matching names.
-x <- GRanges("chr1", IRanges(c(1, 20, 10, 3), width=5, 
-                             names=c("A", "B", "A", "C")))
-gr <- GRanges("chr1", IRanges(c(25, 30, 3), width=10, 
-                              names=c("C", "C", "A"))) 
+## Round trip from genomic -> transcript -> genomic coordinates:
+tx_coord <- mapToTranscripts(x, gr2)
+mapFromTranscripts(tx_coord, gr2)
+
+## ------------------------------------
+## (ii) Map from transcript to genome:
+
+## A prerequisite for mapping from transcript -> genome is that the seqname 
+## of the range in 'x' match the name of the range in 'transcripts'. Here 
+## the seqname of 'x' is "TX_1" and mapping is only attempted with the second 
+## range in 'gr':
+x <- GRanges("TX_1", IRanges(5, 10))
+gr <- GRanges("chr3", IRanges(c(1, 1), width=50, names=c("TX_2", "TX_1")))
 mapFromTranscripts(x, gr)
+
+## ------------------------------------
+## (iii) Element-wise versions:
+
+## Recycling is supported when length(transcripts) == 1; otherwise the
+## lengths of 'x' and 'transcripts' must be the same.
+x <- GRanges("A", IRanges(c(1, 5, 10), width=1))
+transcripts <- GRanges("A", IRanges(4, 7))
+pmapToTranscripts(x, transcripts)
+
 
 ## ---------------------------------------------------------------------
 ## B. Map local sequence locations to the genome
@@ -280,7 +298,7 @@ pmapFromTranscripts(first_loc, exons[[1]])
 geneNames <- c("Bcap29", "Dgkb", "Etv1", "Hbp1", "Hbp1", "Ifrd1", 
                "Ifrd1", "Pik3cg", "Pik3cg", "Tspan13", "Twistnb")
 starts <- c(1409, 3170, 3132, 2437, 2626, 3239, 3261, 4947, 4979, 958, 1489) 
-snps <- GRanges("chr12", IRanges(starts, width=1, names=geneNames))
+snps <- GRanges(geneNames, IRanges(starts, width=1))
 
 ## To map these transcript-space coordinates to the genome we need gene ranges
 ## in genome space.
@@ -293,10 +311,9 @@ library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 txdb <- TxDb.Mmusculus.UCSC.mm10.knownGene
 genes <- genes(txdb)[geneid$ENTREZID]
 
-## mapToTranscripts(..., reverse=TRUE) determines pairs to map by comparing 
-## names in 'x' and 'transcripts'. Ranges in 'snps' will be mapped to all 
-## ranges in 'genes' with the same name. Currently the names of 'genes' are 
-## internal gene ids. Rename 'genes' with the appropriate gene symbol.
+## A prerequesite of the mapping from transcript space to genome space
+## is that seqnames in 'x' match names in 'transcripts'. Rename
+## 'genes' with the appropriate gene symbol.
 names(genes) <- geneid$SYMBOL 
 
 ## The xHits and transcriptsHits metadta columns indicate which ranges in
