@@ -36,10 +36,9 @@ makeTxDbFromGFF(file,
     or \link[rtracklayer]{GTFFile} object.
   }
   \item{format}{
-    Specify the format of the input file. Accepted values are: \code{"auto"}
-    (the default) for auto-detection of the format, \code{"gff3"}, or
-    \code{"gtf"}. Use \code{"gff3"} or \code{"gtf"} only if auto-detection
-    failed.
+    Format of the input file. Accepted values are: \code{"auto"} (the
+    default) for auto-detection of the format, \code{"gff3"}, or \code{"gtf"}.
+    Use \code{"gff3"} or \code{"gtf"} only if auto-detection failed.
   }
   \item{chrominfo}{data frame containing information about the
   chromosomes.  Will be passed to the internal call to

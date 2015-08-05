@@ -15,12 +15,13 @@ import(BiocGenerics)
 import(S4Vectors)
 import(IRanges)
 import(GenomeInfoDb)
+import(XVector)
 import(GenomicRanges)
 
 importFrom(Biobase, createPackage)
 
 importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
-importFrom(Biostrings, DNAStringSet, getSeq)
+importFrom(Biostrings, DNAStringSet, reverseComplement, getSeq)
 
 importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
            useDataset, useMart)
