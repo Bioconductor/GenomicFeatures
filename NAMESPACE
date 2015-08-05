@@ -25,8 +25,8 @@ importFrom(Biostrings, DNAStringSet, getSeq)
 importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
            useDataset, useMart)
 
-importFrom(rtracklayer, browserSession, ucscTableQuery,
-           tableNames, getTable, trackNames, ucscSchema, asBED, asGFF, import)
+importFrom(rtracklayer, FileForFormat, import, asBED, asGFF, browserSession,
+           ucscTableQuery, tableNames, getTable, trackNames, ucscSchema)
 
 importFrom(AnnotationDbi, columns, keys, keytypes, select, mapIds, metadata, dbconn, dbfile, loadDb, saveDb)
 
