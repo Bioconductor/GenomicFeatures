@@ -1,13 +1,9 @@
 import(methods)
 
 importFrom(utils, download.file, installed.packages, read.table)
+importFrom(tools, file_ext, file_path_sans_ext)
 
-import(BiocGenerics)
-import(S4Vectors)
-import(IRanges)
-import(GenomeInfoDb)
-import(GenomicRanges)
-
+importFrom(RCurl, getURL)
 importMethodsFrom(DBI, dbCommit, dbConnect,
                   dbDisconnect, dbExistsTable, dbGetQuery,
                   dbReadTable, dbWriteTable, dbListTables, dbListFields)
@@ -15,7 +11,11 @@ importMethodsFrom(DBI, dbCommit, dbConnect,
 importFrom(RSQLite, SQLite, SQLITE_RO)
 importMethodsFrom(RSQLite, dbBegin, dbGetPreparedQuery)
 
-importFrom(RCurl, getURL)
+import(BiocGenerics)
+import(S4Vectors)
+import(IRanges)
+import(GenomeInfoDb)
+import(GenomicRanges)
 
 importFrom(Biobase, createPackage)
 

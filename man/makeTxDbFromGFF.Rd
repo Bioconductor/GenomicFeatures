@@ -16,25 +16,31 @@
 }
 \usage{
 makeTxDbFromGFF(file,
-                format=c("gff3","gtf"),
-                exonRankAttributeName=NA,
-                gffGeneIdAttributeName=NA,
-                chrominfo=NA,
+                format=c("auto", "gff3", "gtf"),
                 dataSource=NA,
                 organism=NA,
-                circ_seqs=DEFAULT_CIRC_SEQS,
                 taxonomyId=NA,
+                circ_seqs=DEFAULT_CIRC_SEQS,
+                chrominfo=NA,
                 miRBaseBuild=NA,
+                exonRankAttributeName=NA,
+                gffGeneIdAttributeName=NA,
                 useGenesAsTranscripts=FALSE,
                 gffTxName="mRNA",
                 species=NA)
 }
 \arguments{
-  \item{file}{path/file to be processed}
-  \item{format}{"gff3" or "gtf" depending on which file format you have
-  to process}
-  \item{exonRankAttributeName}{this argument is defunct}
-  \item{gffGeneIdAttributeName}{this argument is defunct}
+  \item{file}{
+    Input GFF3 or GTF file. Can be a path to a file, or an URL,
+    or a connection object, or a \link[rtracklayer]{GFF3File}
+    or \link[rtracklayer]{GTFFile} object.
+  }
+  \item{format}{
+    Specify the format of the input file. Accepted values are: \code{"auto"}
+    (the default) for auto-detection of the format, \code{"gff3"}, or
+    \code{"gtf"}. Use \code{"gff3"} or \code{"gtf"} only if auto-detection
+    failed.
+  }
   \item{chrominfo}{data frame containing information about the
   chromosomes.  Will be passed to the internal call to
   \code{\link{makeTxDb}}. See \code{?\link{makeTxDb}} for the details.}
@@ -59,6 +65,8 @@ makeTxDbFromGFF(file,
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
     this value will be set to \code{NA}, which will inactivate the
     \code{microRNAs} accessor.}
+  \item{exonRankAttributeName}{this argument is defunct}
+  \item{gffGeneIdAttributeName}{this argument is defunct}
   \item{useGenesAsTranscripts}{this argument is defunct}
   \item{gffTxName}{this argument is defunct}
   \item{species}{this argument was replaced with the \code{organism} argument
@@ -108,7 +116,6 @@ makeTxDbFromGFF(file,
 ## TESTING GFF3
 gffFile <- system.file("extdata","GFF3_files","a.gff3",package="GenomicFeatures")
 txdb <- makeTxDbFromGFF(file=gffFile,
-            format="gff3",
             dataSource="partial gtf file for Tomatoes for testing",
             organism="Solanum lycopersicum")
 
@@ -119,7 +126,6 @@ chrominfo <- data.frame(chrom = c('supercont1.1','supercont1.2'),
                         length=c(5220442, 5300000),
                         is_circular=c(FALSE, FALSE))
 txdb2 <- makeTxDbFromGFF(file=gtfFile,
-             format="gtf",
              chrominfo=chrominfo,
              dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
                               "release-13/gtf/aedes_aegypti/",sep=""),

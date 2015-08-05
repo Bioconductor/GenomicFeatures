@@ -64,21 +64,49 @@
     metadata
 }
 
+.detect_file_format <- function(file)
+{
+    if (is(file, "connection"))
+        file <- summary(file)$description
+    if (isSingleString(file)) {
+        file2 <- try(FileForFormat(file), silent=TRUE)
+        if (inherits(file2, "try-error"))
+            return(tools::file_ext(file))
+        file <- file2
+    }
+    if (is(file, "RTLFile")) {
+        if (is(file, "GFF3File"))
+            return("gff3")
+        if (is(file, "GTFFile"))
+            return("gtf")
+        desc <- rtracklayer:::resourceDescription(file)
+        if (is(file, "CompressedFile")) {
+            ## Mimic what import,CompressedFile,missing,missing method does.
+            desc <- tools::file_path_sans_ext(desc)
+        }
+        format <- tools::file_ext(desc)
+        return(format)
+    }
+    stop(wmsg("Invalid 'file'. Must be a path to a file, or an URL, ",
+              "or a connection object, or a GFF3File or GTFFile object."))
+}
+
 ### Based on makeTxDbFromGRanges().
 makeTxDbFromGFF <- function(file,
-                            format=c("gff3", "gtf"),
-                            exonRankAttributeName=NA,     # defunct
-                            gffGeneIdAttributeName=NA,    # defunct
-                            chrominfo=NA,
+                            format=c("auto", "gff3", "gtf"),
                             dataSource=NA,
                             organism=NA,
-                            circ_seqs=DEFAULT_CIRC_SEQS,
                             taxonomyId=NA,
+                            circ_seqs=DEFAULT_CIRC_SEQS,
+                            chrominfo=NA,
                             miRBaseBuild=NA,
+                            exonRankAttributeName=NA,     # defunct
+                            gffGeneIdAttributeName=NA,    # defunct
                             useGenesAsTranscripts=FALSE,  # defunct
                             gffTxName="mRNA",             # defunct
                             species=NA)                   # defunct
 {
+    ## Raise error for a bunch of args that are defunct.
     if (!identical(exonRankAttributeName, NA))
         .Defunct(msg="the 'exonRankAttributeName' argument is defunct")
     if (!identical(gffGeneIdAttributeName, NA))
@@ -92,6 +120,13 @@ makeTxDbFromGFF <- function(file,
                           "Please use 'organism' instead."))
 
     format <- match.arg(format)
+    if (format == "auto") {
+        format <- .detect_file_format(file)
+        if (!(format %in% c("gff3", "gff", "gtf")))
+            stop(wmsg("Cannot detect whether 'file' is a GFF3 or GTF file. ",
+                      "Please use the 'format' argument to specify the ",
+                      "format (\"gff3\" or \"gtf\")."))
+    }
     gr <- import(file, format=format, feature.type=GFF_FEATURE_TYPES)
     gr <- .set_seqinfo(gr, chrominfo, circ_seqs)
     metadata <- .prepareGFFMetadata(file, dataSource, organism, taxonomyId,

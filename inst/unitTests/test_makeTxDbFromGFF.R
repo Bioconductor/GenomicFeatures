@@ -23,9 +23,8 @@ test_makeTxDbFromGFF <- function(){
 
   ## generated
   txdb <- makeTxDbFromGFF(file=gffFile,
-         format="gff3",
-         dataSource="partial GFF file for Tomatoes for testing",
-         organism="Solanum lycopersicum")
+              dataSource="partial GFF file for Tomatoes for testing",
+              organism="Solanum lycopersicum")
 
   ## test
   checkTrue(GenomicFeatures:::compareTxDbs(txdb, txdb_gff))
@@ -43,11 +42,10 @@ test_makeTxDbFromGFF <- function(){
                         is_circular=c(FALSE, FALSE))
   
   txdb2 <- makeTxDbFromGFF(file=gtfFile,
-         format="gtf",
-         chrominfo= chrominfo,
-         dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
-                          "release-13/gtf/aedes_aegypti/",sep=""),
-         organism="Aedes aegypti")
+               chrominfo= chrominfo,
+               dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
+                                "release-13/gtf/aedes_aegypti/",sep=""),
+               organism="Aedes aegypti")
 
   ## test
   checkTrue(GenomicFeatures:::compareTxDbs(txdb2, txdb_gtf))
@@ -60,9 +58,8 @@ test_makeTxDbFromGFF <- function(){
   txdb_fly <- loadDb(flyDBFile)
 
   txdb3 <- makeTxDbFromGFF(file=flyFile,
-                                   format="gff3",
-                                   dataSource="gff file from flybase",
-                                   organism="Drosophila melanogaster")
+                           dataSource="gff file from flybase",
+                           organism="Drosophila melanogaster")
   
   checkTrue(GenomicFeatures:::compareTxDbs(txdb3, txdb_fly))
 
@@ -74,10 +71,10 @@ test_makeTxDbFromGFF <- function(){
                           is_circular=c(TRUE))
 
   ## mostly I want to see if if can run this:
-  txdb_bac <- makeTxDbFromGFF(file = gffB, format = "gff",
-                                      chrominfo = chrominfoBac,
-                                      dataSource = "NCBI",
-                                      organism = "Mycoplasma arthritidis")
+  txdb_bac <- makeTxDbFromGFF(file = gffB,
+                              chrominfo = chrominfoBac,
+                              dataSource = "NCBI",
+                              organism = "Mycoplasma arthritidis")
 
   ## Tests
   checkTrue(class(txdb_bac)=="TxDb")
