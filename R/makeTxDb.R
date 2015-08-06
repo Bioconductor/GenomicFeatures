@@ -29,12 +29,27 @@
             paste(colnames(arg)[!is_supported_col], collapse=", "))
 }
 
-### Also returns TRUE if 'x' is an atomic vector or any type with NAs only.
-.isCharacterVectorOrFactor <- function(x)
+.all_logical_NAs <- function(x)
 {
-    if (is.character(x) || is.factor(x))
-        return(TRUE)
-    is.atomic(x) && all(is.na(x))
+    is.logical(x) && all(is.na(x))
+}
+
+### Also returns TRUE if 'x' is a logical vector of NAs.
+.is_character_or_factor <- function(x)
+{
+    is.character(x) || is.factor(x) || .all_logical_NAs(x)
+}
+
+### Like as.integer(x) but fail if 'x' is not a numeric vector or a logical
+### vector of NAs.
+.graceful_as_integer <- function(x, x_what="x")
+{
+    if (!(is.numeric(x) || .all_logical_NAs(x)))
+        stop(wmsg("'", x_what, "' must be either all NAs ",
+                  "or an integer vector"))
+    if (!is.integer(x))
+        x <- as.integer(x)
+    x
 }
 
 .checkForeignKey <- function(referring_vals, referring_type, referring_colname,
@@ -64,19 +79,19 @@
         stop("'transcripts$tx_id' contains duplicated values")
     ## Check 'tx_name'.
     if (hasCol(transcripts, "tx_name")
-     && !.isCharacterVectorOrFactor(transcripts$tx_name))
+     && !.is_character_or_factor(transcripts$tx_name))
         stop("'transcripts$tx_name' must be a character vector (or factor)")
     ## Check 'tx_type'.
     if (hasCol(transcripts, "tx_type")
-     && !.isCharacterVectorOrFactor(transcripts$tx_type))
+     && !.is_character_or_factor(transcripts$tx_type))
         stop("'transcripts$tx_type' must be a character vector (or factor)")
     ## Check 'tx_chrom'.
-    if (!.isCharacterVectorOrFactor(transcripts$tx_chrom)
+    if (!.is_character_or_factor(transcripts$tx_chrom)
      || any(is.na(transcripts$tx_chrom)))
         stop("'transcripts$tx_chrom' must be a character vector (or factor) ",
              "with no NAs")
     ## Check 'tx_strand'.
-    if (!.isCharacterVectorOrFactor(transcripts$tx_strand)
+    if (!.is_character_or_factor(transcripts$tx_strand)
      || any(is.na(transcripts$tx_strand)))
         stop("'transcripts$tx_strand' must be a character vector (or factor) ",
              "with no NAs")
@@ -123,17 +138,17 @@
         stop("'splicings$exon_id' must be an integer vector, with no NAs")
     ## Check 'exon_name'.
     if (hasCol(splicings, "exon_name")
-     && !.isCharacterVectorOrFactor(splicings$exon_name))
+     && !.is_character_or_factor(splicings$exon_name))
         stop("'splicings$exon_name' must be a character vector (or factor)")
     ## Check 'exon_chrom'.
     if (hasCol(splicings, "exon_chrom")
-     && (!.isCharacterVectorOrFactor(splicings$exon_chrom)
+     && (!.is_character_or_factor(splicings$exon_chrom)
          || any(is.na(splicings$exon_chrom))))
         stop("'splicings$exon_chrom' must be a character vector (or factor) ",
              "with no NAs")
     ## Check 'exon_strand'.
     if (hasCol(splicings, "exon_strand")
-     && (!.isCharacterVectorOrFactor(splicings$exon_strand)
+     && (!.is_character_or_factor(splicings$exon_strand)
          || any(is.na(splicings$exon_strand))))
         stop("'splicings$exon_strand' must be a character vector (or factor) ",
              "with no NAs")
@@ -163,27 +178,13 @@
         warning("making a TxDb object without CDS information")
     } else {
         ## Check 'cds_start'.
-        if (!is.vector(splicings$cds_start)
-         || !is.atomic(splicings$cds_start))
-            stop("'splicings$cds_start' must be an integer vector")
-        start_is_na <- is.na(splicings$cds_start)
-        if (!is.numeric(splicings$cds_start) && !all(start_is_na))
-            stop("when not an integer (or numeric) vector, ",
-                 "'splicings$cds_start' must be a vector of NAs")
-        if (!is.integer(splicings$cds_start))
-            splicings$cds_start <- as.integer(splicings$cds_start)
+        splicings$cds_start <- .graceful_as_integer(splicings$cds_start,
+                                                    "splicings$cds_start")
         ## Check 'cds_end'.
-        if (!is.vector(splicings$cds_end)
-         || !is.atomic(splicings$cds_end))
-            stop("'splicings$cds_end' must be an integer vector")
-        end_is_na <- is.na(splicings$cds_end)
-        if (!is.numeric(splicings$cds_end) && !all(end_is_na))
-            stop("when not an integer (or numeric) vector, ",
-                 "'splicings$cds_end' must be a vector of NAs")
-        if (!is.integer(splicings$cds_end))
-            splicings$cds_end <- as.integer(splicings$cds_end)
+        splicings$cds_end <- .graceful_as_integer(splicings$cds_end,
+                                                  "splicings$cds_end")
         ## Check 'cds_start' and 'cds_end' compatibility.
-        if (!all(start_is_na == end_is_na))
+        if (!all(is.na(splicings$cds_start) == is.na(splicings$cds_end)))
             stop("NAs in 'splicings$cds_start' don't match ",
                  "NAs in 'splicings$cds_end'")
         if (any(splicings$cds_start > splicings$cds_end, na.rm=TRUE))
@@ -209,7 +210,7 @@
         if (!hasCol(splicings, "cds_start"))
             stop("'splicings' has a \"cds_name\" col ",
                  "but no \"cds_start\"/\"cds_end\" cols")
-        if (!.isCharacterVectorOrFactor(splicings$cds_name))
+        if (!.is_character_or_factor(splicings$cds_name))
             stop("'splicings$cds_name' must be a character vector (or factor)")
         if (any(is.na(splicings$cds_name) < is.na(splicings$cds_start)))
             stop("'splicings$cds_start' and 'splicings$cds_end' contain NAs ",
@@ -234,7 +235,7 @@
     .OPTIONAL_COLS <- c("tx_id", "tx_name")
     .checkargColnames(genes, .REQUIRED_COLS, .OPTIONAL_COLS, "genes")
     ## Check 'gene_id'.
-    if (!.isCharacterVectorOrFactor(genes$gene_id)
+    if (!.is_character_or_factor(genes$gene_id)
      || any(is.na(genes$gene_id)))
         stop("'genes$gene_id' must be a character vector (or factor) ",
              "with no NAs")
@@ -278,7 +279,7 @@
     .OPTIONAL_COLS <- "is_circular"
     .checkargColnames(chrominfo, .REQUIRED_COLS, .OPTIONAL_COLS, "chrominfo")
     ## Check 'chrom'.
-    if (!.isCharacterVectorOrFactor(chrominfo$chrom)
+    if (!.is_character_or_factor(chrominfo$chrom)
      || any(is.na(chrominfo$chrom)))
         stop("'chrominfo$chrom' must be a character vector (or factor) ",
              "with no NAs")
@@ -290,40 +291,18 @@
         .checkForeignKey(splicings_exon_chrom, NA, "splicings$exon_chrom",
                          chrominfo$chrom, NA, "chrominfo$chrom")
     ## Check 'length'.
-    if (!is.vector(chrominfo$length))
-        stop("'chrominfo$length' must be either all NAs ",
-             "or an integer vector with no NAs")
+    chrominfo$length <- .graceful_as_integer(chrominfo$length,
+                                             "chrominfo$length")
     na_idx <- is.na(chrominfo$length)
-    if (!all(na_idx)) {
-        if (any(na_idx))
-            stop("'chrominfo$length' cannot mix NAs and non-NAs")
-        if (!is.numeric(chrominfo$length))
-            stop("'chrominfo$length' must be either all NAs ",
-                 "or an integer vector with no NAs")
-    }
-    if (!is.integer(chrominfo$length))
-        chrominfo$length <- as.integer(chrominfo$length)
+    if (any(na_idx) && !all(na_idx))
+        stop("'chrominfo$length' cannot mix NAs and non-NAs")
     ## Check 'is_circular'.
-    if (hasCol(chrominfo, "is_circular")) {
-        if (!is.vector(chrominfo$is_circular))
-            stop("'chrominfo$is_circular' must be either all NAs ",
-                 "or a logical vector with no NAs")
-        na_idx <- is.na(chrominfo$is_circular)
-        if (all(na_idx)) {
-            ## We want logical NAs.
-            if (!is.logical(chrominfo$is_circular))
-                chrominfo$is_circular <- as.logical(chrominfo$is_circular)
-        } else {
-            if (any(na_idx))
-                stop("'chrominfo$is_circular' cannot mix NAs and non-NAs")
-            if (!is.logical(chrominfo$is_circular))
-                stop("'chrominfo$is_circular' must be either all NAs ",
-                     "or a logical vector with no NAs")
-        }
-    } else {
+    if (!hasCol(chrominfo, "is_circular")) {
         warning("chromosome circularity flags ",
                 "are not available for this TxDb object")
         chrominfo$is_circular <- rep.int(NA, nrow(chrominfo))
+    } else if (!is.logical(chrominfo$is_circular)) {
+        stop("'chrominfo$is_circular' must be a logical vector")
     }
     chrominfo
 }

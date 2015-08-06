@@ -135,9 +135,9 @@ makeTxDb(transcripts, splicings,
   \item \code{chrom}: Chromosome name.
         Character vector (or factor) with no NAs and no duplicates.
   \item \code{length}: Chromosome length.
-        Either all NAs or an integer vector with no NAs.
+        Integer vector with either all NAs or no NAs.
   \item \code{is_circular}: [optional] Chromosome circularity flag.
-        Either all NAs or a logical vector with no  NAs.
+        Logical vector. NAs are ok.
   }
   Other columns, if any, are ignored (with a warning).
 }
