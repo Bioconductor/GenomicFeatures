@@ -225,19 +225,19 @@ load_chrominfo <- function(txdb, set.col.class=FALSE)
     } else {
         if (!is.data.frame(transcripts))
             stop("'transcripts' must be a data frame")
-        if (!hasCol(transcripts, "tx_name"))
+        if (!has_col(transcripts, "tx_name"))
             COL2CLASS <- COL2CLASS[names(COL2CLASS) != "tx_name"]
-        if (!hasCol(transcripts, "tx_type"))
+        if (!has_col(transcripts, "tx_type"))
             COL2CLASS <- COL2CLASS[names(COL2CLASS) != "tx_type"]
         if (!identical(names(transcripts), names(COL2CLASS)))
             transcripts <- transcripts[names(COL2CLASS)]
         if (set.col.class)
             transcripts <- setDataFrameColClass(transcripts, COL2CLASS)
     }
-    if (drop.tx_name && hasCol(transcripts, "tx_name") &&
+    if (drop.tx_name && has_col(transcripts, "tx_name") &&
                         all(is.na(transcripts$tx_name)))
         transcripts$tx_name <- NULL
-    if (drop.tx_type && hasCol(transcripts, "tx_type") &&
+    if (drop.tx_type && has_col(transcripts, "tx_type") &&
                         all(is.na(transcripts$tx_type)))
         transcripts$tx_type <- NULL
     transcripts
@@ -283,25 +283,25 @@ load_transcripts <- function(txdb, drop.tx_name=FALSE,
     } else {
         if (!is.data.frame(splicings))
             stop("'splicings' must be a data frame")
-        if (!hasCol(splicings, "cds_id"))
+        if (!has_col(splicings, "cds_id"))
             splicings$cds_id <- NA
-        if (!hasCol(splicings, "cds_start"))
+        if (!has_col(splicings, "cds_start"))
             splicings$cds_start <- NA
-        if (!hasCol(splicings, "cds_end"))
+        if (!has_col(splicings, "cds_end"))
             splicings$cds_end <- NA
-        if (!hasCol(splicings, "exon_name"))
+        if (!has_col(splicings, "exon_name"))
             COL2CLASS <- COL2CLASS[names(COL2CLASS) != "exon_name"]
-        if (!hasCol(splicings, "cds_name"))
+        if (!has_col(splicings, "cds_name"))
             COL2CLASS <- COL2CLASS[names(COL2CLASS) != "cds_name"]
         if (!identical(names(splicings), names(COL2CLASS)))
             splicings <- splicings[names(COL2CLASS)]
         if (set.col.class)
             splicings <- setDataFrameColClass(splicings, COL2CLASS)
     }
-    if (drop.exon_name && hasCol(splicings, "exon_name") &&
+    if (drop.exon_name && has_col(splicings, "exon_name") &&
                           all(is.na(splicings$exon_name)))
         splicings$exon_name <- NULL
-    if (drop.cds_name && hasCol(splicings, "cds_name") &&
+    if (drop.cds_name && has_col(splicings, "cds_name") &&
                          all(is.na(splicings$cds_name)))
         splicings$cds_name <- NULL
     splicings

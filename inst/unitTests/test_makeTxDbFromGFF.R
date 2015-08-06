@@ -1,8 +1,3 @@
-## IF I require GenomicFeatures here it will 'fix' the problem for R -e
-## 'BiocGenerics:::testPackage(pkgname="GenomicFeatures",
-## pattern="test_makeTxDbFromGFF")' ...  but NOT for R CMD check
-## GenomicFeatures_x.y.z.tar.gz
-library(GenomicFeatures)
 gffFile <- system.file("extdata","GFF3_files","a.gff3",package="GenomicFeatures")
 
 gtfFile <- system.file("extdata","GTF_files","Aedes_aegypti.partial.gtf",
@@ -22,12 +17,13 @@ test_makeTxDbFromGFF <- function(){
   txdb_gff <- loadDb(gffDBFile)
 
   ## generated
-  txdb <- makeTxDbFromGFF(file=gffFile,
-              dataSource="partial GFF file for Tomatoes for testing",
-              organism="Solanum lycopersicum")
+  txdb1 <- makeTxDbFromGFF(file=gffFile,
+               dataSource="partial GFF file for Tomatoes for testing",
+               organism="Solanum lycopersicum",
+               circ_seqs=character(0))
 
   ## test
-  checkTrue(GenomicFeatures:::compareTxDbs(txdb, txdb_gff))
+  checkTrue(GenomicFeatures:::compareTxDbs(txdb1, txdb_gff))
 
   
   ## wanted
@@ -59,7 +55,8 @@ test_makeTxDbFromGFF <- function(){
 
   txdb3 <- makeTxDbFromGFF(file=flyFile,
                            dataSource="gff file from flybase",
-                           organism="Drosophila melanogaster")
+                           organism="Drosophila melanogaster",
+                           circ_seqs=character(0))
   
   checkTrue(GenomicFeatures:::compareTxDbs(txdb3, txdb_fly))
 

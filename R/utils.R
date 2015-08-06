@@ -8,7 +8,7 @@
 
 ## Global character vector to hold default names for circular sequences.
 ## This is exported!
-DEFAULT_CIRC_SEQS = c("chrM","MT","mit","2micron","2-micron");
+DEFAULT_CIRC_SEQS <- c("chrM", "MT", "mit", "2micron", "2-micron")
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -137,8 +137,31 @@ queryAnnotationDb <- function(annotationdb, sql)
 ### TODO: Find a better home for these low-level data.frame utils.
 ###
 
-### Not data.frame specific. Would work on any matrix-like object.
-hasCol <- function(x, colnames) {colnames %in% colnames(x)}
+### Not data.frame specific. Would also work on any matrix-like object.
+has_col <- function(x, colnames) {colnames %in% colnames(x)}
+
+check_colnames <- function(x, required_colnames,
+                              optional_colnames=character(0),
+                              x_what="x")
+{
+    if (!is.data.frame(x))
+        stop(wmsg("'", x_what, "' must be a data frame"))
+    x_colnames <- colnames(x)
+    if (!all(required_colnames %in% x_colnames))
+        stop(wmsg("'", x_what, "' must have at least the following col",
+                  ifelse(length(required_colnames) >= 2L, "s", ""),
+                  ": ", paste(required_colnames, collapse=", ")))
+    supported_colnames <- c(required_colnames, optional_colnames)
+    is_supported_col <- x_colnames %in% supported_colnames
+    if (any(duplicated(x_colnames[is_supported_col])))
+        stop(wmsg("'", x_what, "' has duplicated colnames"))
+    ignored_idx <- which(!is_supported_col)
+    if (length(ignored_idx) != 0L)
+        warning(wmsg("ignoring the following col",
+                     ifelse(length(ignored_idx) >= 2L, "s", ""),
+                     " in '", x_what, "': ",
+                     paste(x_colnames[ignored_idx], collapse=", ")))
+}
 
 makeZeroRowDataFrame <- function(col2class)
 {
@@ -197,7 +220,7 @@ joinDataFrameWithName2Val <- function(x, join_colname, name2val, vals_colname)
 {
     if (!is.data.frame(x))
         stop("'x' must be a data.frame")
-    if (!isSingleString(join_colname) || !hasCol(x, join_colname))
+    if (!isSingleString(join_colname) || !has_col(x, join_colname))
         stop("'join_colname' must be a valid colname for 'x'")
     if (!is.vector(name2val) && !is.factor(name2val))
         stop("'name2val' must be a vector (or factor)")
@@ -375,31 +398,33 @@ makeFeatureIds <- function(chrom_ids, strand, start, end,
 ### As of Sep 21, 2010 (Ensembl release 59), Ensembl was still not flagging
 ### circular sequences in their db (see this thread for the details
 ### http://lists.ensembl.org/pipermail/dev/2010-September/000139.html),
-### This just takes the list of things that users are calling circular in the
-### circ_seqs argument and then marks those things as being circular and
-### returns the vector all marked up
-
-### TODO: still need to get the new parameter passed along to where this is called...  :P
-matchCircularity <- function(seqnames, circ_seqs)
+make_circ_flags_from_circ_seqs <- function(seqlevels,
+                                           circ_seqs=DEFAULT_CIRC_SEQS)
 {
-    if (!is.character(circ_seqs))
-        stop(wmsg("'circ_seqs' must be a character vector"))
-    ## shorten and put to lowercase (for simplicity in subsequent comparisons)
-    seqs <- tolower(seqnames)
-    circs <- tolower(circ_seqs)
-    ## checks
-    if(length(intersect(seqs,circs))<1 && length(circs)>0){
-      warning("None of the strings in your circ_seqs argument match your seqnames.")  
+    if (!is.character(seqlevels))
+        stop(wmsg("'seqlevels' must be a character vector"))
+    if (identical(circ_seqs, DEFAULT_CIRC_SEQS)) {
+        ## 'circ_seqs' is set to the default (very likely the user did NOT
+        ## specify this argument).
+        seqlevels <- tolower(seqlevels)
+        circ_seqs <- tolower(circ_seqs)
+        circ_flags <- rep.int(NA, length(seqlevels))
+        circ_flags[seqlevels %in% circ_seqs] <- TRUE
+    } else {
+        ## The user specified the 'circ_seqs' argument.
+        if (!is.character(circ_seqs) ||
+            any(circ_seqs %in% c(NA_character_, "")))
+            stop(wmsg("'circ_seqs' must be a character vector with no NAs ",
+                      "and no empty strings"))
+        bad_circ_seqs <- setdiff(circ_seqs, seqlevels)
+        if (length(bad_circ_seqs) != 0L) {
+            in1string <- paste0(bad_circ_seqs, collapse=", ")
+            stop(wmsg("The following chromosome names in 'circ_seqs' are ",
+                      "not found in the TxDb object to be made: ", in1string))
+        }
+        circ_flags <- seqlevels %in% circ_seqs
     }
-    int <- intersect(seqs,circs)
-    is_circular <- rep.int(FALSE, length(seqs))
-    if(length(int)>0){
-      for(i in seq_len(length(int))){
-        idx <- grep(int[i], seqs)
-        is_circular[idx] <- TRUE
-      }
-    }
-    is_circular
+    circ_flags
 }
 
 ### 'exon_count' must be a vector of positive integers and 'tx_strand' a

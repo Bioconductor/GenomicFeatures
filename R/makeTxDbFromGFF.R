@@ -3,35 +3,57 @@
 ### -------------------------------------------------------------------------
 
 
-.set_seqinfo <- function(gr, chrominfo=NA, circ_seqs=DEFAULT_CIRC_SEQS)
+.make_Seqinfo_from_chrominfo <- function(chrominfo,
+                                         circ_seqs=DEFAULT_CIRC_SEQS)
 {
-    if (identical(chrominfo, NA)) {
+    if (is(chrominfo, "Seqinfo"))
+        return(chrominfo)
+    if (!is.data.frame(chrominfo))
+        stop(wmsg("'chrominfo' must be a data.frame, a Seqinfo object, ",
+                  "or NULL"))
+    .REQUIRED_COLS <- c("chrom", "length")
+    .OPTIONAL_COLS <- "is_circular"
+    check_colnames(chrominfo, .REQUIRED_COLS, .OPTIONAL_COLS, "chrominfo")
+    ans <- Seqinfo(as.character(chrominfo$chrom), chrominfo$length)
+    if (!has_col(chrominfo, "is_circular")) {
+        is_circ <- make_circ_flags_from_circ_seqs(seqlevels(ans), circ_seqs)
+    } else if (!identical(circ_seqs, DEFAULT_CIRC_SEQS)) {
+        stop(wmsg("'circ_seqs' should not be specified when 'chrominfo' ",
+                  "has an \"is_circular\" column"))
+    } else {
+        is_circ <- chrominfo$is_circular
+    }
+    isCircular(ans) <- is_circ
+    ans
+}
+
+.tidy_seqinfo <- function(gr, circ_seqs=DEFAULT_CIRC_SEQS, chrominfo=NULL)
+{
+    if (is.null(chrominfo)) {
         seqlevels <- seqlevels(gr)
         seqlevels[rankSeqlevels(seqlevels)] <- seqlevels
         seqlevels(gr) <- seqlevels
-        isCircular(gr) <- matchCircularity(seqlevels(gr), circ_seqs)
+        isCircular(gr) <- make_circ_flags_from_circ_seqs(seqlevels(gr),
+                                                         circ_seqs)
         return(gr)
     }
-    if (!identical(circ_seqs, DEFAULT_CIRC_SEQS))
-        stop(wmsg("only one of 'chrominfo' and 'circ_seqs' can be specified"))
-    if (!is.data.frame(chrominfo))
-        stop(wmsg("'chrominfo' must be a data.frame or NA"))
-    if (!identical(colnames(chrominfo),
-                   c("chrom", "length", "is_circular")))
-        stop(wmsg("'chrominfo' must have three  columns that correpspond ",
-                  "to 'chrom', 'length', and 'is_circular' and are named ",
-                  "accordingly"))
-    seqlevels(gr) <- as.character(chrominfo$chrom)
-    seqlengths(gr) <- chrominfo$length
-    isCircular(gr) <- chrominfo$is_circular
+    si <- .make_Seqinfo_from_chrominfo(chrominfo, circ_seqs)
+    suppressWarnings(seqinfo(gr) <- merge(seqinfo(gr), si))
+    dangling_seqlevels <- setdiff(seqlevelsInUse(gr), seqlevels(si))
+    if (length(dangling_seqlevels) != 0L) {
+        in1string <- paste0(dangling_seqlevels, collapse=", ")
+        stop(wmsg("'chrominfo' must describe at least all the chromosomes ",
+                  "of the genomic features imported from the file. ",
+                  "Chromosomes missing from 'chrominfo': ", in1string))
+    }
+    seqlevels(gr) <- seqlevels(si)
     gr
 }
 
 .prepareGFFMetadata <- function(file, dataSource=NA, organism=NA,
                                 taxonomyId=NA, miRBaseBuild=NA)
 {
-    message("Prepare the 'metadata' data frame ... ",
-            appendLF=FALSE)
+    message("Prepare the 'metadata' data frame ... ", appendLF=FALSE)
     if (!isSingleStringOrNA(dataSource))
         stop("'dataSource' must be a a single string or NA")
     if (!isSingleStringOrNA(organism))
@@ -60,7 +82,7 @@
                      taxonomyId,
                      miRBaseBuild)
                    )
-    message("metadata: OK")
+    message("OK")
     metadata
 }
 
@@ -98,7 +120,7 @@ makeTxDbFromGFF <- function(file,
                             organism=NA,
                             taxonomyId=NA,
                             circ_seqs=DEFAULT_CIRC_SEQS,
-                            chrominfo=NA,
+                            chrominfo=NULL,
                             miRBaseBuild=NA,
                             exonRankAttributeName=NA,     # defunct
                             gffGeneIdAttributeName=NA,    # defunct
@@ -127,11 +149,20 @@ makeTxDbFromGFF <- function(file,
                       "Please use the 'format' argument to specify the ",
                       "format (\"gff3\" or \"gtf\")."))
     }
+
+    message("Import genomic features from the file as a GRanges object ... ",
+            appendLF=FALSE)
     gr <- import(file, format=format, feature.type=GFF_FEATURE_TYPES)
-    gr <- .set_seqinfo(gr, chrominfo, circ_seqs)
+    gr <- .tidy_seqinfo(gr, circ_seqs, chrominfo)
+    message("OK")
+
     metadata <- .prepareGFFMetadata(file, dataSource, organism, taxonomyId,
                                     miRBaseBuild)
-    makeTxDbFromGRanges(gr, metadata=metadata)
+
+    message("Make the TxDb object ... ", appendLF=FALSE)
+    txdb <- makeTxDbFromGRanges(gr, metadata=metadata)
+    message("OK")
+    txdb
 }
 
 makeTranscriptDbFromGFF <- function(...) .Defunct("makeTxDbFromGFF")

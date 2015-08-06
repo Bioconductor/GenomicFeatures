@@ -84,7 +84,7 @@ test_makeTxDbFromUCSCTxTable <- function()
     txdb1 <- GenomicFeatures:::.makeTxDbFromUCSCTxTable(
                  hg19_knownGene_sample, genes,
                  "hg19", "knownGene", "Entrez Gene ID", FALSE,
-                 DEFAULT_CIRC_SEQS)
+                 circ_seqs="chrM")
 
     ## compare
     ok <- GenomicFeatures:::compareTxDbs(txdb1, txdb0)

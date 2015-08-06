@@ -20,7 +20,8 @@ test_makeTxDbFromBiomart <- function()
                      "ENSG00000111837", "ENSG00000231116",
                      "ENSG00000207157", "ENSG00000067646")
 
-    current_txdb <- makeTxDbFromBiomart(transcript_ids=TARGET_TX_NAME)
+    current_txdb <- makeTxDbFromBiomart(transcript_ids=TARGET_TX_NAME,
+                                        circ_seqs="MT")
     checkTrue(validObject(current_txdb))
 
     ## Extract transcripts and re-order them as in TARGET_TX_NAME.

@@ -21,7 +21,7 @@ makeTxDbFromGFF(file,
                 organism=NA,
                 taxonomyId=NA,
                 circ_seqs=DEFAULT_CIRC_SEQS,
-                chrominfo=NA,
+                chrominfo=NULL,
                 miRBaseBuild=NA,
                 exonRankAttributeName=NA,
                 gffGeneIdAttributeName=NA,
@@ -40,30 +40,41 @@ makeTxDbFromGFF(file,
     default) for auto-detection of the format, \code{"gff3"}, or \code{"gtf"}.
     Use \code{"gff3"} or \code{"gtf"} only if auto-detection failed.
   }
-  \item{chrominfo}{data frame containing information about the
-  chromosomes.  Will be passed to the internal call to
-  \code{\link{makeTxDb}}. See \code{?\link{makeTxDb}} for the details.}
-  \item{dataSource}{Where did this data file originate?  Please be as
-  specific as possible.}
-  \item{organism}{What is the Genus and species of this organism. Please
-  use proper scientific nomenclature for example: "Homo sapiens" or
-  "Canis familiaris" and not "human" or "my fuzzy buddy".  If properly
-  written, this information may be used by the software to help you out
-  later.}
-  \item{circ_seqs}{a character vector to list out which chromosomes
-    should be marked as circular.}
-  \item{taxonomyId}{By default this value is NA and the organism
-    provided will be used to look up the correct value for this.  But
-    you can use this argument to override that and supply your own
-    taxId here (which will be separately validated).  Since providing a
-    valid taxonomy id will not require us to look up one based on your
-    organism: this is one way that you can loosen the restrictions about
-    what is and isn't a valid value for the organism.}  
-  \item{miRBaseBuild}{specify the string for the appropriate build
-    Information from mirbase.db to use for microRNAs.  This can be
-    learned by calling \code{supportedMiRBaseBuildValues}.  By default,
-    this value will be set to \code{NA}, which will inactivate the
-    \code{microRNAs} accessor.}
+  \item{dataSource}{
+    A single string describing the origin of the data file. Please be as
+    specific as possible.
+  }
+  \item{organism}{
+    What is the Genus and species of this organism. Please use proper
+    scientific nomenclature for example: "Homo sapiens" or "Canis familiaris"
+    and not "human" or "my fuzzy buddy". If properly written, this information
+    may be used by the software to help you out later.
+  }
+  \item{taxonomyId}{
+    By default this value is NA and the organism provided will be used to
+    look up the correct value for this. But you can use this argument to
+    override that and supply your own taxonomy id here (which will be
+    separately validated). Since providing a valid taxonomy id will not
+    require us to look up one based on your organism: this is one way that
+    you can loosen the restrictions about what is and isn't a valid value
+    for the organism.
+  }  
+  \item{circ_seqs}{
+    A character vector to list out which chromosomes should be marked as
+    circular.
+  }
+  \item{chrominfo}{
+    Data frame containing information about the chromosomes. Will be
+    passed to the internal call to \code{\link{makeTxDb}}.
+    See \code{?\link{makeTxDb}} for more information.
+    Alternatively, can be a \link[GenomeInfoDb]{Seqinfo} object.
+  }
+  \item{miRBaseBuild}{
+    Specify the string for the appropriate build Information from mirbase.db
+    to use for microRNAs. This can be learned by calling
+    \code{supportedMiRBaseBuildValues}. By default, this value will be set to
+    \code{NA}, which will inactivate the \code{microRNAs} accessor.
+  }
   \item{exonRankAttributeName}{this argument is defunct}
   \item{gffGeneIdAttributeName}{this argument is defunct}
   \item{useGenesAsTranscripts}{this argument is defunct}
@@ -71,6 +82,7 @@ makeTxDbFromGFF(file,
   \item{species}{this argument was replaced with the \code{organism} argument
     and is now defunct}
 }
+
 \details{
   \code{makeTxDbFromGFF} is a convenience function that feeds
   data from the parsed file to the \code{\link{makeTxDbFromGRanges}}
