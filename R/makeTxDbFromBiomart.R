@@ -12,13 +12,117 @@
 ###       (2) db creation takes about 60-65 sec.
 ###
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Some biomaRt low-level utilities.
+###
+
+### A thin wrapper to useMart() that checks the user-supplied arguments.
+.useMart2 <- function(biomart="ensembl",
+                      dataset="hsapiens_gene_ensembl",
+                      host="www.biomart.org",
+                      port=80)
+{
+    ### Could be that the user got the 'biomart' and/or 'dataset' values
+    ### programmatically via calls to listMarts() and/or listDatasets(). Note
+    ### that listMarts() and listDatasets() are returning data frames where
+    ### the columns are factors for the former and "AsIs" character vectors
+    ### for the latter.
+    if (is.factor(biomart))
+        biomart <- as.character(biomart)
+    if (!(isSingleString(biomart) && biomart != ""))
+        stop("'biomart' must be a single non-empty string")
+    if (is(dataset, "AsIs"))
+        dataset <- as.character(dataset)
+    if (!(isSingleString(dataset) && dataset != ""))
+        stop("'dataset' must be a single non-empty string")
+    if (!(isSingleString(host) && host != ""))
+        stop("'host' must be a single non-empty string")
+    if (!(isSingleNumber(port) && port > 0))
+        stop("'port' must be a single positive number")
+    useMart(biomart=biomart, dataset=dataset, host=host, port=port)
+}
+
+### TODO: Share this with normalization of 'vals' arg in the transcripts(),
+### exons(), cds(), and genes() extractors.
+.normarg_filters <- function(filters)
+{
+    if (is.null(filters) || identical(filters, ""))
+        return(setNames(list(), character(0)))
+    if (!is.list(filters))
+        stop("'filters' must be a named list")
+    if (length(filters) == 0L)
+        return(setNames(list(), character(0)))
+    filters_names <- names(filters)
+    if (is.null(filters_names))
+        stop("'filters' must be a named list")
+    if (any(filters_names %in% c(NA, "")))
+        stop("names on 'filters' cannot be NA or the empty string")
+    if (anyDuplicated(filters_names))
+        stop("names on 'filters' must be unique")
+    if (!all(sapply(filters, is.atomic)))
+        stop("'filters' list elements must be atomic")
+    if (any(sapply(filters, anyNA)))
+        stop("'filters' list elements cannot contain NAs")
+    filters
+}
+
+### A thin wrapper to getBM() that takes the filters in the form of a named
+### list.
+.getBM2 <- function(attributes, filters=NULL, ...)
+{
+    filters <- .normarg_filters(filters)
+    if (length(filters) == 0L) {
+        bm_filters <- bm_values <- ""
+    } else {
+        bm_filters <- names(filters)
+        bm_values <- unname(filters)
+        bm_values[elementLengths(bm_values) == 0L] <- paste0(
+            "____this_is_a_very_unlikely_valid_value_but_you_never_know_",
+            "this_is_just_a_dirty_hack_to_work_around_getBM_",
+            "misinterpretation_of_empty_list_elements_in_values____")
+    }
+    getBM(attributes, filters=bm_filters, values=bm_values, ...)
+}
+
+.normarg_id_prefix <- function(id_prefix)
+{
+    if (!isSingleString(id_prefix))
+        stop("'id_prefix' must be a single string")
+    id_prefix
+}
+
+### Add filter created from user-supplied transcript_ids to user-specified
+### filters.
+.add_tx_id_filter <- function(filters,
+                              transcript_ids=NULL, id_prefix="ensembl_")
+{
+    filters <- .normarg_filters(filters)
+    tx_name_colname <- paste0(id_prefix, "transcript_id")
+    if (is.null(transcript_ids)) {
+        if (tx_name_colname %in% names(filters))
+            warning(wmsg("transcript ids should be specified via the ",
+                         "'transcript_ids' rather than the 'filters' argument"))
+            return(filters)
+    }
+    if (!is.character(transcript_ids))
+        stop("'transcript_ids' must ba a character vector")
+    if (any(is.na(transcript_ids)))
+        stop("'transcript_ids' cannot contain NAs")
+    if (tx_name_colname %in% names(filters))
+        stop(wmsg("transcript ids cannot be specified via the ",
+                  "'transcript_ids' and 'filters' arguments ",
+                  "at the same time"))
+    filters[[tx_name_colname]] <- transcript_ids
+    filters
+}
+
 ## helper to extract the organism (as Genus and Species) from the dataset
 ## string.
 .extractOrganismFromDatasetDesc <- function(description){
   vals <- unlist(strsplit(description, " "))
   paste(vals[[1]], vals[[2]])
 }
-
 
 .getBiomartDbVersion <- function(mart, host, port, biomart) 
 {
@@ -43,14 +147,14 @@
 ### Download and preprocess the 'transcripts' data frame.
 ###
 
-.makeBiomartTranscripts <- function(filters, values, mart, transcript_ids,
+.makeBiomartTranscripts <- function(filters, mart, transcript_ids,
                                     recognized_attribs,
                                     id_prefix="ensembl_")
 {
     message("Download and preprocess the 'transcripts' data frame ... ",
             appendLF=FALSE)
-    bm_result <- getBM(recognized_attribs[['T']], filters=filters,
-                       values=values, mart=mart, bmHeader=FALSE)
+    bm_result <- .getBM2(recognized_attribs[['T']], filters,
+                         mart=mart, bmHeader=FALSE)
     tx_name_colname <- paste0(id_prefix, "transcript_id")
     tx_name <- bm_result[[tx_name_colname]]
     if (!is.null(transcript_ids)) {
@@ -157,16 +261,10 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                                     host="www.biomart.org",
                                     port=80)
 {
+    mart <- .useMart2(biomart=biomart, dataset=dataset, host=host, port=port)
+    id_prefix <- .normarg_id_prefix(id_prefix)
     recognized_attribs <- recognizedBiomartAttribs(id_prefix)
-
-    mart <- .parseBMMartParams(biomart=biomart,
-                               dataset=dataset,
-                               host=host,
-                               port=port)
-
-    filters <- .parseBMFiltersParams(transcript_ids=NULL, id_prefix)
-    values <- .parseBMValuesParams(transcript_ids=NULL)
-    transcripts <- .makeBiomartTranscripts(filters, values, mart,
+    transcripts <- .makeBiomartTranscripts("", "", mart,
                                            transcript_ids=NULL,
                                            recognized_attribs,
                                            id_prefix)
@@ -509,7 +607,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     ans
 }
 
-.makeBiomartSplicings <- function(filters, values, mart, transcripts_tx_id,
+.makeBiomartSplicings <- function(filters, mart, transcripts_tx_id,
                                   recognized_attribs, id_prefix="ensembl_")
 {
     ## Those are the strictly required fields.
@@ -528,8 +626,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                         function(attribs) all(attribs %in% available_attribs))
     get_groups <- c("E1", names(has_group)[has_group])
     attributes <- unlist(recognized_attribs[get_groups], use.names=FALSE)
-    bm_result <- getBM(attributes, filters=filters, values=values, mart=mart,
-                       bmHeader=FALSE)
+    bm_result <- .getBM2(attributes, filters, mart=mart, bmHeader=FALSE)
     tx_name_colname <- paste0(id_prefix, "transcript_id")
     tx_name <- bm_result[[tx_name_colname]]
     splicings_tx_id <- transcripts_tx_id[tx_name]
@@ -554,7 +651,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 ### Download and preprocess the 'genes' data frame.
 ###
 
-.makeBiomartGenes <- function(filters, values, mart,
+.makeBiomartGenes <- function(filters, mart,
                               transcripts_tx_id, recognized_attribs,
                               id_prefix="ensembl_")
 {
@@ -562,8 +659,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
             appendLF=FALSE)
     attributes <- c(recognized_attribs[['G']],
                     paste0(id_prefix, "transcript_id"))
-    bm_result <- getBM(attributes, filters=filters, values=values, mart=mart,
-                       bmHeader=FALSE)
+    bm_result <- .getBM2(attributes, filters, mart=mart, bmHeader=FALSE)
     tx_name_colname <- paste0(id_prefix, "transcript_id")
     gene_id_colname <- paste0(id_prefix, "gene_id")
     tx_name <- bm_result[[tx_name_colname]]
@@ -596,8 +692,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     db_version <- .getBiomartDbVersion(mart, host, port, biomart)
     datasets <- listDatasets(mart)
     dataset_rowidx <- which(as.character(datasets$dataset) == dataset)
-    ## This should never happen (the above call to useMart() would have failed
-    ## in the first place).
+    ## This should never happen (the earlier call to useMart() would have
+    ## failed in the first place).
     if (length(dataset_rowidx) != 1L)
         stop(wmsg("the BioMart database \"", biomaRt:::martBM(mart),
                   "\" has no (or more than one) \"", dataset, "\" datasets"))
@@ -643,79 +739,11 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### makeTxDbFromBiomart()
 ###
+### TODO: Rename the 'filters' arg -> 'filter' and set its default to NULL
+### so it's consistent with the 'vals' arg of the transcripts(), exons(),
+### cds(), and genes() extractors which we should also rename 'filter'.
+###
 
-.parseBMMartParams <- function(biomart="ensembl",
-                               dataset="hsapiens_gene_ensembl",
-                               host, port)
-{
-    if (is.factor(biomart))
-        biomart <- as.character(biomart)
-    if (is(dataset, "AsIs"))
-        dataset <- as.character(dataset)
-    if (!isSingleString(biomart))
-        stop("'biomart' must be a single string")
-    useMart(biomart=biomart, dataset=dataset, host=host, port=port)
-}
-
-.parseBMFiltersParams <- function(transcript_ids, id_prefix="ensembl_")
-{
-    if (is.null(transcript_ids)) {
-        filters <- ""
-    } else if (is.character(transcript_ids)
-            && !any(is.na(transcript_ids))) {
-        filters <- paste0(id_prefix, "transcript_id")
-    }
-    filters
-}
-
-.parseBMValuesParams <- function(transcript_ids)
-{
-    if (is.null(transcript_ids)) {
-        values <- ""
-    }else if (is.character(transcript_ids)
-            && !any(is.na(transcript_ids))) {
-        if (length(transcript_ids) == 0L)
-            values <- "____a_very_unlikely_valid_transcript_id____"
-        else
-            values <- transcript_ids
-    } else {
-        stop("'transcript_ids' must be a character vector with no NAs")
-    }
-    values
-}
-
-
-## .testMakeTxDbFromBMParams <- function(biomart="ensembl",
-##                                       dataset="hsapiens_gene_ensembl",
-##                                       circ_seqs=DEFAULT_CIRC_SEQS,
-##                                       transcript_ids=NULL)
-## {
-    ## if (is.factor(biomart))
-    ##     biomart <- as.character(biomart)
-    ## if (is(dataset, "AsIs"))
-    ##     dataset <- as.character(dataset)
-    ## if (!isSingleString(biomart))
-    ##     stop("'biomart' must be a single string")
-    ## mart <- useMart(biomart=biomart, dataset=dataset)
-  
-    ## if (is.null(transcript_ids)) {
-    ##     filters <- values <- ""
-    ## } else if (is.character(transcript_ids)
-    ##         && !any(is.na(transcript_ids))) {
-    ##     filters <- "ensembl_transcript_id" 
-    ##     if (length(transcript_ids) == 0L)
-    ##         values <- "____a_very_unlikely_valid_transcript_id____"
-    ##     else
-    ##         values <- transcript_ids
-    ## } else {
-    ##     stop("'transcript_ids' must be a character vector with no NAs")
-    ## }
-## }
-
-
-### Note that listMarts() and listDatasets() are returning data frames where
-### the columns are character factors for the former and "AsIs" character
-### vectors for the latter.
 makeTxDbFromBiomart <- function(biomart="ensembl",
                                 dataset="hsapiens_gene_ensembl",
                                 transcript_ids=NULL,
@@ -727,58 +755,12 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
                                 taxonomyId=NA,
                                 miRBaseBuild=NA)
 {
-    ## Could be that the user got the 'biomart' and/or 'dataset' values
-    ## programmatically via calls to listMarts() and/or listDatasets().
-    mart <- .parseBMMartParams(biomart=biomart,
-                               dataset=dataset,
-                               host=host,
-                               port=port)
-
-    ##combines user-specified filters with those created from supplied
-    ##transcripts_ids
-    .mergeTxIDsAndFilters <- function(transcript_ids, filters, id_prefix) {
-      if (filters == "")
-        filters <- list()
-
-      if (class(filters) != "list")
-        stop("filters parameter must be a named list")
-
-      if(length(filters) != 0) {
-        if(is.null(names(filters)))
-          stop("filters parameter must be a named list")
-      }
-      
-      transcript_filters <- .parseBMFiltersParams(transcript_ids, id_prefix)
-      transcript_values <- .parseBMValuesParams(transcript_ids)
-
-      ##merge transcript_ids into filters
-      transcript_list <- list()
-      if(transcript_filters != "") {
-        transcript_list <- list(transcript_values)
-        names(transcript_list) <- transcript_filters
-      }
-
-      transcripts_and_filters <- append(filters, transcript_list)
-
-      f <- ""
-      v <- ""
-      if (length(transcripts_and_filters) > 0) {
-        f <- names(transcripts_and_filters)
-        v <- unname(transcripts_and_filters)
-      }
-      res <- list()
-      res[['filters']] <- f
-      res[['values']] <- v
-      return(res)
-    }
-    
-    return_list <- .mergeTxIDsAndFilters(transcript_ids,
-                                         filters, id_prefix)
-    filters <- return_list$filters
-    values <- return_list$values
-    
+    mart <- .useMart2(biomart=biomart, dataset=dataset, host=host, port=port)
+    id_prefix <- .normarg_id_prefix(id_prefix)
+    filters <- .add_tx_id_filter(filters, transcript_ids, id_prefix)
     recognized_attribs <- recognizedBiomartAttribs(id_prefix)
-    transcripts <- .makeBiomartTranscripts(filters, values, mart,
+
+    transcripts <- .makeBiomartTranscripts(filters, mart,
                                            transcript_ids,
                                            recognized_attribs,
                                            id_prefix)
@@ -788,7 +770,7 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
                                        extra_seqnames=transcripts$tx_chrom,
                                        circ_seqs=circ_seqs,
                                        host, port)
-    splicings <- .makeBiomartSplicings(filters, values, mart,
+    splicings <- .makeBiomartSplicings(filters, mart,
                                        transcripts_tx_id,
                                        recognized_attribs,
                                        id_prefix=id_prefix)
@@ -811,7 +793,7 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
         splicings$utr_anomaly <- NULL
     }
         
-    genes <- .makeBiomartGenes(filters, values, mart, transcripts_tx_id,
+    genes <- .makeBiomartGenes(filters, mart, transcripts_tx_id,
                                recognized_attribs, id_prefix)
     metadata <- .prepareBiomartMetadata(mart, is.null(transcript_ids), host,
                                         port, taxonomyId, miRBaseBuild)

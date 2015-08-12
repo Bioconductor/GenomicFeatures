@@ -6,11 +6,6 @@
 ###
 
 
-## Global character vector to hold default names for circular sequences.
-## This is exported!
-DEFAULT_CIRC_SEQS <- c("chrM", "MT", "mit", "2micron", "2-micron")
-
-
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### DB related.
 ###
@@ -393,6 +388,11 @@ makeFeatureIds <- function(chrom_ids, strand, start, end,
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Miscellaneous.
 ###
+
+## Global character vector to hold default names for circular sequences.
+## This is exported!
+DEFAULT_CIRC_SEQS <- c("chrM", "MT", "mit", "2micron", "2-micron")
+
 
 ### AFAIK UCSC doesn't flag circular sequences.
 ### As of Sep 21, 2010 (Ensembl release 59), Ensembl was still not flagging

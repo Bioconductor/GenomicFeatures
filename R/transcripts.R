@@ -495,9 +495,10 @@ translateCols <- function(columns, txdb){
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Primary extractors: transcripts(), exons(), cds(), and genes().
 ###
-### Proposal:
-###   - rename the 'vals' arg -> 'filter'
-###   - rename the 'columns' arg -> 'colnames'
+### TODO: Rename the 'vals' arg -> 'filter' so it's consistent with the
+### 'filters' arg of makeTxDbFromBiomart() which we should also rename
+### 'filter'.
+### Other proposal: rename the 'columns' arg -> 'colnames'
 ###
 
 setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
