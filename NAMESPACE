@@ -23,8 +23,8 @@ importFrom(Biobase, createPackage)
 importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
 importFrom(Biostrings, DNAStringSet, reverseComplement, getSeq)
 
-importFrom(biomaRt, getBM, listAttributes, listDatasets, listMarts,
-           useDataset, useMart)
+importFrom(biomaRt, getBM, listAttributes, listDatasets, listFilters,
+           listMarts, useDataset, useMart)
 
 importFrom(rtracklayer, FileForFormat, import, asBED, asGFF, browserSession,
            ucscTableQuery, tableNames, getTable, trackNames, ucscSchema)

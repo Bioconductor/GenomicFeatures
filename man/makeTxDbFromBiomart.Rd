@@ -159,6 +159,7 @@ head(listDatasets(useMart("ensembl")))
 
 ## Retrieve the full transcript dataset for Worm:
 txdb1 <- makeTxDbFromBiomart(dataset="celegans_gene_ensembl")
+txdb1
 
 ## Retrieve an incomplete transcript dataset for Human:
 transcript_ids <- c(
@@ -201,8 +202,9 @@ mart <- useMart("ensembl", dataset="hsapiens_gene_ensembl")
 head(listFilters(mart))
 
 ## Retrieve transcript dataset for Ensembl gene ENSG00000011198:
+my_filter <- list(ensembl_gene_id="ENSG00000011198")
 txdb4 <- makeTxDbFromBiomart(dataset="hsapiens_gene_ensembl",
-                             filters=list(ensembl_gene_id="ENSG00000011198"))
+                             filters=my_filter)
 txdb4
 transcripts(txdb4, columns=c("tx_id", "tx_name", "gene_id"))
 transcriptLengths(txdb4)

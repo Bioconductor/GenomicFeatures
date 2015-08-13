@@ -118,6 +118,7 @@ supportedUCSCtables()
 ## Retrieve a full transcript dataset for Yeast from UCSC:
 txdb1 <- makeTxDbFromUCSC(genome="sacCer3", tablename="ensGene",
                           circ_seqs="chrM")
+txdb1
 
 ## Retrieve an incomplete transcript dataset for Mouse from UCSC (only
 ## transcripts linked to Entrez Gene ID 22290):

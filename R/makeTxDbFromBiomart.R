@@ -267,7 +267,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     chrominfo <- .makeBiomartChrominfo(mart,
                                        extra_seqnames=transcripts$tx_chrom,
                                        host=host, port=port)
-    chrominfo[ , 1:2]
+    chrominfo[ , 1:2, drop=FALSE]
 }
 
 
@@ -761,6 +761,7 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
                   "\n\nPlease use the listFilters() function from the ",
                   "biomaRt package to get valid filter names."))
     }
+    is_full_dataset <- length(filters) == 0L
     recognized_attribs <- recognizedBiomartAttribs(id_prefix)
 
     transcripts <- .makeBiomartTranscripts(filters, mart,
@@ -773,6 +774,10 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
                                        extra_seqnames=transcripts$tx_chrom,
                                        circ_seqs=circ_seqs,
                                        host, port)
+    if (!is_full_dataset) {
+        keep_idx <- which(chrominfo[ , "chrom"] %in% transcripts$tx_chrom)
+        chrominfo <- chrominfo[keep_idx, , drop=FALSE]
+    }
     splicings <- .makeBiomartSplicings(filters, mart,
                                        transcripts_tx_id,
                                        recognized_attribs,
@@ -798,7 +803,7 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
         
     genes <- .makeBiomartGenes(filters, mart, transcripts_tx_id,
                                recognized_attribs, id_prefix)
-    metadata <- .prepareBiomartMetadata(mart, length(filters) == 0L,
+    metadata <- .prepareBiomartMetadata(mart, is_full_dataset,
                                         host, port, taxonomyId, miRBaseBuild)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
