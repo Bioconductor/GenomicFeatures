@@ -391,7 +391,7 @@ makeFeatureIds <- function(chrom_ids, strand, start, end,
 
 ## Global character vector to hold default names for circular sequences.
 ## This is exported!
-DEFAULT_CIRC_SEQS <- c("chrM", "MT", "mit", "2micron", "2-micron")
+DEFAULT_CIRC_SEQS <- c("chrM", "MT", "MtDNA", "mit", "2micron", "2-micron")
 
 
 ### AFAIK UCSC doesn't flag circular sequences.

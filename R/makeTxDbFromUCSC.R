@@ -702,8 +702,9 @@ supportedUCSCtables <- function()
         is_circular=make_circ_flags_from_circ_seqs(ucsc_chrominfotable$chrom,
                                                    circ_seqs)
     )
-    chrom_ids <- rankSeqlevels(chrominfo$chrom)
-    chrominfo <- chrominfo[order(chrom_ids), ]
+    oo <- order(rankSeqlevels(chrominfo[ , "chrom"]))
+    chrominfo <- chrominfo[oo, , drop=FALSE]
+    rownames(chrominfo) <- NULL
     message("OK")
     chrominfo
 }
@@ -716,9 +717,9 @@ supportedUCSCtables <- function()
 getChromInfoFromUCSC <- function(genome,
           goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {
-  chromInfo <-.makeUCSCChrominfo(genome, circ_seqs=character(),
+  chrominfo <-.makeUCSCChrominfo(genome, circ_seqs=character(),
                                  goldenPath_url=goldenPath_url)
-  chromInfo[,1:2]
+  chrominfo[ , 1:2]
 }
 
 

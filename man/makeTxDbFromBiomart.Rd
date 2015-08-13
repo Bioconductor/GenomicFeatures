@@ -54,12 +54,12 @@ getChromInfoFromBiomart(biomart="ensembl",
     should be marked as circular.}
   \item{filters}{Additional filters to use in the BioMart query. Must be
     a named list. An example is \code{filters=as.list(c(source="entrez"))}}
-  \item{host}{The host URL of the BioMart. Defaults to www.biomart.org.}
-  \item{port}{The port to use in the HTTP communication with the host.}
   \item{id_prefix}{Specifies the prefix used in BioMart attributes. For
     example, some BioMarts may have an attribute specified as
     \code{"ensembl_transcript_id"} whereas others have the same attribute
     specified as \code{"transcript_id"}. Defaults to \code{"ensembl_"}.}
+  \item{host}{The host URL of the BioMart. Defaults to www.biomart.org.}
+  \item{port}{The port to use in the HTTP communication with the host.}
   \item{taxonomyId}{By default this value is NA and the dataset
     selected will be used to look up the correct value for this.  But
     you can use this argument to override that and supply your own
@@ -110,7 +110,12 @@ getChromInfoFromBiomart(biomart="ensembl",
   Not all these datasets have CDS information.
 }
 
-\value{A \link{TxDb} object.}
+\value{
+  A \link{TxDb} object for \code{makeTxDbFromBiomart}.
+
+  A data frame with 1 row per chromosome (or scaffold) and with columns
+  \code{chrom} and \code{length} for \code{getChromInfoFromBiomart}.
+}
 
 \author{
   M. Carlson and H. Pages
@@ -142,13 +147,19 @@ getChromInfoFromBiomart(biomart="ensembl",
 }
 
 \examples{
-## Discover which datasets are available in the "ensembl" BioMart
-## database:
+## ---------------------------------------------------------------------
+## A. BASIC USAGE
+## ---------------------------------------------------------------------
+
+## Use listDatasets() from the biomaRt package to list the datasets
+## available in the "ensembl" BioMart database:
 library(biomaRt)
 head(listDatasets(useMart("ensembl")))
 
-## Retrieving an incomplete transcript dataset for Human from the
-## "ensembl" BioMart database:
+## Retrieve the full transcript dataset for Worm:
+txdb1 <- makeTxDbFromBiomart(dataset="celegans_gene_ensembl")
+
+## Retrieve an incomplete transcript dataset for Human:
 transcript_ids <- c(
     "ENST00000013894",
     "ENST00000268655",
@@ -157,19 +168,32 @@ transcript_ids <- c(
     "ENST00000384428",
     "ENST00000478783"
 )
-txdb <- makeTxDbFromBiomart(transcript_ids=transcript_ids)
-txdb  # note that these annotations match the GRCh38 genome assembly
+txdb2 <- makeTxDbFromBiomart(dataset="hsapiens_gene_ensembl",
+                             transcript_ids=transcript_ids)
+txdb2  # note that these annotations match the GRCh38 genome assembly
 
-## Now what if we want to use another mirror?  We might make use of the
-## new host argument.  But wait!  If we use biomaRt, we can see that
-## this host has named the mart differently!
+## ---------------------------------------------------------------------
+## B. USING A HOST OTHER THAN www.biomart.org
+## ---------------------------------------------------------------------
+
+## A typical use case is to access the "ensembl" BioMart database on a
+## mirror e.g. on uswest.ensembl.org. A gotcha when doing this is that
+## the name of the database on the mirror can be different! We can check
+## this with listMarts() from the biomaRt package:
 listMarts(host="uswest.ensembl.org")
-## Therefore we must also change the name passed into the "mart"
-## argument thusly:
-try(
-    txdb <- makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
-                                transcript_ids=transcript_ids,
-                                host="uswest.ensembl.org")	    
-)
-txdb
+
+## Therefore, in addition to setting 'host' to "uswest.ensembl.org" we
+## must also change the name passed to the 'biomart' argument:
+txdb3 <- makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
+                             dataset="hsapiens_gene_ensembl",
+                             transcript_ids=transcript_ids,
+                             host="uswest.ensembl.org")
+txdb3
+
+## ---------------------------------------------------------------------
+## C. RETRIEVING CHROMOSOME INFORMATION ONLY
+## ---------------------------------------------------------------------
+
+chrominfo <- getChromInfoFromBiomart(dataset="celegans_gene_ensembl")
+chrominfo
 }

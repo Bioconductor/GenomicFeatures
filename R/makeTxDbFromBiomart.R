@@ -264,7 +264,7 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     mart <- .useMart2(biomart=biomart, dataset=dataset, host=host, port=port)
     id_prefix <- .normarg_id_prefix(id_prefix)
     recognized_attribs <- recognizedBiomartAttribs(id_prefix)
-    transcripts <- .makeBiomartTranscripts("", "", mart,
+    transcripts <- .makeBiomartTranscripts(NULL, mart,
                                            transcript_ids=NULL,
                                            recognized_attribs,
                                            id_prefix)
