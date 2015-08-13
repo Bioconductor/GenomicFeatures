@@ -14,7 +14,7 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Some biomaRt low-level utilities.
+### Some helper functions to facilitate working with the biomaRt package.
 ###
 
 ### A thin wrapper to useMart() that checks the user-supplied arguments.
@@ -250,11 +250,7 @@
     NULL
 }
 
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Allow users to discover 'chrominfo' data frame.
-###
-
+## User-friendly wrapper to .makeBiomartChrominfo().
 getChromInfoFromBiomart <- function(biomart="ensembl",
                                     dataset="hsapiens_gene_ensembl",
                                     id_prefix="ensembl_",
@@ -271,9 +267,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     chrominfo <- .makeBiomartChrominfo(mart,
                                        extra_seqnames=transcripts$tx_chrom,
                                        host=host, port=port)
-    chrominfo[,1:2]
+    chrominfo[ , 1:2]
 }
-
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -758,6 +753,14 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
     mart <- .useMart2(biomart=biomart, dataset=dataset, host=host, port=port)
     id_prefix <- .normarg_id_prefix(id_prefix)
     filters <- .add_tx_id_filter(filters, transcript_ids, id_prefix)
+    valid_filter_names <- listFilters(mart, what="name")
+    invalid_filter_names <- setdiff(names(filters), valid_filter_names)
+    if (length(invalid_filter_names) != 0L) {
+        in1string <- paste0(invalid_filter_names, collapse=", ")
+        stop(wmsg("Invalid filter name(s): ", in1string,
+                  "\n\nPlease use the listFilters() function from the ",
+                  "biomaRt package to get valid filter names."))
+    }
     recognized_attribs <- recognizedBiomartAttribs(id_prefix)
 
     transcripts <- .makeBiomartTranscripts(filters, mart,
@@ -795,8 +798,8 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
         
     genes <- .makeBiomartGenes(filters, mart, transcripts_tx_id,
                                recognized_attribs, id_prefix)
-    metadata <- .prepareBiomartMetadata(mart, is.null(transcript_ids), host,
-                                        port, taxonomyId, miRBaseBuild)
+    metadata <- .prepareBiomartMetadata(mart, length(filters) == 0L,
+                                        host, port, taxonomyId, miRBaseBuild)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTxDb(transcripts, splicings,

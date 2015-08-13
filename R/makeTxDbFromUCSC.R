@@ -709,11 +709,7 @@ supportedUCSCtables <- function()
     chrominfo
 }
 
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Allow users to discover 'chrominfo' data frame.
-###
-
+## User-friendly wrapper to .makeUCSCChrominfo().
 getChromInfoFromUCSC <- function(genome,
           goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 {

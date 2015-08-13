@@ -53,7 +53,7 @@ getChromInfoFromBiomart(biomart="ensembl",
   \item{circ_seqs}{a character vector to list out which chromosomes
     should be marked as circular.}
   \item{filters}{Additional filters to use in the BioMart query. Must be
-    a named list. An example is \code{filters=as.list(c(source="entrez"))}}
+    a named list. An example is \code{filters=list(source="entrez")}}
   \item{id_prefix}{Specifies the prefix used in BioMart attributes. For
     example, some BioMarts may have an attribute specified as
     \code{"ensembl_transcript_id"} whereas others have the same attribute
@@ -129,7 +129,8 @@ getChromInfoFromBiomart(biomart="ensembl",
           \link[GenomicRanges]{GRanges} object, or from a GFF or GTF file.
 
     \item The \code{\link[biomaRt]{listMarts}}, \code{\link[biomaRt]{useMart}},
-          and \code{\link[biomaRt]{listDatasets}} functions in the
+          \code{\link[biomaRt]{listDatasets}}, and
+          \code{\link[biomaRt]{listFilters}} functions in the
           \pkg{biomaRt} package.
 
     \item \code{\link{DEFAULT_CIRC_SEQS}}.
@@ -151,8 +152,8 @@ getChromInfoFromBiomart(biomart="ensembl",
 ## A. BASIC USAGE
 ## ---------------------------------------------------------------------
 
-## Use listDatasets() from the biomaRt package to list the datasets
-## available in the "ensembl" BioMart database:
+## We can use listDatasets() from the biomaRt package to list the
+## datasets available in the "ensembl" BioMart database:
 library(biomaRt)
 head(listDatasets(useMart("ensembl")))
 
@@ -191,7 +192,23 @@ txdb3 <- makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
 txdb3
 
 ## ---------------------------------------------------------------------
-## C. RETRIEVING CHROMOSOME INFORMATION ONLY
+## C. USING FILTERS
+## ---------------------------------------------------------------------
+
+## We can use listFilters() from the biomaRt package to get valid filter
+## names:
+mart <- useMart("ensembl", dataset="hsapiens_gene_ensembl")
+head(listFilters(mart))
+
+## Retrieve transcript dataset for Ensembl gene ENSG00000011198:
+txdb4 <- makeTxDbFromBiomart(dataset="hsapiens_gene_ensembl",
+                             filters=list(ensembl_gene_id="ENSG00000011198"))
+txdb4
+transcripts(txdb4, columns=c("tx_id", "tx_name", "gene_id"))
+transcriptLengths(txdb4)
+
+## ---------------------------------------------------------------------
+## D. RETRIEVING CHROMOSOME INFORMATION ONLY
 ## ---------------------------------------------------------------------
 
 chrominfo <- getChromInfoFromBiomart(dataset="celegans_gene_ensembl")
