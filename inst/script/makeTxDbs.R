@@ -33,13 +33,15 @@ makeTxDbPackageFromUCSC(version=version,
                         tablename="lincRNAsTranscripts",
                         miRBaseBuild="GRCh37")
 
-## Human HG38
-makeTxDbPackageFromUCSC(version=version,
-                        maintainer=maintainer,
-                        author=author,
-			destDir=TxDbOutDir,
-                        genome="hg38",
-                        tablename="knownGene")
+
+## Looks like UCSC took away their 'knownGene' track for hg38...
+## ## Human HG38
+## makeTxDbPackageFromUCSC(version=version,
+##                         maintainer=maintainer,
+##                         author=author,
+## 			destDir=TxDbOutDir,
+##                         genome="hg38",
+##                         tablename="knownGene")
 
 
 
@@ -92,7 +94,7 @@ makeTxDbPackageFromBiomart(version=version,
                           maintainer=maintainer,
                           author=author,
 		 	  destDir=TxDbOutDir,
-                          biomart="plants_mart_25",
+                          biomart="plants_mart_28",
                           dataset="athaliana_eg_gene")
                                          
 
