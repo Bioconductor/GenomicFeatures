@@ -73,7 +73,7 @@
     }
   }else{
     type <- gsub(" ",".",type)
-    pkgName <- paste(prefix,species, sep=".")      
+    pkgName <- paste(prefix,species,type, sep=".")
   }
   gsub("_","",pkgName)  ## R does not allow underscores in package names
 }
