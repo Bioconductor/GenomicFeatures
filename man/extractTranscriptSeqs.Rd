@@ -147,7 +147,8 @@ extractTranscriptSeqs(x, transcripts)
 extractTranscriptSeqs(x, transcripts, strand="-")
 
 ## Note that, for a transcript located on the minus strand, the exons
-## are typically ordered by descending position on the reference genome:
+## should typically be ordered by descending position on the reference
+## genome in order to reflect their rank in the transcript:
 extractTranscriptSeqs(x, IRangesList(tx1=tx1, tx2=rev(tx2)), strand="-")
 
 ## Extract the exon of the 1st transcript from the minus strand:
