@@ -80,11 +80,11 @@ threeUTRsByTranscript(x, ...)
   where the ranges within each of the elements are ordered according
   to the following rule:
 
-  When using \code{exonsBy} and \code{cdsBy} with \code{by = "tx"},
-  the ranges are returned in the order they appear in the transcript,
-  i.e. order by the splicing.exon_rank field in \code{x}'s internal
-  database. In all other cases, the ranges will be ordered by chromosome,
-  strand, start, and end values.
+  When using \code{exonsBy} or \code{cdsBy} with \code{by = "tx"},
+  the returned exons or CDS are ordered by ascending rank for each
+  transcript, that is, by their position in the transcript.
+  In all other cases, the ranges will be ordered by chromosome, strand,
+  start, and end values.
 }
 \value{A \link[GenomicRanges]{GRangesList} object.}
 \author{
@@ -114,7 +114,7 @@ threeUTRsByTranscript(x, ...)
   ## Get the exons grouped by gene:
   exonsBy(txdb, "gene")
 
-  ## Get the cds grouped by transcript:
+  ## Get the CDS grouped by transcript:
   cds_by_tx0 <- cdsBy(txdb, "tx")
   ## With more informative group names:
   cds_by_tx1 <- cdsBy(txdb, "tx", use.names=TRUE)

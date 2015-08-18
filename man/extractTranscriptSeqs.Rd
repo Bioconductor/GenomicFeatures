@@ -48,6 +48,14 @@ extractTranscriptSeqs(x, transcripts, ...)
             \link[GenomicRanges]{GRangesList} object with
             \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
     }
+
+    Note that, for each transcript, the exons must be ordered by ascending
+    rank, that is, by their position in the transcript. This means that,
+    for a transcript located on the minus strand, the exons should typically
+    be ordered by descending position on the reference genome.
+    If \code{transcripts} was obtained with \code{\link{exonsBy}} (see above),
+    then the exons are guaranteed to be ordered by ascending rank. See
+    \code{?\link{exonsBy}} for more information.
   }
   \item{...}{
     Additional arguments, for use in specific methods.
@@ -137,6 +145,9 @@ extractTranscriptSeqs(x, transcripts)
 
 ## Extract all the exons from the minus strand:
 extractTranscriptSeqs(x, transcripts, strand="-")
+
+## Note that, for a transcript located on the minus strand, the exons
+## are typically ordered by descending position on the reference genome:
 extractTranscriptSeqs(x, IRangesList(tx1=tx1, tx2=rev(tx2)), strand="-")
 
 ## Extract the exon of the 1st transcript from the minus strand:
