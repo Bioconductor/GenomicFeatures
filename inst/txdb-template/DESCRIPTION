@@ -5,7 +5,7 @@ Version: @PKGVERSION@
 Author: @AUTHOR@
 Maintainer: @MAINTAINER@
 Depends: GenomicFeatures (>= @GFVERSION@)
-Imports: GenomicFeatures, AnnotationDbi
+Imports: AnnotationDbi
 License: @LIC@
 organism: @ORGANISM@
 species: @SPECIES@
