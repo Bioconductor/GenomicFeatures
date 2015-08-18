@@ -1,6 +1,6 @@
 import(methods)
 
-importFrom(utils, download.file, installed.packages, read.table)
+importFrom(utils, download.file, installed.packages, read.table, as.person)
 importFrom(tools, file_ext, file_path_sans_ext)
 
 importFrom(RCurl, getURL)

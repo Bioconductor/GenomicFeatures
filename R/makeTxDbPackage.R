@@ -107,6 +107,52 @@
     url
 }
 
+.normMaintainer <- function(maintainer) {
+    maintainer <- as.person(maintainer)
+    if (length(maintainer) > 1L) {
+        stop("more than one 'maintainer' provided")
+    }
+    maintainer
+}
+
+.getMaintainer <- function(authors) {
+    m <- vapply(authors, function(a) "cre" %in% a$role, logical(1L))
+    if (sum(m) != 1L) {
+        stop("there must be one 'maintainer'")
+    }
+    maintainer <- authors[m]
+    maintainer$role <- list(NULL)
+    maintainer$comment <- list(NULL)
+    maintainer
+}
+
+.mergeMaintainer <- function(authors, maintainer) {
+    maintainer <- .normMaintainer(maintainer)
+    maintainer$role <- list(union(maintainer$role, "cre"))
+    m <- unlist(authors$given) == maintainer$given &
+        unlist(authors$family) == maintainer$family
+    if (any(m)) {
+        authors$role[m] <- list(union(unlist(authors$role[m]), "cre"))
+        if (!is.null(maintainer$email)) {
+            authors$email[m] <- maintainer$email
+        }
+    } else {
+        authors <- c(authors, maintainer)
+    }
+    maintainer <- .getMaintainer(authors)
+    if (is.null(maintainer$email)) {
+        stop("the 'maintainer' must have an email address")
+    }
+    authors
+}
+
+.normAuthor <- function(authors, maintainer) {
+    authors <- as.person(authors)
+    if (!missing(maintainer)) {
+        authors <- .mergeMaintainer(authors, maintainer)
+    }
+    authors
+}
 
 makeTxDbPackage <- function(txdb,
                             version,
@@ -120,6 +166,7 @@ makeTxDbPackage <- function(txdb,
        pkgname <- .makePackageName(txdb)
    }
    dbType <- .getMetaDataValue(txdb,'Db type')
+   authors <- .normAuthor(author, maintainer)
    
    ## there should only be one template
    template_path <- system.file("txdb-template",package="GenomicFeatures")
@@ -132,8 +179,8 @@ makeTxDbPackage <- function(txdb,
       .getMetaDataValue(txdb,'Data source'), "by exposing these as",dbType,
       "objects"),
     PKGVERSION=version,
-    AUTHOR=author,
-    MAINTAINER=maintainer,
+    AUTHOR=paste(authors, collapse=", "),
+    MAINTAINER=as.character(.getMaintainer(authors)),
     GFVERSION=.getMetaDataValue(txdb,
       'GenomicFeatures version at creation time'),
     LIC=license,

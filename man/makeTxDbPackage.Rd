@@ -88,9 +88,14 @@ makeFDbPackageFromUCSC(
 }
 \arguments{
   \item{version}{What is the version number for this package?}
-  \item{maintainer}{Who is the package maintainer? (must include email to be 
-    valid)}
-  \item{author}{Who is the creator of this package?}
+  \item{maintainer}{Who is the package maintainer? (must include email
+    to be valid). Should be a \code{\link{person}} object, or something
+    coercible to one, like a string. May be omitted if the \code{author}
+    argument is a \code{person} containing someone with the maintainer role.}
+  \item{author}{Who is the creator of this package? Should be
+    a \code{\link{person}} object, or something coercible to one, like a
+    character vector of names. The \code{maintainer} argument will be
+    merged into this list.}
   \item{destDir}{A path where the package source should be assembled.}
   \item{license}{What is the license (and it's version)}
   \item{biomart}{which BioMart database to use.
