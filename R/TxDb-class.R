@@ -38,122 +38,11 @@ makeFeatureColnames <- function(feature_shortname=c("tx", "exon", "cds"),
 ## This is to try and tidy up before setRefClass()
 gc()
 
-## planned fix for seqinfo(): (so it can support the force argument).
-## 1) Add a character vector slot to hold seqnames and their "altered"
-## names. OR add a seqinfo object slot to hold a temporary seqinfo
-## data (which would then be respected by all the methods?)
-## 2) new2old argument: Note that while we can support renaming to
-## whatever, we cannot allow users to change the length of the
-## sequences.  So there are still some restrictions.  However: we CAN
-## allow users to limit scope like in isActiveSeq (a slot that will
-## become redundant with this one, by simply stashing NA into values
-## that the user has excluded.  OR: if we take the seqinfo approach,
-## then we would store the temp seqinfo. and allow users to mess with
-## it however they liked, and the methods would have to post-filter
-## based on that.
-## 3) no replace "value", as we can't really allow the user to set the
-## seqinfo to just anything.  Because it's a database, some values are
-## not allowed?  OR: do we want to just have the results filtered so
-## that the results are in line with a seqinfo. slot?  - currently we
-## just don't do the setter.
-
-## Herve made a good point about all this.  And that was that if I
-## start allowing all these changes to seqinfo, then I have to filter
-## the results.  How much of a mess will that be?  Do we include
-## ranges that overlap with the new boundary?  If so do we truncate
-## those?
-## There is currently code that translates from the old seqinfo to the
-## new names (currently only naming is allowed).
-
-## No matter which solution I choose, we don't want to allow filtering
-## based on circularity.
-
-## AND: I also need to get vals to behave better as it currently is
-## ignoring even the meager amount of things that we are trying to
-## support via seqlevels.  And this is because it gets translated into
-## a query without 1st being translated back to whatever the DB is
-## using (so things will break if you use a name for vals after
-## renaming your stuff).
-
-## Other considerations: the implementation of a seqinfo slot could
-## create additional complications for methods similar to
-## extractTranscriptSeqs because these rely on the names coming
-## back being the same as the ones in the DB.  In fact, anywhere that
-## we have code that relys on this it is at risk for breaking.  So if
-## we want to go down the route of making these methods the same
-## across the board, then we have to consider the ramifications of
-## that decision.  Specifically, some code may not behave as expected
-## after users change these things.  For the base level accessors, we
-## can hide that by translating or by filtering based on a maleable
-## seqinfo slot.  But for more compound operations, existing code may
-## be expecting that these values will always be within the parameters
-## that have been allowed up till now (IOW no dropping of seqlevels,
-## etc.)
-
-## So: 1st decision: what do we want to allow users to change?
-## 1) seqlevels (names) - the only thing that is allowed now.
-## 2) "drop" seqlevels, (force=TRUE)   - This is what we want to add.
-## 3) change values of seqlengths? Nope
-## 4) change values of genomes? Nope
-## 5) change values of circularity? Nope
-## 6) add seqlevels? Nope
-## 7) reorder seqlevels? Yes
-
-## To just add #2, option 1, IOW a translation slot (not a full blown
-## seqinfo object) should be enough to do the trick.
-
-
-### Changing the names works
-## seqlevels(txdb) <- as.character(1:93)
-
-## But we also want to support subsetting:
-## library(TxDb.Hsapiens.UCSC.hg19.knownGene); txdb=TxDb.Hsapiens.UCSC.hg19.knownGene; seqinfo(txdb)
-## seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
-
-### And to reset we do this:
-## txdb <- restoreSeqlevels(txdb)
-
-
-## Bugs :
-## This works:
-## seqlevels(txdb, force=TRUE) <- c(chr4 = "4", chr5 = "5", chr6="6")
-## But this doesn't: (needs to go based on match internally)
-## seqlevels(txdb, force=TRUE) <- c(chr5 = "5", chr6="6", chr4="4")
-
-
-## Some unit tests needed for the following:
-
-## This should fail: add seqlevels (and it does)
-## seqlevels(txdb, force=TRUE) <- c(foo = "2")
-## This throws an error, so that's good
-
-
-## These next three do not *actually* make any change the object (so
-## these are actually "safe", but they SHOULD still throw an error)
-
-## This should fail: change circ
-## seqinfo(txdb) <- seqinfo()
-## foo = seqinfo(txdb)
-## foo@is_circular = rep(TRUE, 93)
-## seqinfo(txdb, new2old=1:93) <- foo
-
-## This should fail: change genome
-## foo = seqinfo(txdb)
-## foo@genome = rep("hg18", 93)
-## seqinfo(txdb, new2old=1:93) <- foo
-
-## This should fail: change seqlengths
-## foo = seqinfo(txdb)
-## foo@seqlengths = rep(1000L, 93)
-## seqinfo(txdb, new2old=1:93) <- foo
-
-
 ### Concrete GenomicFeatures types
 .TxDb <-
     setRefClass("TxDb", contains="AnnotationDb",
         fields=list(.chrom="character",
                     isActiveSeq="logical",
-                    seqlevelsStyle="character",
                     new2old="integer"),
         methods=list(
           initialize=function(...) {
@@ -167,14 +56,13 @@ gc()
                   ## deprecate .chrom and isActiveSeq
                   .self$.chrom <- chrominfo$chrom 
                   .self$isActiveSeq <- !logical(length(.self$.chrom)) 
-                  .self$seqlevelsStyle <- character()
               }
           .self
       }))
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Low-level data loaders.
+### Low-level data loaders
 ###
 ### For internal use only (i.e. NOT exported)
 ###
@@ -360,7 +248,7 @@ load_genes <- function(txdb, set.col.class=FALSE)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Validity of a TxDb object.
+### Validity of a TxDb object
 ###
 
 ### The table specified in a call to .valid.table.colnames() must have at
@@ -446,20 +334,15 @@ setValidity2("TxDb", .valid.TxDb)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Low-level constructor (filled out so that we can be consistent with
-### AnnnotationDb
+### Low-level constructor (not exported)
 ###
 
-## Legacy constructor (still not exported) - used in some other places so
-## preserved for now
-TxDb <- function(conn)
-{
-    .TxDb$new(conn=conn)
-}
+### Only used in makeTxDb().
+TxDb <- function(conn) .TxDb$new(conn=conn)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Accessors.
+### species() and organism() getters
 ###
 
 ### The "species" method currently defined in AnnotationDbi (1.29.20) for
@@ -485,9 +368,23 @@ setMethod("organism", "TxDb",
     }
 )
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### seqinfo() getter and setter
+###
+
+### Get the original seqlevels (i.e. extract them directly from the db).
+setMethod("seqlevels0", "TxDb",
+    function(x)
+    {
+        sql <- "SELECT chrom FROM chrominfo ORDER BY _chrom_id"
+        queryAnnotationDb(x, sql)[[1L]]
+    }
+)
+
 ## seqinfo getter needs to rename and re-sort things based on new2old
 ## integers every single time it is accessed
-.seqinfo.TxDb <- function(x)
+.get_TxDb_seqinfo <- function(x)
 {
     data <- load_chrominfo(x, set.col.class=TRUE)
     ## We take the seqnames from x's private field '.chrom'.
@@ -504,7 +401,7 @@ setMethod("organism", "TxDb",
     ans
 }
 
-setMethod("seqinfo", "TxDb", function(x){.seqinfo.TxDb(x)})
+setMethod("seqinfo", "TxDb", .get_TxDb_seqinfo)
 
 ### This is a restricted "seqinfo<-" method for TxDb objects
 ### that only supports replacement of the sequence names or dropping
@@ -512,7 +409,117 @@ setMethod("seqinfo", "TxDb", function(x){.seqinfo.TxDb(x)})
 ### resorting and renaming every time, the setter only needs to put
 ### the new2old field together correctly (in the object).
 
-.seqinfo.TxDbReplace <- function(x, new2old=NULL, force=FALSE, value)
+## planned fix for seqinfo(): (so it can support the force argument).
+## 1) Add a character vector slot to hold seqnames and their "altered"
+## names. OR add a seqinfo object slot to hold a temporary seqinfo
+## data (which would then be respected by all the methods?)
+## 2) new2old argument: Note that while we can support renaming to
+## whatever, we cannot allow users to change the length of the
+## sequences.  So there are still some restrictions.  However: we CAN
+## allow users to limit scope like in isActiveSeq (a slot that will
+## become redundant with this one, by simply stashing NA into values
+## that the user has excluded.  OR: if we take the seqinfo approach,
+## then we would store the temp seqinfo. and allow users to mess with
+## it however they liked, and the methods would have to post-filter
+## based on that.
+## 3) no replace "value", as we can't really allow the user to set the
+## seqinfo to just anything.  Because it's a database, some values are
+## not allowed?  OR: do we want to just have the results filtered so
+## that the results are in line with a seqinfo. slot?  - currently we
+## just don't do the setter.
+
+## Herve made a good point about all this.  And that was that if I
+## start allowing all these changes to seqinfo, then I have to filter
+## the results.  How much of a mess will that be?  Do we include
+## ranges that overlap with the new boundary?  If so do we truncate
+## those?
+## There is currently code that translates from the old seqinfo to the
+## new names (currently only naming is allowed).
+
+## No matter which solution I choose, we don't want to allow filtering
+## based on circularity.
+
+## AND: I also need to get vals to behave better as it currently is
+## ignoring even the meager amount of things that we are trying to
+## support via seqlevels.  And this is because it gets translated into
+## a query without 1st being translated back to whatever the DB is
+## using (so things will break if you use a name for vals after
+## renaming your stuff).
+
+## Other considerations: the implementation of a seqinfo slot could
+## create additional complications for methods similar to
+## extractTranscriptSeqs because these rely on the names coming
+## back being the same as the ones in the DB.  In fact, anywhere that
+## we have code that relys on this it is at risk for breaking.  So if
+## we want to go down the route of making these methods the same
+## across the board, then we have to consider the ramifications of
+## that decision.  Specifically, some code may not behave as expected
+## after users change these things.  For the base level accessors, we
+## can hide that by translating or by filtering based on a maleable
+## seqinfo slot.  But for more compound operations, existing code may
+## be expecting that these values will always be within the parameters
+## that have been allowed up till now (IOW no dropping of seqlevels,
+## etc.)
+
+## So: 1st decision: what do we want to allow users to change?
+## 1) seqlevels (names) - the only thing that is allowed now.
+## 2) "drop" seqlevels, (force=TRUE)   - This is what we want to add.
+## 3) change values of seqlengths? Nope
+## 4) change values of genomes? Nope
+## 5) change values of circularity? Nope
+## 6) add seqlevels? Nope
+## 7) reorder seqlevels? Yes
+
+## To just add #2, option 1, IOW a translation slot (not a full blown
+## seqinfo object) should be enough to do the trick.
+
+
+### Changing the names works
+## seqlevels(txdb) <- as.character(1:93)
+
+## But we also want to support subsetting:
+## library(TxDb.Hsapiens.UCSC.hg19.knownGene); txdb=TxDb.Hsapiens.UCSC.hg19.knownGene; seqinfo(txdb)
+## seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+
+### And to reset we do this:
+## txdb <- restoreSeqlevels(txdb)
+
+
+## Bugs :
+## This works:
+## seqlevels(txdb, force=TRUE) <- c(chr4 = "4", chr5 = "5", chr6="6")
+## But this doesn't: (needs to go based on match internally)
+## seqlevels(txdb, force=TRUE) <- c(chr5 = "5", chr6="6", chr4="4")
+
+
+## Some unit tests needed for the following:
+
+## This should fail: add seqlevels (and it does)
+## seqlevels(txdb, force=TRUE) <- c(foo = "2")
+## This throws an error, so that's good
+
+
+## These next three do not *actually* make any change the object (so
+## these are actually "safe", but they SHOULD still throw an error)
+
+## This should fail: change circ
+## seqinfo(txdb) <- seqinfo()
+## foo = seqinfo(txdb)
+## foo@is_circular = rep(TRUE, 93)
+## seqinfo(txdb, new2old=1:93) <- foo
+
+## This should fail: change genome
+## foo = seqinfo(txdb)
+## foo@genome = rep("hg18", 93)
+## seqinfo(txdb, new2old=1:93) <- foo
+
+## This should fail: change seqlengths
+## foo = seqinfo(txdb)
+## foo@seqlengths = rep(1000L, 93)
+## seqinfo(txdb, new2old=1:93) <- foo
+
+
+.replace_TxDb_seqinfo <- function(x, new2old=NULL, force=FALSE, value)
 {
     if (!is(value, "Seqinfo"))
         stop("the supplied 'seqinfo' must be a Seqinfo object")
@@ -579,45 +586,12 @@ setMethod("seqinfo", "TxDb", function(x){.seqinfo.TxDb(x)})
     x
 }
 
-setReplaceMethod("seqinfo", "TxDb", function(x, new2old, force, value){
-    .seqinfo.TxDbReplace(x, new2old=new2old, force=force, value)})
+setReplaceMethod("seqinfo", "TxDb", .replace_TxDb_seqinfo)
 
 
-## This is the seqlevels() currently in use from GRanges
-## I will have to make my own one of these to fix the problem with the
-## new2old being wrong (OR I have to solve it in the replacementmethod
-## for seqinfo above...
-
-## ### Default "seqlevels<-" method works on any object 'x' with working
-## ### "seqinfo" and "seqinfo<-" methods.
-## setReplaceMethod("seqlevels", "ANY",
-##     function(x, force=FALSE, value)
-##     {
-##         ## Make the new Seqinfo object.
-##         x_seqinfo <- seqinfo(x)
-##         seqlevels(x_seqinfo) <- value
-##         ## Map the new sequence levels to the old ones.
-##         new2old <- getSeqlevelsReplacementMode(value, seqlevels(x))
-##         if (identical(new2old, -2L)) {
-##             new2old <- match(value, seqlevels(x))
-##         } else if (identical(new2old, -1L)) {
-##             new2old <- seq_len(length(value))
-##         }
-##         ## Do the replacement.
-##         seqinfo(x, new2old=new2old, force=force) <- x_seqinfo
-##         x
-##     }
-## )
-
-
-
-
-
-
-## Reset seqlevels (seqnames) back to original values.
-setMethod("seqlevels0", "TxDb", 
-    function(x) x$initialize()
-)
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### isActiveSeq() getter and setter
+###
 
 setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
 
@@ -674,7 +648,7 @@ setReplaceMethod("isActiveSeq","TxDb",
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Comparing 2 TxDb objects.
+### Comparing 2 TxDb objects
 ###
 
 ### Used in unit tests for makeTxDbFromGRanges().
