@@ -65,16 +65,13 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
     shifted
 }
 
-.recycling <- function(xlen, txlen)
-{
-    if (xlen != txlen) {
-        if (txlen == 1L)
-            TRUE
-        else
-            stop(paste0("recycling is supported when length(transcripts) == 1; ",
-                        "otherwise lengths of 'x' and 'transcripts' ",
-                        "must match"))
-    } else FALSE
+.pmap_recycle <- function(x, len) {
+    if (length(x) != len && length(x) != 1L) {
+        stop(paste0("recycling is supported when length(x) == 1 or ",
+                    "length(transcripts) == 1; ",
+                    "otherwise the lengths must match"))
+    }
+    rep(x, length.out=len)
 }
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -266,24 +263,6 @@ setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"),
 ### pmapToTranscripts()
 ###
 
-.pmapToTranscripts_ranges <- function(x, transcripts, ...)
-{
-    if (!length(x))
-        return(IRanges())
-    if (.recycling(length(x), length(transcripts)))
-        transcripts <- rep(transcripts, length(x))
-    gr <- GRanges(seqnames(transcripts), x)
-    ranges(pmapToTranscripts(gr, transcripts, TRUE))
-}
-
-setMethod("pmapToTranscripts", c("Ranges", "GenomicRanges"),
-    function(x, transcripts, ...) .pmapToTranscripts_ranges
-)
-
-setMethod("pmapToTranscripts", c("Ranges", "GRangesList"), 
-    function(x, transcripts, ...) .pmapToTranscripts_ranges
-)
-
 setMethod("pmapToTranscripts", c("GenomicRanges", "GenomicRanges"), 
     function(x, transcripts, ignore.strand=FALSE, ...) 
     {
@@ -297,8 +276,9 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
     {
         if (!length(x))
             return(GRanges())
-        if (.recycling(length(x), length(transcripts)))
-            transcripts <- rep(transcripts, length(x))
+        maxlen <- max(length(x), length(transcripts))
+        x <- .pmap_recycle(x, maxlen)
+        transcripts <- .pmap_recycle(transcripts, maxlen)
         if (is.null(names(transcripts)))
             stop ("'transcripts' must have names")
         if (!ignore.strand)
@@ -343,8 +323,9 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
 {
     if (!length(x))
         return(GRanges())
-    if (.recycling(length(x), length(transcripts)))
-        transcripts <- rep(transcripts, length(x))
+    maxlen <- max(length(x), length(transcripts))
+    x <- .pmap_recycle(x, maxlen)
+    transcripts <- .pmap_recycle(transcripts, maxlen)
 
     ## mapping
     xStart <- as.list(start(x))
@@ -357,24 +338,29 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
     e <- unlist(transcriptLocs2refLocs(xEnd, txStart, txEnd, tmpstrand,
                                        FALSE, FALSE), use.names=FALSE)
 
+    sn <- unlist(seqnames(transcripts), use.names=FALSE)
+    if (is(transcripts, "GRangesList"))
+        sn <- sn[start(PartitioningByEnd(transcripts))]
+
     ## non-hits
     if (any(skip <- is.na(s) | is.na(e))) {
         s[skip] <- 0L 
         e[skip] <- -1L
-        seqname[skip] <- "UNMAPPED"
+        sn[skip] <- "UNMAPPED"
     }
-    IRanges(s, e, names=names(x)) 
+    
+    pintersect(transcripts, GRanges(sn, IRanges(s, e)))
 }
 
 setMethod("pmapFromTranscripts", c("Ranges", "GenomicRanges"),
-    function(x, transcripts, ...) 
-        .pmapFromTranscripts_ranges
-)
+          function(x, transcripts, ...) 
+              .pmapFromTranscripts_ranges(x, transcripts, ...)
+          )
 
 setMethod("pmapFromTranscripts", c("Ranges", "GRangesList"), 
-    function(x, transcripts, ...) 
-        .pmapFromTranscripts_ranges 
-)
+          function(x, transcripts, ...) 
+              .pmapFromTranscripts_ranges(x, transcripts, ...)
+          )
 
 setMethod("pmapFromTranscripts", c("GenomicRanges", "GenomicRanges"), 
     function(x, transcripts, ignore.strand=FALSE, ...) 
@@ -389,8 +375,9 @@ setMethod("pmapFromTranscripts", c("GenomicRanges", "GRangesList"),
     {
         if (!length(x))
             return(GRanges())
-        if (.recycling(length(x), length(transcripts)))
-            transcripts <- rep(transcripts, length(x))
+        maxlen <- max(length(x), length(transcripts))
+        x <- .pmap_recycle(x, maxlen)
+        transcripts <- .pmap_recycle(transcripts, maxlen)
         if (!ignore.strand)
             if (!all(elementLengths(runLength(strand(transcripts))) == 1))
                 stop(paste0("when ignore.strand=TRUE all inner list ",

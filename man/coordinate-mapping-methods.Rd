@@ -6,8 +6,6 @@
 \alias{mapToTranscripts,GenomicRanges,GRangesList-method}
 \alias{mapToTranscripts,ANY,TxDb-method}
 \alias{pmapToTranscripts}
-\alias{pmapToTranscripts,Ranges,GenomicRanges-method}
-\alias{pmapToTranscripts,Ranges,GRangesList-method}
 \alias{pmapToTranscripts,GenomicRanges,GenomicRanges-method}
 \alias{pmapToTranscripts,GenomicRanges,GRangesList-method}
 
@@ -44,6 +42,8 @@
 \S4method{mapFromTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
           ignore.strand = FALSE, ...) 
 \S4method{pmapFromTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
+          ignore.strand = FALSE, ...)
+\S4method{pmapFromTranscripts}{Ranges,GRangesList}(x, transcripts, 
           ignore.strand = FALSE, ...) 
 }
 
@@ -51,7 +51,8 @@
   \item{x}{
     \code{\linkS4class{GenomicRanges}} object of positions to be mapped.
     The seqnames of \code{x} are used in \code{mapFromTranscripts}, i.e.,
-    when mapping from transcripts to the genome.
+    when mapping from transcripts to the genome. In the case of
+    \code{pmapFromTranscripts}, \code{x} can be a \code{Ranges} object.
   }
   \item{transcripts}{
     A named \code{\linkS4class{GenomicRanges}} or
