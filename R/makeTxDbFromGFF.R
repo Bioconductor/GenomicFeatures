@@ -149,10 +149,21 @@ makeTxDbFromGFF <- function(file,
                       "Please use the 'format' argument to specify the ",
                       "format (\"gff3\" or \"gtf\")."))
     }
+    if (format == "gff3") {
+        colnames <- GFF3_COLNAMES
+    } else if (format == "gtf") {
+        colnames <- GTF_COLNAMES
+    } else { # format == "gff"
+        ## We don't know a priori if the file is GFF3 or GTF.
+        ## TODO: Maybe use sniffGFFVersion() to detect whether the file is
+        ## GFF3 or GTF (maybe do this in .detect_file_format()).
+        colnames <- union(GFF3_COLNAMES, GTF_COLNAMES)
+    }
 
     message("Import genomic features from the file as a GRanges object ... ",
             appendLF=FALSE)
-    gr <- import(file, format=format, feature.type=GFF_FEATURE_TYPES)
+    gr <- import(file, format=format, colnames=colnames,
+                       feature.type=GFF_FEATURE_TYPES)
     gr <- .tidy_seqinfo(gr, circ_seqs, chrominfo)
     message("OK")
 

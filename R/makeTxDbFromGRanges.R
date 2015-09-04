@@ -36,14 +36,18 @@
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Get the metadata columns of interest
 ###
+
 ### Expected metadata columns for GRanges in GFF3 format:
 ###   - required: type, ID
 ###   - optional: Parent, Name, Dbxref, geneID
-###
+### Used in R/makeTxDbFromGFF.R
+GFF3_COLNAMES <- c("type", "ID", "Parent", "Name", "Dbxref", "geneID")
+
 ### Expected metadata columns for GRanges in GTF format:
 ###   - required: type, gene_id, transcript_id
 ###   - optional: exon_id
-###
+### Used in R/makeTxDbFromGFF.R
+GTF_COLNAMES <- c("type", "gene_id", "transcript_id", "exon_id")
 
 .GENE_TYPES <- c("gene", "pseudogene")
 .TX_TYPES <- c("transcript", "pseudogenic_transcript", "primary_transcript",
@@ -93,11 +97,12 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     transcript_id
 }
 
-### If we have "gene_id" and "transcript_id" metadata columns then we assume
-### the GRanges object is in GTF format. Otherwise we assume it's in GFF3
-### format.
+### If we have "gene_id" and "transcript_id" metadata columns (and if they
+### don't contain only NAs) then we assume the GRanges object is in GTF format.
+### Otherwise we assume it's in GFF3 format.
 .is_gtf_format <- function(gene_id, transcript_id)
-    !(is.null(gene_id) || is.null(transcript_id))
+    !(is.null(gene_id) || is.null(transcript_id) ||
+      all(is.na(gene_id)) || all(is.na(transcript_id)))
 
 .get_ID <- function(gr_mcols, type, gene_id, transcript_id, gtf.format=FALSE)
 {
@@ -970,7 +975,8 @@ test_makeTxDbFromGRanges_on_Ensembl_organism_gtf <- function(organism)
     download.file(url, local_gtf_file)
 
     cat("Import ", local_gtf_file, " as GRanges object 'gr' ... ", sep="")
-    gr <- import(local_gtf_file)
+    gr <- import(local_gtf_file, colnames=GTF_COLNAMES,
+                                 feature.type=GFF_FEATURE_TYPES)
     cat("\n")
 
     cat("txdb1 <- makeTxDbFromGRanges(gr) ... ", sep="")
@@ -1045,27 +1051,32 @@ library(rtracklayer)
 GFF3_files <- system.file("extdata", "GFF3_files", package="GenomicFeatures")
 
 file1 <- file.path(GFF3_files, "TheCanonicalGene_v1.gff3")
-gr1 <- import(file1, format="gff3", feature.type=GFF_FEATURE_TYPES)
+gr1 <- import(file1, format="gff3", colnames=GFF3_COLNAMES,
+                     feature.type=GFF_FEATURE_TYPES)
 txdb1 <- makeTxDbFromGRanges(gr1)
 txdb1
 
 file2 <- file.path(GFF3_files, "TheCanonicalGene_v2.gff3")
-gr2 <- import(file2, format="gff3", feature.type=GFF_FEATURE_TYPES)
+gr2 <- import(file2, format="gff3", colnames=GFF3_COLNAMES,
+                     feature.type=GFF_FEATURE_TYPES)
 txdb2 <- makeTxDbFromGRanges(gr2)
 txdb2
 
 file3 <- file.path(GFF3_files, "a.gff3")
-gr3 <- import(file3, format="gff3", feature.type=GFF_FEATURE_TYPES)
+gr3 <- import(file3, format="gff3", colnames=GFF3_COLNAMES,
+                     feature.type=GFF_FEATURE_TYPES)
 txdb3 <- makeTxDbFromGRanges(gr3)
 txdb3
 
 file4 <- file.path(GFF3_files, "dmel-1000-r5.11.filtered.gff")
-gr4 <- import(file4, format="gff3", feature.type=GFF_FEATURE_TYPES)
+gr4 <- import(file4, format="gff3", colnames=GFF3_COLNAMES,
+                     feature.type=GFF_FEATURE_TYPES)
 txdb4 <- makeTxDbFromGRanges(gr4)
 txdb4  # exactly the same as with makeTxDbFromGFF()
 
 file5 <- file.path(GFF3_files, "NC_011025.gff")
-gr5 <- import(file5, format="gff3", feature.type=GFF_FEATURE_TYPES)
+gr5 <- import(file5, format="gff3", colnames=GFF3_COLNAMES,
+                     feature.type=GFF_FEATURE_TYPES)
 txdb5 <- makeTxDbFromGRanges(gr5)
 txdb5
 
@@ -1074,7 +1085,8 @@ filename <- paste0(genome, "_genomic.gff.gz")
 url <- paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/", genome, "/", filename)
 file6 <- file.path(tempdir(), file6)
 download.file(url, file6)
-gr6 <- import(file6, format="gff3", feature.type=GFF_FEATURE_TYPES)
+gr6 <- import(file6, format="gff3", colnames=GFF3_COLNAMES,
+                     feature.type=GFF_FEATURE_TYPES)
 
 ## Compared with makeTxDbFromGFF():
 ##
@@ -1093,12 +1105,14 @@ GTF_files <- system.file("extdata", "GTF_files", package="GenomicFeatures")
 ## test1.gtf grabbed from http://mblab.wustl.edu/GTF22.html (5 exon gene with
 ## 3 translated exons).
 file1 <- file.path(GTF_files, "test1.gtf")
-gr1 <- import(file1, format="gtf", feature.type=GFF_FEATURE_TYPES)
+gr1 <- import(file1, format="gtf", colnames=GTF_COLNAMES,
+                     feature.type=GFF_FEATURE_TYPES)
 txdb1 <- makeTxDbFromGRanges(gr1)
 txdb1
 
 file2 <- file.path(GTF_files, "Aedes_aegypti.partial.gtf")
-gr2 <- import(file2, format="gtf", feature.type=GFF_FEATURE_TYPES)
+gr2 <- import(file2, format="gtf", colnames=GTF_COLNAMES,
+                     feature.type=GFF_FEATURE_TYPES)
 txdb2 <- makeTxDbFromGRanges(gr2)
 txdb2
 }
