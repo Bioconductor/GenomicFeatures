@@ -378,7 +378,20 @@ setMethod("seqlevels0", "TxDb",
     function(x)
     {
         sql <- "SELECT chrom FROM chrominfo ORDER BY _chrom_id"
-        queryAnnotationDb(x, sql)[[1L]]
+        ans <- queryAnnotationDb(x, sql)[[1L]]
+        attr(ans, "seqlevels0") <- TRUE
+        ans
+    }
+)
+
+setReplaceMethod("seqlevels", "TxDb",
+    function(x, force=FALSE, value)
+    {
+        seqlevels0 <- seqlevels0(x)
+        if (!identical(value, seqlevels0))
+            return(callNextMethod())
+        ## Reset 'x'.
+        x$initialize()
     }
 )
 

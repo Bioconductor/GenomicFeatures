@@ -6,6 +6,8 @@
 
 \alias{species,TxDb-method}
 \alias{organism,TxDb-method}
+\alias{seqlevels0,TxDb-method}
+\alias{seqlevels<-,TxDb-method}
 \alias{seqinfo,TxDb-method}
 \alias{seqinfo<-,TxDb-method}
 \alias{isActiveSeq}
@@ -40,6 +42,16 @@
     \item{}{
       \code{metadata(x)}:
       Return \code{x}'s metadata in a data frame.
+    }
+    \item{}{
+      \code{seqlevels0(x)}:
+      Get the \emph{sequence levels} originally in \code{x}. This ignores any
+      change the user might have made to the \emph{sequence levels} with the
+      \code{seqlevels} setter.
+    }
+    \item{}{
+      \code{seqlevels(x)}, \code{seqlevels(x) <- value}:
+      Get or set the \emph{sequence levels} in \code{x}.
     }
     \item{}{
       \code{seqinfo(x)}, \code{seqinfo(x) <- value}:
