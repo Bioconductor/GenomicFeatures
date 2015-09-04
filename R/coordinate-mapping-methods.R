@@ -109,16 +109,16 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 }
 
 setMethod("mapToTranscripts", c("GenomicRanges", "GenomicRanges"), 
-    function(x, transcripts, ignore.strand=FALSE, ...)
+    function(x, transcripts, ignore.strand=FALSE)
     {
         grl <- relist(transcripts, PartitioningByEnd(seq_along(transcripts), 
                       names=names(transcripts)))
-        mapToTranscripts(x, grl, ignore.strand, ...)
+        mapToTranscripts(x, grl, ignore.strand)
     }
 )
 
 setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"), 
-    function(x, transcripts, ignore.strand=FALSE, ...) 
+    function(x, transcripts, ignore.strand=FALSE) 
     {
         if (!length(x) && !length(transcripts))
             return(GRanges(xHits=integer(), transcriptsHits=integer()))
@@ -212,16 +212,16 @@ setMethod("mapToTranscripts", c("ANY", "TxDb"),
 }
 
 setMethod("mapFromTranscripts", c("GenomicRanges", "GenomicRanges"), 
-    function(x, transcripts, ignore.strand=FALSE, ...)
+    function(x, transcripts, ignore.strand=FALSE)
     {
         grl <- relist(transcripts, PartitioningByEnd(seq_along(transcripts), 
                       names=names(transcripts)))
-        mapFromTranscripts(x, grl, ignore.strand, ...)
+        mapFromTranscripts(x, grl, ignore.strand)
     }
 )
 
 setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"), 
-    function(x, transcripts, ignore.strand=FALSE, ...) 
+    function(x, transcripts, ignore.strand=FALSE) 
     {
         if (!length(x) && !length(transcripts))
             return(GRanges(xHits=integer(), transcriptsHits=integer()))
@@ -264,15 +264,15 @@ setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"),
 ###
 
 setMethod("pmapToTranscripts", c("GenomicRanges", "GenomicRanges"), 
-    function(x, transcripts, ignore.strand=FALSE, ...) 
+    function(x, transcripts, ignore.strand=FALSE) 
     {
         grl <- splitAsList(transcripts, seq_along(transcripts))
-        pmapToTranscripts(x, grl, ignore.strand, ...)
+        pmapToTranscripts(x, grl, ignore.strand)
     }
 )
 
 setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"), 
-    function(x, transcripts, ignore.strand=FALSE, ...) 
+    function(x, transcripts, ignore.strand=FALSE) 
     {
         if (!length(x))
             return(GRanges())
@@ -319,7 +319,7 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
 ### pmapFromTranscripts()
 ###
 
-.pmapFromTranscripts_ranges <- function(x, transcripts, ...) 
+.pmapFromTranscripts_ranges <- function(x, transcripts) 
 {
     if (!length(x))
         return(GRanges())
@@ -353,25 +353,25 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
 }
 
 setMethod("pmapFromTranscripts", c("Ranges", "GenomicRanges"),
-          function(x, transcripts, ...) 
-              .pmapFromTranscripts_ranges(x, transcripts, ...)
+          function(x, transcripts) 
+              .pmapFromTranscripts_ranges(x, transcripts)
           )
 
 setMethod("pmapFromTranscripts", c("Ranges", "GRangesList"), 
-          function(x, transcripts, ...) 
-              .pmapFromTranscripts_ranges(x, transcripts, ...)
+          function(x, transcripts) 
+              .pmapFromTranscripts_ranges(x, transcripts)
           )
 
 setMethod("pmapFromTranscripts", c("GenomicRanges", "GenomicRanges"), 
-    function(x, transcripts, ignore.strand=FALSE, ...) 
+    function(x, transcripts, ignore.strand=FALSE) 
     {
         grl <- splitAsList(transcripts, seq_along(transcripts))
-        pmapFromTranscripts(x, grl, ignore.strand, ...)
+        pmapFromTranscripts(x, grl, ignore.strand)
     }
 )
 
 setMethod("pmapFromTranscripts", c("GenomicRanges", "GRangesList"), 
-    function(x, transcripts, ignore.strand=FALSE, ...) 
+    function(x, transcripts, ignore.strand=FALSE) 
     {
         if (!length(x))
             return(GRanges())

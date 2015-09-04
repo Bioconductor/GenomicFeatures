@@ -32,19 +32,18 @@
 \usage{
 ## mapping to transcripts
 \S4method{mapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = FALSE, ...) 
+          ignore.strand = FALSE) 
 \S4method{mapToTranscripts}{ANY,TxDb}(x, transcripts, ignore.strand = FALSE, 
           extractor.fun = GenomicFeatures::transcripts, ...) 
 \S4method{pmapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = FALSE, ...) 
+          ignore.strand = FALSE) 
 
 ## mapping from transcripts
 \S4method{mapFromTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = FALSE, ...) 
+          ignore.strand = FALSE) 
 \S4method{pmapFromTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = FALSE, ...)
-\S4method{pmapFromTranscripts}{Ranges,GRangesList}(x, transcripts, 
-          ignore.strand = FALSE, ...) 
+          ignore.strand = FALSE)
+\S4method{pmapFromTranscripts}{Ranges,GRangesList}(x, transcripts)
 }
 
 \arguments{
