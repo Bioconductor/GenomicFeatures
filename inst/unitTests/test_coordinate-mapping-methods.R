@@ -132,7 +132,8 @@ test_pmapToTranscripts <- function()
     ## recycling 
     x <- GRanges("chr1", IRanges(1, width=1))
     y <- GRanges("chr1", IRanges(1:5, width=1))
-    checkException(pmapToTranscripts(x, y), silent=TRUE)
+    ans <- pmapToTranscripts(x, GRangesList("tx1"=y, "tx2"=y))
+    checkIdentical(as.character(seqnames(ans)), c("tx1", "tx2"))
     ans <- pmapToTranscripts(c(x, x), GRangesList("tx1"=y))
     checkIdentical(as.character(seqnames(ans)), c("tx1", "tx1"))
 
@@ -188,7 +189,8 @@ test_pmapFromTranscripts <- function()
     ## recycling 
     x <- GRanges("tx1", IRanges(1, width=1))
     gr <- GRanges("chr1", IRanges(1:5, width=1))
-    checkException(pmapFromTranscripts(x, align), silent=TRUE)
+    ans <- pmapFromTranscripts(x, gr)
+    checkIdentical(as.character(seqnames(ans)), rep("chr1", 5L))
     ans <- pmapFromTranscripts(c(x, x), gr[1])
     checkIdentical(as.character(seqnames(ans)), c("chr1", "chr1"))
 
