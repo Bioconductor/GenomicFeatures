@@ -46,9 +46,9 @@
 ###
 
 .GENE_TYPES <- c("gene", "pseudogene")
-.TX_TYPES <- c("mRNA", "transcript", "primary_transcript",
-               "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
-.EXON_TYPES <- "exon"
+.TX_TYPES <- c("transcript", "pseudogenic_transcript", "primary_transcript",
+               "mRNA", "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
+.EXON_TYPES <- c("exon", "pseudogenic_exon")
 .CDS_TYPES <- "CDS"
 .STOP_CODON_TYPES <- "stop_codon"
 
@@ -877,16 +877,17 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
             in1string <- paste0(sort(drop2_tx), collapse=", ")
             warning(wmsg(
                 "The following transcripts were dropped because no genomic ",
-                "ranges could be found for them and they have exons on more ",
-                "than one chromosome so their ranges could not be inferred: ",
-                in1string))
+                "ranges could be found for them and their ranges could not ",
+                "be inferred from their exons either because they have exons ",
+                "on more than one chromosome: ", in1string))
         }
         if (length(drop3_tx) != 0L) {
             in1string <- paste0(sort(drop3_tx), collapse=", ")
             warning(wmsg(
                 "The following transcripts were dropped because no genomic ",
-                "ranges could be found for them and they have exons on both ",
-                "strands so their ranges could not be inferred: ", in1string))
+                "ranges could be found for them and their ranges could not ",
+                "be inferred from their exons either because they have exons ",
+                "on both strands: ", in1string))
         }
     }
 
