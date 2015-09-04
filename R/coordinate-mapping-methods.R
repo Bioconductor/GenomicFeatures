@@ -161,7 +161,7 @@ setMethod("mapToTranscripts", c("ANY", "TxDb"),
         } else {
             stop("invalid 'extractor.fun'")
         }
-        mapToTranscripts(x, transcripts, ignore.strand, ...)
+        mapToTranscripts(x, transcripts, ignore.strand=ignore.strand)
     }
 )
 

@@ -17,7 +17,7 @@ test_mapToTranscripts <- function()
                  width=200, names=LETTERS[1:3]), strand="+")
     align <- cdsbytx
 
-    ans <- mapToTranscripts(x, cdsbytx, FALSE, FALSE)
+    ans <- mapToTranscripts(x, cdsbytx, ignore.strand=FALSE)
     checkTrue(length(ans) == 3L)
     checkIdentical(names(ans), c("B", "B", "C"))
     checkTrue(all(width(ans) == 200L))
