@@ -60,6 +60,9 @@ extractTranscriptCoverage(reads, transcripts)
     \item \code{\link{extractTranscriptSeqs}} for extracting transcript or
           CDS sequences from chromosome sequences.
 
+    \item \code{\link{transcriptLengths}} for extracting the transcript
+          lengths from a \link{TxDb} object.
+
     \item The \link[IRanges]{RleList} class defined and documented in the
           \pkg{IRanges} package.
 

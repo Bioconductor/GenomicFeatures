@@ -122,6 +122,9 @@ stopifnot(all(non_coding[6:8] == 0))
 ## utr3_len must be equal to tx_len:
 coding <- dm3_txlens[dm3_txlens$cds_len != 0, ]
 stopifnot(all(rowSums(coding[6:8]) == coding[[5]]))
+
+## A sanity check:
+stopifnot(identical(dm3_txlens$tx_id, mcols(transcripts(txdb))$tx_id))
 }
 
 \keyword{manip}

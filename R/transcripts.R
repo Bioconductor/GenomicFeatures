@@ -305,10 +305,12 @@ translateCols <- function(columns, txdb){
     SQL_what <- .getSQL_What(root_table, txdb, what)
     SQL_from <- .joinRootToChildTables(root_table, child_tables)
     SQL_where <- .sqlWhereIn(vals)
-    if (length(orderby_cols) == 0L)
+    if (length(orderby_cols) == 0L) {
         SQL_orderby <- ""
-    else
-        SQL_orderby <- paste("ORDER BY", paste(orderby_cols, collapse=", "))
+    } else {
+        orderby <- .asQualifiedColnames(root_table, orderby_cols)
+        SQL_orderby <- paste("ORDER BY", paste(orderby, collapse=", "))
+    }
     SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from,
                  SQL_where, SQL_orderby)
     ans <- queryAnnotationDb(txdb, SQL)
@@ -341,7 +343,10 @@ translateCols <- function(columns, txdb){
 .extractRootData <- function(root_table, txdb, vals, root_columns)
 {
     CORECOLS <- .DBDESC[[root_table]]$CORECOLS
-    orderby_cols <- CORECOLS[c("chrom", "strand", "start", "end")]
+    ## Ordering by '_tx_id' guarantees that the objects returned by
+    ## transcripts() and exonsBy() are parallel.
+    #orderby_cols <- CORECOLS[c("chrom", "strand", "start", "end")]
+    orderby_cols <- CORECOLS["id"]
     what_cols <- unique(c(CORECOLS, root_columns))
     where_cols <- .getWhereCols(vals)
     if (is.list(vals))

@@ -99,6 +99,9 @@ extractTranscriptSeqs(x, transcripts, ...)
     \item \code{\link{extractTranscriptCoverage}} for extracting transcript or
           CDS coverage from a set of aligned reads.
 
+    \item \code{\link{transcriptLengths}} for extracting the transcript
+          lengths from a \link{TxDb} object.
+
     \item The \code{\link{transcriptLocs2refLocs}} function for converting
           transcript-based locations into reference-based locations.
 
@@ -199,15 +202,17 @@ stopifnot(identical(width(cds_seqs), unname(sum(width(cds)))))
 
 ## Note that, alternatively, the CDS sequences can be obtained from the
 ## transcript sequences by removing the 5' and 3' UTRs:
-five_utr_width <- sum(width(fiveUTRsByTranscript(txdb, use.names=TRUE)))
-five_utr_width <- five_utr_width[names(cds_seqs)]
-five_utr_width[is.na(five_utr_width)] <- 0L
-three_utr_width <- sum(width(threeUTRsByTranscript(txdb, use.names=TRUE)))
-three_utr_width <- three_utr_width[names(cds_seqs)]
-three_utr_width[is.na(three_utr_width)] <- 0L
-cds_seqs2 <- narrow(tx_seqs[names(cds_seqs)],
-                    start=five_utr_width+1L,
-                    end=-(three_utr_width+1L))
+tx_lens <- transcriptLengths(txdb, with.utr5_len=TRUE, with.utr3_len=TRUE)
+stopifnot(identical(tx_lens$tx_name, names(tx_seqs)))  # sanity
+cds_seqs2tx_seqs <- match(names(cds_seqs), names(tx_seqs))
+## Keep the rows in 'tx_lens' that correspond to a sequence in 'cds_seqs'
+## and put them in the same order as in 'cds_seqs':
+tx_lens <- tx_lens[cds_seqs2tx_seqs, ]
+utr5_width <- tx_lens$utr5_len
+utr3_width <- tx_lens$utr3_len
+cds_seqs2 <- narrow(tx_seqs[cds_seqs2tx_seqs],
+                    start=utr5_width+1L,
+                    end=-(utr3_width+1L))
 stopifnot(identical(as.character(cds_seqs), as.character(cds_seqs2)))
 
 ## ---------------------------------------------------------------------

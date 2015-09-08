@@ -164,6 +164,12 @@ txdb <- loadDb(txdb_file)
 ## transcripts()
 ## ---------------------------------------------------------------------
 
+tx <- transcripts(txdb)
+tx
+
+## A sanity check:
+stopifnot(identical(mcols(tx)$tx_id, seq_along(tx)))
+
 vals <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
 transcripts(txdb, vals)
 
