@@ -93,6 +93,11 @@ cvg_by_tx
 
 ## A sanity check:
 stopifnot(identical(elementLengths(cvg_by_tx), sum(width(transcripts))))
+
+## Also works to extract the CDS coverage:
+cds <- cdsBy(txdb, by="tx", use.names=TRUE)
+cvg_by_cds <- extractTranscriptCoverage(reads, cds)
+stopifnot(identical(elementLengths(cvg_by_cds), sum(width(cds))))
 }
 
 \keyword{manip}
