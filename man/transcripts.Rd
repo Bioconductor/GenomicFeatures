@@ -128,17 +128,29 @@ genes(x, ...)
     \item \code{\link{transcriptsBy}} and \code{\link{transcriptsByOverlaps}}
           for more ways to extract genomic features
           from a \link{TxDb} object.
+
     \item \code{\link{transcriptLengths}} for extracting the transcript
           lengths from a \link{TxDb} object.
+
+    \item \code{\link{extractTranscriptSeqs}} for extracting transcript or
+          CDS sequences from chromosome sequences.
+
+    \item \code{\link{extractTranscriptCoverage}} for extracting transcript or
+          CDS coverage from a set of aligned reads.
+
     \item \code{\link{disjointExons}} for extracting the non-overlapping
           exon parts from a \link{TxDb} object.
+
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
           \link{TxDb} object.
+
     \item \code{\link{microRNAs}} and \code{\link{tRNAs}} for extracting
           microRNA or tRNA genomic ranges from a \link{TxDb} object.
+
     \item \code{\link{id2name}} for mapping \link{TxDb} internal ids
           to external names for a given feature type.
+
     \item The \link{TxDb} class.
   }
 }

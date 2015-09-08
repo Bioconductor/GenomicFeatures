@@ -95,39 +95,51 @@ threeUTRsByTranscript(x, ...)
     \item \code{\link{transcripts}} and \code{\link{transcriptsByOverlaps}}
           for more ways to extract genomic features
           from a \link{TxDb} object.
+
+    \item \code{\link{transcriptLengths}} for extracting the transcript
+          lengths from a \link{TxDb} object.
+
+    \item \code{\link{extractTranscriptSeqs}} for extracting transcript or
+          CDS sequences from chromosome sequences.
+
+    \item \code{\link{extractTranscriptCoverage}} for extracting transcript or
+          CDS coverage from a set of aligned reads.
+
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
           \link{TxDb} object.
+
     \item \code{\link{id2name}} for mapping \link{TxDb} internal ids
           to external names for a given feature type.
+
     \item The \link{TxDb} class.
   }
 }
 \examples{
-  txdb_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
-                           package="GenomicFeatures")
-  txdb <- loadDb(txdb_file)
+txdb_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
+                         package="GenomicFeatures")
+txdb <- loadDb(txdb_file)
 
-  ## Get the transcripts grouped by gene:
-  transcriptsBy(txdb, "gene")
+## Get the transcripts grouped by gene:
+transcriptsBy(txdb, "gene")
 
-  ## Get the exons grouped by gene:
-  exonsBy(txdb, "gene")
+## Get the exons grouped by gene:
+exonsBy(txdb, "gene")
 
-  ## Get the CDS grouped by transcript:
-  cds_by_tx0 <- cdsBy(txdb, "tx")
-  ## With more informative group names:
-  cds_by_tx1 <- cdsBy(txdb, "tx", use.names=TRUE)
-  ## Note that 'cds_by_tx1' can also be obtained with:
-  names(cds_by_tx0) <- id2name(txdb, feature.type="tx")[names(cds_by_tx0)]
-  stopifnot(identical(cds_by_tx0, cds_by_tx1))
+## Get the CDS grouped by transcript:
+cds_by_tx0 <- cdsBy(txdb, "tx")
+## With more informative group names:
+cds_by_tx1 <- cdsBy(txdb, "tx", use.names=TRUE)
+## Note that 'cds_by_tx1' can also be obtained with:
+names(cds_by_tx0) <- id2name(txdb, feature.type="tx")[names(cds_by_tx0)]
+stopifnot(identical(cds_by_tx0, cds_by_tx1))
 
-  ## Get the introns grouped by transcript:
-  intronsByTranscript(txdb)
+## Get the introns grouped by transcript:
+intronsByTranscript(txdb)
 
-  ## Get the 5' UTRs grouped by transcript:
-  fiveUTRsByTranscript(txdb)
-  fiveUTRsByTranscript(txdb, use.names=TRUE)  # more informative group names
+## Get the 5' UTRs grouped by transcript:
+fiveUTRsByTranscript(txdb)
+fiveUTRsByTranscript(txdb, use.names=TRUE)  # more informative group names
 }
 
 \keyword{methods}

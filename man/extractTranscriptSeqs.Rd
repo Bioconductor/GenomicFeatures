@@ -5,7 +5,7 @@
 \alias{extractTranscriptSeqs,ANY-method}
 
 
-\title{Extract transcript sequences from chromosomes}
+\title{Extract transcript or CDS sequences from chromosome sequences}
 
 \description{
   \code{extractTranscriptSeqs} extracts transcript or CDS sequences from
@@ -86,8 +86,8 @@ extractTranscriptSeqs(x, transcripts, ...)
 
 \value{
   A \link[Biostrings]{DNAStringSet} object \emph{parallel} to
-  \code{transcripts}, that is, the i-th element in the returned object
-  is the sequence of the i-th transcript in \code{transcripts}.
+  \code{transcripts}, that is, the i-th element in it is the sequence
+  of the i-th transcript in \code{transcripts}.
 }
 
 \author{
@@ -96,6 +96,9 @@ extractTranscriptSeqs(x, transcripts, ...)
 
 \seealso{
   \itemize{
+    \item \code{\link{extractTranscriptCoverage}} for extracting transcript or
+          CDS coverage from a set of aligned reads.
+
     \item The \code{\link{transcriptLocs2refLocs}} function for converting
           transcript-based locations into reference-based locations.
 

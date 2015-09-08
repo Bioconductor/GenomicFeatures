@@ -13,12 +13,12 @@
 ### length and names of 'breakpoints'. Behaves as an endomorphism on a
 ### CompressedList object.
 ### Note that
-###     .regroup(x, length(x))[[1L]]
+###     regroup(x, length(x))[[1L]]
 ### is equivalent to
 ###     unlist(x, use.names=FALSE)
 ### TODO: We have this same helper in GenomicFeatures/R/transcripts.R and in
 ### SplicingGraphs/R/utils.R. Clean this!
-.regroup <- function(x, breakpoints)
+regroup <- function(x, breakpoints)
 {
    ans_breakpoints <- end(PartitioningByEnd(x))[breakpoints]
    ans_skeleton <- PartitioningByEnd(ans_breakpoints,
@@ -82,7 +82,7 @@ extractTranscriptCoverage <- function(reads, transcripts)
 
     transcripts_breakpoints <- end(PartitioningByEnd(transcripts))
     names(transcripts_breakpoints) <- names(transcripts)
-    ans <- .regroup(ex_cvg, transcripts_breakpoints)
+    ans <- regroup(ex_cvg, transcripts_breakpoints)
 
   ## 6) Propagate 'mcols(transcripts)'.
 
