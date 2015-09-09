@@ -80,6 +80,10 @@ extractTranscriptCoverage(reads, transcripts)
 }
 
 \examples{
+## ---------------------------------------------------------------------
+## EXTRACT TRANSCRIPTOME COVERAGE FROM A SET OF ALIGNED READS
+## ---------------------------------------------------------------------
+
 ## Load the aligned reads:
 library(pasillaBamSubset)
 library(GenomicAlignments)
@@ -97,10 +101,45 @@ cvg_by_tx
 ## A sanity check:
 stopifnot(identical(elementLengths(cvg_by_tx), sum(width(transcripts))))
 
-## Also works to extract the CDS coverage:
+## ---------------------------------------------------------------------
+## EXTRACT CDS COVERAGE FROM A SET OF ALIGNED READS
+## ---------------------------------------------------------------------
+
+## extractTranscriptCoverage() can also be used to extract CDS coverage:
 cds <- cdsBy(txdb, by="tx", use.names=TRUE)
 cvg_by_cds <- extractTranscriptCoverage(reads, cds)
+cvg_by_cds
+
+## A sanity check:
 stopifnot(identical(elementLengths(cvg_by_cds), sum(width(cds))))
+
+## ---------------------------------------------------------------------
+## ALTERNATIVELY, THE CDS COVERAGE CAN BE OBTAINED FROM THE TRANSCRIPT
+## COVERAGE BY TRIMMING THE 5' AND 3' UTRS
+## ---------------------------------------------------------------------
+
+tx_lens <- transcriptLengths(txdb, with.utr5_len=TRUE, with.utr3_len=TRUE)
+stopifnot(identical(tx_lens$tx_name, names(cvg_by_tx)))  # sanity
+
+## Keep the rows in 'tx_lens' that correspond to a list element in
+## 'cvg_by_cds' and put them in the same order as in 'cvg_by_cds':
+m <- match(names(cvg_by_cds), names(cvg_by_tx))
+tx_lens <- tx_lens[m, ]
+utr5_width <- tx_lens$utr5_len
+utr3_width <- tx_lens$utr3_len
+
+trimListElements <- function(x, ltrim=0, rtrim=0)
+{
+    x_eltlens <- elementLengths(x)
+    n1 <- pmax(x_eltlens - rtrim, 0)
+    n2 <- pmax(n1 - ltrim, 0)
+    ptail(phead(x, n=n1), n=n2)
+}
+
+cvg_by_cds2 <- trimListElements(cvg_by_tx[m], utr5_width, utr3_width)
+
+## A sanity check:
+stopifnot(identical(cvg_by_cds2, cvg_by_cds))
 }
 
 \keyword{manip}

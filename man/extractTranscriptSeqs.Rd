@@ -204,16 +204,15 @@ stopifnot(identical(width(cds_seqs), unname(sum(width(cds)))))
 ## transcript sequences by removing the 5' and 3' UTRs:
 tx_lens <- transcriptLengths(txdb, with.utr5_len=TRUE, with.utr3_len=TRUE)
 stopifnot(identical(tx_lens$tx_name, names(tx_seqs)))  # sanity
-cds_seqs2tx_seqs <- match(names(cds_seqs), names(tx_seqs))
 ## Keep the rows in 'tx_lens' that correspond to a sequence in 'cds_seqs'
 ## and put them in the same order as in 'cds_seqs':
-tx_lens <- tx_lens[cds_seqs2tx_seqs, ]
+m <- match(names(cds_seqs), names(tx_seqs))
+tx_lens <- tx_lens[m, ]
 utr5_width <- tx_lens$utr5_len
 utr3_width <- tx_lens$utr3_len
-cds_seqs2 <- narrow(tx_seqs[cds_seqs2tx_seqs],
-                    start=utr5_width+1L,
-                    end=-(utr3_width+1L))
-stopifnot(identical(as.character(cds_seqs), as.character(cds_seqs2)))
+cds_seqs2 <- narrow(tx_seqs[m],
+                    start=utr5_width+1L, end=-(utr3_width+1L))
+stopifnot(identical(as.character(cds_seqs2), as.character(cds_seqs)))
 
 ## ---------------------------------------------------------------------
 ## 4. TRANSLATE THE CDS SEQUENCES
