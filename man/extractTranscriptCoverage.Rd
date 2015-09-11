@@ -95,11 +95,11 @@ txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
 transcripts <- exonsBy(txdb, by="tx", use.names=TRUE)
 
 ## Extract the transcript coverage:
-cvg_by_tx <- extractTranscriptCoverage(reads, transcripts)
-cvg_by_tx
+tx_cvg <- extractTranscriptCoverage(reads, transcripts)
+tx_cvg
 
 ## A sanity check:
-stopifnot(identical(elementLengths(cvg_by_tx), sum(width(transcripts))))
+stopifnot(identical(elementLengths(tx_cvg), sum(width(transcripts))))
 
 ## ---------------------------------------------------------------------
 ## EXTRACT CDS COVERAGE FROM A SET OF ALIGNED READS
@@ -107,11 +107,11 @@ stopifnot(identical(elementLengths(cvg_by_tx), sum(width(transcripts))))
 
 ## extractTranscriptCoverage() can also be used to extract CDS coverage:
 cds <- cdsBy(txdb, by="tx", use.names=TRUE)
-cvg_by_cds <- extractTranscriptCoverage(reads, cds)
-cvg_by_cds
+cds_cvg <- extractTranscriptCoverage(reads, cds)
+cds_cvg
 
 ## A sanity check:
-stopifnot(identical(elementLengths(cvg_by_cds), sum(width(cds))))
+stopifnot(identical(elementLengths(cds_cvg), sum(width(cds))))
 
 ## ---------------------------------------------------------------------
 ## ALTERNATIVELY, THE CDS COVERAGE CAN BE OBTAINED FROM THE TRANSCRIPT
@@ -119,11 +119,11 @@ stopifnot(identical(elementLengths(cvg_by_cds), sum(width(cds))))
 ## ---------------------------------------------------------------------
 
 tx_lens <- transcriptLengths(txdb, with.utr5_len=TRUE, with.utr3_len=TRUE)
-stopifnot(identical(tx_lens$tx_name, names(cvg_by_tx)))  # sanity
+stopifnot(identical(tx_lens$tx_name, names(tx_cvg)))  # sanity
 
 ## Keep the rows in 'tx_lens' that correspond to a list element in
-## 'cvg_by_cds' and put them in the same order as in 'cvg_by_cds':
-m <- match(names(cvg_by_cds), names(cvg_by_tx))
+## 'cds_cvg' and put them in the same order as in 'cds_cvg':
+m <- match(names(cds_cvg), names(tx_cvg))
 tx_lens <- tx_lens[m, ]
 utr5_width <- tx_lens$utr5_len
 utr3_width <- tx_lens$utr3_len
@@ -136,10 +136,10 @@ trimListElements <- function(x, ltrim=0, rtrim=0)
     ptail(phead(x, n=n1), n=n2)
 }
 
-cvg_by_cds2 <- trimListElements(cvg_by_tx[m], utr5_width, utr3_width)
+cds_cvg2 <- trimListElements(tx_cvg[m], utr5_width, utr3_width)
 
 ## A sanity check:
-stopifnot(identical(cvg_by_cds2, cvg_by_cds))
+stopifnot(identical(cds_cvg2, cds_cvg))
 }
 
 \keyword{manip}
