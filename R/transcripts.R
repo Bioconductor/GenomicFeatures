@@ -541,11 +541,13 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
 
 .relist_col <- function(x, skeleton)
 {
-   if (is.list(x) || is(x, "List"))
+   if (is.list(x) || (is(x, "List") && !is(x, "Ranges")))
        return(IRanges:::regroupBySupergroup(x, skeleton))
    relist(x, skeleton)
 }
 
+### Used in SplicingGraphs! Move this to IRanges (and check similarity with
+### "collapse" method for DataFrame objects).
 .collapse_df <- function(df, skeleton)
 {
     ## FIXME: endoapply() on a DataFrame object is broken when applying
