@@ -539,24 +539,22 @@ setMethod("cds", "TxDb",
 
 setGeneric("genes", function(x, ...) standardGeneric("genes"))
 
-.regroup <- function(x, new_breakpoints)
+.relist_col <- function(x, skeleton)
 {
-   if (is.list(x) || is(x, "List")) {
-       new_breakpoints <- end(PartitioningByEnd(x))[new_breakpoints]
-       x <- unlist(x, use.names=FALSE)
-   }
-   relist(x, PartitioningByEnd(new_breakpoints))
+   if (is.list(x) || is(x, "List"))
+       return(IRanges:::regroupBySupergroup(x, skeleton))
+   relist(x, skeleton)
 }
 
-.regroup_rows <- function(df, new_breakpoints)
+.collapse_df <- function(df, skeleton)
 {
     ## FIXME: endoapply() on a DataFrame object is broken when applying
     ## a function 'FUN' that modifies the nb of rows. Furthermore, the
     ## returned object passes validation despite being broken! Fix it
     ## in IRanges.
-    ans <- endoapply(df, function(x) unique(.regroup(x, new_breakpoints)))
+    ans <- endoapply(df, function(x) unique(.relist_col(x, skeleton)))
     ## Fix the broken DataFrame returned by endoapply().
-    ans@nrows <- length(new_breakpoints)
+    ans@nrows <- length(skeleton)
     ans@rownames <- NULL
     ans
 }
@@ -590,11 +588,10 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     ## Split 'tx' by gene.
     tx_by_gene <- split(tx, mcols(tx)$gene_id)
 
-    ## Turn inner mcols into outter mcols by reducing them.
+    ## Turn inner mcols into outter mcols by relist()'ing them.
     inner_mcols <- mcols(tx_by_gene@unlistData)[columns]
     mcols(tx_by_gene@unlistData) <- NULL
-    new_breakpoints <- end(PartitioningByEnd(tx_by_gene))
-    outter_mcols <- .regroup_rows(inner_mcols, new_breakpoints)
+    outter_mcols <- .collapse_df(inner_mcols, tx_by_gene)
     gene_id <- outter_mcols$gene_id
     if (!is.null(gene_id)) {
         stopifnot(identical(names(tx_by_gene), as.character(gene_id)))

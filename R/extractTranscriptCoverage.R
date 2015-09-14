@@ -3,42 +3,6 @@
 ### -------------------------------------------------------------------------
 
 
-### A very efficient way to concatenate groups of successive list elements
-### in 'x'.
-### 'x' must be a list-like object (typically a CompressedList object).
-### 'skeleton' will be immediately replaced with 'PartitioningByEnd(skeleton)'
-### so it should be an object that is accepted by the PartitioningByEnd()
-### constructor (note that this constructor is a no-op if 'skeleton' is
-### already a PartitioningByEnd object). After this transformation, 'skeleton'
-### should define a partitioning that is compatible with 'seq_along(x)' (i.e.
-### 'relist(seq_along(x), skeleton)' should work).
-### Return a list-like object of the same elementType() as 'x' but with the
-### length and names of 'skeleton'. Behaves as an endomorphism on a
-### CompressedList or PartitioningByEnd object.
-### Note that
-###     regroup(x, length(x))[[1L]]
-### is equivalent to
-###     unlist(x, use.names=FALSE)
-### TODO:
-### - Move this helper to IRanges (R/extractList.R might be a good place) and
-###   maybe export and document it?
-### - Remove older versions of this helper from GenomicFeatures/R/transcripts.R
-###   and SplicingGraphs/R/utils.R, and use IRanges::regroup() instead.
-regroup <- function(x, skeleton)
-{
-    skeleton <- PartitioningByEnd(skeleton)
-    x_breakpoints <- end(PartitioningByEnd(x))
-    ans_breakpoints <- x_breakpoints[end(skeleton)]
-    nleading0s <- length(skeleton) - length(ans_breakpoints)
-    if (nleading0s != 0L)
-        ans_breakpoints <- c(rep.int(0L, nleading0s), ans_breakpoints)
-    ans_partitioning <- PartitioningByEnd(ans_breakpoints,
-                                          names=names(skeleton))
-    if (is(x, "PartitioningByEnd"))
-        return(ans_partitioning)
-    relist(unlist(x, use.names=FALSE), ans_partitioning)
-}
-
 ### The function is named after extractTranscriptSeqs() because extracting
 ### transcript coverage from a set of aligned reads is an operation that feels
 ### a lot like extracting transcript sequences from a genome.
@@ -93,7 +57,7 @@ extractTranscriptCoverage <- function(reads, transcripts)
   ## 5) Compute coverage of each transcript by concatenating coverage of its
   ##    exons.
 
-    ans <- regroup(ex_cvg, transcripts)
+    ans <- IRanges:::regroupBySupergroup(ex_cvg, transcripts)
 
   ## 6) Propagate 'mcols(transcripts)'.
 
