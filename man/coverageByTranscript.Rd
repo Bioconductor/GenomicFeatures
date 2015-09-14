@@ -108,9 +108,9 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
     \item The \code{\link{exonsBy}} function for extracting exon ranges
           grouped by transcript.
 
-    \item \code{\link{findCompatibleOverlaps}} for finding which reads are
-          \emph{compatible} with the splicing of which transcript.
-
+    \item \code{\link{findCompatibleOverlaps}} in the \pkg{GenomicAlignments}
+          package for finding which reads are \emph{compatible} with the
+          splicing of which transcript.
   }
 }
 
