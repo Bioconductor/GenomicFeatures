@@ -98,6 +98,7 @@ export(
 
   ## extractTranscriptCoverage.R:
   extractTranscriptCoverage,
+  pextractTranscriptCoverage,
 
   ## extractUpstreamSeqs.R:
   extractUpstreamSeqs,

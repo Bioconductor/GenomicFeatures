@@ -8,7 +8,7 @@
 ### a lot like extracting transcript sequences from a genome.
 ### We define it as an ordinary function though (and not as a generic like
 ### extractTranscriptSeqs()), at least for now.
-extractTranscriptCoverage <- function(reads, transcripts)
+extractTranscriptCoverage <- function(x, transcripts)
 {
     if (!is(transcripts, "GRangesList")) {
         transcripts <- try(exonsBy(transcripts, by="tx", use.names=TRUE),
@@ -18,7 +18,7 @@ extractTranscriptCoverage <- function(reads, transcripts)
                       "from 'transcripts' with ",
                       "exonsBy(transcripts, by=\"tx\", use.names=TRUE)"))
     }
-    seqinfo(reads) <- merge(seqinfo(reads), seqinfo(transcripts))
+    seqinfo(x) <- merge(seqinfo(x), seqinfo(transcripts))
 
   ## 1) Compute unique exons ('uex').
 
@@ -35,8 +35,8 @@ extractTranscriptCoverage <- function(reads, transcripts)
   ## 2) Compute coverage for each unique exon ('uex_cvg').
 
     #There doesn't seem to be much benefit in doing this.
-    #reads <- subsetByOverlaps(reads, transcripts, ignore.strand=TRUE)
-    cvg <- coverage(reads)
+    #x <- subsetByOverlaps(x, transcripts, ignore.strand=TRUE)
+    cvg <- coverage(x)
     uex_cvg <- cvg[uex]  # parallel to 'uex'
 
   ## 3) Flip coverage for exons on minus strand.
@@ -61,6 +61,211 @@ extractTranscriptCoverage <- function(reads, transcripts)
 
   ## 6) Propagate 'mcols(transcripts)'.
 
+    mcols(ans) <- mcols(transcripts)
+    ans
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### projectOnTranscripts()
+###
+### NOT exported! Used in pextractTranscriptCoverage() below.
+###
+
+### Transform genome-based coordinates into transcriptome-based coordinates.
+### 'transcripts' must be a GRanges object representing the exons of a single
+### transcript or a GRangesList object of exons grouped by transcript. If the
+### former then 'start' and 'end' must be numeric vectors parallel to
+### 'transcripts' and the function returns 2 numeric vectors also parallel to
+### 'transcripts'. If the latter then they must be NumericList objects with
+### the shape of 'transcripts' and the function returns 2 NumericList objects
+### also with the shape of 'transcripts'.
+.genome2txcoords <- function(transcripts, start, end=start)
+{
+    offset_in_exon <- start - start(transcripts)
+    offset_in_exon2 <- end(transcripts) - end
+    cumsumwtx <- cumsum(width(transcripts))
+    end_in_tx <- cumsumwtx - offset_in_exon2
+    end_in_tx2 <- cumsumwtx - offset_in_exon
+    strand_is_minus <- unname(strand(transcripts) == "-")
+    if (is(transcripts, "GRangesList")) {
+        strand_is_minus <- unlist(strand_is_minus, use.names=FALSE)
+        tmp <- extractROWS(unlist(offset_in_exon2, use.names=FALSE),
+                           strand_is_minus)
+        offset_in_exon <- relist(
+               replaceROWS(unlist(offset_in_exon, use.names=FALSE),
+                           strand_is_minus, tmp),
+                           offset_in_exon)
+        tmp <- extractROWS(unlist(end_in_tx2, use.names=FALSE),
+                           strand_is_minus)
+        end_in_tx <- relist(
+               replaceROWS(unlist(end_in_tx, use.names=FALSE),
+                           strand_is_minus, tmp),
+                           end_in_tx)
+    } else {  # GRanges
+        tmp <- extractROWS(offset_in_exon2, strand_is_minus)
+        offset_in_exon <- replaceROWS(offset_in_exon, strand_is_minus, tmp)
+        tmp <- extractROWS(end_in_tx2, strand_is_minus)
+        end_in_tx <- replaceROWS(end_in_tx, strand_is_minus, tmp)
+    }
+    list(end_in_tx=end_in_tx, offset_in_exon=offset_in_exon)
+}
+
+.put_transcriptome_costume <- function(x, transcripts)
+{
+    stopifnot(is(x, "GRangesList"), is(transcripts, "GRangesList"))
+    stopifnot(length(x) == length(transcripts))
+
+    ## Temporarily put all the ranges in 'x' on the 1st level and drop
+    ## all other levels.
+    seqlevel1 <- seqlevels(x)[[1L]]
+    tmp_seqnames <- relist(Rle(factor(seqlevel1, levels=seqlevels(x)),
+                               length(unlist(x, use.names=FALSE))), x)
+    suppressWarnings(seqnames(x) <- tmp_seqnames)
+    seqlevels(x) <- seqlevel1
+
+    ## Set transcriptome-based seqinfo.
+    ans_seqinfo <- Seqinfo(paste0("TX", as.character(seq_along(transcripts))),
+                           unname(sum(width(transcripts))),
+                           logical(length(transcripts)),
+                           genome(transcripts))
+    new2old <- rep.int(NA_integer_, length(ans_seqinfo))
+    new2old[1L] <- 1L
+    suppressWarnings(seqinfo(x, new2old=new2old) <- ans_seqinfo)
+
+    ## Set transcriptome-based seqnames.
+    ans_seqnames <- relist(Rle(factor(seqlevels(ans_seqinfo),
+                                      levels=seqlevels(ans_seqinfo)),
+                               elementLengths(x)), x)
+    seqnames(x) <- ans_seqnames
+
+    ## Set strand to "*".
+    strand(x) <- "*"
+    x
+}
+
+### If 'keep.nohit.exons' is TRUE, return a GRangesList object with the same
+### shape as 'transcripts'. Names and metadata columns on 'transcripts' are
+### propagated.
+.project_GRanges_on_transcripts <- function(x, transcripts,
+                                            ignore.strand=FALSE,
+                                            keep.nohit.exons=FALSE)
+{
+    stopifnot(is(x, "GRanges"), is(transcripts, "GRangesList"))
+    if (length(x) != length(transcripts)) {
+        if (length(x) == 1L)
+            x <- rep.int(x, length(transcripts))
+        else if (length(transcripts) == 1L)
+            transcripts <- rep.int(transcripts, length(x))
+        else
+            stop(wmsg("when 'x' and 'transcripts' don't have the ",
+                      "same length, one of them must have length 1"))
+    }
+    if (!isTRUEorFALSE(keep.nohit.exons))
+        stop(wmsg("'keep.nohit.exons' must be TRUE or FALSE"))
+
+    pint <- pintersect(transcripts, x, ignore.strand=ignore.strand)
+
+    ## Transform genome-based coordinates in 'pint' into transcriptome-based
+    ## coordinates.
+    txcoords <- .genome2txcoords(transcripts, start(pint), end(pint))
+    ans <- shift(pint, txcoords$end_in_tx - end(pint))
+
+    ## Add "offset_in_exon" inner metadata column to 'ans'.
+    unlisted_ans <- unlist(ans, use.names=FALSE)
+    mcols(unlisted_ans)$offset_in_exon <- unlist(txcoords$offset_in_exon,
+                                                 use.names=FALSE)
+
+    ## 'pint' typically contains many "nohit ranges" that are zero-width ranges
+    ## artificially created by pintersect(), one for each exon in 'transcripts'
+    ## that receives no hit. This allows 'pint' to have the same shape as
+    ## 'transcripts' which is required for .genome2txcoords() to work.
+    ## If 'keep.nohit.exons' is FALSE then we remove those "nohit ranges" from
+    ## 'ans'.
+    if (!keep.nohit.exons) {
+        is_hit <- relist(mcols(unlisted_ans)$hit, ans)
+        mcols(unlisted_ans)$hit <- NULL
+        ans <- relist(unlisted_ans, ans)[is_hit]
+    } else {
+        ans <- relist(unlisted_ans, ans)
+    }
+
+    .put_transcriptome_costume(ans, transcripts)
+}
+
+### Return a GRangesList object parallel to 'transcripts' (but the shape is
+### different). Names and metadata columns on 'transcripts' are propagated.
+.project_GRangesList_on_transcripts <- function(x, transcripts,
+                                                ignore.strand=FALSE,
+                                                keep.nohit.exons=FALSE)
+{
+    stopifnot(is(x, "GRangesList"), is(transcripts, "GRangesList"))
+    if (length(x) != length(transcripts)) {
+        if (length(x) == 1L)
+            x <- rep.int(x, length(transcripts))
+        else if (length(transcripts) == 1L)
+            transcripts <- rep.int(transcripts, length(x))
+        else
+            stop(wmsg("when 'x' and 'transcripts' don't have the ",
+                      "same length, one of them must have length 1"))
+    }
+    x_eltlens <- elementLengths(x)
+    transcripts2 <- rep.int(transcripts, x_eltlens)
+    unlisted_x <- unlist(x, use.names=FALSE)
+    y <- .project_GRanges_on_transcripts(unlisted_x, transcripts2,
+                                         ignore.strand, keep.nohit.exons)
+    ans <- IRanges:::regroupBySupergroup(y, x)
+    .put_transcriptome_costume(ans, transcripts)
+}
+
+### 'x' and 'transcripts' must have the same length. Perform "parallel
+### projection" of the ranges in 'x' on the exons in 'transcripts'.
+setGeneric("projectOnTranscripts", signature="x",
+    function(x, transcripts, ...) standardGeneric("projectOnTranscripts")
+)
+
+setMethod("projectOnTranscripts", "GRanges",
+    .project_GRanges_on_transcripts
+)
+
+setMethod("projectOnTranscripts", "GRangesList",
+    .project_GRangesList_on_transcripts
+)
+
+setMethod("projectOnTranscripts", "ANY",
+    function(x, transcripts, ignore.strand=FALSE, keep.nohit.exons=FALSE, ...)
+    {
+        x <- grglist(x, ...)
+        callGeneric()
+    }
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### pextractTranscriptCoverage()
+###
+### "Parallel" version of extractTranscriptCoverage(). 'x' and 'transcripts'
+### must have the same length. 'x' can be any object supported by
+### projectOnTranscripts().
+###
+
+pextractTranscriptCoverage <- function(x, transcripts,
+                                       ignore.strand=FALSE, ...)
+{
+    if (!is(transcripts, "GRangesList")) {
+        transcripts <- try(exonsBy(transcripts, by="tx", use.names=TRUE),
+                           silent=TRUE)
+        if (is(transcripts, "try-error"))
+            stop(wmsg("failed to extract the exon ranges ",
+                      "from 'transcripts' with ",
+                      "exonsBy(transcripts, by=\"tx\", use.names=TRUE)"))
+    }
+    ranges_on_tx <- projectOnTranscripts(x, transcripts,
+                                         ignore.strand=ignore.strand,
+                                         keep.nohit.exons=FALSE,
+                                         ...)
+    ans <- as(coverage(ranges_on_tx), "CompressedRleList")
+    names(ans) <- names(transcripts)
     mcols(ans) <- mcols(transcripts)
     ans
 }
