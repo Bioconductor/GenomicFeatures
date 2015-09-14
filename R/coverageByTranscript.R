@@ -1,14 +1,12 @@
 ### =========================================================================
-### extractTranscriptCoverage()
+### coverageByTranscript()
 ### -------------------------------------------------------------------------
 
 
-### The function is named after extractTranscriptSeqs() because extracting
-### transcript coverage from a set of aligned reads is an operation that feels
-### a lot like extracting transcript sequences from a genome.
-### We define it as an ordinary function though (and not as a generic like
-### extractTranscriptSeqs()), at least for now.
-extractTranscriptCoverage <- function(x, transcripts, ignore.strand=FALSE)
+### Computing coverage by transcript (or CDS) of a set of ranges is an
+### operation that feels a lot like extracting transcript sequences from a
+### genome. Defined as an ordinary function for now.
+coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
 {
     if (!is(transcripts, "GRangesList")) {
         transcripts <- try(exonsBy(transcripts, by="tx", use.names=TRUE),
@@ -50,7 +48,7 @@ extractTranscriptCoverage <- function(x, transcripts, ignore.strand=FALSE)
         is_minus_ex <- strand(uex) == "-"
         if (!identical(is_plus_ex, !is_minus_ex))
             stop(wmsg("'transcripts' has exons on the * strand. ",
-                      "This is not supported yet."))
+                      "This is not supported at the moment."))
         uex_cvg <- cvg1[uex]
         uex_cvg[is_minus_ex] <- cvg2[uex[is_minus_ex]]
     }
@@ -85,7 +83,7 @@ extractTranscriptCoverage <- function(x, transcripts, ignore.strand=FALSE)
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### projectOnTranscripts()
 ###
-### NOT exported! Used in pextractTranscriptCoverage() below.
+### NOT exported! Used in pcoverageByTranscript() below.
 ###
 
 ### Transform genome-based coordinates into transcriptome-based coordinates.
@@ -258,15 +256,14 @@ setMethod("projectOnTranscripts", "ANY",
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### pextractTranscriptCoverage()
+### pcoverageByTranscript()
 ###
-### "Parallel" version of extractTranscriptCoverage(). 'x' and 'transcripts'
+### "Parallel" version of coverageByTranscript(). 'x' and 'transcripts'
 ### must have the same length. 'x' can be any object supported by
 ### projectOnTranscripts().
 ###
 
-pextractTranscriptCoverage <- function(x, transcripts,
-                                       ignore.strand=FALSE, ...)
+pcoverageByTranscript <- function(x, transcripts, ignore.strand=FALSE, ...)
 {
     if (!is(transcripts, "GRangesList")) {
         transcripts <- try(exonsBy(transcripts, by="tx", use.names=TRUE),

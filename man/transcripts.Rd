@@ -132,11 +132,11 @@ genes(x, ...)
     \item \code{\link{transcriptLengths}} for extracting the transcript
           lengths from a \link{TxDb} object.
 
-    \item \code{\link{extractTranscriptSeqs}} for extracting transcript or
-          CDS sequences from chromosome sequences.
+    \item \code{\link{extractTranscriptSeqs}} for extracting transcript
+          (or CDS) sequences from chromosome sequences.
 
-    \item \code{\link{extractTranscriptCoverage}} for extracting transcript or
-          CDS coverage from a set of aligned reads.
+    \item \code{\link{coverageByTranscript}} for computing coverage by
+          transcript (or CDS) of a set of ranges.
 
     \item \code{\link{disjointExons}} for extracting the non-overlapping
           exon parts from a \link{TxDb} object.

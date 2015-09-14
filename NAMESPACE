@@ -96,10 +96,6 @@ export(
   ## extractTranscriptSeqs.R:
   extractTranscriptSeqs,
 
-  ## extractTranscriptCoverage.R:
-  extractTranscriptCoverage,
-  pextractTranscriptCoverage,
-
   ## extractUpstreamSeqs.R:
   extractUpstreamSeqs,
 
@@ -118,6 +114,14 @@ export(
   ## transcriptLocs2refLocs.R:
   transcriptLocs2refLocs,
   transcriptWidths,
+
+  ## coordinate-mapping-methods.R:
+  mapToTranscripts, pmapToTranscripts,
+  mapFromTranscripts, pmapFromTranscripts,
+
+  ## coverageByTranscript.R:
+  coverageByTranscript,
+  pcoverageByTranscript,
 
   ## Defunct:
   makeTranscriptDb,

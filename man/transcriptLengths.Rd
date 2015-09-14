@@ -88,11 +88,11 @@ transcriptLengths(txdb, with.cds_len=FALSE,
           for how to extract the genomic locations of features from a
           \link{TxDb} object.
 
-    \item \code{\link{extractTranscriptSeqs}} for extracting transcript or
-          CDS sequences from chromosome sequences.
+    \item \code{\link{extractTranscriptSeqs}} for extracting transcript
+          (or CDS) sequences from chromosome sequences.
 
-    \item \code{\link{extractTranscriptCoverage}} for extracting transcript or
-          CDS coverage from a set of aligned reads.
+    \item \code{\link{coverageByTranscript}} for computing coverage by
+          transcript (or CDS) of a set of ranges.
 
     \item \code{\link{makeTxDbFromUCSC}} and
           \code{\link{makeTxDbFromBiomart}} for convenient ways to

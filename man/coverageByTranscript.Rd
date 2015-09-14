@@ -1,47 +1,47 @@
-\name{extractTranscriptCoverage}
+\name{coverageByTranscript}
 
-\alias{extractTranscriptCoverage}
-\alias{pextractTranscriptCoverage}
+\alias{coverageByTranscript}
+\alias{pcoverageByTranscript}
 
-\title{Extract transcript or CDS coverage from a set of aligned reads}
+\title{Compute coverage by transcript (or CDS) of a set of ranges}
 
 \description{
-  \code{extractTranscriptCoverage} extracts transcript or CDS coverage from
-  a set of aligned reads.
+  \code{coverageByTranscript} computes the transcript (or CDS) coverage
+  of a set of ranges.
 
-  \code{pextractTranscriptCoverage} is a \emph{parallel} version of
-  \code{extractTranscriptCoverage}.
+  \code{pcoverageByTranscript} is a \emph{parallel} version of
+  \code{coverageByTranscript}.
 }
 
 \usage{
-extractTranscriptCoverage(x, transcripts, ignore.strand=FALSE)
+coverageByTranscript(x, transcripts, ignore.strand=FALSE)
 
-pextractTranscriptCoverage(x, transcripts, ignore.strand=FALSE, ...)
+pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
 }
 
 \arguments{
   \item{x}{
-    An object representing a set of aligned reads.
+    An object representing a set of ranges (typically aligned reads).
     \link[GenomicRanges]{GRanges}, \link[GenomicRanges]{GRangesList},
     \link[GenomicAlignments]{GAlignments},
     \link[GenomicAlignments]{GAlignmentPairs}, and
     \link[GenomicAlignments]{GAlignmentsList} objects are supported.
 
-    More generally, for \code{extractTranscriptCoverage} \code{x} can be
+    More generally, for \code{coverageByTranscript} \code{x} can be
     any object for which \code{\link[GenomeInfoDb]{seqinfo}()} and
     \code{\link[GenomicRanges]{coverage}()} are supported (e.g. a
     \link[Rsamtools]{BamFile} object).
     Note that, for such objects, \code{coverage()} is expected to return an
     \link[IRanges]{RleList} object whose names are \code{seqlevels(x)}).
 
-    More generally, for \code{pextractTranscriptCoverage} \code{x} can be
+    More generally, for \code{pcoverageByTranscript} \code{x} can be
     any object for which \code{\link[GenomicRanges]{grglist}()} is supported.
     It should have the length of \code{transcripts} or length 1. If the
     latter, it is recycled to the length of \code{transcripts}.
   }
   \item{transcripts}{
     A \link[GenomicRanges]{GRangesList} object representing the exons of
-    each transcript for which to extract coverage. For each transcript, the
+    each transcript for which to compute coverage. For each transcript, the
     exons must be ordered by \emph{ascending rank}, that is, by their position
     in the transcript. This means that, for a transcript located on the minus
     strand, the exons should typically be ordered by descending position on
@@ -54,9 +54,9 @@ pextractTranscriptCoverage(x, transcripts, ignore.strand=FALSE, ...)
     which case it is replaced by the \link[GenomicRanges]{GRangesList} object
     returned by \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
 
-    For \code{pextractTranscriptCoverage}, \code{transcripts} should have the
-    length of \code{x} or length 1. If the latter, it is recycled to the length
-    of \code{x}).
+    For \code{pcoverageByTranscript}, \code{transcripts} should have the
+    length of \code{x} or length 1. If the latter, it is recycled to the
+    length of \code{x}).
   }
   \item{ignore.strand}{
     TRUE or FALSE. If FALSE (the default) then the strand of a range in
@@ -69,7 +69,7 @@ pextractTranscriptCoverage(x, transcripts, ignore.strand=FALSE, ...)
     \code{\link[GenomicRanges]{grglist}()}.
     More precisely, when \code{x} is not a \link[GenomicRanges]{GRanges}
     or \link[GenomicRanges]{GRangesList} object,
-    \code{pextractTranscriptCoverage} replace it by the
+    \code{pcoverageByTranscript} replace it by the
     \link[GenomicRanges]{GRangesList} object returned by
     \code{\link[GenomicRanges]{grglist}(x, ...)}.
   }
@@ -90,8 +90,8 @@ pextractTranscriptCoverage(x, transcripts, ignore.strand=FALSE, ...)
 
 \seealso{
   \itemize{
-    \item \code{\link{extractTranscriptSeqs}} for extracting transcript or
-          CDS sequences from chromosome sequences.
+    \item \code{\link{extractTranscriptSeqs}} for extracting transcript
+          (or CDS) sequences from chromosome sequences.
 
     \item \code{\link{transcriptLengths}} for extracting the transcript
           lengths from a \link{TxDb} object.
@@ -116,7 +116,7 @@ pextractTranscriptCoverage(x, transcripts, ignore.strand=FALSE, ...)
 
 \examples{
 ## ---------------------------------------------------------------------
-## 1. EXTRACT TRANSCRIPTOME COVERAGE FROM A SET OF ALIGNED READS
+## 1. COMPUTE TRANSCRIPTOME COVERAGE OF A SET OF ALIGNED READS
 ## ---------------------------------------------------------------------
 
 ## Load the aligned reads:
@@ -129,14 +129,14 @@ library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
 txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
 transcripts <- exonsBy(txdb, by="tx", use.names=TRUE)
 
-## Extract the transcript coverage with extractTranscriptCoverage():
-tx_cvg <- extractTranscriptCoverage(reads, transcripts, ignore.strand=TRUE)
+## Compute the transcript coverage with coverageByTranscript():
+tx_cvg <- coverageByTranscript(reads, transcripts, ignore.strand=TRUE)
 tx_cvg
 
 ## A sanity check:
 stopifnot(identical(elementLengths(tx_cvg), sum(width(transcripts))))
 
-## We can also use pextractTranscriptCoverage() to compute 'tx_cvg'.
+## We can also use pcoverageByTranscript() to compute 'tx_cvg'.
 ## For this we first create a GAlignmentsList object "parallel" to
 ## 'transcripts' where the i-th list element contains the aligned reads
 ## that overlap with the i-th transcript:
@@ -145,8 +145,8 @@ tx2reads <- setNames(as(t(hits), "List"), names(transcripts))
 reads_by_tx <- extractList(reads, tx2reads)  # GAlignmentsList object
 reads_by_tx
 
-## Call pextractTranscriptCoverage():
-tx_cvg2 <- pextractTranscriptCoverage(reads_by_tx, transcripts,
+## Call pcoverageByTranscript():
+tx_cvg2 <- pcoverageByTranscript(reads_by_tx, transcripts,
                                       ignore.strand=TRUE)
 stopifnot(identical(tx_cvg, tx_cvg2))
 
@@ -156,19 +156,19 @@ compat_hits <- findCompatibleOverlaps(reads, transcripts)
 tx2reads <- setNames(as(t(compat_hits), "List"), names(transcripts))
 compat_reads_by_tx <- extractList(reads, tx2reads)
 
-tx_compat_cvg <- pextractTranscriptCoverage(compat_reads_by_tx,
+tx_compat_cvg <- pcoverageByTranscript(compat_reads_by_tx,
                                             transcripts,
                                             ignore.strand=TRUE)
 ## A sanity check:
 stopifnot(all(all(tx_compat_cvg <= tx_cvg)))
 
 ## ---------------------------------------------------------------------
-## 2. EXTRACT CDS COVERAGE FROM A SET OF ALIGNED READS
+## 2. COMPUTE CDS COVERAGE OF A SET OF ALIGNED READS
 ## ---------------------------------------------------------------------
 
-## extractTranscriptCoverage() can also be used to extract CDS coverage:
+## coverageByTranscript() can also be used to compute CDS coverage:
 cds <- cdsBy(txdb, by="tx", use.names=TRUE)
-cds_cvg <- extractTranscriptCoverage(reads, cds, ignore.strand=TRUE)
+cds_cvg <- coverageByTranscript(reads, cds, ignore.strand=TRUE)
 cds_cvg
 
 ## A sanity check:

@@ -5,10 +5,10 @@
 \alias{extractTranscriptSeqs,ANY-method}
 
 
-\title{Extract transcript or CDS sequences from chromosome sequences}
+\title{Extract transcript (or CDS) sequences from chromosome sequences}
 
 \description{
-  \code{extractTranscriptSeqs} extracts transcript or CDS sequences from
+  \code{extractTranscriptSeqs} extracts transcript (or CDS) sequences from
   an object representing a single chromosome or a collection of chromosomes.
 }
 
@@ -96,8 +96,8 @@ extractTranscriptSeqs(x, transcripts, ...)
 
 \seealso{
   \itemize{
-    \item \code{\link{extractTranscriptCoverage}} for extracting transcript or
-          CDS coverage from a set of aligned reads.
+    \item \code{\link{coverageByTranscript}} for computing coverage by
+          transcript (or CDS) of a set of ranges.
 
     \item \code{\link{transcriptLengths}} for extracting the transcript
           lengths from a \link{TxDb} object.

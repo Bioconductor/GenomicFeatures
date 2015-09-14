@@ -99,11 +99,11 @@ threeUTRsByTranscript(x, ...)
     \item \code{\link{transcriptLengths}} for extracting the transcript
           lengths from a \link{TxDb} object.
 
-    \item \code{\link{extractTranscriptSeqs}} for extracting transcript or
-          CDS sequences from chromosome sequences.
+    \item \code{\link{extractTranscriptSeqs}} for extracting transcript
+          (or CDS) sequences from chromosome sequences.
 
-    \item \code{\link{extractTranscriptCoverage}} for extracting transcript or
-          CDS coverage from a set of aligned reads.
+    \item \code{\link{coverageByTranscript}} for computing coverage by
+          transcript (or CDS) of a set of ranges.
 
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a

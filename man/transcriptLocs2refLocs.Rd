@@ -72,8 +72,13 @@ transcriptWidths(exonStarts=list(), exonEnds=list())
 }
 
 \seealso{
-  \code{\link{extractTranscriptSeqs}} for extracting transcript sequences
-  from chromosomes.
+  \itemize{
+    \item \code{\link{extractTranscriptSeqs}} for extracting transcript
+          (or CDS) sequences from chromosomes.
+
+    \item \code{\link{coverageByTranscript}} for computing coverage by
+          transcript (or CDS) of a set of ranges.
+  }
 }
 
 \examples{
