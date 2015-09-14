@@ -8,7 +8,7 @@
 ### a lot like extracting transcript sequences from a genome.
 ### We define it as an ordinary function though (and not as a generic like
 ### extractTranscriptSeqs()), at least for now.
-extractTranscriptCoverage <- function(x, transcripts)
+extractTranscriptCoverage <- function(x, transcripts, ignore.strand=FALSE)
 {
     if (!is(transcripts, "GRangesList")) {
         transcripts <- try(exonsBy(transcripts, by="tx", use.names=TRUE),
@@ -19,6 +19,8 @@ extractTranscriptCoverage <- function(x, transcripts)
                       "exonsBy(transcripts, by=\"tx\", use.names=TRUE)"))
     }
     seqinfo(x) <- merge(seqinfo(x), seqinfo(transcripts))
+    if (!isTRUEorFALSE(ignore.strand))
+        stop(wmsg("'ignore.strand' must be TRUE or FALSE"))
 
   ## 1) Compute unique exons ('uex').
 
@@ -36,8 +38,22 @@ extractTranscriptCoverage <- function(x, transcripts)
 
     #There doesn't seem to be much benefit in doing this.
     #x <- subsetByOverlaps(x, transcripts, ignore.strand=TRUE)
-    cvg <- coverage(x)
-    uex_cvg <- cvg[uex]  # parallel to 'uex'
+    if (ignore.strand) {
+        cvg <- coverage(x)
+        uex_cvg <- cvg[uex]  # parallel to 'uex'
+    } else {
+        x1 <- x[strand(x) %in% c("+", "*")]
+        x2 <- x[strand(x) %in% c("-", "*")]
+        cvg1 <- coverage(x1)
+        cvg2 <- coverage(x2)
+        is_plus_ex <- strand(uex) == "+"
+        is_minus_ex <- strand(uex) == "-"
+        if (!identical(is_plus_ex, !is_minus_ex))
+            stop(wmsg("'transcripts' has exons on the * strand. ",
+                      "This is not supported yet."))
+        uex_cvg <- cvg1[uex]
+        uex_cvg[is_minus_ex] <- cvg2[uex[is_minus_ex]]
+    }
 
   ## 3) Flip coverage for exons on minus strand.
 

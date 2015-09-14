@@ -14,7 +14,7 @@
 }
 
 \usage{
-extractTranscriptCoverage(x, transcripts)
+extractTranscriptCoverage(x, transcripts, ignore.strand=FALSE)
 
 pextractTranscriptCoverage(x, transcripts, ignore.strand=FALSE, ...)
 }
@@ -130,7 +130,7 @@ txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
 transcripts <- exonsBy(txdb, by="tx", use.names=TRUE)
 
 ## Extract the transcript coverage:
-tx_cvg <- extractTranscriptCoverage(reads, transcripts)
+tx_cvg <- extractTranscriptCoverage(reads, transcripts, ignore.strand=TRUE)
 tx_cvg
 
 ## A sanity check:
@@ -142,7 +142,7 @@ stopifnot(identical(elementLengths(tx_cvg), sum(width(transcripts))))
 
 ## extractTranscriptCoverage() can also be used to extract CDS coverage:
 cds <- cdsBy(txdb, by="tx", use.names=TRUE)
-cds_cvg <- extractTranscriptCoverage(reads, cds)
+cds_cvg <- extractTranscriptCoverage(reads, cds, ignore.strand=TRUE)
 cds_cvg
 
 ## A sanity check:
