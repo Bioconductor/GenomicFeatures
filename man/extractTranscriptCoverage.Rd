@@ -129,12 +129,38 @@ library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
 txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
 transcripts <- exonsBy(txdb, by="tx", use.names=TRUE)
 
-## Extract the transcript coverage:
+## Extract the transcript coverage with extractTranscriptCoverage():
 tx_cvg <- extractTranscriptCoverage(reads, transcripts, ignore.strand=TRUE)
 tx_cvg
 
 ## A sanity check:
 stopifnot(identical(elementLengths(tx_cvg), sum(width(transcripts))))
+
+## We can also use pextractTranscriptCoverage() to compute 'tx_cvg'.
+## For this we first create a GAlignmentsList object "parallel" to
+## 'transcripts' where the i-th list element contains the aligned reads
+## that overlap with the i-th transcript:
+hits <- findOverlaps(reads, transcripts, ignore.strand=TRUE)
+tx2reads <- setNames(as(t(hits), "List"), names(transcripts))
+reads_by_tx <- extractList(reads, tx2reads)  # GAlignmentsList object
+reads_by_tx
+
+## Call pextractTranscriptCoverage():
+tx_cvg2 <- pextractTranscriptCoverage(reads_by_tx, transcripts,
+                                      ignore.strand=TRUE)
+stopifnot(identical(tx_cvg, tx_cvg2))
+
+## A more meaningful coverage is obtained by counting for each
+## transcript only the reads that are *compatible* with its splicing:
+compat_hits <- findCompatibleOverlaps(reads, transcripts)
+tx2reads <- setNames(as(t(compat_hits), "List"), names(transcripts))
+compat_reads_by_tx <- extractList(reads, tx2reads)
+
+tx_compat_cvg <- pextractTranscriptCoverage(compat_reads_by_tx,
+                                            transcripts,
+                                            ignore.strand=TRUE)
+## A sanity check:
+stopifnot(all(all(tx_compat_cvg <= tx_cvg)))
 
 ## ---------------------------------------------------------------------
 ## 2. EXTRACT CDS COVERAGE FROM A SET OF ALIGNED READS
@@ -149,8 +175,8 @@ cds_cvg
 stopifnot(identical(elementLengths(cds_cvg), sum(width(cds))))
 
 ## ---------------------------------------------------------------------
-## 3. ALTERNATIVELY, THE CDS COVERAGE CAN BE OBTAINED FROM THE TRANSCRIPT
-##    COVERAGE BY TRIMMING THE 5' AND 3' UTRS
+## 3. ALTERNATIVELY, THE CDS COVERAGE CAN BE OBTAINED FROM THE
+##    TRANSCRIPT COVERAGE BY TRIMMING THE 5' AND 3' UTRS
 ## ---------------------------------------------------------------------
 
 tx_lens <- transcriptLengths(txdb, with.utr5_len=TRUE, with.utr3_len=TRUE)
@@ -175,37 +201,6 @@ cds_cvg2 <- trimListElements(tx_cvg[m], utr5_width, utr3_width)
 
 ## A sanity check:
 stopifnot(identical(cds_cvg2, cds_cvg))
-
-## ---------------------------------------------------------------------
-## 4. USING pextractTranscriptCoverage()
-## ---------------------------------------------------------------------
-
-## We can also use pextractTranscriptCoverage() to compute 'tx_cvg'.
-## For this we first create a GAlignmentsList object "parallel" to
-## 'transcripts' where the i-th list element contains the aligned reads
-## that overlap with the i-th transcript:
-hits <- findOverlaps(reads, transcripts, ignore.strand=TRUE)
-tx2reads <- setNames(as(t(hits), "List"), names(transcripts))
-reads_by_tx <- extractList(reads, tx2reads)  # GAlignmentsList object
-reads_by_tx
-
-## Call pextractTranscriptCoverage():
-tx_cvg2 <- pextractTranscriptCoverage(reads_by_tx, transcripts,
-                                      ignore.strand=TRUE)
-stopifnot(identical(tx_cvg, tx_cvg2))
-
-## A more meaningful coverage is obtained by counting for each transcript
-## only the reads that are *compatible* with its splicing:
-compat_hits <- findCompatibleOverlaps(reads, transcripts)
-tx2reads <- setNames(as(t(compat_hits), "List"), names(transcripts))
-compat_reads_by_tx <- extractList(reads, tx2reads)
-
-tx_compat_cvg <- pextractTranscriptCoverage(compat_reads_by_tx,
-                                            transcripts,
-                                            ignore.strand=TRUE)
-
-## A sanity check:
-stopifnot(all(all(tx_compat_cvg <= tx_cvg)))
 }
 
 \keyword{manip}
