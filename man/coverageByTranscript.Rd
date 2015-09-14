@@ -9,8 +9,8 @@
   \code{coverageByTranscript} computes the transcript (or CDS) coverage
   of a set of ranges.
 
-  \code{pcoverageByTranscript} is a \emph{parallel} version of
-  \code{coverageByTranscript}.
+  \code{pcoverageByTranscript} is a version of \code{coverageByTranscript}
+  that operates element-wise.
 }
 
 \usage{
