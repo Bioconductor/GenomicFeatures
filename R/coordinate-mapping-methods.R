@@ -78,6 +78,9 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 ### mapToTranscripts()
 ###
 
+### No need to have Ranges methods when mapping to transcripts. Plain
+### ranges only make sense in the transcript space.
+
 .mapToTranscripts <- function(x, transcripts, hits, ignore.strand) 
 {
     flat <- unlist(transcripts, use.names=FALSE)
@@ -122,17 +125,19 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"),
     {
         if (!length(x) && !length(transcripts))
             return(GRanges(xHits=integer(), transcriptsHits=integer()))
-
-        if (!ignore.strand)
-            if (any(elementLengths(runValue(strand(transcripts))) > 1))
-                stop(paste0("when ignore.strand=TRUE all inner list ",
-                            "elements of 'transcripts' must be the ",
-                            "same strand"))
         if (is.null(names(transcripts)))
             stop ("'transcripts' must have names")
+        if (ignore.strand) {
+            strand(transcripts) <- "*"
+        } else if (any(elementLengths(runValue(strand(transcripts))) > 1)) {
+                stop(paste0("when ignore.strand=TRUE all inner list elements",
+                            "of 'transcripts' must be the same strand"))
+        }
+
         ## order within list elements by strand
         transcripts <- 
             .orderElementsByTranscription(transcripts)
+
         ## findOverlaps determines pairs
         hits <- findOverlaps(x, unlist(transcripts, use.names=FALSE), 
                              type="within", ignore.strand=ignore.strand)
@@ -166,100 +171,6 @@ setMethod("mapToTranscripts", c("ANY", "TxDb"),
 )
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### mapFromTranscripts()
-###
-
-## use seqnames of 'x' and names of 'transcripts' for mapping
-
-.mapFromTranscripts <- function(x, transcripts, hits, ignore.strand)
-{
-    if (length(hits)) {
-        xHits <- queryHits(hits)
-        txHits <- subjectHits(hits)
-        ## strand mismatch
-        txstrand <- unlist(runValue(strand(transcripts)), use.names=FALSE)
-        strand <- tmpstrand <- as.character(txstrand)[txHits]
-        if (ignore.strand || all(txstrand == "*")) {
-            mismatch <- logical(length(xHits))
-            tmpstrand <- rep("+", length(xHits)) ## for transcriptLocs2refLocs
-        } else if (!ignore.strand) {
-            mismatch <- (as.numeric(strand(x)[xHits]) + 
-                         as.numeric(txstrand[txHits])) == 3L 
-        }
-        xStart <- as.list(start(x)[xHits])
-        xEnd <- as.list(end(x)[xHits])
-        txStart <- as.list(start(transcripts)[txHits])
-        txEnd <- as.list(end(transcripts)[txHits])
-        s <- unlist(transcriptLocs2refLocs(xStart, txStart, txEnd, tmpstrand,
-                                           FALSE, FALSE), use.names=FALSE)
-        e <- unlist(transcriptLocs2refLocs(xEnd, txStart, txEnd, tmpstrand,
-                                           FALSE, FALSE), use.names=FALSE)
-
-        ## non-hits
-        seqname <- as.character(runValue(seqnames(transcripts)[txHits]))
-        if (any(skip <- is.na(s) | is.na(e) | mismatch)) {
-            s[skip] <- 0L 
-            e[skip] <- -1L
-            seqname[skip] <- "UNMAPPED"
-        }
-        GRanges(Rle(seqname), IRanges(s, e, names=names(x)[xHits]), 
-                strand=strand, DataFrame(xHits, transcriptsHits=txHits))
-    } else {
-        ans <- GRanges()
-        mcols(ans) <- DataFrame(xHits=integer(), transcriptsHits=integer())
-        ans
-    }
-}
-
-setMethod("mapFromTranscripts", c("GenomicRanges", "GenomicRanges"), 
-    function(x, transcripts, ignore.strand=FALSE)
-    {
-        grl <- relist(transcripts, PartitioningByEnd(seq_along(transcripts), 
-                      names=names(transcripts)))
-        mapFromTranscripts(x, grl, ignore.strand)
-    }
-)
-
-setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"), 
-    function(x, transcripts, ignore.strand=FALSE) 
-    {
-        if (!length(x) && !length(transcripts))
-            return(GRanges(xHits=integer(), transcriptsHits=integer()))
-
-        if (!ignore.strand)
-            if (!all(elementLengths(runLength(strand(transcripts))) == 1))
-                stop(paste0("when ignore.strand=TRUE all inner list ",
-                            "elements of 'transcripts' must be the ",
-                            "same strand"))
-        xNames <- as.character(seqnames(x))
-        txNames <- names(transcripts)
-        if (is.null(txNames))
-            stop ("'transcripts' must have names")
-
-        ## order within list elements by strand
-        transcripts <- 
-        .orderElementsByTranscription(transcripts)
-        ## name matching determines pairs
-        match0 <- match(txNames, txNames)
-        match1 <- match(xNames, txNames)
-        group0 <- splitAsList(seq_along(txNames), match0)
-        group1 <- group0[match(na.omit(match1), names(group0))]
-        xHits <- rep(which(!is.na(match1)), elementLengths(group1))
-        txHits <- unlist(group1, use.names=FALSE)
-        if (!length(xHits <- na.omit(xHits)))
-            stop ("none of 'names(x)' are in 'names(transcripts)'")
-
-        hits <- Hits(xHits, txHits, length(x), length(transcripts))
-        map <- .mapFromTranscripts(x, transcripts, hits, ignore.strand) 
-        ## remove zero-width ranges 
-        if (any(hasWidth <- width(map) != 0L))
-            map <- map[hasWidth]
-        map
-    }
-)
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### pmapToTranscripts()
 ###
 
@@ -276,19 +187,23 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
     {
         if (!length(x))
             return(GRanges())
+        if (is.null(names(transcripts)))
+            stop ("'transcripts' must have names")
+        if (ignore.strand) {
+            strand(transcripts) <- "*"
+        } else if (!all(elementLengths(runLength(strand(transcripts))) == 1)) {
+            stop(paste0("when ignore.strand=TRUE all inner list elements ",
+                        "of 'transcripts' must be the same strand"))
+        }
+
+        ## order within list elements by strand
+        transcripts <- 
+            .orderElementsByTranscription(transcripts)
+
+        ## recycling
         maxlen <- max(length(x), length(transcripts))
         x <- .pmap_recycle(x, maxlen)
         transcripts <- .pmap_recycle(transcripts, maxlen)
-        if (is.null(names(transcripts)))
-            stop ("'transcripts' must have names")
-        if (!ignore.strand)
-            if (!all(elementLengths(runLength(strand(transcripts))) == 1))
-                stop(paste0("when ignore.strand=TRUE all inner list ",
-                            "elements of 'transcripts' must have the ",
-                            "same strand"))
-        ## order within list elements
-        transcripts <- 
-            .orderElementsByTranscription(transcripts)
 
         ## map i-th elements
         hits <- findOverlaps(x, unlist(transcripts, use.names=FALSE), 
@@ -316,27 +231,175 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
 )
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### mapFromTranscripts()
+###
+
+## use seqnames of 'x' and names of 'transcripts' for mapping
+
+.mapFromTranscripts <- function(x, transcripts, hits, ignore.strand)
+{
+    if (length(hits)) {
+        xHits <- queryHits(hits)
+        txHits <- subjectHits(hits)
+
+        ## We check strand in this helper because 'hits' was not constructed 
+        ## with findOverlaps() or any other strand-aware method.
+        if (is(transcripts, "GRangesList"))
+            txstrand <- unlist(runValue(strand(transcripts)), use.names=FALSE)
+        else
+            txstrand <- as.factor(strand(transcripts))
+        strand <- tmpstrand <- as.character(txstrand)[txHits]
+        if (ignore.strand || all(tmpstrand == "*")) {
+            strand(x) <- strand(transcripts) <- "*"
+            mismatch <- logical(length(xHits))
+            tmpstrand <- rep("+", length(xHits))
+            strand <- rep("*", length(xHits))
+        } else {
+            mismatch <- (as.numeric(strand(x)[xHits]) + 
+                        as.numeric(txstrand[txHits])) == 3L 
+        }
+
+        ## mapping
+        xStart <- as.list(start(x)[xHits])
+        xEnd <- as.list(end(x)[xHits])
+        txStart <- as.list(start(transcripts)[txHits])
+        txEnd <- as.list(end(transcripts)[txHits])
+        s <- unlist(transcriptLocs2refLocs(xStart, txStart, txEnd, tmpstrand,
+                                           FALSE, FALSE), use.names=FALSE)
+        e <- unlist(transcriptLocs2refLocs(xEnd, txStart, txEnd, tmpstrand,
+                                           FALSE, FALSE), use.names=FALSE)
+
+        ## reverse start and end for negative strand
+        if (!ignore.strand && any(nstrand <- strand == "-")) {
+            start <- s
+            end <- e
+            start[nstrand] <- e[nstrand]
+            end[nstrand] <- s[nstrand]
+            s <- start
+            e <- end
+        }
+
+        sn <- unlist(seqnames(transcripts), use.names=FALSE)
+        if (is(transcripts, "GRangesList"))
+            sn <- sn[start(PartitioningByEnd(transcripts))]
+        sn <- sn[txHits]
+
+        ## non-hits qualified as 'UNMAPPED'
+        if (any(skip <- is.na(s) | is.na(e) | mismatch)) {
+            s[skip] <- 0L 
+            e[skip] <- -1L
+            levels(sn) <- c(levels(sn), "UNMAPPED")
+            sn[skip] <- Rle("UNMAPPED")
+        }
+        if (!is.null(xnames <- names(x)))
+            xnames <- xnames[xHits]
+        GRanges(sn, IRanges(s, e, names=xnames), 
+                strand=strand, DataFrame(xHits, transcriptsHits=txHits))
+    } else {
+        ans <- GRanges()
+        mcols(ans) <- DataFrame(xHits=integer(), transcriptsHits=integer())
+        ans
+    }
+}
+
+setMethod("mapFromTranscripts", c("GenomicRanges", "GenomicRanges"), 
+    function(x, transcripts, ignore.strand=FALSE)
+    {
+        grl <- relist(transcripts, PartitioningByEnd(seq_along(transcripts), 
+                      names=names(transcripts)))
+        map <- mapFromTranscripts(x, grl, ignore.strand)
+
+        ## remove zero-width ranges 
+        if (any(zeroWidth <- width(map) == 0L))
+            map <- map[!zeroWidth]
+
+        map
+    }
+)
+
+setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"), 
+    function(x, transcripts, ignore.strand=FALSE) 
+    {
+        if (!length(x) || !length(transcripts))
+            return(GRanges(xHits=integer(), transcriptsHits=integer()))
+
+        if (ignore.strand) {
+            strand(transcripts) <- "*"
+        } else if (!all(elementLengths(runLength(strand(transcripts))) == 1)) {
+            stop(paste0("when ignore.strand=TRUE all inner list ",
+                        "elements of 'transcripts' must be the same strand"))
+        }
+
+        ## order within list elements by strand
+        transcripts <- .orderElementsByTranscription(transcripts)
+
+        xNames <- as.character(seqnames(x))
+        txNames <- names(transcripts)
+        if (is.null(txNames))
+            stop ("'transcripts' must have names")
+
+        ## name matching determines pairs
+        match0 <- match(txNames, txNames)
+        match1 <- match(xNames, txNames)
+        group0 <- splitAsList(seq_along(txNames), match0)
+        group1 <- group0[match(na.omit(match1), names(group0))]
+        xHits <- rep(which(!is.na(match1)), elementLengths(group1))
+        txHits <- unlist(group1, use.names=FALSE)
+        if (!length(xHits <- na.omit(xHits)))
+            stop ("none of 'names(x)' are in 'names(transcripts)'")
+
+        ## construct Hits
+        hits <- Hits(xHits, txHits, length(x), length(transcripts))
+        map <- .mapFromTranscripts(x, transcripts, hits, ignore.strand) 
+        ## remove zero-width ranges 
+        if (any(zeroWidth <- width(map) == 0L))
+            map <- map[!zeroWidth]
+
+        map
+    }
+)
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### pmapFromTranscripts()
 ###
 
 .pmapFromTranscripts_ranges <- function(x, transcripts) 
 {
-    if (!length(x))
-        return(GRanges())
+    if (!length(x) || !length(transcripts))
+        if (is(transcripts, "GRangesList"))
+            return(GRangesList())
+        else return(GRanges())
+
+    ## recycling
     maxlen <- max(length(x), length(transcripts))
     x <- .pmap_recycle(x, maxlen)
     transcripts <- .pmap_recycle(transcripts, maxlen)
+
+    ## strand from 'transcripts'
+    if (is(transcripts, "GRangesList"))
+        txstrand <- unlist(runValue(strand(transcripts)), use.names=FALSE)
+    else
+        txstrand <- as.character(strand(transcripts))
+    strand <- tmpstrand <- as.character(txstrand)
 
     ## mapping
     xStart <- as.list(start(x))
     xEnd <- as.list(end(x))
     txStart <- as.list(start(transcripts))
     txEnd <- as.list(end(transcripts))
-    tmpstrand <- rep("+", length(x)) ## for transcriptLocs2refLocs
     s <- unlist(transcriptLocs2refLocs(xStart, txStart, txEnd, tmpstrand,
                                        FALSE, FALSE), use.names=FALSE)
     e <- unlist(transcriptLocs2refLocs(xEnd, txStart, txEnd, tmpstrand,
                                        FALSE, FALSE), use.names=FALSE)
+    ## reverse start and end for negative strand
+    if (any(nstrand <- tmpstrand == "-")) {
+        start <- s
+        end <- e
+        start[nstrand] <- e[nstrand]
+        end[nstrand] <- s[nstrand]
+        s <- start
+        e <- end
+    }
 
     sn <- unlist(seqnames(transcripts), use.names=FALSE)
     if (is(transcripts, "GRangesList"))
@@ -346,49 +409,81 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
     if (any(skip <- is.na(s) | is.na(e))) {
         s[skip] <- 0L 
         e[skip] <- -1L
-        sn[skip] <- "UNMAPPED"
+        levels(sn) <- c(levels(sn), "UNMAPPED")
+        sn[skip] <- Rle("UNMAPPED")
     }
-    
-    pintersect(transcripts, GRanges(sn, IRanges(s, e)))
+
+    GRanges(sn, IRanges(s, e), strand=tmpstrand)
 }
 
 setMethod("pmapFromTranscripts", c("Ranges", "GenomicRanges"),
           function(x, transcripts) 
               .pmapFromTranscripts_ranges(x, transcripts)
-          )
+)
 
+## return GRangesList to preserve exon structure
 setMethod("pmapFromTranscripts", c("Ranges", "GRangesList"), 
-          function(x, transcripts) 
-              .pmapFromTranscripts_ranges(x, transcripts)
-          )
+    function(x, transcripts)
+    {
+        if (!length(x) || !length(transcripts))
+            return(GRangesList())
+        if (!all(elementLengths(runLength(strand(transcripts))) == 1)) {
+            stop(paste0("when ignore.strand=TRUE all inner list ",
+                        "elements of 'transcripts' must have the same strand"))
+        }
+
+        ## recycling
+        maxlen <- max(length(x), length(transcripts))
+        x <- .pmap_recycle(x, maxlen)
+        transcripts <- .pmap_recycle(transcripts, maxlen)
+
+        map <- .pmapFromTranscripts_ranges(x, 
+            .orderElementsByTranscription(transcripts))
+        pintersect(transcripts, map)
+    }
+)
 
 setMethod("pmapFromTranscripts", c("GenomicRanges", "GenomicRanges"), 
     function(x, transcripts, ignore.strand=FALSE) 
     {
-        grl <- splitAsList(transcripts, seq_along(transcripts))
-        pmapFromTranscripts(x, grl, ignore.strand)
-    }
-)
-
-setMethod("pmapFromTranscripts", c("GenomicRanges", "GRangesList"), 
-    function(x, transcripts, ignore.strand=FALSE) 
-    {
-        if (!length(x))
+        if (!length(x) || !length(transcripts))
             return(GRanges())
+
+        ## recycling
         maxlen <- max(length(x), length(transcripts))
         x <- .pmap_recycle(x, maxlen)
         transcripts <- .pmap_recycle(transcripts, maxlen)
-        if (!ignore.strand)
-            if (!all(elementLengths(runLength(strand(transcripts))) == 1))
-                stop(paste0("when ignore.strand=TRUE all inner list ",
-                            "elements of 'transcripts' must have the ",
-                            "same strand"))
-        ## order within list elements
-        transcripts <- 
-            .orderElementsByTranscription(transcripts)
 
         ## map i-th elements
         hits <- Hits(seq_along(x), seq_along(x), length(x), length(x))
         .mapFromTranscripts(x, transcripts, hits, ignore.strand)
+    }
+)
+
+## return GRangesList to preserve exon structure
+setMethod("pmapFromTranscripts", c("GenomicRanges", "GRangesList"), 
+    function(x, transcripts, ignore.strand=FALSE) 
+    {
+        if (!length(x) || !length(transcripts))
+            return(GRangesList())
+
+        if (ignore.strand) {
+            strand(transcripts) <- "*"
+        } else if (!all(elementLengths(runLength(strand(transcripts))) == 1)) {
+            stop(paste0("when ignore.strand=TRUE all inner list ",
+                        "elements of 'transcripts' must have the same strand"))
+        }
+
+        ## recycling
+        maxlen <- max(length(x), length(transcripts))
+        x <- .pmap_recycle(x, maxlen)
+        transcripts <- .pmap_recycle(transcripts, maxlen)
+
+        ## map i-th elements
+        hits <- Hits(seq_along(x), seq_along(x), length(x), length(x))
+        map <- .mapFromTranscripts(x, 
+                                   .orderElementsByTranscription(transcripts), 
+                                   hits, ignore.strand)
+        pintersect(transcripts, map)
     }
 )

@@ -65,16 +65,16 @@
     the reverse direction they become the seqlevels of the output object.
   }
   \item{ignore.strand}{
-    \code{ignore.strand} is used in overlap operations only.  When TRUE, strand
-    is ignored (i.e., all strands are considered "+"). 
+    When \code{ignore.strand} is TRUE, strand is ignored in overlaps operations 
+    (i.e., all strands are considered "+") and the strand in the output is '*'.
 
-    When \code{transcripts} is a \code{GRangesList} and \code{ignore.strand =
-    FALSE} all inner list elements of a common list element must have the same
-    strand.
+    When \code{ignore.strand} is FALSE strand in the output is taken from the 
+    \code{transcripts} argument. When \code{transcripts} is a
+    \code{GRangesList}, all inner list elements of a common list element must 
+    have the same strand or an error is thrown.
 
-    Strand in the output is taken from the \code{transcripts} argument. Mapped
-    position is computed by counting from the transcription start site (TSS)
-    and is unaffected by the value of \code{ignore.strand}.
+    Mapped position is computed by counting from the transcription start site 
+    (TSS) and is not affected by the value of \code{ignore.strand}.
   }
   \item{extractor.fun}{
     Function to extract genomic features from a \code{TxDb} object.
@@ -129,6 +129,17 @@
       \code{transcripts} object and should be transcript names. In this
       direction, mapping is attempted between all elements of \code{x} and
       all elements of \code{transcripts}.
+
+      \code{mapToTranscripts} uses \code{findOverlaps} to map ranges in
+      \code{x} to ranges in \code{transcripts}. This method does not return 
+      unmapped ranges.
+
+      \code{pmapToTranscripts} maps the i-th range in \code{x} to the
+      i-th range in \code{transcripts}. Recycling is supported for both
+      \code{x} and \code{transcripts} when either is length == 1L; otherwise
+      the lengths must match. Ranges in \code{x} that do not map (out of bounds 
+      or strand mismatch) are returned as zero-width ranges starting at 0. 
+      These ranges are given the seqname of "UNMAPPED". 
     }
     \item{\code{mapFromTranscripts}, \code{pmapFromTranscripts}}{
       The transcript-based position in \code{x} is mapped to genomic coordinates
@@ -141,47 +152,48 @@
       positions in from the beginning of the \code{transcripts} range.  The
       seqlevels of the return object are chromosome names.
 
-      \code{mapFromTranscripts} only attempts to map ranges where the 
-      seqname in \code{x} matches the name in \code{transcripts}
-      (vs attempting to match all possible pairs). Name matching is motivated 
-      by use cases such as differentially expressed regions where the 
-      expressed regions in \code{x} would only be related to a subset of 
-      regions in \code{transcripts}. The element-wise version of the function
-      does not use name matching.
-    }
-    \item{element-wise versions}{
-      \code{pmapToTranscripts} and \code{pmapFromTranscripts} are element-wise
-      (aka `parallel`) versions of \code{mapToTranscripts} and 
-      \code{mapFromTranscripts}. The i-th range in \code{x} is mapped to the 
-      i-th range in \code{transcripts}. Recycling of \code{transcripts} is 
-      supported when \code{length(transcripts) == 1}, otherwise \code{x} and 
-      \code{transcipts} be the same length.
-
-      Ranges in \code{x} that do not map (out of bounds or strand mismatch) 
-      are returned as zero-width ranges starting at 0. These ranges are given
-      the special seqname of "UNMAPPED". Note the non-parallel methods do not 
-      return unmapped ranges so the "UNMAPPED" seqname is unique to 
-      \code{pmapToTranscipts} and \code{pmapFromTranscripts}.
+      \code{mapFromTranscripts} uses the seqname of \code{x} and the names 
+      of \code{transcripts} to determine mapping pairs (vs attempting to match 
+      all possible pairs). Name matching is motivated by use cases such as 
+      differentially expressed regions where the expressed regions in \code{x} 
+      would only be related to a subset of regions in \code{transcripts}. 
+      This method does not return unmapped ranges.
+     
+      \code{pmapFromTranscripts} maps the i-th range in \code{x} to the i-th
+      range in \code{transcripts} and therefore does not use name matching.
+      Recycling is supported in \code{pmapFromTranscripts} when either
+      \code{x} or \code{transcripts} is length == 1L; otherwise the lengths 
+      must match. Ranges in \code{x} that do not map (out of bounds or strand 
+      mismatch) are returned as zero-width ranges starting at 0. These ranges 
+      are given the seqname of "UNMAPPED". 
     }
   }
 }
 
 \value{
-  An object the same class as \code{x}.
 
-  Parallel methods return an object the same shape as \code{x}. Ranges that
-  cannot be mapped (out of bounds or strand mismatch) are returned as 
-  zero-width ranges starting at 0 with a seqname of "UNMAPPED".
+  \code{pmapToTranscripts} returns a \code{GRanges} the same length as
+  \code{x}.
+  
+  \code{pmapFromTranscripts} returns a \code{GRanges} when \code{transcripts}
+  is a \code{GRanges} and a \code{GRangesList} when \code{transcripts}
+  is a \code{GRangesList}. In both cases the return object is the same
+  length as \code{x}. The rational for returning the \code{GRangesList} is 
+  to preserve exon structure; ranges in a list element that are not overlapped 
+  by \code{x} are returned as a zero-width range. The \code{GRangesList}
+  return object will have no seqlevels called "UNMAPPED"; those will only
+  occur when a \code{GRanges} is returned.
 
-  Non-parallel methods return an object that varies in length similar to a
-  Hits object. The result only contains mapped records, strand mismatch
-  and out of bound ranges are not returned. \code{xHits} and 
-  \code{transcriptsHits} metadata columns indicate the elements of \code{x} 
-  and \code{transcripts} used in the mapping.
+  \code{mapToTranscripts} and \code{mapFromTranscripts} return \code{GRanges}
+  objects that vary in length similar to a \code{Hits} object. The result 
+  contains mapped records only; strand mismatch and out of bound ranges are 
+  not returned. \code{xHits} and \code{transcriptsHits} metadata columns 
+  (similar to the \code{queryHits} and \code{subjectHits} of a \code{Hits}
+  object) indicate elements of \code{x} and \code{transcripts} used in 
+  the mapping.
 
-  When present, names from \code{x} are propagated to the output. When
-  mapping to transcript coordinates, seqlevels of the output are the names 
-  on the \code{transcripts} object; most often these will be transcript
+  When mapping to transcript coordinates, seqlevels of the output are the names 
+  on the \code{transcripts} object and most often these will be transcript
   names. When mapping to the genome, seqlevels of the output are the seqlevels 
   of \code{transcripts} which are usually chromosome names.
 }

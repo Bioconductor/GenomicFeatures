@@ -1,6 +1,204 @@
 library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
 txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
 cdsbytx <- cdsBy(txdb, "tx", use.names=TRUE)[1:3]
+quiet <- suppressWarnings
+
+### ----------------------------------------------------------------------
+### mapFromTranscripts(), pmapFromTranscripts()
+
+test_mapFromTranscripts <- function()
+{
+    ## empty
+    ans1 <- mapFromTranscripts(GRanges(), GRanges())
+    ans2 <- mapFromTranscripts(GRanges(), GRangesList())
+    checkIdentical(ans1, ans2)
+    checkIdentical(names(mcols(ans1)), c("xHits", "transcriptsHits"))
+
+    ## 'transcripts' must have names
+    x <- GRanges("tx1", IRanges(1, 5), strand="+")
+    gr <- GRanges("chr1", IRanges(c(1, 20), width=10), strand="+")
+    checkException(mapFromTranscripts(x, gr), silent=TRUE) 
+    checkException(mapFromTranscripts(x, GRangesList(gr, gr)), silent=TRUE) 
+}
+
+test_mapFromTranscripts_strand <- function()
+{
+    x <- GRanges("tx1", IRanges(1, 5), strand="+")
+    gr <- GRanges("chr1", IRanges(c(1, 20), width=10), strand="+")
+    names(gr) <- c("tx1", "tx1")
+    align = GRangesList(gr, gr, gr)
+    names(align) <- c("tx1", "bar", "tx1") 
+
+    ## "+' strand 
+    ans <- mapFromTranscripts(x, align)  ## GRangesList
+    checkTrue(all(width(ans) == 5L))
+    checkIdentical(mcols(ans)$transcriptsHits, c(1L, 3L))
+    checkIdentical(ranges(ans), IRanges(c(1, 1), c(5, 5)))
+    checkIdentical(unique(as.character(seqnames(ans))), "chr1")
+    ignore <- mapFromTranscripts(x, align, TRUE)
+    checkIdentical(ranges(ans), ranges(ignore))
+    checkTrue(unique(as.character(strand(ignore))) == "*")
+    ans <- mapFromTranscripts(x, gr)  ## GRanges
+    checkTrue(all(width(ans) == 5L))
+    checkIdentical(mcols(ans)$transcriptsHits, c(1L, 2L))
+    checkIdentical(ranges(ans), IRanges(c(1, 20), c(5, 24)))
+    checkIdentical(unique(as.character(seqnames(ans))), "chr1")
+    ignore <- mapFromTranscripts(x, gr, TRUE)
+    checkIdentical(ranges(ans), ranges(ignore))
+    checkTrue(unique(as.character(strand(ignore))) == "*")
+
+    ## invalid mixed strand 
+    strand(align[[1]][1]) <- "-"
+    checkException(mapFromTranscripts(x, align, FALSE), silent=TRUE) 
+
+    ## valid mixed strand:
+    strand(align[[1]]) <- "-"
+    ans <- mapFromTranscripts(x, align) ## GRangesList
+    checkTrue(all(width(ans) == 5L))
+    checkIdentical(mcols(ans)$transcriptsHits, 3L)
+    checkIdentical(ranges(ans), IRanges(1, 5))
+    checkIdentical(unique(as.character(seqnames(ans))), "chr1")
+    ignore <- mapFromTranscripts(x, align, TRUE)
+    checkIdentical(mcols(ignore)$transcriptsHits, c(1L, 3L))
+    checkTrue(unique(as.character(strand(ignore))) == "*")
+    strand(x) <- "-"
+    ans <- mapFromTranscripts(x, align)
+    checkIdentical(ranges(ans), IRanges(25, end=29))
+    strand(gr[2]) <- "-"
+    strand(x) <- "+"
+    ans <- mapFromTranscripts(x, gr)  ## GRanges
+    checkTrue(all(width(ans) == 5L))
+    checkIdentical(mcols(ans)$transcriptsHits, 1L)
+    checkIdentical(ranges(ans), IRanges(1, 5))
+    checkIdentical(unique(as.character(seqnames(ans))), "chr1")
+    ignore <- mapFromTranscripts(x, gr, TRUE)
+    checkIdentical(ranges(ignore), IRanges(c(1, 20), c(5, 24)))
+    checkTrue(unique(as.character(strand(ignore))) == "*")
+    strand(x) <- "-"
+    ans <- mapFromTranscripts(x, align)
+    checkIdentical(ranges(ans), IRanges(25, end=29))
+}
+
+test_mapFromTranscripts_order_in_GRangesList <- function()
+{
+    x <- GRanges("tx1", IRanges(1, 5), strand="+")
+    gr1 <- GRanges("chr1", IRanges(c(1, 20), end=c(10, 30)), strand="+")
+    gr2 <- GRanges("chr1", IRanges(c(20, 1), end=c(30, 10)), strand="+")
+    align <- GRangesList(gr1, gr2); names(align) <- c("tx1", "tx1")
+
+    ans <- mapFromTranscripts(x, align) 
+    checkIdentical(ranges(ans), IRanges(c(1, 1), c(5, 5)))
+    checkIdentical(mcols(ans)$xHits, c(1L, 1L))
+    checkIdentical(mcols(ans)$transcriptsHits, c(1L, 2L))
+
+    strand(x) <- strand(align) <- "-"
+    ans <- mapFromTranscripts(x, align) 
+    checkIdentical(ranges(ans), IRanges(c(26, 26), c(30, 30)))
+    checkIdentical(mcols(ans)$xHits, c(1L, 1L))
+    checkIdentical(mcols(ans)$transcriptsHits, c(1L, 2L))
+}
+
+test_pmapFromTranscripts <- function()
+{
+    ## empty
+    ans1 <- pmapFromTranscripts(IRanges(), GRanges())
+    ans2 <- pmapFromTranscripts(IRanges(), GRangesList())
+    ans3 <- pmapFromTranscripts(GRanges(), GRanges())
+    ans4 <- pmapFromTranscripts(GRanges(), GRangesList())
+    checkTrue(length(ans1) == length(ans2))
+    checkTrue(length(ans3) == length(ans4))
+    checkTrue(length(ans1) == 0L)
+    checkTrue(is(ans1, "GRanges"))
+    checkTrue(is(ans2, "GRangesList"))
+    checkTrue(is(ans3, "GRanges"))
+    checkTrue(is(ans4, "GRangesList"))
+}
+
+test_pmapFromTranscripts_recycling <- function()
+{
+    x <- GRanges("tx1", IRanges(c(1, 1, 1), width=5), strand="+")
+    gr <- GRanges("chr1", IRanges(c(10, 10, 10), width=10), strand="+")
+
+    checkException(pmapFromTranscripts(x[1:2], gr), silent=TRUE)
+    checkException(pmapFromTranscripts(x, gr[1:2]), silent=TRUE)
+
+    ## 'transcripts' as GRanges
+    ans1 <- pmapFromTranscripts(x[1], gr)
+    ans2 <- pmapFromTranscripts(x, gr[1])
+    checkIdentical(ans1, ans2)
+    ans1 <- pmapFromTranscripts(ranges(x[1]), gr)
+    ans2 <- pmapFromTranscripts(ranges(x), gr[1])
+    checkIdentical(ans1, ans2)
+    checkIdentical(names(mcols(ans1)), character(0))
+
+    ## 'transcripts' as GRangesList
+    grl <- split(gr, seq_along(gr))
+    ans1 <- pmapFromTranscripts(x[1], grl)
+    ans2 <- pmapFromTranscripts(x, grl[1])
+    checkIdentical(unname(ans1), unname(ans2))
+    ans1 <- pmapFromTranscripts(ranges(x[1]), grl)
+    ans2 <- pmapFromTranscripts(ranges(x), grl[1])
+    checkIdentical(unname(ans1), unname(ans2))
+}
+
+test_pmapFromTranscripts_strand <- function()
+{
+    x <- GRanges("chr1", IRanges(1, 5))
+    align <- GRangesList(
+        GRanges("chr1", IRanges(c(201, 101), c(220, 120)), strand="-"),
+        GRanges("chr1", IRanges(501, 535), strand="+"))
+
+    ans <- pmapFromTranscripts(ranges(x), align)
+    checkIdentical(width(ans), IntegerList(c(5, 0), 5))
+    checkIdentical(start(ans), IntegerList(c(216, 101), 501))
+
+    ## 'x' is "*"
+    ans <- pmapFromTranscripts(x, align)
+    checkIdentical(width(ans), IntegerList(c(5, 0), 5))
+    checkIdentical(start(ans), IntegerList(c(216, 101), 501))
+
+    ## 'x' is "+"
+    strand(x) <- "+"
+    ans <- pmapFromTranscripts(x, align)
+    checkIdentical(width(ans), IntegerList(c(0, 0), 5))
+    checkIdentical(start(ans), IntegerList(c(201, 101), 501))
+
+    ## 'x' is "-"
+    strand(x) <- "-"
+    ans <- pmapFromTranscripts(x, align)
+    checkIdentical(width(ans), IntegerList(c(5, 0), 0))
+    checkIdentical(start(ans), IntegerList(c(216, 101), 501))
+
+    ## ignore.strand
+    ans <- pmapFromTranscripts(x, align, TRUE)
+    checkIdentical(width(ans), IntegerList(c(0, 5), 5))
+    checkIdentical(start(ans), IntegerList(c(201, 101), 501))
+    checkIdentical(as.character(runValue(strand(ans))), c("*", "*")) 
+
+    ## order of ranges in return GRangesList 
+    strand(align) <- strand(x) <- "+"
+    ans <- pmapFromTranscripts(x, align)
+
+    ## invalid mixed strand
+    x <- GRanges("chr1", IRanges(1, 5), strand="+")
+    align <- GRangesList(
+        GRanges("chr1", IRanges(c(1, 1), width=5), strand=c("+", "-")))
+    checkException(pmapFromTranscripts(x, align), silent=TRUE)
+    checkException(pmapFromTranscripts(ranges(x), align), silent=TRUE)
+}
+
+test_pmapFromTranscripts_UNMAPPED <- function()
+{
+    ## 'transcripts' is GRanges
+    x <- GRanges("chr1", IRanges(40, 50))
+    align <- GRanges("chr1", IRanges(35, width=5))
+    ans <- pmapFromTranscripts(x, align, TRUE) 
+    checkIdentical(as.character(seqnames(ans)), "UNMAPPED")
+    checkTrue(width(ans) == 0L)
+}
+
+### ----------------------------------------------------------------------
+### mapToTranscripts(), pmapToTranscripts()
 
 test_mapToTranscripts <- function()
 {
@@ -36,18 +234,21 @@ test_mapToTranscripts <- function()
 
     x <- GRanges("chr3", IRanges(9, 9), strand="+")
     transcripts <- GRangesList(tx1=GRanges("chr3", IRanges(3, 10), strand="-"))
-    ans <- mapToTranscripts(x, transcripts, ignore.strand=FALSE)
+    ans <- mapToTranscripts(x, transcripts)
     checkTrue(length(ans) == 0L)
-    ans <- mapToTranscripts(x, transcripts, ignore.strand=TRUE)
-    checkTrue(start(ans) == 2L)
-    checkTrue(as.character(strand(ans)) == "-")
+    ans <- mapToTranscripts(x, transcripts, TRUE)
+    checkTrue(start(ans) == 7L)
+    checkTrue(as.character(strand(ans)) == "*")
 
     x <- GRanges("1", IRanges(248, width=1))
     transcripts <- GRangesList(
         foo = (GRanges("1", IRanges(c(101,201), width=50), strand="-")))
-    ans1 <- mapToTranscripts(x, transcripts, ignore.strand=TRUE)
-    ans2 <- mapToTranscripts(x, transcripts, ignore.strand=FALSE)
-    checkIdentical(ans1, ans2)
+    ans <- mapToTranscripts(x, transcripts, TRUE)
+    checkIdentical(ranges(ans), IRanges(98, 98))
+    checkTrue(as.character(strand(ans)) == "*")
+    ans <- mapToTranscripts(x, transcripts, FALSE)
+    checkIdentical(ranges(ans), IRanges(3, 3))
+    checkTrue(as.character(strand(ans)) == "-")
 
     ## TxDb
     x <- GRanges("chr2L", IRanges(c(7500, 8400, 9000), 
@@ -59,33 +260,6 @@ test_mapToTranscripts <- function()
     ans <- mapToTranscripts(x, txdb, extractor.fun=exonsBy, by="gene")
     checkIdentical(mcols(ans)$transcriptsHits, rep(4179L, 5))
     checkIdentical(seqlevels(ans), "FBgn0031208")
-}
-
-test_mapFromTranscripts <- function()
-{
-    x <- GRanges("tx1", IRanges(10, width=2), strand="+")
-    gr <- GRanges("chr1", IRanges(c(10, 100), width=50), strand="+")
-    align = GRangesList(gr, gr, gr)
-    names(align) <- c("tx1", "bar", "tx1") 
-
-    ans <- mapFromTranscripts(x, align)
-    checkIdentical(as.character(seqnames(ans)), as.character(seqnames(gr)))
-    checkTrue(all(width(ans) == 2L))
-    checkIdentical(mcols(ans)$xHits, c(1L, 1L))
-    checkIdentical(mcols(ans)$transcriptsHits, c(1L, 3L))
-    ans <- mapFromTranscripts(x, unlist(align))
-    checkIdentical(mcols(ans)$xHits, c(1L, 1L, 1L, 1L))
-    checkIdentical(mcols(ans)$transcriptsHits, c(1L, 2L, 5L, 6L))
-
-    strand(align[[1]][1]) <- "-"
-    checkException(mapFromTranscripts(x, align, FALSE), silent=TRUE) 
-
-    strand(align[[1]]) <- "-"
-    ans <- mapFromTranscripts(x, align, FALSE) 
-    checkIdentical(mcols(ans)$transcriptsHits, 3L)
-    ans <- mapFromTranscripts(x, align, TRUE) 
-    checkIdentical(mcols(ans)$transcriptsHits, c(1L, 3L))
-    checkIdentical(seqlevels(ans), "chr1")
 }
 
 test_mapToTranscripts_range_order <- function()
@@ -129,6 +303,7 @@ test_pmapToTranscripts <- function()
     checkIdentical(names(mcols(ans1)), character(0))
     checkIdentical(names(mcols(ans2)), character(0))
 
+    ## methods  GR,GR  GR,GRL  
     ## recycling 
     x <- GRanges("chr1", IRanges(1, width=1))
     y <- GRanges("chr1", IRanges(1:5, width=1))
@@ -174,55 +349,4 @@ test_pmapToTranscripts <- function()
     align <- GRanges("chr1", IRanges(c(1, 35, 45, 55), width=11))
     ans <- pmapToTranscripts(x, align) 
     checkIdentical(seqnames(ans), Rle(as.factor("UNMAPPED"), 4)) 
-}
-
-test_pmapFromTranscripts <- function()
-{
-    ## empty
-    ans1 <- pmapFromTranscripts(GRanges(), GRanges())
-    ans2 <- pmapFromTranscripts(GRanges(), GRangesList())
-    checkTrue(length(ans1) == 0L)
-    checkTrue(length(ans2) == 0L)
-    checkIdentical(names(mcols(ans1)), character(0))
-    checkIdentical(names(mcols(ans2)), character(0))
-
-    ## recycling 
-    x <- GRanges("tx1", IRanges(1, width=1))
-    gr <- GRanges("chr1", IRanges(1:5, width=1))
-    ans <- pmapFromTranscripts(x, gr)
-    checkIdentical(as.character(seqnames(ans)), rep("chr1", 5L))
-    ans <- pmapFromTranscripts(c(x, x), gr[1])
-    checkIdentical(as.character(seqnames(ans)), c("chr1", "chr1"))
-
-    ## strand
-    x <- GRanges("chr1", IRanges(c(1, 50, 150), width=1, names=LETTERS[1:3]))
-    gr <- GRanges("chr1", IRanges(c(100, 300), width=100))
-    align <- GRangesList(gr, gr, gr)
-
-    strand(x) <- "-"
-    strand(align) <- "+"
-    ans <- pmapFromTranscripts(x, align)
-    checkTrue(length(x) == length(x))
-    checkTrue(all(width(ans) == 0L))
-
-    strand(align[[2]][1]) <- "-"
-    checkException(pmapFromTranscripts(x, align), silent=TRUE) 
-
-    strand(align) <- "+"
-    strand(x) <- "+"
-    ans <- pmapFromTranscripts(x, align) 
-    checkIdentical(start(ans), c(100L, 149L, 349L))
-
-    strand(align) <- "-"
-    strand(x) <- "-"
-    ans <- pmapFromTranscripts(x, align) 
-    checkIdentical(start(ans), c(399L, 350L, 150L))
-    checkIdentical(names(ans), names(x))
-    checkIdentical(seqlevels(ans), "chr1")
-
-    ## out of bounds
-    x <- GRanges("chr1", IRanges(rep(40, 3), width=11))
-    align <- GRanges("chr1", IRanges(c(35, 45, 55), width=20))
-    ans <- pmapFromTranscripts(x, align, TRUE) 
-    checkIdentical(seqnames(ans), Rle(as.factor("UNMAPPED"), 3)) 
 }
