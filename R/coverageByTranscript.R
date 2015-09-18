@@ -138,8 +138,24 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     suppressWarnings(seqnames(x) <- tmp_seqnames)
     seqlevels(x) <- seqlevel1
 
+    ## Prepare transcriptome-based seqlevels.
+    ans_seqlevels <- names(transcripts)
+    if (is.null(ans_seqlevels)) {
+        seqlevels_are_bad <- TRUE
+    } else {
+        seqlevels_are_bad <- anyDuplicated(ans_seqlevels) ||
+                             any(ans_seqlevels %in% c(NA_character_, ""))
+        if (seqlevels_are_bad)
+            warning(wmsg("The names on 'transcripts' could not be used to set ",
+                         "the seqlevels of the returned object (because they ",
+                         "contain duplicates, NAs, and/or empty strings). ",
+                         "Setting artificial seqlevels TX1, TX2, etc..."))
+    }
+    if (seqlevels_are_bad)
+        ans_seqlevels <- paste0("TX", as.character(seq_along(transcripts)))
+
     ## Set transcriptome-based seqinfo.
-    ans_seqinfo <- Seqinfo(paste0("TX", as.character(seq_along(transcripts))),
+    ans_seqinfo <- Seqinfo(ans_seqlevels,
                            unname(sum(width(transcripts))),
                            logical(length(transcripts)),
                            genome(transcripts))
