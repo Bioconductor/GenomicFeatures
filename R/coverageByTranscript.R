@@ -125,7 +125,8 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     list(end_in_tx=end_in_tx, offset_in_exon=offset_in_exon)
 }
 
-.put_transcriptome_costume <- function(x, transcripts)
+### Put nice transcriptome costume on.
+.set_transcriptome_seqinfo <- function(x, transcripts)
 {
     stopifnot(is(x, "GRangesList"), is(transcripts, "GRangesList"))
     stopifnot(length(transcripts) == length(x) || length(transcripts) == 1L)
@@ -180,9 +181,12 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
 ### propagated.
 .project_GRanges_on_transcripts <- function(x, transcripts,
                                             ignore.strand=FALSE,
-                                            keep.nohit.exons=FALSE)
+                                            keep.nohit.exons=FALSE,
+                                            set.transcriptome.seqinfo=TRUE)
 {
     stopifnot(is(x, "GRanges"), is(transcripts, "GRangesList"))
+
+    ## Recycle arguments.
     transcripts_was_recycled <- FALSE
     if (length(x) != length(transcripts)) {
         if (length(x) == 1L) {
@@ -223,9 +227,14 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     } else {
         ans <- relist(unlisted_ans, ans)
     }
+
+    if (!set.transcriptome.seqinfo)
+        return(ans)
+
+    ## Put nice transcriptome costume on.
     if (transcripts_was_recycled)
         transcripts <- transcripts[1L]
-    .put_transcriptome_costume(ans, transcripts)
+    .set_transcriptome_seqinfo(ans, transcripts)
 }
 
 ### Return a GRangesList object parallel to 'transcripts' (but the shape is
@@ -235,6 +244,8 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
                                                 keep.nohit.exons=FALSE)
 {
     stopifnot(is(x, "GRangesList"), is(transcripts, "GRangesList"))
+
+    ## Recycle arguments.
     transcripts_was_recycled <- FALSE
     if (length(x) != length(transcripts)) {
         if (length(x) == 1L) {
@@ -247,15 +258,19 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
                       "same length, one of them must have length 1"))
         }
     }
+
     x_eltlens <- elementLengths(x)
     transcripts2 <- rep.int(transcripts, x_eltlens)
     unlisted_x <- unlist(x, use.names=FALSE)
     y <- .project_GRanges_on_transcripts(unlisted_x, transcripts2,
-                                         ignore.strand, keep.nohit.exons)
+                                         ignore.strand, keep.nohit.exons,
+                                         set.transcriptome.seqinfo=FALSE)
     ans <- IRanges:::regroupBySupergroup(y, x)
+
+    ## Put nice transcriptome costume on.
     if (transcripts_was_recycled)
         transcripts <- transcripts[1L]
-    .put_transcriptome_costume(ans, transcripts)
+    .set_transcriptome_seqinfo(ans, transcripts)
 }
 
 ### 'x' and 'transcripts' must have the same length. Perform "parallel
