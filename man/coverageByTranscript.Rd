@@ -147,7 +147,7 @@ reads_by_tx
 
 ## Call pcoverageByTranscript():
 tx_cvg2 <- pcoverageByTranscript(reads_by_tx, transcripts,
-                                      ignore.strand=TRUE)
+                                 ignore.strand=TRUE)
 stopifnot(identical(tx_cvg, tx_cvg2))
 
 ## A more meaningful coverage is obtained by counting for each
@@ -157,8 +157,8 @@ tx2reads <- setNames(as(t(compat_hits), "List"), names(transcripts))
 compat_reads_by_tx <- extractList(reads, tx2reads)
 
 tx_compat_cvg <- pcoverageByTranscript(compat_reads_by_tx,
-                                            transcripts,
-                                            ignore.strand=TRUE)
+                                       transcripts,
+                                       ignore.strand=TRUE)
 ## A sanity check:
 stopifnot(all(all(tx_compat_cvg <= tx_cvg)))
 

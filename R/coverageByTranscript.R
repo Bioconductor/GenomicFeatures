@@ -128,7 +128,7 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
 .put_transcriptome_costume <- function(x, transcripts)
 {
     stopifnot(is(x, "GRangesList"), is(transcripts, "GRangesList"))
-    stopifnot(length(x) == length(transcripts))
+    stopifnot(length(transcripts) == length(x) || length(transcripts) == 1L)
 
     ## Temporarily put all the ranges in 'x' on the 1st level and drop
     ## all other levels.
@@ -164,10 +164,11 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     suppressWarnings(seqinfo(x, new2old=new2old) <- ans_seqinfo)
 
     ## Set transcriptome-based seqnames.
-    ans_seqnames <- relist(Rle(factor(seqlevels(ans_seqinfo),
-                                      levels=seqlevels(ans_seqinfo)),
-                               elementLengths(x)), x)
-    seqnames(x) <- ans_seqnames
+    if (length(ans_seqlevels) != 1L) {
+        ans_seqnames <- relist(Rle(factor(ans_seqlevels, levels=ans_seqlevels),
+                                   elementLengths(x)), x)
+        seqnames(x) <- ans_seqnames
+    }
 
     ## Set strand to "*".
     strand(x) <- "*"
@@ -182,14 +183,17 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
                                             keep.nohit.exons=FALSE)
 {
     stopifnot(is(x, "GRanges"), is(transcripts, "GRangesList"))
+    transcripts_was_recycled <- FALSE
     if (length(x) != length(transcripts)) {
-        if (length(x) == 1L)
+        if (length(x) == 1L) {
             x <- rep.int(x, length(transcripts))
-        else if (length(transcripts) == 1L)
+        } else if (length(transcripts) == 1L) {
             transcripts <- rep.int(transcripts, length(x))
-        else
+            transcripts_was_recycled <- TRUE
+        } else {
             stop(wmsg("when 'x' and 'transcripts' don't have the ",
                       "same length, one of them must have length 1"))
+        }
     }
     if (!isTRUEorFALSE(keep.nohit.exons))
         stop(wmsg("'keep.nohit.exons' must be TRUE or FALSE"))
@@ -206,12 +210,12 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     mcols(unlisted_ans)$offset_in_exon <- unlist(txcoords$offset_in_exon,
                                                  use.names=FALSE)
 
-    ## 'pint' typically contains many "nohit ranges" that are zero-width ranges
-    ## artificially created by pintersect(), one for each exon in 'transcripts'
-    ## that receives no hit. This allows 'pint' to have the same shape as
-    ## 'transcripts' which is required for .genome2txcoords() to work.
-    ## If 'keep.nohit.exons' is FALSE then we remove those "nohit ranges" from
-    ## 'ans'.
+    ## 'pint' typically contains many "nohit ranges" that are zero-width
+    ## ranges artificially created by pintersect(), one for each exon in
+    ## 'transcripts' that receives no hit. This allows 'pint' to have the
+    ## same shape as 'transcripts' which is required for .genome2txcoords()
+    ## to work. If 'keep.nohit.exons' is FALSE then we remove those "nohit
+    ## ranges" from 'ans'.
     if (!keep.nohit.exons) {
         is_hit <- relist(mcols(unlisted_ans)$hit, ans)
         mcols(unlisted_ans)$hit <- NULL
@@ -219,7 +223,8 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     } else {
         ans <- relist(unlisted_ans, ans)
     }
-
+    if (transcripts_was_recycled)
+        transcripts <- transcripts[1L]
     .put_transcriptome_costume(ans, transcripts)
 }
 
@@ -230,14 +235,17 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
                                                 keep.nohit.exons=FALSE)
 {
     stopifnot(is(x, "GRangesList"), is(transcripts, "GRangesList"))
+    transcripts_was_recycled <- FALSE
     if (length(x) != length(transcripts)) {
-        if (length(x) == 1L)
+        if (length(x) == 1L) {
             x <- rep.int(x, length(transcripts))
-        else if (length(transcripts) == 1L)
+        } else if (length(transcripts) == 1L) {
             transcripts <- rep.int(transcripts, length(x))
-        else
+            transcripts_was_recycled <- TRUE
+        } else {
             stop(wmsg("when 'x' and 'transcripts' don't have the ",
                       "same length, one of them must have length 1"))
+        }
     }
     x_eltlens <- elementLengths(x)
     transcripts2 <- rep.int(transcripts, x_eltlens)
@@ -245,6 +253,8 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     y <- .project_GRanges_on_transcripts(unlisted_x, transcripts2,
                                          ignore.strand, keep.nohit.exons)
     ans <- IRanges:::regroupBySupergroup(y, x)
+    if (transcripts_was_recycled)
+        transcripts <- transcripts[1L]
     .put_transcriptome_costume(ans, transcripts)
 }
 
