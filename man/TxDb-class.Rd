@@ -139,8 +139,8 @@ seqlengths(txdb)  # shortcut for 'seqlengths(seqinfo(txdb))'
 isCircular(txdb)  # shortcut for 'isCircular(seqinfo(txdb))'
 names(which(isCircular(txdb)))
 
-## Can set user-supplied seqlevels on 'txdb' to restrict any further
-## operations to the supplied seqlevels:
+## You can set user-supplied seqlevels on 'txdb' to restrict any further
+## operations to a subset of chromosomes:
 seqlevels(txdb) <- c("Y", "6")
 ## Then you can restore the seqlevels stored in the db:
 seqlevels(txdb) <- seqlevels0(txdb)
