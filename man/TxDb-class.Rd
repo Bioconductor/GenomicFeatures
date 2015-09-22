@@ -9,7 +9,6 @@
 \alias{seqlevels0,TxDb-method}
 \alias{seqlevels<-,TxDb-method}
 \alias{seqinfo,TxDb-method}
-\alias{seqinfo<-,TxDb-method}
 \alias{isActiveSeq}
 \alias{isActiveSeq<-}
 \alias{isActiveSeq,TxDb-method}
@@ -140,12 +139,11 @@ seqlengths(txdb)  # shortcut for 'seqlengths(seqinfo(txdb))'
 isCircular(txdb)  # shortcut for 'isCircular(seqinfo(txdb))'
 names(which(isCircular(txdb)))
 
-## Can set txdb so that only chr1 and chr2 are used by using the
-## seqlevels:
-seqlevels(txdb, force=TRUE) <- c("1", "2")
-## Then you can restore the default seqlevels:
-txdb <- restoreSeqlevels(txdb)
-
+## Can set user-supplied seqlevels on 'txdb' to restrict any further
+## operations to the supplied seqlevels:
+seqlevels(txdb) <- c("Y", "6")
+## Then you can restore the seqlevels stored in the db:
+seqlevels(txdb) <- seqlevels0(txdb)
 
 ## Use of as.list():
 txdb_dump <- as.list(txdb)

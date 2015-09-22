@@ -41,21 +41,18 @@ gc()
 ### Concrete GenomicFeatures types
 .TxDb <-
     setRefClass("TxDb", contains="AnnotationDb",
-        fields=list(.chrom="character",
-                    isActiveSeq="logical",
-                    new2old="integer"),
+        fields=list(user_seqlevels="character",
+                    user2seqlevels0="integer",
+                    isActiveSeq="logical"),
         methods=list(
           initialize=function(...) {
               callSuper(...)
               if (length(dbListTables(conn) != 0L)) {
                   chrominfo <- load_chrominfo(.self, set.col.class=TRUE)
-                  ## set up initial new2old slot:
-##                   n2o <- 
-##                   names(n2o) <- chrominfo$chrom
-                  .self$new2old <- seq_along(chrominfo$chrom)
-                  ## deprecate .chrom and isActiveSeq
-                  .self$.chrom <- chrominfo$chrom 
-                  .self$isActiveSeq <- !logical(length(.self$.chrom)) 
+                  .self$user_seqlevels <- chrominfo$chrom 
+                  .self$user2seqlevels0 <- seq_along(chrominfo$chrom)
+                  ## deprecate isActiveSeq
+                  .self$isActiveSeq <- !logical(length(.self$user_seqlevels)) 
               }
           .self
       }))
@@ -384,27 +381,58 @@ setMethod("seqlevels0", "TxDb",
     }
 )
 
+### Adapted from default "seqlevels<-" method defined in GenomeInfoDb.
+### We only support "renaming" and "strict subsetting" modes.
 setReplaceMethod("seqlevels", "TxDb",
     function(x, force=FALSE, value)
     {
-        seqlevels0 <- seqlevels0(x)
-        if (!identical(value, seqlevels0))
-            return(callNextMethod())
-        ## Reset 'x'.
-        x$initialize()
+        x_seqlevels0 <- seqlevels0(x)  # "real" seqlevels (from the db)
+        if (identical(value, x_seqlevels0))
+            return(x$initialize())
+        x_seqlevels <- seqlevels(x)
+        ## Map the new sequence levels to the old ones.
+        new2old <- GenomeInfoDb:::getSeqlevelsReplacementMode(value,
+                                                              x_seqlevels)
+        if (identical(new2old, -3L)) {
+            ## "renaming" mode
+            x$user_seqlevels <- value
+            return(x)
+        }
+        if (identical(new2old, -2L) || identical(new2old, -1L)) {
+            ## "subsetting" mode
+            new2old <- match(value, x_seqlevels)
+        }
+        user2seqlevels0 <- x$user2seqlevels0[new2old]
+        na_idx <- which(is.na(user2seqlevels0))
+        if (length(na_idx) != 0L) {
+            user2seqlevels0[na_idx] <- match(value[na_idx], x_seqlevels0)
+            if (anyNA(user2seqlevels0))
+                stop(wmsg("adding seqlevels to a TxDb object is not supported"))
+            any_dup <- anyDuplicated(user2seqlevels0)
+            if (any_dup) {
+                idx0 <- user2seqlevels0[any_dup]
+                in1string <- paste(value[user2seqlevels0 == idx0],
+                                   collapse=", ")
+                seqlevel0 <- x_seqlevels0[idx0]
+                stop(wmsg("more than one user-supplied seqlevels ",
+                          "(", in1string, ") refer to the same seqlevel ",
+                          "stored in the db (", seqlevel0, ")"))
+            }
+        }
+        x$user_seqlevels <- unname(value)
+        x$user2seqlevels0 <- user2seqlevels0
+        x
     }
 )
 
-## seqinfo getter needs to rename and re-sort things based on new2old
-## integers every single time it is accessed
 .get_TxDb_seqinfo <- function(x)
 {
     data <- load_chrominfo(x, set.col.class=TRUE)
-    ## We take the seqnames from x's private field '.chrom'.
-    ans <- Seqinfo(seqnames=x$.chrom, ## stored correctly already
-                   seqlengths=data[["length"]][x$new2old],
-                   isCircular=data[["is_circular"]][x$new2old])
-    ## Then re-arrange the ans value based on the new2old values
+    ## We take the seqnames from x's private field 'user_seqlevels'.
+    ans <- Seqinfo(seqnames=x$user_seqlevels, ## stored correctly already
+                   seqlengths=data[["length"]][x$user2seqlevels0],
+                   isCircular=data[["is_circular"]][x$user2seqlevels0])
+    ## Then re-arrange the ans value based on the user2seqlevels0 values
     ## also get the genome information.
     sql <- "SELECT value FROM metadata WHERE name='Genome'"
     genome <- unlist(queryAnnotationDb(x, sql))
@@ -416,191 +444,6 @@ setReplaceMethod("seqlevels", "TxDb",
 
 setMethod("seqinfo", "TxDb", .get_TxDb_seqinfo)
 
-### This is a restricted "seqinfo<-" method for TxDb objects
-### that only supports replacement of the sequence names or dropping
-### and resorting of the sequence names.  Since the getter above is
-### resorting and renaming every time, the setter only needs to put
-### the new2old field together correctly (in the object).
-
-## planned fix for seqinfo(): (so it can support the force argument).
-## 1) Add a character vector slot to hold seqnames and their "altered"
-## names. OR add a seqinfo object slot to hold a temporary seqinfo
-## data (which would then be respected by all the methods?)
-## 2) new2old argument: Note that while we can support renaming to
-## whatever, we cannot allow users to change the length of the
-## sequences.  So there are still some restrictions.  However: we CAN
-## allow users to limit scope like in isActiveSeq (a slot that will
-## become redundant with this one, by simply stashing NA into values
-## that the user has excluded.  OR: if we take the seqinfo approach,
-## then we would store the temp seqinfo. and allow users to mess with
-## it however they liked, and the methods would have to post-filter
-## based on that.
-## 3) no replace "value", as we can't really allow the user to set the
-## seqinfo to just anything.  Because it's a database, some values are
-## not allowed?  OR: do we want to just have the results filtered so
-## that the results are in line with a seqinfo. slot?  - currently we
-## just don't do the setter.
-
-## Herve made a good point about all this.  And that was that if I
-## start allowing all these changes to seqinfo, then I have to filter
-## the results.  How much of a mess will that be?  Do we include
-## ranges that overlap with the new boundary?  If so do we truncate
-## those?
-## There is currently code that translates from the old seqinfo to the
-## new names (currently only naming is allowed).
-
-## No matter which solution I choose, we don't want to allow filtering
-## based on circularity.
-
-## AND: I also need to get vals to behave better as it currently is
-## ignoring even the meager amount of things that we are trying to
-## support via seqlevels.  And this is because it gets translated into
-## a query without 1st being translated back to whatever the DB is
-## using (so things will break if you use a name for vals after
-## renaming your stuff).
-
-## Other considerations: the implementation of a seqinfo slot could
-## create additional complications for methods similar to
-## extractTranscriptSeqs because these rely on the names coming
-## back being the same as the ones in the DB.  In fact, anywhere that
-## we have code that relys on this it is at risk for breaking.  So if
-## we want to go down the route of making these methods the same
-## across the board, then we have to consider the ramifications of
-## that decision.  Specifically, some code may not behave as expected
-## after users change these things.  For the base level accessors, we
-## can hide that by translating or by filtering based on a maleable
-## seqinfo slot.  But for more compound operations, existing code may
-## be expecting that these values will always be within the parameters
-## that have been allowed up till now (IOW no dropping of seqlevels,
-## etc.)
-
-## So: 1st decision: what do we want to allow users to change?
-## 1) seqlevels (names) - the only thing that is allowed now.
-## 2) "drop" seqlevels, (force=TRUE)   - This is what we want to add.
-## 3) change values of seqlengths? Nope
-## 4) change values of genomes? Nope
-## 5) change values of circularity? Nope
-## 6) add seqlevels? Nope
-## 7) reorder seqlevels? Yes
-
-## To just add #2, option 1, IOW a translation slot (not a full blown
-## seqinfo object) should be enough to do the trick.
-
-
-### Changing the names works
-## seqlevels(txdb) <- as.character(1:93)
-
-## But we also want to support subsetting:
-## library(TxDb.Hsapiens.UCSC.hg19.knownGene); txdb=TxDb.Hsapiens.UCSC.hg19.knownGene; seqinfo(txdb)
-## seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
-
-### And to reset we do this:
-## txdb <- restoreSeqlevels(txdb)
-
-
-## Bugs :
-## This works:
-## seqlevels(txdb, force=TRUE) <- c(chr4 = "4", chr5 = "5", chr6="6")
-## But this doesn't: (needs to go based on match internally)
-## seqlevels(txdb, force=TRUE) <- c(chr5 = "5", chr6="6", chr4="4")
-
-
-## Some unit tests needed for the following:
-
-## This should fail: add seqlevels (and it does)
-## seqlevels(txdb, force=TRUE) <- c(foo = "2")
-## This throws an error, so that's good
-
-
-## These next three do not *actually* make any change the object (so
-## these are actually "safe", but they SHOULD still throw an error)
-
-## This should fail: change circ
-## seqinfo(txdb) <- seqinfo()
-## foo = seqinfo(txdb)
-## foo@is_circular = rep(TRUE, 93)
-## seqinfo(txdb, new2old=1:93) <- foo
-
-## This should fail: change genome
-## foo = seqinfo(txdb)
-## foo@genome = rep("hg18", 93)
-## seqinfo(txdb, new2old=1:93) <- foo
-
-## This should fail: change seqlengths
-## foo = seqinfo(txdb)
-## foo@seqlengths = rep(1000L, 93)
-## seqinfo(txdb, new2old=1:93) <- foo
-
-
-.replace_TxDb_seqinfo <- function(x, new2old=NULL, force=FALSE, value)
-{
-    if (!is(value, "Seqinfo"))
-        stop("the supplied 'seqinfo' must be a Seqinfo object")
-    IN_THIS_CONTEXT <- paste0("when replacing the 'seqinfo' ",
-                              "of a TxDb object")
-
-    ## Get the current seqinfo
-    x_seqinfo <- seqinfo(x)
-        
-    ## make sure new2old is set up
-    if (is.null(new2old)) {
-        stop("'new2old' must be specified ", IN_THIS_CONTEXT)
-        return(x)
-    }
-    ## length has to be reasonable to move forward
-    if(!is.null(new2old) &&  !(length(new2old) <= length(x_seqinfo))){
-        stop("The replacement value must be either a 1 to 1 replacement ",
-             "or a subset of the original set ",
-                 IN_THIS_CONTEXT)
-    }
-    
-    ## if the new value is smaller, then we need a smaller thing for comparison
-    if(!is.null(new2old) && length(new2old) < length(x_seqinfo)){
-        equiv_seqinfo <- Seqinfo(seqnames=seqnames(value), 
-                   seqlengths=x_seqinfo@seqlengths[new2old],
-                   isCircular=x_seqinfo@is_circular[new2old],
-                   genome=x_seqinfo@genome[new2old])
-    }else{
-        equiv_seqinfo <- x_seqinfo
-    }
-
-    ## no changes to circ allowed
-    if(!identical(value@is_circular, equiv_seqinfo@is_circular)){
-        stop("No changes are allowed to circularity ", IN_THIS_CONTEXT)
-    }
-    
-    ## no changes to genome allowed
-    if(!identical(value@genome, equiv_seqinfo@genome)){
-        stop("No changes are allowed to genome ", IN_THIS_CONTEXT)
-    }
-    
-    ## no changes to lengths allowed
-    if(!identical(value@seqlengths, equiv_seqinfo@seqlengths)){
-        stop("No changes are allowed to seqlengths ", IN_THIS_CONTEXT)
-    }
-    
-    
-    if(force == TRUE && !is.null(new2old)){
-        ## just always set the new2old value up if it's here.
-        x$new2old <- new2old
-        ## and we also need to update the isActiveSeq slot
-        x$isActiveSeq <- .isActiveSeq(x)[new2old]
-        names(x$isActiveSeq) <- NULL
-    }
-    if(force != TRUE && !is.null(new2old) &&
-       length(new2old) < length(x_seqinfo)){
-        stop("You need to use force=TRUE if you want to drop seqlevels.")
-    }
-    
-    ## store the names where we always have
-    x$.chrom <- seqnames(value)
-
-    ## And return
-    x
-}
-
-setReplaceMethod("seqinfo", "TxDb", .replace_TxDb_seqinfo)
-
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### isActiveSeq() getter and setter
@@ -611,8 +454,8 @@ setGeneric("isActiveSeq", function(x) standardGeneric("isActiveSeq"))
 ## , msg="isActiveSeq is deprecated for Bioc 2.13 and above. Please see help(seqinfo) for an alternative approach."
 
 .isActiveSeq <- function(x){
-    ans <- x$isActiveSeq
-    names(ans) <- x$.chrom
+    ans <- x$isActiveSeq[x$user2seqlevels0]
+    names(ans) <- x$user_seqlevels
     ans
 }
 setMethod("isActiveSeq", "TxDb",

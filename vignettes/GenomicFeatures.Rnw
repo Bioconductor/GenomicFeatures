@@ -129,15 +129,16 @@ default it will be all of them).
 If you then wanted to only set Chromosome 1 to be active you could do
 it like this:
 <<seqlevels2>>=
-seqlevels(txdb, force=TRUE) <- c("chr1")
+seqlevels(txdb) <- "chr1"
 @ 
 
 So if you ran this, then from this point on in your R session only
 chromosome 1 would be consulted when you call the various retrieval
-methods...  If you need to reset back to the original seqlevels, use
-the \Rfunction{restoreSeqlevels} method.
+methods...  If you need to reset back to the original seqlevels (i.e.
+to the seqlevels stored in the db), then set the seqlevels to
+\Rcode{seqlevels0(txdb)}.
 <<seqlevels3>>=
-txdb <- restoreSeqlevels(txdb)
+seqlevels(txdb) <- seqlevels0(txdb)
 @ 
 
 
@@ -147,7 +148,7 @@ the rest of this vignette will assume you have succeeded at this.
 \end{Exercise}
 \begin{Solution}
 <<seqlevels4>>=
-seqlevels(txdb, force=TRUE) <- c("chr15")
+seqlevels(txdb) <- "chr15"
 @
 \end{Solution}
 
