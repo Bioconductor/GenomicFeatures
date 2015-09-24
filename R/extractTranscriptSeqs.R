@@ -164,7 +164,7 @@ if (FALSE) {
     } else {
         ## Why do we need this?
         regex <- paste0("^", seqlevel, "$")
-        x <- getSeq(x, regex, as.character=FALSE)
+        x <- getSeq(x, regex)
     }
     extractTranscriptSeqs(x, transcripts, strand=strand)
 }
