@@ -50,6 +50,13 @@
     gr
 }
 
+.rename_by_dbxrefTag <- function(gr, dbxrefTag) {
+    dbxref <- unlist(gr$Dbxref, use.names=FALSE)
+    m <- grepl(paste0("^", dbxrefTag, ":"), dbxref)
+    gr$Name[togroup(gr$Dbxref)[m]] <- dbxref[m]
+    gr
+}
+
 .prepareGFFMetadata <- function(file, dataSource=NA, organism=NA,
                                 taxonomyId=NA, miRBaseBuild=NA)
 {
@@ -122,6 +129,7 @@ makeTxDbFromGFF <- function(file,
                             circ_seqs=DEFAULT_CIRC_SEQS,
                             chrominfo=NULL,
                             miRBaseBuild=NA,
+                            dbxrefTag,
                             exonRankAttributeName=NA,     # defunct
                             gffGeneIdAttributeName=NA,    # defunct
                             useGenesAsTranscripts=FALSE,  # defunct
@@ -165,6 +173,10 @@ makeTxDbFromGFF <- function(file,
     gr <- import(file, format=format, colnames=colnames,
                        feature.type=GFF_FEATURE_TYPES)
     gr <- .tidy_seqinfo(gr, circ_seqs, chrominfo)
+    if (!missing(dbxrefTag)) {
+        gr <- .rename_by_dbxrefTag(gr, dbxrefTag)
+    }
+
     message("OK")
 
     metadata <- .prepareGFFMetadata(file, dataSource, organism, taxonomyId,

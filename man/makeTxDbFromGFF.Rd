@@ -23,6 +23,7 @@ makeTxDbFromGFF(file,
                 circ_seqs=DEFAULT_CIRC_SEQS,
                 chrominfo=NULL,
                 miRBaseBuild=NA,
+                dbxrefTag,
                 exonRankAttributeName=NA,
                 gffGeneIdAttributeName=NA,
                 useGenesAsTranscripts=FALSE,
@@ -74,6 +75,10 @@ makeTxDbFromGFF(file,
     to use for microRNAs. This can be learned by calling
     \code{supportedMiRBaseBuildValues}. By default, this value will be set to
     \code{NA}, which will inactivate the \code{microRNAs} accessor.
+  }
+  \item{dbxrefTag}{
+    If not missing, the values in the \code{Dbxref} attribute with the
+    specified tag (like \dQuote{GeneID}) are used for the feature names.
   }
   \item{exonRankAttributeName}{this argument is defunct}
   \item{gffGeneIdAttributeName}{this argument is defunct}
