@@ -207,7 +207,7 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     ## Transform genome-based coordinates in 'pint' into transcriptome-based
     ## coordinates.
     txcoords <- .genome2txcoords(transcripts, start(pint), end(pint))
-    seqlengths(pint) <- NA_integer_  # so no out-of-bound range when shifting
+    seqlengths(pint)[] <- NA_integer_  # so no out-of-bound range when shifting
     ans <- shift(pint, txcoords$end_in_tx - end(pint))
 
     ## Add "offset_in_exon" inner metadata column to 'ans'.
