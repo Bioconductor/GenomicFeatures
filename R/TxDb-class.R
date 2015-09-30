@@ -519,8 +519,9 @@ setReplaceMethod("isActiveSeq","TxDb",
 
 keep_user_seqlevels_from_TxDb <- function(x, txdb)
 {
-    stopifnot(setequal(seqlevels(x), seqlevels0(txdb)))
-    from_seqlevels <- seqlevels0(txdb)[txdb$user2seqlevels0]
+    txdb_seqlevels0 <- seqlevels0(txdb)
+    stopifnot(setequal(seqlevels(x), txdb_seqlevels0))
+    from_seqlevels <- txdb_seqlevels0[txdb$user2seqlevels0]
     to_seqlevels <- txdb$user_seqlevels
     new_seqlevels <- setNames(to_seqlevels, from_seqlevels)
     new_seqlevels <- new_seqlevels[txdb$isActiveSeq[txdb$user2seqlevels0]]
