@@ -502,7 +502,7 @@ setReplaceMethod("isActiveSeq","TxDb",
     {
         #.Deprecated("seqlevels", package="GenomicFeatures")
         value <- .mk_isActiveSeqReplacementValue(x, value)
-        x$isActiveSeq[txdb$user2seqlevels0] <- unname(value)
+        x$isActiveSeq[x$user2seqlevels0] <- unname(value)
         x
     }
 )
