@@ -1,4 +1,15 @@
-- makeTxDbFromUCSC() - Address the CDS non-completeness issue.
+o makeTxDbFromUCSC() - Address the CDS non-completeness issue.
   The status of the CDS (complete or not) can be inferred from the
   cds*Stat field (when present) of the UCSC table.
+
+o Too many helper functions are defined and used internally to query the
+  db:
+  - direct use of DBI::dbGetQuery(), RSQLite::dbGetPreparedQuery(),
+    and RSQLite::dbSendPreparedQuery()
+  - dbEasyQuery() is defined in AnnotationDbi and GenomicFeatures with
+    different definitions.
+  - AnnotationDbi:::dbQuery() is the same as GenomicFeatures:::dbEasyQuery()
+  - queryAnnotationDb()
+  - GenomicFeatures:::dbEasyPreparedQuery()
+  Clean this mess!
 
