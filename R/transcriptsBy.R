@@ -216,14 +216,7 @@ setMethod("intronsByTranscript", "TxDb",
 {
     ans <- load_splicings(txdb)
     ids <- unique(ans$tx_id[!is.na(ans$cds_id)])
-    ans <- ans[ans$tx_id %in% ids, ]
-
-    ## modify results to not respect our activeSeqs mask.
-    isActSeq <- .isActiveSeq(txdb)
-    ## We only care about the ones that are TRUE
-    isActSeq <- isActSeq[isActSeq]
-    ## remove unwanted stuff from df 
-    ans[ans$exon_chrom %in% names(isActSeq),]  
+    ans[ans$tx_id %in% ids, ]
 }
 
 ### 'tx_id': character or integer vector with runs of identical elements (one
@@ -231,7 +224,7 @@ setMethod("intronsByTranscript", "TxDb",
 ### 'exons_with_cds': integer vector containing the indices of the elements
 ### in 'tx_id' corresponding to exons with a CDS. The indices must be sorted
 ### in ascending order.
-### Returns the indices of the first exon with a CDS for every transcript, plus
+### Returns for each transcript the indices of the first exon with a CDS, plus
 ### the indices of the preceding exons in the transcript.
 ### Note that, for each transcript, exons that have a 5' UTR are all the exons
 ### before the first exon with a CDS, including the first exon with a CDS (even
@@ -252,7 +245,7 @@ setMethod("intronsByTranscript", "TxDb",
 }
 
 ### 'tx_id', 'exons_with_cds': same as for .exons_with_5utr().
-### Returns the indices of the last exon with a CDS for every transcript, plus
+### Returns for each transcript the indices of the last exon with a CDS, plus
 ### the indices of the following exons in the transcript.
 ### Note that, for each transcript, exons that have a 3' UTR are all the exons
 ### after the last exon with a CDS, including the last exon with a CDS (even
@@ -271,23 +264,23 @@ setMethod("intronsByTranscript", "TxDb",
     S4Vectors:::fancy_mseq(lengths, offset=offset)
 }
 
-.makeUTRsByTranscript <- function(x, splicings, utr_start, utr_end)
+.makeUTRsByTranscript <- function(txdb, splicings, utr_start, utr_end)
 {
-    activeNames <- names(.isActiveSeq(x))[.isActiveSeq(x)]
-    seqinfo <- seqinfo(x)[activeNames]
+    seqinfo0 <- get_TxDb_seqinfo0(txdb)
     cols <- paste0("exon_", c("id", "name", "rank"))
-    grg <- GRanges(seqnames = factor(
+    gr <- GRanges(seqnames = factor(
                      splicings$exon_chrom,
-                     levels =seqlevels(seqinfo)),
-                   ranges = IRanges(start = utr_start, end = utr_end),
-                   strand = strand(splicings$exon_strand),
-                   splicings[cols],
-                   seqinfo = seqinfo)
-    idx <- width(grg) != 0L  # drop 0-width UTRs
-    split(grg[idx], splicings$tx_id[idx])
+                     levels =seqlevels(seqinfo0)),
+                  ranges = IRanges(start = utr_start, end = utr_end),
+                  strand = strand(splicings$exon_strand),
+                  splicings[cols],
+                  seqinfo = seqinfo0)
+    idx <- width(gr) != 0L  # drop 0-width UTRs
+    grl <- split(gr[idx], splicings$tx_id[idx])
+    keep_user_seqlevels_from_TxDb(grl, txdb)
 }
 
-.make5UTRsByTranscript <- function(x, splicings, use.names=FALSE)
+.make5UTRsByTranscript <- function(txdb, splicings, use.names=FALSE)
 {
     exons_with_cds <- which(!is.na(splicings$cds_id))
     idx <- .exons_with_5utr(splicings$tx_id, exons_with_cds)
@@ -303,13 +296,13 @@ setMethod("intronsByTranscript", "TxDb",
     utr_start[idx] <- splicings$cds_end[idx] + 1L
 
     ## split by grouping variable
-    ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end)
-    ans <- .set.group.names(ans, use.names, x, "tx")
-    ans <- .assignMetadataList(ans, x)
+    ans <- .makeUTRsByTranscript(txdb, splicings, utr_start, utr_end)
+    ans <- .set.group.names(ans, use.names, txdb, "tx")
+    ans <- .assignMetadataList(ans, txdb)
     ans
 }
 
-.make3UTRsByTranscript <- function(x, splicings, use.names=FALSE)
+.make3UTRsByTranscript <- function(txdb, splicings, use.names=FALSE)
 {
     exons_with_cds <- which(!is.na(splicings$cds_id))
     idx <- .exons_with_3utr(splicings$tx_id, exons_with_cds)
@@ -325,9 +318,9 @@ setMethod("intronsByTranscript", "TxDb",
     utr_end[idx] <- splicings$cds_start[idx] - 1L
 
     ## split by grouping variable
-    ans <- .makeUTRsByTranscript(x, splicings, utr_start, utr_end)
-    ans <- .set.group.names(ans, use.names, x, "tx")            
-    ans <- .assignMetadataList(ans, x)
+    ans <- .makeUTRsByTranscript(txdb, splicings, utr_start, utr_end)
+    ans <- .set.group.names(ans, use.names, txdb, "tx")            
+    ans <- .assignMetadataList(ans, txdb)
     ans
 }
 
