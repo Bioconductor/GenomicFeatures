@@ -4,145 +4,289 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### A high-level representation of the db relational model used for
-### generating SQL queries.
+### Low-level helpers for building SQL queries
 ###
 
-### Note that we omit the *_start and *_end cols.
-.ALLCOLS <- c("gene_id",
-              "tx_id", "tx_name", "tx_chrom", "tx_strand",
-              "exon_id", "exon_name", "exon_chrom", "exon_strand",
-              "cds_id", "cds_name", "cds_chrom", "cds_strand",
-              "exon_rank")
+.build_SQL_WHERE <- function(vals)
+{
+    if (length(vals) == 0L)
+        return("")
+    sql <-
+      lapply(seq_len(length(vals)), function(i) {
+               v <- vals[[i]]
+               if (!is.numeric(v))
+                 v <- paste0("'", v, "'")
+               v <- paste0("(", paste(v, collapse=","), ")")
+               v <- paste0(names(vals)[i], " IN ", v)
+               paste0("(", v, ")")
+            })
+    paste(unlist(sql), collapse=" AND ")
+}
 
-.CORETAGS <- c("id", "chrom", "strand", "start", "end")
-
-### THE TRANSCRIPT CENTRIC POINT OF VIEW:
-### If we look at the db from a transcript centric point of view, then the
-### graph of relations between the tables becomes a tree where the 'transcript'
-### table is the root:
-###                            transcript
-###                             /      \
-###                          gene    splicing
-###                                  /      \
-###                                exon     cds
-###
-.TRANSCRIPT_CENTRIC_DBDESC <- list(
-    CORECOLS=structure(paste("tx", .CORETAGS, sep="_"), names=.CORETAGS),
-    ### Each col defined in the db is assigned to the closest table (starting
-    ### from the 'transcript' table) where it can be found. The 'transcript'
-    ### element must be the 1st in the list:
-    COLMAP=list(
-        transcript=c("tx_id", makeFeatureColnames("tx")),
-        gene="gene_id",
-        splicing=c("exon_rank", "exon_id", "_exon_id", "cds_id", "_cds_id"),
-        exon=c("exon_name", "exon_chrom", "exon_strand",
-               "exon_start", "exon_end"),
-        cds=c("cds_name", "cds_chrom", "cds_strand", "cds_start", "cds_end")
-    ),
-    ### For each table that is not the root or a leaf table in the above tree,
-    ### we list the tables that are below it:
-    CHILDTABLES=list(
-        splicing=c("exon", "cds")
-    ),
-    ### For each table that is not the root table in the above tree, we specify
-    ### the join condition with the parent table:
-    JOINS=c(
-        gene="transcript._tx_id=gene._tx_id",
-        splicing="transcript._tx_id=splicing._tx_id",
-        exon="splicing._exon_id=exon._exon_id",
-        cds="splicing._cds_id=cds._cds_id"
-    )
-)
-
-### THE EXON CENTRIC POINT OF VIEW:
-### If we look at the db from an exon centric point of view, then the
-### graph of relations between the tables becomes a tree where the 'exon'
-### table is the root:
-###                               exon
-###                                |
-###                             splicing
-###                            /   |    \
-###                   transcript  gene  cds
-###
-.EXON_CENTRIC_DBDESC <- list(
-    CORECOLS=structure(paste("exon", .CORETAGS, sep="_"), names=.CORETAGS),
-    ### Each col defined in the db is assigned to the closest table (starting
-    ### from the 'exon' table) where it can be found. The 'exon' element must
-    ### be the 1st in the list:
-    COLMAP=list(
-        exon=c("exon_id", makeFeatureColnames("exon")),
-        splicing=c("tx_id", "_tx_id", "exon_rank", "cds_id", "_cds_id"),
-        transcript=c("tx_name", "tx_chrom", "tx_strand", "tx_start", "tx_end",
-          "tx_type"),
-        gene="gene_id",
-        cds=c("cds_name", "cds_chrom", "cds_strand", "cds_start", "cds_end")
-    ),
-    ### For each table that is not the root or a leaf table in the above tree,
-    ### we list the tables that are below it:
-    CHILDTABLES=list(
-        splicing=c("transcript", "gene", "cds")
-    ),
-    ### For each table that is not the root table in the above tree, we specify
-    ### the join condition with the parent table:
-    JOINS=c(
-        splicing="exon._exon_id=splicing._exon_id",
-        transcript="splicing._tx_id=transcript._tx_id",
-        gene="splicing._tx_id=gene._tx_id",
-        cds="splicing._cds_id=cds._cds_id"
-    )
-)
-
-### THE CDS CENTRIC POINT OF VIEW:
-### If we look at the db from a cds centric point of view, then the
-### graph of relations between the tables becomes a tree where the 'cds'
-### table is the root:
-###                               cds
-###                                |
-###                             splicing
-###                            /   |    \
-###                   transcript  gene  exon
-###
-.CDS_CENTRIC_DBDESC <- list(
-    CORECOLS=structure(paste("cds", .CORETAGS, sep="_"), names=.CORETAGS),
-    ### Each col defined in the db is assigned to the closest table (starting
-    ### from the 'cds' table) where it can be found. The 'cds`' element must
-    ### be the 1st in the list:
-    COLMAP=list(
-        cds=c("cds_id", makeFeatureColnames("cds")),
-        splicing=c("tx_id", "_tx_id", "exon_rank", "exon_id", "_exon_id"),
-        transcript=c("tx_name", "tx_chrom", "tx_strand", "tx_start", "tx_end",
-          "tx_type"),
-        gene="gene_id",
-        exon=c("exon_name", "exon_chrom", "exon_strand",
-               "exon_start", "exon_end")
-    ),
-    ### For each table that is not the root or a leaf table in the above tree,
-    ### we list the tables that are below it:
-    CHILDTABLES=list(
-        splicing=c("transcript", "gene", "exon")
-    ),
-    ### For each table that is not the root table in the above tree, we specify
-    ### the join condition with the parent table:
-    JOINS=c(
-        splicing="cds._cds_id=splicing._cds_id",
-        transcript="splicing._tx_id=transcript._tx_id",
-        gene="splicing._tx_id=gene._tx_id",
-        exon="splicing._exon_id=exon._exon_id"
-    )
-)
-
-.DBDESC <- list(
-    transcript=.TRANSCRIPT_CENTRIC_DBDESC,
-    exon=.EXON_CENTRIC_DBDESC,
-    cds=.CDS_CENTRIC_DBDESC
-)
+.build_SQL_SELECT <- function(columns, joins, join_type="INNER",
+                              vals=list(), orderby_columns=character(0))
+{
+    if (length(joins) == 1L) {
+        SQL <- "SELECT"
+    } else {
+        SQL <- "SELECT DISTINCT"
+    }
+    SQL <- c(SQL, paste(columns, collapse=", "), "FROM", joins[[1L]])
+    if (length(joins) != 1L) {
+        idx <- 2L * seq_len(length(joins) %/% 2L)
+        join_Rtables <- joins[idx + 1L]
+        join_on <- joins[idx]
+        SQL <- c(SQL, paste0(join_type, " JOIN ", join_Rtables,
+                             " ON (", join_on, ")"))
+    }
+    if (length(vals) != 0L)
+        SQL <- c(SQL, "WHERE", .build_SQL_WHERE(vals))
+    if (length(orderby_columns) != 0L)
+        SQL <- c(SQL, "ORDER BY", paste(orderby_columns, collapse=", "))
+    SQL
+}
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Some utility functions.
+### DB schema
 ###
 
+CHROMNFO_DESC <- list(
+    cols=c("_chrom_id",
+           "chrom",
+           "length",
+           "is_circular"),
+    Pcol="_chrom_id"
+)
+
+CORE_TAGS <- c("id", "chrom", "strand", "start", "end")
+
+TRANSCRIPT_DESC <- list(
+    cols=c(id="_tx_id",
+           name="tx_name",
+           type="tx_type",
+           chrom="tx_chrom",
+           strand="tx_strand",
+           start="tx_start",
+           end="tx_end"),
+    Pcol="_tx_id"
+)
+
+EXON_DESC <- list(
+    cols=c(id="_exon_id",
+           name="exon_name",
+           chrom="exon_chrom",
+           strand="exon_strand",
+           start="exon_start",
+           end="exon_end"),
+    Pcol="_exon_id"
+)
+
+CDS_DESC <- list(
+    cols=c(id="_cds_id",
+           name="cds_name",
+           chrom="cds_chrom",
+           strand="cds_strand",
+           start="cds_start",
+           end="cds_end"),
+    Pcol="_cds_id"
+)
+
+SPLICING_DESC <- list(
+    cols=c("_tx_id", "exon_rank", "_exon_id", "_cds_id")
+)
+
+GENE_DESC <- list(
+    cols=c("gene_id", "_tx_id")
+)
+
+### Order of tables matters! "transcript" must be before "splicing" and "gene",
+### and "exon" and "cds" must be before "splicing". See .column2table() below
+### why.
+DB_DESC <- list(
+    chrominfo=CHROMNFO_DESC,
+    transcript=TRANSCRIPT_DESC,
+    exon=EXON_DESC,
+    cds=CDS_DESC,
+    splicing=SPLICING_DESC,
+    gene=GENE_DESC
+)
+
+### When the same column belongs to more than one table (e.g. "_tx_id",
+### "_exon_id", or "_cds_id"), then the table for which the column is a
+### primary key is chosen.
+.column2table <- function(columns)
+{
+    if (length(columns) == 0L)
+        return(character(0))
+    sapply(columns, function(column) {
+        for (table in names(DB_DESC)) {
+            if (column %in% DB_DESC[[table]]$cols)
+                return(table)
+        }
+        stop(column, ": unknown db column")
+    })
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### .select_features()
+###
+
+.join_tables <- function(tables)
+{
+    tables <- unique(tables)
+    if (length(tables) == 1L)
+        return(tables)
+    if (any(tables %in% c("exon", "cds")))
+        tables <- c(tables, "splicing")
+    ## Order tables & remove duplicates.
+    join_order <- c("transcript", "gene", "splicing", "exon", "cds")
+    tables <- intersect(join_order, tables)
+    ans <- character(2L * length(tables) - 1L)
+    ans[2L * seq_along(tables) - 1L] <- tables
+    for (i in 2:length(tables)) {
+        table <- tables[[i]]
+        if (table == "exon") {
+            ON <- "splicing._exon_id=exon._exon_id"
+        } else if (table == "cds") {
+            ON <- "splicing._cds_id=cds._cds_id"
+        } else {
+            ON <- paste0(tables[[i-1L]], "._tx_id=", table, "._tx_id")
+        }
+        ans[2L * (i - 1L)] <- ON
+    }
+    ans
+}
+
+.as_qualified <- function(columns)
+    paste(.column2table(columns), columns, sep=".")
+
+.select_features <- function(txdb, columns=character(0), vals=list(),
+                             ptable, core_columns)
+{
+    pkey <- orderby <- core_columns[["id"]]  # primary key
+    names(columns) <- .column2table(columns)
+
+    ## 1st SQL query: extract stuff from the primary table.
+    columns1 <- union(core_columns, columns[names(columns) == ptable])
+    where_columns <- names(vals)
+    where_tables <- .column2table(where_columns)
+    joins <- .join_tables(c(ptable, where_tables))
+    if (length(joins) != 1L) {
+        columns1 <- .as_qualified(columns1)
+        names(vals) <- paste0(where_tables, ".", where_columns)
+        orderby <- .as_qualified(orderby)
+    }
+    SQL <- .build_SQL_SELECT(columns1, joins, "INNER", vals, orderby)
+    df1 <- queryAnnotationDb(txdb, SQL)
+
+    ## Additional SQL queries: 1 additional query per secondary table.
+    foreign_columns <- columns[names(columns) != ptable]
+    if (ptable == "transcript") {
+        ## We make an exception to the "1 additional query per secondary
+        ## table" procedure: tables "splicing", "exon", and "cds" are
+        ## treated as the virtual single table obtained by LEFT JOIN'ing them
+        ## together.
+        splicing_bundle <- c("splicing", "exon", "cds")
+    } else if (ptable == "exon") {
+        ## We make an exception to the "1 additional query per secondary
+        ## table" procedure: tables "splicing", "transcript", and "cds" are
+        ## treated as the virtual single table obtained by LEFT JOIN'ing them
+        ## together.
+        splicing_bundle <- c("splicing", "transcript", "cds")
+    } else if (ptable == "cds") {
+        ## We make an exception to the "1 additional query per secondary
+        ## table" procedure: tables "splicing", "transcript", and "exon" are
+        ## treated as the virtual single table obtained by LEFT JOIN'ing them
+        ## together.
+        splicing_bundle <- c("splicing", "transcript", "exon")
+    } else {
+        stop(ptable, ": unsupported primary db table")
+    }
+    bundle_idx <- names(foreign_columns) %in% splicing_bundle
+    names(foreign_columns)[bundle_idx] <- "splicing"
+    foreign_columns <- split(foreign_columns, names(foreign_columns))
+    secondary_tables <- names(foreign_columns)
+    names(secondary_tables) <- secondary_tables
+    df_list <- lapply(secondary_tables, function(table) {
+        columns2 <- foreign_columns[[table]]
+        vals2 <- list(df1[[pkey]])
+        if (table == "splicing") {
+            tables2 <- .column2table(columns2)
+            joins <- .join_tables(c("splicing", tables2))
+            columns2 <- .as_qualified(columns2)
+            columns2 <- c(pkey, columns2)
+            names(vals2) <- pkey
+            if (ptable == "transcript") {
+                orderby_columns <- c(pkey, "exon_rank")
+            } else {
+                orderby_columns <- c(pkey, "splicing._tx_id")
+            }
+            SQL <- .build_SQL_SELECT(columns2, joins, "LEFT", vals2,
+                                     orderby_columns)
+        } else {
+            joins <- .join_tables(c(ptable, table))
+            columns2 <- c(pkey, columns2)
+            columns2 <- .as_qualified(columns2)
+            names(vals2) <- .as_qualified(pkey)
+            SQL <- .build_SQL_SELECT(columns2, joins, "INNER", vals2)
+        }
+        queryAnnotationDb(txdb, SQL)
+    })
+    c(setNames(list(df1), ptable), df_list)
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### .extract_features_as_GRanges()
+###
+
+.make_DataFrame_from_df_list <- function(df_list)
+{
+    DF1 <- DataFrame(df_list[[1L]], check.names=FALSE)
+    if (length(df_list) == 1L)
+        return(DF1)
+    ids <- DF1[[1L]]
+    DF_list <- lapply(2:length(df_list), function(i) {
+        df <- df_list[[i]]
+        f <- factor(df[[1L]], levels=ids)
+        DataFrame(lapply(df[-1L], function(col) unname(splitAsList(col, f))),
+                  check.names=FALSE)
+    })
+    do.call(DataFrame, c(list(DF1), DF_list, list(check.names=FALSE)))
+}
+
+.as_db_columns <- function(columns)
+    sub("^(tx_id|exon_id|cds_id)$", "_\\1", columns)
+
+.extract_features_as_GRanges <- function(txdb, ptable,
+                                         columns=character(0), vals=list())
+{
+    db_columns <- .as_db_columns(columns)
+    names(vals) <- .as_db_columns(names(vals))
+    core_columns <- DB_DESC[[ptable]]$cols[CORE_TAGS]
+    df_list <- .select_features(txdb, db_columns, vals, ptable, core_columns)
+    DF <- .make_DataFrame_from_df_list(df_list)
+    ans <- makeGRangesFromDataFrame(DF, seqinfo=get_TxDb_seqinfo0(txdb))
+    mcols(ans) <- setNames(DF[db_columns], columns)
+    keep_user_seqlevels_from_TxDb(ans, txdb)
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Primary extractors: transcripts(), exons(), cds(), and genes().
+###
+### TODO: Rename the 'vals' arg -> 'filter' so it's consistent with the
+### 'filters' arg of makeTxDbFromBiomart() which we should also rename
+### 'filter'. Also place it *after* the 'columns' argument.
+### Other proposal: rename the 'columns' arg -> 'colnames'
+###
+
+.dbSchemaHasTxType <- function(txdb){
+    txFields <- dbListFields(dbconn(txdb),"transcript")
+    "tx_type" %in% txFields
+}
 
 ## For converting user arguments FROM the UC style down to what we use
 ## internally
@@ -176,242 +320,6 @@ translateCols <- function(columns, txdb){
     columns
 }
 
-
-
-
-.getClosestTable <- function(root_table, colnames)
-{
-    COLMAP <- .DBDESC[[root_table]]$COLMAP
-    ans <- character(length(colnames))
-    ans[] <- NA_character_
-    for (tablename in names(COLMAP))
-        ans[colnames %in% COLMAP[[tablename]]] <- tablename
-    ans
-}
-
-.assignColToClosestTable <- function(root_table, colnames)
-{
-    COLMAP <- .DBDESC[[root_table]]$COLMAP
-    lapply(COLMAP, function(cols) intersect(cols, colnames))
-}
-
-.asQualifiedColnames <- function(root_table, colnames)
-{
-    colnames[colnames == "tx_id"] <- "_tx_id"
-    colnames[colnames == "exon_id"] <- "_exon_id"
-    colnames[colnames == "cds_id"] <- "_cds_id"
-    paste(.getClosestTable(root_table, colnames), colnames, sep=".")
-}
-
-.joinRootToChildTables <- function(root_table, child_tables)
-{
-    COLMAP <- .DBDESC[[root_table]]$COLMAP
-    CHILDTABLES <- .DBDESC[[root_table]]$CHILDTABLES
-    JOINS <- .DBDESC[[root_table]]$JOINS
-    all_tables <- names(COLMAP)
-    ans <- all_tables[1L]
-    for (i in seq_len(length(all_tables))[-1L]) {
-        right_table <- all_tables[i]
-        right_children <- c(right_table, CHILDTABLES[[right_table]])
-        if (length(intersect(child_tables, right_children)) != 0L)
-            ans <- paste(ans, "LEFT JOIN", right_table,
-                              "ON", JOINS[[right_table]])
-    }
-    ans
-}
-
-### In the case of TxDb objects, the distance between 'root_table'
-### and 'child_table' is always <= 2.
-### TODO: Revisit this. Not sure it would be guaranteed to work correctly if
-### the distance between 'root_table' and 'child_table' was >= 3.
-.joinPrimaryKeyToChildTable <- function(root_table, child_table)
-{
-    COLMAP <- .DBDESC[[root_table]]$COLMAP
-    CHILDTABLES <- .DBDESC[[root_table]]$CHILDTABLES
-    JOINS <- .DBDESC[[root_table]]$JOINS
-    all_tables <- names(COLMAP)
-    ans <- ""
-    for (i in seq_len(length(all_tables))[-1L]) {
-        right_table <- all_tables[i]
-        right_children <- c(right_table, CHILDTABLES[[right_table]])
-        if (length(intersect(child_table, right_children)) != 0L) {
-            if (ans == "") {
-                ans <- right_table
-                next
-            }
-            ans <- paste(ans, "LEFT JOIN", right_table,
-                              "ON", JOINS[[right_table]])
-        }
-    }
-    ans
-}
-
-### convert a named list into an SQL where condition
-.sqlWhereIn <- function(vals)
-{
-    if (length(vals) == 0L)
-        return("")
-    sql <-
-      lapply(seq_len(length(vals)), function(i) {
-               v <- vals[[i]]
-               if (!is.numeric(v))
-                 v <- paste0("'", v, "'")
-               v <- paste0("(", paste(v, collapse=","), ")")
-               v <- paste0(names(vals)[i], " IN ", v)
-               paste0("(", v, ")")
-            })
-    paste("WHERE", paste(unlist(sql), collapse = " AND "))
-}
-
-
-.dbSchemaHasTxType <- function(txdb){
-    txFields <- dbListFields(dbconn(txdb),"transcript")
-    "tx_type" %in% txFields
-}
-
-.getSQL_OrderBy <- function(root_table, txdb, what_cols){
-    if( ("transcript.tx_type" %in% what_cols) && !.dbSchemaHasTxType(txdb) ){
-        ## Only THEN do we adjust the result
-        ## Then drop that string
-        what_cols <- what_cols[!(what_cols %in% "transcript.tx_type")]
-        what <- paste(what_cols, collapse=", ")
-    }else{
-        what <- paste(what_cols, collapse=", ")
-    }
-    what
-}
-
-.getSQL_What <- function(root_table, txdb, what_cols){
-    if( ("transcript.tx_type" %in% what_cols) && !.dbSchemaHasTxType(txdb) ){
-        ## Only THEN do we adjust the result
-        what <- what_cols    
-        old <- "transcript.tx_type"  ###paste0(root_table,'.tx_type')
-        new <- "NULL AS tx_type"
-        ## then replace old with new
-        what[what %in% old] <- new
-        what <- paste(what, collapse=", ")
-    }else{
-        what <- paste(what_cols, collapse=", ")
-    }
-    what
-}
-
-.extractData <- function(root_table, txdb, what_cols, child_tables, vals,
-                         orderby_cols=NULL)
-{
-    ## SQL_what <- paste(.asQualifiedColnames(root_table, what_cols),
-    ##                   collapse=", ")
-    what <- .asQualifiedColnames(root_table, what_cols)
-    SQL_what <- .getSQL_What(root_table, txdb, what)
-    SQL_from <- .joinRootToChildTables(root_table, child_tables)
-    SQL_where <- .sqlWhereIn(vals)
-    if (length(orderby_cols) == 0L) {
-        SQL_orderby <- ""
-    } else {
-        orderby <- .asQualifiedColnames(root_table, orderby_cols)
-        SQL_orderby <- paste("ORDER BY", paste(orderby, collapse=", "))
-    }
-    SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from,
-                 SQL_where, SQL_orderby)
-    ans <- queryAnnotationDb(txdb, SQL)
-    names(ans) <- what_cols
-    ans
-}
-
-.getWhereCols <- function(vals)
-{
-    if (is.null(vals))
-        return(character(0))
-    ans <- NULL
-    if (is.list(vals)) {
-        if (length(vals) == 0L)
-            return(character(0))
-        ans <- names(vals)
-    }
-    if (is.null(ans))
-        stop("'vals' must be NULL or a named list")
-    #valid_columns <- setdiff(.ALLCOLS, "exon_rank")
-    valid_columns <- .ALLCOLS
-    if (!all(ans %in% valid_columns)) {
-        valid_columns <- paste0("'", valid_columns, "'", collapse = ", ")
-        stop("'vals' must be NULL or a list with names ",
-             "in ", valid_columns)
-    }
-    ans
-}
-
-.extractRootData <- function(root_table, txdb, vals, root_columns)
-{
-    CORECOLS <- .DBDESC[[root_table]]$CORECOLS
-    ## Ordering by '_tx_id' guarantees that the objects returned by
-    ## transcripts() and exonsBy() are parallel.
-    #orderby_cols <- CORECOLS[c("chrom", "strand", "start", "end")]
-    orderby_cols <- CORECOLS["id"]
-    what_cols <- unique(c(CORECOLS, root_columns))
-    where_cols <- .getWhereCols(vals)
-    if (is.list(vals))
-        names(vals) <- .asQualifiedColnames(root_table, where_cols)
-    where_tables <- unique(.getClosestTable(root_table, where_cols))
-    .extractData(root_table, txdb, what_cols, where_tables, vals, orderby_cols)
-}
-
-.extractDataFromChildTable <- function(root_table, txdb,
-                                       primary_key, ids,
-                                       child_table, child_columns)
-{
-    ans_names <- c(primary_key, child_columns)
-    primary_key <- paste0("_", primary_key)
-    what <- c(primary_key,
-                   .asQualifiedColnames(root_table, child_columns))
-    
-##    SQL_what <- paste(what, collapse=", ")
-    SQL_what <- .getSQL_What(root_table, txdb, what)
-    SQL_from <- .joinPrimaryKeyToChildTable(root_table, child_table)
-    vals <- list(ids)
-    names(vals) <- primary_key
-    SQL_where <- .sqlWhereIn(vals)
-    ## SQL_orderby <- SQL_what ## similar fix here to the SQL_what
-    SQL_orderby <- .getSQL_OrderBy(root_table, txdb, what)
-    SQL <- paste("SELECT DISTINCT", SQL_what, "FROM", SQL_from,
-                 SQL_where, "ORDER BY", SQL_orderby)
-    ans <- dbEasyQuery(dbconn(txdb), SQL)
-    names(ans) <- ans_names
-    ans
-}
-
-.extractChildData <- function(root_table, txdb, ids, assigned_columns)
-{
-    primary_key <- .DBDESC[[root_table]]$CORECOLS["id"]
-    ans <- NULL
-    all_tables <- names(assigned_columns)
-    for (i in seq_len(length(all_tables))[-1L]) {
-        child_columns <- assigned_columns[[i]]
-        if (length(child_columns) == 0L)
-            next
-        child_table <- all_tables[i]
-        data0 <- .extractDataFromChildTable(root_table, txdb,
-                                            primary_key, ids,
-                                            child_table, child_columns)
-        data <- lapply(data0[ , -1L, drop=FALSE],
-                       function(col0)
-                       {
-                           col <- split(col0, data0[[1L]])
-                           col <- col[as.character(ids)]
-                           class0 <- class(col0)
-                           class <- paste0(toupper(substr(class0, 1L, 1L)),
-                                           substr(class0, 2L, nchar(class0)),
-                                           "List")
-                           get(class)(unname(col))
-                       })
-        data <- DataFrame(data)
-        if (is.null(ans))
-            ans <- data
-        else
-            ans <- c(ans, data)
-    }
-    ans
-}
-
 ## me a named list from the metadata data.frame
 .makeMetadataList <- function(meta){
     lst <- as.list(meta[,2])
@@ -426,115 +334,38 @@ translateCols <- function(columns, txdb){
     obj
 }
 
-## helper to translate back to what is expected from seqinfo()
-.translateToSeqInfo <- function(txdb, x){
-    tr <- load_chrominfo(txdb, set.col.class=TRUE)$chrom[txdb$user2seqlevels0]
-    names(tr) <- txdb$user_seqlevels
-    idx <- match(x, tr)
-    names(tr)[idx]
-}
-
-.extractFeatureRowsAsGRanges <- function(root_table, txdb, vals, columns)
+.extractFromTxDb <- function(txdb, ptable, columns=character(0), vals=NULL)
 {
-    ## 1st translate columns from UC format to LC format
+    user_columns <- columns
     columns <- translateCols(columns, txdb)
-    ## Then proceed with checking
-    CORECOLS <- .DBDESC[[root_table]]$CORECOLS
-    assigned_columns <- .assignColToClosestTable(root_table, columns) 
-    root_columns <- assigned_columns[[root_table]]
-    ## Extract the data from the db.
-    root_data <- .extractRootData(root_table, txdb, vals, root_columns)
-    ## seqnames may be out of sync with expected results.  Massage back.
-    root_data[[CORECOLS["chrom"]]] <- .translateToSeqInfo(txdb, 
-                                          root_data[[CORECOLS["chrom"]]])
-    child_data <- .extractChildData(root_table, txdb,
-                          root_data[[CORECOLS["id"]]], assigned_columns)
-    ## Construct the GRanges object and return it.
-    ans_seqinfo <- seqinfo(txdb)
-    ans_seqnames <- factor(root_data[[CORECOLS["chrom"]]],
-                           levels=seqlevels(ans_seqinfo))
-    ans_ranges <- IRanges(start=root_data[[CORECOLS["start"]]],
-                          end=root_data[[CORECOLS["end"]]])
-    ans_strand <- strand(root_data[[CORECOLS["strand"]]])
-
-    activeNames <- names(.isActiveSeq(txdb))[.isActiveSeq(txdb)]
-    seqinfo <- seqinfo(txdb)[activeNames]
-    ans <- GRanges(seqnames = ans_seqnames,  
-                   ranges = ans_ranges,
-                   strand = ans_strand,
-                   seqinfo = seqinfo)
-
-    ans_values <- c(DataFrame(root_data[root_columns]), child_data)
-    if (is.null(names(columns)))
-      names(columns) <- columns
-    mcols(ans)[names(columns)] <- ans_values[columns]
+    if (is.null(vals))
+        vals <- list()
+    names(vals) <- translateCols(names(vals), txdb)
+    ans <- .extract_features_as_GRanges(txdb, ptable, columns, vals)
+    names(mcols(ans)) <- if (is.null(names(user_columns))) user_columns
+                         else names(user_columns)
     .assignMetadataList(ans, txdb)
 }
 
-
-
-## this helper is just to get the .isActiveSeq vector, but to have it
-## named based on the original database seqnames...
-## This is important for places where .isActiveSeq() needs to be used
-## as part of a database query instead of as part of a external
-## representation.
-.baseNamedActiveSeqs <- function(txdb){
-    trueNames <- load_chrominfo(txdb, set.col.class=TRUE)$chrom
-    actSqs <- .isActiveSeq(txdb)
-    names(actSqs) <- trueNames[txdb$user2seqlevels0] ## limit result to these.
-    actSqs
-}
-
-## This is used to create a list from the .isActiveSeq slot
-## !!!
-## TODO: I think that this helper is screwing up the vals values in the methods
-.makeActiveSeqsList <- function(type, txdb){
-    actSqs <- .baseNamedActiveSeqs(txdb)
-    keepSeqs <- names(actSqs)[actSqs]
-    res <- list(keepSeqs)
-    names(res) <- type
-    res
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Primary extractors: transcripts(), exons(), cds(), and genes().
-###
-### TODO: Rename the 'vals' arg -> 'filter' so it's consistent with the
-### 'filters' arg of makeTxDbFromBiomart() which we should also rename
-### 'filter'.
-### Other proposal: rename the 'columns' arg -> 'colnames'
-###
-
 setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
 
-## TODOS: change defaults (WILL break many examples!)
-## TODO: change defaults from c("tx_id", "tx_name") to: c("TXID", "TXNAME") 
 setMethod("transcripts", "TxDb",
-    function(x, vals=NULL, columns=c("tx_id", "tx_name")){
-        vals = c(vals, .makeActiveSeqsList("tx_chrom", x))
-        .extractFeatureRowsAsGRanges("transcript", x, vals, columns)
-      }
+    function(x, vals=NULL, columns=c("tx_id", "tx_name"))
+        .extractFromTxDb(x, "transcript", columns=columns, vals=vals)
 )
 
 setGeneric("exons", function(x, ...) standardGeneric("exons"))
 
-## TODO: change defaults from c("exon_id") to: c("EXONID") 
 setMethod("exons", "TxDb",
-    function(x, vals=NULL, columns="exon_id"){
-        vals = c(vals, .makeActiveSeqsList("exon_chrom", x))
-        .extractFeatureRowsAsGRanges("exon", x, vals, columns)
-        }
+    function(x, vals=NULL, columns="exon_id")
+        .extractFromTxDb(x, "exon", columns=columns, vals=vals)
 )
 
 setGeneric("cds", function(x, ...) standardGeneric("cds"))
 
-## TODO: change defaults from c("cds_id") to: c("CDSID") 
 setMethod("cds", "TxDb",
-    function(x, vals=NULL, columns="cds_id"){
-        vals = c(vals, .makeActiveSeqsList("cds_chrom", x))
-        .extractFeatureRowsAsGRanges("cds", x, vals, columns)
-        }
+    function(x, vals=NULL, columns="cds_id")
+        .extractFromTxDb(x, "cds", columns=columns, vals=vals)
 )
 
 setGeneric("genes", function(x, ...) standardGeneric("genes"))

@@ -1,3 +1,6 @@
+o Fix handling of the 'vals' arg (transcripts(), etc...) when the txdb has
+  user seqlevels on.
+
 o makeTxDbFromUCSC() - Address the CDS non-completeness issue.
   The status of the CDS (complete or not) can be inferred from the
   cds*Stat field (when present) of the UCSC table.
@@ -12,4 +15,13 @@ o Too many helper functions are defined and used internally to query the
   - queryAnnotationDb()
   - GenomicFeatures:::dbEasyPreparedQuery()
   Clean this mess!
+
+o DB schema change: Replace tx_chrom, exon_chrom, and cds_chrom columns with
+  _tx_chrom_id, _exon_chrom_id, and _cds_chrom_id.
+
+o Add the following indices to the db schema:
+    CREATE INDEX splicing_tx_id ON splicing (_tx_id);
+    CREATE INDEX splicing_exon_id ON splicing (_exon_id);
+    CREATE INDEX splicing_cds_id ON splicing (_cds_id);
+    CREATE INDEX gene_tx_id ON gene (_tx_id);
 
