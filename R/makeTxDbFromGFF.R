@@ -121,14 +121,6 @@
 }
 
 ### Based on makeTxDbFromGRanges().
-### Timing (T) and memory usage (VIRT) of
-###   txdb <- makeTxDbFromGFF("dmel-all-r6.03.gff.gz")
-### on rhino04 since BioC 3.0:
-###   BioC      T    VIRT  comment
-###   ----  -----  ------  -------
-###    3.0                 old makeTranscriptDbFromGFF()
-###    3.1          > 14g  use new makeTxDbFromGRanges() internally
-###    3.2    41s  755212  improvements to the import() step (in rtracklayer)
 makeTxDbFromGFF <- function(file,
                             format=c("auto", "gff3", "gtf"),
                             dataSource=NA,
