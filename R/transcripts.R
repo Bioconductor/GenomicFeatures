@@ -7,6 +7,20 @@
 ### Low-level helpers for building SQL queries
 ###
 
+.build_SQL_FROM <- function(joins, join_type="INNER")
+{
+    joins_len <- length(joins)
+    stopifnot(joins_len %% 2L == 1L)
+    SQL <- joins[[1L]]
+    if (joins_len != 1L) {
+        ON_idx <- 2L * seq_len(joins_len %/% 2L)
+        ON <- joins[ON_idx]
+        Rtables <- joins[ON_idx + 1L]
+        SQL <- c(SQL, paste0(join_type, " JOIN ", Rtables, " ON (", ON, ")"))
+    }
+    SQL
+}
+
 .build_SQL_WHERE <- function(vals)
 {
     if (length(vals) == 0L)
@@ -16,33 +30,25 @@
                v <- vals[[i]]
                if (!is.numeric(v))
                  v <- paste0("'", v, "'")
-               v <- paste0("(", paste(v, collapse=","), ")")
+               v <- paste0("(", paste0(v, collapse=","), ")")
                v <- paste0(names(vals)[i], " IN ", v)
                paste0("(", v, ")")
             })
-    paste(unlist(sql), collapse=" AND ")
+    paste0(unlist(sql), collapse=" AND ")
 }
 
-.build_SQL_SELECT <- function(columns, joins, join_type="INNER",
-                              vals=list(), orderby_columns=character(0))
+.build_SQL_SELECT <- function(columns, joins, distinct=FALSE,
+                              vals=list(), orderby=character(0))
 {
-    if (length(joins) == 1L) {
-        SQL <- "SELECT"
-    } else {
-        SQL <- "SELECT DISTINCT"
-    }
-    SQL <- c(SQL, paste(columns, collapse=", "), "FROM", joins[[1L]])
-    if (length(joins) != 1L) {
-        idx <- 2L * seq_len(length(joins) %/% 2L)
-        join_Rtables <- joins[idx + 1L]
-        join_on <- joins[idx]
-        SQL <- c(SQL, paste0(join_type, " JOIN ", join_Rtables,
-                             " ON (", join_on, ")"))
-    }
+    SQL <- "SELECT"
+    if (distinct)
+        SQL <- c(SQL, "DISTINCT")
+    SQL <- c(SQL, paste0(columns, collapse=", "),
+             "FROM", .build_SQL_FROM(joins))
     if (length(vals) != 0L)
         SQL <- c(SQL, "WHERE", .build_SQL_WHERE(vals))
-    if (length(orderby_columns) != 0L)
-        SQL <- c(SQL, "ORDER BY", paste(orderby_columns, collapse=", "))
+    if (length(orderby) != 0L)
+        SQL <- c(SQL, "ORDER BY", paste0(orderby, collapse=", "))
     SQL
 }
 
@@ -58,8 +64,6 @@ CHROMNFO_DESC <- list(
            "is_circular"),
     Pcol="_chrom_id"
 )
-
-CORE_TAGS <- c("id", "chrom", "strand", "start", "end")
 
 TRANSCRIPT_DESC <- list(
     cols=c(id="_tx_id",
@@ -112,6 +116,15 @@ DB_DESC <- list(
     gene=GENE_DESC
 )
 
+### Tables "transcript", "exon", and "cds", must have these tags (at a minimum).
+CORE_TAGS <- c("id", "chrom", "strand", "start", "end")
+
+### The "splicing right tables" can be bundled to the "splicing" table with
+### a LEFT JOIN using the SPLICING_JOIN_USING columns.
+SPLICING_RTABLES <- c("transcript", "exon", "cds")
+SPLICING_JOIN_USING <- setNames(c("_tx_id", "_exon_id", "_cds_id"),
+                                SPLICING_RTABLES)
+
 ### When the same column belongs to more than one table (e.g. "_tx_id",
 ### "_exon_id", or "_cds_id"), then the table for which the column is a
 ### primary key is chosen.
@@ -133,6 +146,31 @@ DB_DESC <- list(
 ### .select_features()
 ###
 
+.as_qualified <- function(tables, columns) paste(tables, columns, sep=".")
+
+.join_splicing_Rtables <- function(tables=character(0))
+{
+    tables <- unique(tables)
+    join_order <- c("splicing", SPLICING_RTABLES)
+    if (!all(tables %in% join_order))
+        stop("invalid tables")
+    tables <- c("splicing", tables)
+    ## Order tables & remove duplicates.
+    tables <- intersect(join_order, tables)
+    if (length(tables) == 1L)
+        return(tables)
+    joins <- character(2L * length(tables) - 1L)
+    ON_idx <- 2L * seq_len(length(tables) - 1L)
+    Rtables <- tables[-1L]
+    USING <- SPLICING_JOIN_USING[Rtables]
+    Lcolumns <- .as_qualified("splicing", USING)
+    Rcolumns <- .as_qualified(Rtables, USING)
+    ON <- paste(Lcolumns, Rcolumns, sep="=")
+    joins[ON_idx] <- ON     
+    joins[c(1L, ON_idx + 1L)] <- tables
+    joins
+}
+
 .join_tables <- function(tables)
 {
     tables <- unique(tables)
@@ -143,24 +181,28 @@ DB_DESC <- list(
     ## Order tables & remove duplicates.
     join_order <- c("transcript", "gene", "splicing", "exon", "cds")
     tables <- intersect(join_order, tables)
-    ans <- character(2L * length(tables) - 1L)
-    ans[2L * seq_along(tables) - 1L] <- tables
-    for (i in 2:length(tables)) {
-        table <- tables[[i]]
-        if (table == "exon") {
-            ON <- "splicing._exon_id=exon._exon_id"
-        } else if (table == "cds") {
-            ON <- "splicing._cds_id=cds._cds_id"
+    joins <- character(2L * length(tables) - 1L)
+    ON_idx <- 2L * seq_len(length(tables) - 1L)
+    ON <- sapply(2:length(tables), function(i) {
+        Rtable <- tables[[i]]
+        if (Rtable == "exon") {
+            USING <- "_exon_id"
+            Ltable <- "splicing"
+        } else if (Rtable == "cds") {
+            USING <- "_cds_id"
+            Ltable <- "splicing"
         } else {
-            ON <- paste0(tables[[i-1L]], "._tx_id=", table, "._tx_id")
+            USING <- "_tx_id"
+            Ltable <- tables[[i - 1L]]
         }
-        ans[2L * (i - 1L)] <- ON
-    }
-    ans
+        Lcolumn <- .as_qualified(Ltable, USING)
+        Rcolumn <- .as_qualified(Rtable, USING)
+        paste(Lcolumn, Rcolumn, sep="=")
+    })
+    joins[ON_idx] <- ON
+    joins[c(1L, ON_idx + 1L)] <- tables
+    joins
 }
-
-.as_qualified <- function(columns)
-    paste(.column2table(columns), columns, sep=".")
 
 .select_features <- function(txdb, columns=character(0), vals=list(),
                              ptable, core_columns)
@@ -174,36 +216,19 @@ DB_DESC <- list(
     where_tables <- .column2table(where_columns)
     joins <- .join_tables(c(ptable, where_tables))
     if (length(joins) != 1L) {
-        columns1 <- .as_qualified(columns1)
-        names(vals) <- paste0(where_tables, ".", where_columns)
-        orderby <- .as_qualified(orderby)
+        columns1 <- .as_qualified(.column2table(columns1), columns1)
+        names(vals) <- .as_qualified(where_tables, where_columns)
+        orderby <- .as_qualified(.column2table(orderby), orderby)
     }
-    SQL <- .build_SQL_SELECT(columns1, joins, "INNER", vals, orderby)
+    SQL <- .build_SQL_SELECT(columns1, joins, distinct=TRUE,
+                             vals=vals, orderby=orderby)
     df1 <- queryAnnotationDb(txdb, SQL)
 
-    ## Additional SQL queries: 1 additional query per secondary table.
+    ## Additional SQL queries: 1 additional query per secondary table with the
+    ## exception that "splicing right tables" are treated as the virtual single
+    ## table obtained by LEFT JOIN'ing them together.
     foreign_columns <- columns[names(columns) != ptable]
-    if (ptable == "transcript") {
-        ## We make an exception to the "1 additional query per secondary
-        ## table" procedure: tables "splicing", "exon", and "cds" are
-        ## treated as the virtual single table obtained by LEFT JOIN'ing them
-        ## together.
-        splicing_bundle <- c("splicing", "exon", "cds")
-    } else if (ptable == "exon") {
-        ## We make an exception to the "1 additional query per secondary
-        ## table" procedure: tables "splicing", "transcript", and "cds" are
-        ## treated as the virtual single table obtained by LEFT JOIN'ing them
-        ## together.
-        splicing_bundle <- c("splicing", "transcript", "cds")
-    } else if (ptable == "cds") {
-        ## We make an exception to the "1 additional query per secondary
-        ## table" procedure: tables "splicing", "transcript", and "exon" are
-        ## treated as the virtual single table obtained by LEFT JOIN'ing them
-        ## together.
-        splicing_bundle <- c("splicing", "transcript", "exon")
-    } else {
-        stop(ptable, ": unsupported primary db table")
-    }
+    splicing_bundle <- c("splicing", SPLICING_RTABLES)
     bundle_idx <- names(foreign_columns) %in% splicing_bundle
     names(foreign_columns)[bundle_idx] <- "splicing"
     foreign_columns <- split(foreign_columns, names(foreign_columns))
@@ -211,26 +236,32 @@ DB_DESC <- list(
     names(secondary_tables) <- secondary_tables
     df_list <- lapply(secondary_tables, function(table) {
         columns2 <- foreign_columns[[table]]
-        vals2 <- list(df1[[pkey]])
+        if (length(vals) == 0L) {
+            vals2 <- list()
+        } else {
+            vals2 <- setNames(list(df1[[pkey]]), pkey)
+        }
         if (table == "splicing") {
             tables2 <- .column2table(columns2)
-            joins <- .join_tables(c("splicing", tables2))
-            columns2 <- .as_qualified(columns2)
+            joins <- .join_splicing_Rtables(tables2)
+            from <- paste0(.build_SQL_FROM(joins, "LEFT"), collapse=" ")
+            columns2 <- .as_qualified(tables2, columns2)
             columns2 <- c(pkey, columns2)
-            names(vals2) <- pkey
             if (ptable == "transcript") {
-                orderby_columns <- c(pkey, "exon_rank")
+                orderby <- c(pkey, "exon_rank")
             } else {
-                orderby_columns <- c(pkey, "splicing._tx_id")
+                orderby <- c(pkey, "splicing._tx_id")
             }
-            SQL <- .build_SQL_SELECT(columns2, joins, "LEFT", vals2,
-                                     orderby_columns)
+            SQL <- .build_SQL_SELECT(columns2, from,
+                                     vals=vals2, orderby=orderby)
         } else {
             joins <- .join_tables(c(ptable, table))
             columns2 <- c(pkey, columns2)
-            columns2 <- .as_qualified(columns2)
-            names(vals2) <- .as_qualified(pkey)
-            SQL <- .build_SQL_SELECT(columns2, joins, "INNER", vals2)
+            columns2 <- .as_qualified(.column2table(columns2), columns2)
+            names(vals2) <- .as_qualified(.column2table(names(vals2)),
+                                          names(vals2))
+            SQL <- .build_SQL_SELECT(columns2, joins, distinct=TRUE,
+                                     vals=vals2)
         }
         queryAnnotationDb(txdb, SQL)
     })
@@ -247,10 +278,12 @@ DB_DESC <- list(
     DF1 <- DataFrame(df_list[[1L]], check.names=FALSE)
     if (length(df_list) == 1L)
         return(DF1)
-    ids <- DF1[[1L]]
+    pkey <- names(DF1)[[1L]]
+    ids <- DF1[[pkey]]
     DF_list <- lapply(2:length(df_list), function(i) {
         df <- df_list[[i]]
-        f <- factor(df[[1L]], levels=ids)
+        stopifnot(identical(names(df)[[1L]], pkey))
+        f <- factor(df[[pkey]], levels=ids)
         DataFrame(lapply(df[-1L], function(col) unname(splitAsList(col, f))),
                   check.names=FALSE)
     })
