@@ -4,268 +4,6 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Low-level helpers for building SQL queries
-###
-
-.tables_in_joins <- function(joins)
-{
-    joins_len <- length(joins)
-    stopifnot(joins_len %% 2L == 1L)
-    joins[seq(1L, joins_len, by=2L)]
-}
-
-.build_SQL_FROM <- function(joins, join_type="INNER")
-{
-    joins_len <- length(joins)
-    stopifnot(joins_len %% 2L == 1L)
-    SQL <- joins[[1L]]
-    if (joins_len != 1L) {
-        ON_idx <- 2L * seq_len(joins_len %/% 2L)
-        ON <- joins[ON_idx]
-        Rtables <- joins[ON_idx + 1L]
-        SQL <- c(SQL, paste0(join_type, " JOIN ", Rtables, " ON (", ON, ")"))
-    }
-    SQL
-}
-
-.build_SQL_WHERE <- function(vals)
-{
-    if (length(vals) == 0L)
-        return("")
-    sql <-
-      lapply(seq_len(length(vals)), function(i) {
-               v <- vals[[i]]
-               if (!is.numeric(v))
-                 v <- paste0("'", v, "'")
-               v <- paste0("(", paste0(v, collapse=","), ")")
-               v <- paste0(names(vals)[i], " IN ", v)
-               paste0("(", v, ")")
-            })
-    paste0(unlist(sql), collapse=" AND ")
-}
-
-.build_SQL_SELECT <- function(columns, joins, distinct=FALSE,
-                              vals=list(), orderby=character(0))
-{
-    SQL <- "SELECT"
-    if (distinct)
-        SQL <- c(SQL, "DISTINCT")
-    SQL <- c(SQL, paste0(columns, collapse=", "),
-             "FROM", .build_SQL_FROM(joins))
-    if (length(vals) != 0L)
-        SQL <- c(SQL, "WHERE", .build_SQL_WHERE(vals))
-    if (length(orderby) != 0L)
-        SQL <- c(SQL, "ORDER BY", paste0(orderby, collapse=", "))
-    SQL
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### DB schema
-###
-
-CHROMNFO_DESC <- list(
-    cols=c("_chrom_id",
-           "chrom",
-           "length",
-           "is_circular"),
-    Pcol="_chrom_id"
-)
-
-TRANSCRIPT_DESC <- list(
-    cols=c(id="_tx_id",
-           name="tx_name",
-           type="tx_type",
-           chrom="tx_chrom",
-           strand="tx_strand",
-           start="tx_start",
-           end="tx_end"),
-    Pcol="_tx_id"
-)
-
-EXON_DESC <- list(
-    cols=c(id="_exon_id",
-           name="exon_name",
-           chrom="exon_chrom",
-           strand="exon_strand",
-           start="exon_start",
-           end="exon_end"),
-    Pcol="_exon_id"
-)
-
-CDS_DESC <- list(
-    cols=c(id="_cds_id",
-           name="cds_name",
-           chrom="cds_chrom",
-           strand="cds_strand",
-           start="cds_start",
-           end="cds_end"),
-    Pcol="_cds_id"
-)
-
-SPLICING_DESC <- list(
-    cols=c("_tx_id", "exon_rank", "_exon_id", "_cds_id")
-)
-
-GENE_DESC <- list(
-    cols=c("gene_id", "_tx_id")
-)
-
-### Order of tables matters! "transcript" must be before "splicing" and "gene",
-### and "exon" and "cds" must be before "splicing". See .column2table() below
-### why.
-DB_DESC <- list(
-    chrominfo=CHROMNFO_DESC,
-    transcript=TRANSCRIPT_DESC,
-    exon=EXON_DESC,
-    cds=CDS_DESC,
-    splicing=SPLICING_DESC,
-    gene=GENE_DESC
-)
-
-### Tables "transcript", "exon", and "cds", must have these tags (at a minimum).
-CORE_TAGS <- c("id", "chrom", "strand", "start", "end")
-
-### The "splicing right tables" can be bundled to the "splicing" table with
-### a LEFT JOIN using the SPLICING_JOIN_USING columns.
-SPLICING_RTABLES <- c("transcript", "exon", "cds")
-SPLICING_JOIN_USING <- setNames(c("_tx_id", "_exon_id", "_cds_id"),
-                                SPLICING_RTABLES)
-SPLICING_BUNDLE <- c("splicing", SPLICING_RTABLES)
-
-### When the same column belongs to more than one table (e.g. "_tx_id",
-### "_exon_id", or "_cds_id"), then the table for which the column is a
-### primary key is chosen by default. This behavior can be changed by passing
-### the name of a table to 'from_table' in which case the priority is given to
-### that table.
-.column2table <- function(columns, from_table=NA)
-{
-    if (length(columns) == 0L)
-        return(character(0))
-    tables <- sapply(columns,
-        function(column) {
-            for (table in names(DB_DESC)) {
-                if (column %in% DB_DESC[[table]]$cols)
-                    return(table)
-            }
-            stop(column, ": unknown db column")
-        }
-    )
-    if (!is.na(from_table))
-        tables[columns %in% DB_DESC[[from_table]]$cols] <- from_table
-    tables
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### .select_from_INNER_JOIN() and .select_from_SPLICING_BUNDLE()
-###
-
-.as_qualified <- function(tables, columns) paste(tables, columns, sep=".")
-
-.join_tables <- function(tables)
-{
-    tables <- unique(tables)
-    if (length(tables) == 1L)
-        return(tables)
-    if (any(tables %in% c("exon", "cds")))
-        tables <- c(tables, "splicing")
-    ## Order tables & remove duplicates.
-    join_order <- c("transcript", "splicing", "exon", "cds", "gene")
-    tables <- intersect(join_order, tables)
-    joins <- character(2L * length(tables) - 1L)
-    ON_idx <- 2L * seq_len(length(tables) - 1L)
-    ON <- sapply(2:length(tables), function(i) {
-        Rtable <- tables[[i]]
-        if (Rtable == "exon") {
-            USING <- "_exon_id"
-            Ltable <- "splicing"
-        } else if (Rtable == "cds") {
-            USING <- "_cds_id"
-            Ltable <- "splicing"
-        } else {
-            USING <- "_tx_id"
-            Ltable <- tables[[1L]]
-        }
-        Lcolumn <- .as_qualified(Ltable, USING)
-        Rcolumn <- .as_qualified(Rtable, USING)
-        paste(Lcolumn, Rcolumn, sep="=")
-    })
-    joins[ON_idx] <- ON
-    joins[c(1L, ON_idx + 1L)] <- tables
-    joins
-}
-
-.join_splicing_Rtables <- function(tables=character(0))
-{
-    if (!all(tables %in% SPLICING_BUNDLE))
-        stop("all tables must be in SPLICING_BUNDLE")
-    tables <- c("splicing", tables)
-    ## Order tables & remove duplicates.
-    tables <- intersect(SPLICING_BUNDLE, tables)
-    if (length(tables) == 1L)
-        return(tables)
-    joins <- character(2L * length(tables) - 1L)
-    ON_idx <- 2L * seq_len(length(tables) - 1L)
-    Rtables <- tables[-1L]
-    USING <- SPLICING_JOIN_USING[Rtables]
-    Lcolumns <- .as_qualified("splicing", USING)
-    Rcolumns <- .as_qualified(Rtables, USING)
-    ON <- paste(Lcolumns, Rcolumns, sep="=")
-    joins[ON_idx] <- ON     
-    joins[c(1L, ON_idx + 1L)] <- tables
-    joins
-}
-
-### The columns in 'columns' + those involved thru 'vals' and 'orderby' are
-### collected and their corresponding tables are INNER JOIN'ed.
-.select_from_INNER_JOIN <- function(txdb, table, columns, vals=list(),
-                                    orderby=character(0))
-{
-    tables <- .column2table(columns, from_table=table)
-    where_columns <- names(vals)
-    where_tables <- .column2table(where_columns, from_table=table)
-    joins <- .join_tables(c(table, tables, where_tables))
-    orderby_tables <- .column2table(orderby, from_table=table)
-    stopifnot(all(orderby_tables %in% .tables_in_joins(joins)))
-    use_joins <- length(joins) > 1L
-    if (use_joins) {
-        columns <- .as_qualified(tables, columns)
-        names(vals) <- .as_qualified(where_tables, where_columns)
-        orderby <- .as_qualified(orderby_tables, orderby)
-    }
-    ## .build_SQL_SELECT() generates an INNER JOIN.
-    SQL <- .build_SQL_SELECT(columns, joins, distinct=use_joins,
-                             vals=vals, orderby=orderby)
-    queryAnnotationDb(txdb, SQL)
-}
-
-### Can only involve columns (thru 'columns', 'vals', and 'orderby') that
-### belong to the tables in SPLICING_BUNDLE at the moment.
-.select_from_SPLICING_BUNDLE <- function(txdb, columns,
-                                         vals=list(), orderby=character(0))
-{
-    tables <- .column2table(columns, from_table="splicing")
-    where_columns <- names(vals)
-    where_tables <- .column2table(where_columns, from_table="splicing")
-    orderby_tables <- .column2table(orderby, from_table="splicing")
-    joins <- .join_splicing_Rtables(c(tables, where_tables, orderby_tables))
-    use_joins <- length(joins) > 1L
-    if (use_joins) {
-        columns <- .as_qualified(tables, columns)
-        names(vals) <- .as_qualified(where_tables, where_columns)
-        orderby <- .as_qualified(orderby_tables, orderby)
-    }
-    ## .build_SQL_SELECT() would generate an INNER JOIN but we want a
-    ## LEFT JOIN.
-    from <- paste0(.build_SQL_FROM(joins, "LEFT"), collapse=" ")
-    SQL <- .build_SQL_SELECT(columns, from, distinct=FALSE,
-                             vals=vals, orderby=orderby)
-    queryAnnotationDb(txdb, SQL)
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### .extract_features()
 ###
 
@@ -273,19 +11,19 @@ SPLICING_BUNDLE <- c("splicing", SPLICING_RTABLES)
                               vals=list(), core_columns)
 {
     proxy_column <- orderby <- core_columns[["id"]]
-    names(columns) <- .column2table(columns, from_table=proxy_table)
+    names(columns) <- TXDB_column2table(columns, from_table=proxy_table)
 
-    ## 1st SQL query: extract stuff from the proxy table.
+    ## 1st SELECT: extract stuff from the proxy table.
     columns1 <- union(core_columns, columns[names(columns) == proxy_table])
-    df1 <- .select_from_INNER_JOIN(txdb, proxy_table, columns1, vals=vals,
-                                   orderby=orderby)
+    df1 <- TxDb_SELECT_from_INNER_JOIN(txdb, proxy_table, columns1,
+                                       vals=vals, orderby=orderby)
 
-    ## Additional SQL queries: 1 additional query per satellite table with the
-    ## exception that the satellite tables that belong to SPLICING_BUNDLE are
-    ## treated as the virtual single table obtained by LEFT JOIN'ing them
+    ## Additional SELECTs: 1 additional SELECT per satellite table with the
+    ## exception that the satellite tables that belong to TXDB_SPLICING_BUNDLE
+    ## are treated as the virtual single table obtained by LEFT JOIN'ing them
     ## together.
     foreign_columns <- columns[names(columns) != proxy_table]
-    bundle_idx <- names(foreign_columns) %in% SPLICING_BUNDLE
+    bundle_idx <- names(foreign_columns) %in% TXDB_SPLICING_BUNDLE
     names(foreign_columns)[bundle_idx] <- "splicing"
     foreign_columns <- split(foreign_columns, names(foreign_columns))
     satellite_tables <- names(foreign_columns)
@@ -304,13 +42,13 @@ SPLICING_BUNDLE <- c("splicing", SPLICING_RTABLES)
             } else {
                 orderby <- c(proxy_column, "_tx_id")
             }
-            .select_from_SPLICING_BUNDLE(txdb, columns2,
-                                         vals=vals2, orderby=orderby)
+            TxDb_SELECT_from_splicing_bundle(txdb, columns2,
+                                             vals=vals2, orderby=orderby)
         } else if (satellite_table == "gene") {
             columns2 <- c(proxy_column, columns2)
             orderby <- c("_tx_id", "gene_id")
-            .select_from_INNER_JOIN(txdb, "gene", columns2,
-                                    vals=vals2, orderby=orderby)
+            TxDb_SELECT_from_INNER_JOIN(txdb, "gene", columns2,
+                                        vals=vals2, orderby=orderby)
         } else {
             stop(satellite_table, ": unsupported satellite table")
         }
@@ -348,7 +86,7 @@ SPLICING_BUNDLE <- c("splicing", SPLICING_RTABLES)
 {
     db_columns <- .as_db_columns(columns)
     names(vals) <- .as_db_columns(names(vals))
-    core_columns <- DB_DESC[[proxy_table]]$cols[CORE_TAGS]
+    core_columns <- TXDB_table_columns(proxy_table)[CORE_TAGS]
     df_list <- .extract_features(txdb, proxy_table, db_columns,
                                  vals, core_columns)
     DF <- .make_DataFrame_from_df_list(df_list)
