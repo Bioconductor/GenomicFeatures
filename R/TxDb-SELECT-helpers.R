@@ -129,7 +129,7 @@
 )
 
 ### Tables "transcript", "exon", and "cds", must have these tags (at a minimum).
-CORE_TAGS <- c("id", "chrom", "strand", "start", "end")
+TXDB_CORE_TAGS <- c("id", "chrom", "strand", "start", "end")
 
 ### The "splicing right tables" can be bundled to the "splicing" table with
 ### a LEFT JOIN using the .TXDB_SPLICING_JOIN_USING columns.
@@ -226,7 +226,10 @@ TXDB_column2table <- function(columns, from_table=NA)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### TxDb_SELECT_from_INNER_JOIN() and TxDb_SELECT_from_splicing_bundle()
+### The 2 main helpers for SELECT'ing stuff from a TxDb object:
+###   - TxDb_SELECT_from_INNER_JOIN()
+###   - TxDb_SELECT_from_splicing_bundle()
+### They should satisfy the needs of most extractors defined in the package.
 ###
 
 ### The columns in 'columns' + those involved thru 'vals' and 'orderby' are
@@ -246,7 +249,7 @@ TxDb_SELECT_from_INNER_JOIN <- function(txdb, table, columns, vals=list(),
         names(vals) <- .as_qualified(where_tables, where_columns)
         orderby <- .as_qualified(orderby_tables, orderby)
     }
-    ## .build_SQL_SELECT() generates an INNER JOIN.
+    ## .build_SQL_SELECT() uses INNER joins.
     SQL <- .build_SQL_SELECT(columns, joins, distinct=use_joins,
                              vals=vals, orderby=orderby)
     queryAnnotationDb(txdb, SQL)
@@ -255,7 +258,8 @@ TxDb_SELECT_from_INNER_JOIN <- function(txdb, table, columns, vals=list(),
 ### Can only involve columns (thru 'columns', 'vals', and 'orderby') that
 ### belong to the tables in TXDB_SPLICING_BUNDLE at the moment.
 TxDb_SELECT_from_splicing_bundle <- function(txdb, columns,
-                                             vals=list(), orderby=character(0))
+                                             vals=list(), orderby=character(0),
+                                             join_type="LEFT")
 {
     tables <- TXDB_column2table(columns, from_table="splicing")
     where_columns <- names(vals)
@@ -269,9 +273,9 @@ TxDb_SELECT_from_splicing_bundle <- function(txdb, columns,
         names(vals) <- .as_qualified(where_tables, where_columns)
         orderby <- .as_qualified(orderby_tables, orderby)
     }
-    ## .build_SQL_SELECT() would generate an INNER JOIN but we want a
-    ## LEFT JOIN.
-    from <- paste0(.build_SQL_FROM(joins, "LEFT"), collapse=" ")
+    ## .build_SQL_SELECT() would use INNER joins but we need to override this
+    ## to use the type of join specified by the user.
+    from <- paste0(.build_SQL_FROM(joins, join_type), collapse=" ")
     SQL <- .build_SQL_SELECT(columns, from, distinct=FALSE,
                              vals=vals, orderby=orderby)
     queryAnnotationDb(txdb, SQL)

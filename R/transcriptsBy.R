@@ -133,6 +133,79 @@
     .assignMetadataList(ans, txdb)
 }
 
+### 'columns' must be a named character vector with the names being used to
+### rename the columns.
+.split_df_into_GRL <- function(txdb, df, columns, by, use.names)
+{
+    rownames(df) <- NULL
+    f <- df[[1L]]
+    gr <- makeGRangesFromDataFrame(df[-1L], seqinfo=get_TxDb_seqinfo0(txdb))
+    gr_mcols <- setNames(df[columns], names(columns))
+    mcols(gr) <- DataFrame(gr_mcols, check.names=FALSE)
+    grl <- split(gr, f)
+    grl <- keep_user_seqlevels_from_TxDb(grl, txdb)
+    grl <- .set.group.names(grl, use.names, txdb, by)
+    .assignMetadataList(grl, txdb)
+}
+
+.extract_exons_or_cds_by <- function(txdb, proxy_table, by=c("tx", "gene"),
+                                     use.names=FALSE)
+{
+    proxy_table_columns <- TXDB_table_columns(proxy_table)
+    proxy_column <- proxy_table_columns[["id"]]
+
+    if (by == "tx") {
+        ## Group by transcript.
+        orderby <- c("_tx_id", "exon_rank")
+        ans_columns <- c(id=proxy_column,
+                         name=proxy_table_columns[["name"]],
+                         "exon_rank")
+
+        ## We use a single SELECT query.
+        columns <- c(orderby, TXDB_table_columns(proxy_table))
+        exons <- TxDb_SELECT_from_splicing_bundle(txdb, columns,
+                                                  orderby=orderby,
+                                                  join_type="INNER")
+    } else {
+        ## Group by gene.
+        orderby <- c("gene_id", proxy_column)
+        ans_columns <- proxy_table_columns[c("id", "name")]
+
+        ## We use 2 SELECT queries and join the results ourselves. This join
+        ## is actually faster than the SQL JOIN.
+
+        ## 1st SELECT query.
+        gene_exons <- TxDb_SELECT_from_INNER_JOIN(txdb, "splicing", orderby,
+                                                  orderby=orderby)
+        if (proxy_table == "cds") {
+            ## Proxy column is from the "splicing" table, not from the "cds"
+            ## table (which was not even involved in the JOIN in the first
+            ## place), so it can contain NAs. Remove these rows.
+            keep_me <- !is.na(gene_exons[[2L]])
+            gene_exons <- gene_exons[keep_me, , drop=FALSE]
+        }
+
+        ## 2nd SELECT query.
+        columns <- TXDB_table_columns(proxy_table)
+        exons <- TxDb_SELECT_from_INNER_JOIN(txdb, proxy_table, columns)
+
+        ## Join the results.
+        gene_id <- gene_exons[ , "gene_id"]
+        gene_id <- factor(gene_id, levels=unique(gene_id))
+        join_idx <- match(gene_exons[ , proxy_column], exons[ , proxy_column])
+        exons <- cbind(gene_id=gene_id, exons[join_idx, ])
+    }
+
+    user_columns <- names(ans_columns)
+    has_noname <- user_columns %in% c(NA_character_, "")
+    prefix_idx <- which(!has_noname)
+    user_columns[prefix_idx] <- paste(proxy_table, user_columns[prefix_idx],
+                                      sep="_")
+    user_columns[has_noname] <- ans_columns[has_noname]
+    names(ans_columns) <- user_columns
+    .split_df_into_GRL(txdb, exons, ans_columns, by, use.names)
+}
+
 setGeneric("transcriptsBy", signature="x",
     function(x, by=c("gene", "exon", "cds"), ...)
         standardGeneric("transcriptsBy")
@@ -172,14 +245,7 @@ setMethod("exonsBy", "TxDb",
     function(x, by=c("tx", "gene"), use.names=FALSE)
     {
         by <- match.arg(by)
-        distinct <- gene_in_join <- by == "gene"
-        order_by_exon_rank <- by == "tx"
-        .featuresBy(x, by, "exon",
-                    distinct=distinct,
-                    splicing_in_join=TRUE,
-                    gene_in_join=gene_in_join,
-                    order_by_exon_rank=order_by_exon_rank,
-                    use.names=use.names)
+        .extract_exons_or_cds_by(x, "exon", by, use.names=use.names)
     }
 )
 
@@ -191,14 +257,7 @@ setMethod("cdsBy", "TxDb",
     function(x, by=c("tx", "gene"), use.names=FALSE)
     {
         by <- match.arg(by)
-        distinct <- gene_in_join <- by == "gene"
-        order_by_exon_rank <- by == "tx"
-        .featuresBy(x, by, "cds",
-                    distinct=distinct,
-                    splicing_in_join=TRUE,
-                    gene_in_join=gene_in_join,
-                    order_by_exon_rank=order_by_exon_rank,
-                    use.names=use.names)
+        .extract_exons_or_cds_by(x, "cds", by, use.names=use.names)
     }
 )
 

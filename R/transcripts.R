@@ -7,6 +7,7 @@
 ### .extract_features()
 ###
 
+### Return a named list of ordinary data frames, 1 per SELECT query.
 .extract_features <- function(txdb, proxy_table, columns=character(0),
                               vals=list(), core_columns)
 {
@@ -86,7 +87,7 @@
 {
     db_columns <- .as_db_columns(columns)
     names(vals) <- .as_db_columns(names(vals))
-    core_columns <- TXDB_table_columns(proxy_table)[CORE_TAGS]
+    core_columns <- TXDB_table_columns(proxy_table)[TXDB_CORE_TAGS]
     df_list <- .extract_features(txdb, proxy_table, db_columns,
                                  vals, core_columns)
     DF <- .make_DataFrame_from_df_list(df_list)
