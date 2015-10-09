@@ -182,14 +182,14 @@ txdb2  # note that these annotations match the GRCh38 genome assembly
 ## mirror e.g. on uswest.ensembl.org. A gotcha when doing this is that
 ## the name of the database on the mirror can be different! We can check
 ## this with listMarts() from the biomaRt package:
-listMarts(host="uswest.ensembl.org")
+listMarts(host="useast.ensembl.org")
 
 ## Therefore, in addition to setting 'host' to "uswest.ensembl.org" we
 ## must also change the name passed to the 'biomart' argument:
 txdb3 <- makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
                              dataset="hsapiens_gene_ensembl",
                              transcript_ids=transcript_ids,
-                             host="uswest.ensembl.org")
+                             host="useast.ensembl.org")
 txdb3
 
 ## ---------------------------------------------------------------------
