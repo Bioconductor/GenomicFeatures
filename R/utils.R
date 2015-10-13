@@ -346,10 +346,17 @@ makeFeatureIds <- function(chrom_ids, strand, start, end,
 ### Miscellaneous.
 ###
 
-## Global character vector to hold default names for circular sequences.
-## This is exported!
-DEFAULT_CIRC_SEQS <- c("chrM", "MT", "MtDNA", "mit", "2micron", "2-micron")
-
+### Global character vector to hold default names for circular sequences.
+### This is exported!
+DEFAULT_CIRC_SEQS <- c(
+    ## Mitochondrial genome
+    "chrM", "MT", "MtDNA", "mit", "Mito", "mitochondrion",
+    "dmel_mitochondrion_genome",
+    ## Chloroplast genome
+    "Pltd", "ChrC", "Pt", "chloroplast", "Chloro",
+    ## Plasmid (yeast)
+    "2micron", "2-micron", "2uM"
+)
 
 ### AFAIK UCSC doesn't flag circular sequences.
 ### As of Sep 21, 2010 (Ensembl release 59), Ensembl was still not flagging
