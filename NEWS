@@ -1,3 +1,110 @@
+CHANGES IN VERSION 1.22
+-----------------------
+
+NEW FEATURES
+
+    o Add coverageByTranscript() and pcoverageByTranscript(). See
+      ?coverageByTranscript for more information.
+
+    o Various improvements to makeTxDbFromGFF():
+      - Now supports 'format="auto"' for auto-detection of the file format.
+      - Now supports naming features by dbxref tag (like GeneID). This has
+        proven useful when importing GFFs from NCBI.
+
+    o Improvements to the coordinate mapping methods:
+      - Support recycling when length(transcripts) == 1 for parallel
+        mapping functions.
+      - Add pmapToTranscripts,Ranges,GRangesList and
+        pmapFromTranscripts,Ranges,GRangesList methods.
+
+    o Adds 'taxonomyId' argument to the makeTxDbFrom*() functions.
+
+    o Improvements to makeTxDbPackage():
+      - Add 'pkgname' argument to makeTxDbPackage() to let the user override
+        the automatic naming of the package to be generated.
+      - Support person objects for 'maintainer' and 'author' arguments to
+        makeTxDbPackage().
+
+    o The 'chrominfo' vector passed to makeTxDb() can now mix NAs and non-NAs.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o 2 significant changes to makeTxDbFromGRanges() and makeTxDbFromGFF():
+      - They now also import transcripts of type pseudogenic_transcript and
+        pseudogenic_exon.
+      - They normally get the "gene_id" and "[tx|exon|CDS]_name" columns from
+        the Name tag. Now they will also infer these columns from the ID tag
+        when the Name tag is missing.
+
+    o Improve handling of 'circ_seqs' argument by makeTxDbFromUCSC(),
+      makeTxDbFromGFF(), and makeTxDbFromBiomart(): no more annoying warning
+      when none of the strings in DEFAULT_CIRC_SEQS matches the seqlevels of
+      the TxDb object to be made.
+
+    o 2 minor changes to makeTxDbFromBiomart():
+      - Now drops unneeded chromosome info when importing an incomplete
+        transcript dataset.
+      - Now returns a TxDb object with 'Full dataset' field set to 'no' when
+        makeTxDbFromBiomart() is called with user-supplied 'filters'.
+
+    o makeTxDbPackage() now includes data source in the package name by default
+      (for non UCSC and BioMart databases).
+
+    o The following changes were made to the coordinate mapping methods:
+      - mapToTranscripts() now reports mapped position with respect to the
+        transcription start site regardless of strand.
+      - Change 'ignore.strand' default from TRUE to FALSE in all coordinate
+        mapping methods for consistency with other functions that already have
+        the 'ignore.strand' argument.
+      - Name matching in mapFromTranscripts() is now done with seqnames(x) and
+        names(transcripts).
+      - The pmapFromTranscripts,*,GRangesList methods now return a GRangesList
+        object. Also they no longer use 'UNMAPPED' seqname for unmapped ranges.
+      - Remove uneeded ellipisis from the argument list of various coordinate
+        mapping methods. 
+
+    o Change behavior of seqlevels0() getter so it does what it was always
+      intended to do.
+
+    o The order of the transcripts returned by transcripts() has changed: now
+      they are guaranteed to be in the same order as in the GRangesList object
+      returned by exonsBy().
+
+    o Code improvements and speedup to the transcripts(), exons(), cds(),
+      exonsBy(), and cdsBy() extractors.
+
+    o In order to avoid loss of information (and make it reversible with
+      makeTxDbFromGRanges()), the "asGFF" method for TxDb objects now
+      propagates the "exon_name" and "cds_name" columns to the GRanges object.
+
+DEPRECATED AND DEFUNCT
+
+    o After being deprecated in BioC 3.1, the makeTranscriptDb*() functions
+      are now defunct.
+
+    o After being deprecated in BioC 3.1, the 'exonRankAttributeName',
+      'gffGeneIdAttributeName', 'useGenesAsTranscripts', 'gffTxName', and
+      'species' arguments of makeTxDbFromGFF() are now defunct.
+
+    o Remove sortExonsByRank() (was defunct in BioC 3.1).
+
+BUG FIXES
+
+    o Fix bug in fiveUTRsByTranscript() and threeUTRsByTranscript() extractors
+      when the TxDb object had "user defined" seqlevels and/or a set of
+      "active/inactive" seqlevels defined on it.
+
+    o Fix bug in isActiveSeq() setter when the TxDb object had "user defined"
+      seqlevels on it.
+
+    o Fix many issues with seqlevels() setter for TxDb objects. In particular
+      make the 'seqlevels(x) <- seqlevels0(x)' idiom work on TxDb objects.
+
+    o Fix bug in makeTxDbFromBiomart() when using it to retrieve a dataset that
+      doesn't provide the cds_length attribute (e.g. sitalica_eg_gene dataset
+      in plants_mart_26).
+
+
 CHANGES IN VERSION 1.20
 -----------------------
 
