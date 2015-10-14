@@ -3,7 +3,7 @@
 ### -------------------------------------------------------------------------
 
 
-.set.group.names <- function(ans, use.names, txdb, by)
+.set_group_names <- function(ans, use.names, txdb, by)
 {
     if (!isTRUEorFALSE(use.names))
         stop("'use.names' must be TRUE or FALSE")
@@ -17,120 +17,30 @@
     ans
 }
 
-## helper to translate back to what is expected from seqinfo()
-.translateToSeqInfo <- function(txdb, x){
-    tr <- load_chrominfo(txdb, set.col.class=TRUE)$chrom[txdb$user2seqlevels0]
-    names(tr) <- txdb$user_seqlevels
-    idx <- match(x, tr)
-    names(tr)[idx]
-}
-
-## !!!
-## TODO: I think that this helper is screwing things up
-.baseNamedActiveSeqs <- function(txdb){
-    trueNames <- load_chrominfo(txdb, set.col.class=TRUE)$chrom
-    actSqs <- .isActiveSeq(txdb)
-    names(actSqs) <- trueNames[txdb$user2seqlevels0] ## limit result to these.
-    actSqs
-}
-
-.getOnlyActiveSeqs <- function(txdb){
-    actSqs <- .baseNamedActiveSeqs(txdb)
-    names(actSqs)[actSqs]
-}
-
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### transcriptsBy(), exonsBy() and cdsBy().
 ###
 
-.featuresBy <- function(txdb, by, type,
-                        distinct=FALSE,
-                        splicing_in_join=TRUE,
-                        gene_in_join=FALSE,
-                        order_by_exon_rank=TRUE,
-                        use.names=FALSE)
+.join_genes_and_Rdf <- function(genes, Rdf, using)
 {
-    if(!is(txdb, "TxDb"))
-        stop("'txdb' must be a TxDb object")
+    gene_id <- genes[ , "gene_id"]
+    gene_id <- factor(gene_id, levels=unique(gene_id))
+    join_idx <- match(genes[ , using], Rdf[ , using])
+    cbind(gene_id=gene_id, Rdf[join_idx, ])
+}
 
-    long <- ifelse(type == "tx", "transcript", type)
-    short <- type
-
-    ## create SQL query
-    selectClause <- "SELECT"
-    if (distinct)
-        selectClause <- paste(selectClause, "DISTINCT")
-    selectClause <-
-      paste(selectClause, "LONG._SHORT_id AS SHORT_id, SHORT_name,",
-            "SHORT_chrom, SHORT_strand, SHORT_start, SHORT_end")
-    if (by == "gene") {
-        selectClause <- paste(selectClause, ", gene_id", sep = "")
-    } else if (splicing_in_join) {
-        selectClause <-
-          paste(selectClause, ", splicing._GROUPBY_id AS GROUPBY_id", sep = "")
-        if (order_by_exon_rank)
-            selectClause <- paste(selectClause, ", exon_rank", sep = "")
-    }
-    fromClause <- "FROM LONG"
-    if (splicing_in_join) {
-        fromClause <-
-          paste(fromClause,
-                "INNER JOIN splicing",
-                "ON (LONG._SHORT_id=splicing._SHORT_id)")
-    }
-    if (gene_in_join) {
-        fromClause <-
-          paste(fromClause,
-                " INNER JOIN gene",
-                " ON (", ifelse(type == "tx", "transcript", "splicing"),
-                "._tx_id=gene._tx_id)", sep = "")
-    }
-    whereClause <- "WHERE GROUPBY_id IS NOT NULL"
-    orderByClause <- "ORDER BY GROUPBY_id"
-    if (order_by_exon_rank) {
-        orderByClause <- paste(orderByClause, ", exon_rank", sep = "")
-    } else {
-        orderByClause <-
-          paste(orderByClause, ", SHORT_chrom, SHORT_strand, ",
-                "SHORT_start, SHORT_end", sep = "")
-    }
-    whereSeqsClause <- paste0("AND SHORT_chrom IN ('",
-                              paste(.getOnlyActiveSeqs(txdb), collapse="','")
-                              ,"')")
-    
-    sql <- paste(selectClause, fromClause, whereClause, whereSeqsClause,
-                 orderByClause)
-    sql <- gsub("LONG", long, sql)
-    sql <- gsub("SHORT", short, sql)
-    sql <- gsub("GROUPBY", by, sql)
-
-    ## get the data from the database
-    data <- queryAnnotationDb(txdb, sql)
-    ## seqnames may be out of sync with expected results. Massage back.
-    chromName <- paste0(type,"_chrom")
-    data[[chromName]] <- .translateToSeqInfo(txdb, data[[chromName]])
-
-    ## create the GRanges object
-    cols <- paste0(type, c("_id", "_name"))
-    if (order_by_exon_rank)
-        cols <- c(cols, "exon_rank")
-    activeNames <- names(.isActiveSeq(txdb))[.isActiveSeq(txdb)]
-    seqinfo <- seqinfo(txdb)[activeNames]
-    grngs <- GRanges(seqnames = factor(
-                       data[[paste0(type, "_chrom")]],
-                       levels = activeNames),
-                     ranges = IRanges(
-                       start = data[[paste0(type, "_start")]],
-                       end = data[[paste0(type, "_end")]]),
-                     strand = strand(data[[paste0(type, "_strand")]]),
-                     data[cols],
-                     seqinfo = seqinfo)
-
-    ## split by grouping variable
-    ans <- split(grngs, data[[paste0(by, "_id")]])
-    ans <- .set.group.names(ans, use.names, txdb, by)
-    .assignMetadataList(ans, txdb)
+### 'columns' must be a named vector of db columns where the names are user
+### columns.
+.add_prefix_to_user_columns <- function(columns, prefix)
+{
+    user_columns <- names(columns)
+    has_noname <- user_columns %in% c(NA_character_, "")
+    prefix_idx <- which(!has_noname)
+    user_columns[prefix_idx] <- paste(prefix, user_columns[prefix_idx], sep="_")
+    user_columns[has_noname] <- columns[has_noname]
+    names(columns) <- user_columns
+    columns
 }
 
 ### 'columns' must be a named character vector with the names being used to
@@ -144,66 +54,93 @@
     mcols(gr) <- DataFrame(gr_mcols, check.names=FALSE)
     grl <- split(gr, f)
     grl <- keep_user_seqlevels_from_TxDb(grl, txdb)
-    grl <- .set.group.names(grl, use.names, txdb, by)
+    grl <- .set_group_names(grl, use.names, txdb, by)
     .assignMetadataList(grl, txdb)
 }
 
-.extract_exons_or_cds_by <- function(txdb, proxy_table, by=c("tx", "gene"),
-                                     use.names=FALSE)
+.extract_transcripts_by <- function(txdb, by=c("gene", "exon", "cds"),
+                                    use.names=FALSE)
 {
-    proxy_table_columns <- TXDB_table_columns(proxy_table)
-    proxy_column <- proxy_table_columns[["id"]]
-
-    if (by == "tx") {
-        ## Group by transcript.
-        orderby <- c("_tx_id", "exon_rank")
-        ans_columns <- c(id=proxy_column,
-                         name=proxy_table_columns[["name"]],
-                         "exon_rank")
-
-        ## We use a single SELECT query.
-        columns <- c(orderby, TXDB_table_columns(proxy_table))
-        exons <- TxDb_SELECT_from_splicing_bundle(txdb, columns,
-                                                  orderby=orderby,
-                                                  join_type="INNER")
-    } else {
+    by <- match.arg(by)
+    tags <- c(TXDB_CORE_TAGS, "name")
+    columns <- TXDB_table_columns("transcript")[tags]
+    join_column <- columns[["id"]]
+    ans_columns <- columns[c("id", "name")]
+    if (by == "gene") {
         ## Group by gene.
-        orderby <- c("gene_id", proxy_column)
-        ans_columns <- proxy_table_columns[c("id", "name")]
+        column1 <- "gene_id"
+        orderby <- c(column1, join_column)
 
         ## We use 2 SELECT queries and join the results ourselves. This join
         ## is actually faster than the SQL JOIN.
 
         ## 1st SELECT query.
-        gene_exons <- TxDb_SELECT_from_INNER_JOIN(txdb, "splicing", orderby,
-                                                  orderby=orderby)
+        genes <- TxDb_SELECT_from_INNER_JOIN(txdb, "gene", orderby,
+                                             orderby=orderby)
+        ## 2nd SELECT query.
+        Rdf <- TxDb_SELECT_from_INNER_JOIN(txdb, "transcript", columns)
+        ## Join the results.
+        df <- .join_genes_and_Rdf(genes, Rdf, join_column)
+    } else {
+        ## Group by exon or CDS.
+        column1 <- TXDB_table_columns(by)[["id"]]
+        orderby <- c(column1, join_column, "exon_rank")
+        ans_columns <- c(ans_columns, "exon_rank")
+
+        ## We use a single SELECT query.
+        columns <- c(column1, columns, "exon_rank")
+        df <- TxDb_SELECT_from_splicing_bundle(txdb, columns,
+                                               orderby=orderby,
+                                               join_type="INNER")
+    }
+    ans_columns <- .add_prefix_to_user_columns(ans_columns, "tx")
+    .split_df_into_GRL(txdb, df, ans_columns, by, use.names)
+}
+
+.extract_exons_or_cds_by <- function(txdb, proxy_table, by=c("tx", "gene"),
+                                     use.names=FALSE)
+{
+    by <- match.arg(by)
+    tags <- c(TXDB_CORE_TAGS, "name")
+    columns <- TXDB_table_columns(proxy_table)[tags]
+    join_column <- columns[["id"]]
+    ans_columns <- columns[c("id", "name")]
+    if (by == "tx") {
+        ## Group by transcript.
+        column1 <- TXDB_table_columns("transcript")[["id"]]
+        orderby <- c(column1, "exon_rank")
+        ans_columns <- c(ans_columns, "exon_rank")
+
+        ## We use a single SELECT query.
+        columns <- c(orderby, columns)
+        df <- TxDb_SELECT_from_splicing_bundle(txdb, columns,
+                                               orderby=orderby,
+                                               join_type="INNER")
+    } else {
+        ## Group by gene.
+        column1 <- "gene_id"
+        orderby <- c(column1, join_column)
+
+        ## We use 2 SELECT queries and join the results ourselves. This join
+        ## is actually faster than the SQL JOIN.
+
+        ## 1st SELECT query.
+        genes <- TxDb_SELECT_from_INNER_JOIN(txdb, "splicing", orderby,
+                                             orderby=orderby)
         if (proxy_table == "cds") {
             ## Proxy column is from the "splicing" table, not from the "cds"
             ## table (which was not even involved in the JOIN in the first
             ## place), so it can contain NAs. Remove these rows.
-            keep_me <- !is.na(gene_exons[[2L]])
-            gene_exons <- gene_exons[keep_me, , drop=FALSE]
+            keep_me <- !is.na(genes[[2L]])
+            genes <- genes[keep_me, , drop=FALSE]
         }
-
         ## 2nd SELECT query.
-        columns <- TXDB_table_columns(proxy_table)
-        exons <- TxDb_SELECT_from_INNER_JOIN(txdb, proxy_table, columns)
-
+        Rdf <- TxDb_SELECT_from_INNER_JOIN(txdb, proxy_table, columns)
         ## Join the results.
-        gene_id <- gene_exons[ , "gene_id"]
-        gene_id <- factor(gene_id, levels=unique(gene_id))
-        join_idx <- match(gene_exons[ , proxy_column], exons[ , proxy_column])
-        exons <- cbind(gene_id=gene_id, exons[join_idx, ])
+        df <- .join_genes_and_Rdf(genes, Rdf, join_column)
     }
-
-    user_columns <- names(ans_columns)
-    has_noname <- user_columns %in% c(NA_character_, "")
-    prefix_idx <- which(!has_noname)
-    user_columns[prefix_idx] <- paste(proxy_table, user_columns[prefix_idx],
-                                      sep="_")
-    user_columns[has_noname] <- ans_columns[has_noname]
-    names(ans_columns) <- user_columns
-    .split_df_into_GRL(txdb, exons, ans_columns, by, use.names)
+    ans_columns <- .add_prefix_to_user_columns(ans_columns, proxy_table)
+    .split_df_into_GRL(txdb, df, ans_columns, by, use.names)
 }
 
 setGeneric("transcriptsBy", signature="x",
@@ -211,29 +148,11 @@ setGeneric("transcriptsBy", signature="x",
         standardGeneric("transcriptsBy")
 )
 
-###                    use  splicing      gene
-###   type    by  DISTINCT   in JOIN   in JOIN   ORDER BY
-##    ----  ----  --------  --------  --------  ---------
-###     tx  gene        no        no       yes      locus
-###     tx  exon       yes       yes        no      locus
-###     tx   cds       yes       yes        no      locus
-###   exon    tx        no       yes        no  exon_rank
-###   exon  gene       yes       yes       yes      locus
-###    cds    tx        no       yes        no  exon_rank
-###    cds  gene       yes       yes       yes      locus
-
 setMethod("transcriptsBy", "TxDb",
     function(x, by=c("gene", "exon", "cds"), use.names=FALSE)
     {
         by <- match.arg(by)
-        distinct <- splicing_in_join <- by != "gene"
-        gene_in_join <- by == "gene"
-        .featuresBy(x, by, "tx",
-                    distinct=distinct,
-                    splicing_in_join=splicing_in_join,
-                    gene_in_join=gene_in_join,
-                    order_by_exon_rank=FALSE,
-                    use.names=use.names)
+        .extract_transcripts_by(x, by=by, use.names=use.names)
     }
 )
 
@@ -245,7 +164,7 @@ setMethod("exonsBy", "TxDb",
     function(x, by=c("tx", "gene"), use.names=FALSE)
     {
         by <- match.arg(by)
-        .extract_exons_or_cds_by(x, "exon", by, use.names=use.names)
+        .extract_exons_or_cds_by(x, "exon", by=by, use.names=use.names)
     }
 )
 
@@ -257,13 +176,13 @@ setMethod("cdsBy", "TxDb",
     function(x, by=c("tx", "gene"), use.names=FALSE)
     {
         by <- match.arg(by)
-        .extract_exons_or_cds_by(x, "cds", by, use.names=use.names)
+        .extract_exons_or_cds_by(x, "cds", by=by, use.names=use.names)
     }
 )
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### intronsByTranscript().
+### intronsByTranscript()
 ###
 
 setGeneric("intronsByTranscript",
@@ -277,13 +196,13 @@ setMethod("intronsByTranscript", "TxDb",
         exn <- exonsBy(x)
         tx <- tx[match(names(exn), mcols(tx)[,"tx_id"])]
         ans <- psetdiff(tx, exn)
-        .set.group.names(ans, use.names, x, "tx")
+        .set_group_names(ans, use.names, x, "tx")
     }
 )
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### fiveUTRsByTranscript() and threeUTRsByTranscript().
+### fiveUTRsByTranscript() and threeUTRsByTranscript()
 ###
 
 .getSplicingsForTranscriptsWithCDSs <- function(txdb)
@@ -371,7 +290,7 @@ setMethod("intronsByTranscript", "TxDb",
 
     ## split by grouping variable
     ans <- .makeUTRsByTranscript(txdb, splicings, utr_start, utr_end)
-    ans <- .set.group.names(ans, use.names, txdb, "tx")
+    ans <- .set_group_names(ans, use.names, txdb, "tx")
     ans <- .assignMetadataList(ans, txdb)
     ans
 }
@@ -393,7 +312,7 @@ setMethod("intronsByTranscript", "TxDb",
 
     ## split by grouping variable
     ans <- .makeUTRsByTranscript(txdb, splicings, utr_start, utr_end)
-    ans <- .set.group.names(ans, use.names, txdb, "tx")            
+    ans <- .set_group_names(ans, use.names, txdb, "tx")            
     ans <- .assignMetadataList(ans, txdb)
     ans
 }

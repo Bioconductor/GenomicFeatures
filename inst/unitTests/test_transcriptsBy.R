@@ -22,16 +22,18 @@ test_transcriptsBy <- function()
 
     ans <- transcriptsBy(txdb0, by="exon")
     grg1 <- GRanges(seqnames=factor("chr1", levels = seqlevels),
-                    ranges=IRanges(start=1, end=100),
+                    ranges=IRanges(start=c(1, 1), end=100),
                     strand=strand("+"),
-                    tx_id=26L,
-                    tx_name="A")
+                    tx_id=c(26L, 26L),
+                    tx_name="A",
+                    exon_rank=1:2)
     grg2 <- GRanges(seqnames=factor(c("chr2", "chr2"), levels = seqlevels),
                     ranges=IRanges(start=c(16844685, 16844685),
                                    end=c(16844760,16844760)),
                     strand=strand(c("-", "-")),
                     tx_id=c(5L, 11L),
-                    tx_name=c("B", "C"))
+                    tx_name=c("B", "C"),
+                    exon_rank=1L)
     want <- GRangesList(`1`=grg1, `2`=grg2)
     seqinfo(want) <- seqinfo
     want <- GenomicFeatures:::.assignMetadataList(want, txdb0)
@@ -90,12 +92,13 @@ test_transcriptsBy <- function()
     txByExon <- transcriptsBy(txdb1, by="exon")
     checkTrue(validObject(txByExon))
     checkIdentical(dupCount(txByExon), 0L)
-    want <- GRanges(seqnames = factor("chr1", levels=seqlevels),
-                    ranges   = IRanges(start=c(32671236, 32671236),
-                                       end  =c(32674288, 32674288)),
-                    strand   = strand("+"),
-                    tx_id    = c(1L, 3L),
-                    tx_name  = c("uc001bum.2", "uc010ogz.1"))
+    want <- GRanges(seqnames  = factor("chr1", levels=seqlevels),
+                    ranges    = IRanges(start=c(32671236, 32671236),
+                                        end  =c(32674288, 32674288)),
+                    strand    = strand("+"),
+                    tx_id     = c(1L, 3L),
+                    tx_name   = c("uc001bum.2", "uc010ogz.1"),
+                    exon_rank = 1L)
     seqinfo(want) <- seqinfo
 #    metadata(want)[[1]] <- DataFrame(metadata(txdb1)) ##WTH?
     checkIdentical(txByExon[[1L]], want)
@@ -104,11 +107,12 @@ test_transcriptsBy <- function()
     txByCds <- transcriptsBy(txdb1, by="cds")
     checkTrue(validObject(txByCds))
     checkIdentical(dupCount(txByCds), 0L)
-    want <- GRanges(seqnames = factor("chr1", levels=seqlevels),
-                    ranges   = IRanges(start=32671236, end=32674288),
-                    strand   = strand("+"),
-                    tx_id    = 1L,
-                    tx_name  = "uc001bum.2")
+    want <- GRanges(seqnames  = factor("chr1", levels=seqlevels),
+                    ranges    = IRanges(start=32671236, end=32674288),
+                    strand    = strand("+"),
+                    tx_id     = 1L,
+                    tx_name   = "uc001bum.2",
+                    exon_rank = 1L)
     seqinfo(want) <- seqinfo
 #    metadata(want)[[1]] <- DataFrame(metadata(txdb1)) ##WTH?
     checkIdentical(txByCds[[1L]], want)
@@ -133,7 +137,6 @@ test_transcriptsBy_seqlevelsStyleSwap <- function(){
     get_grlN <- transcriptsBy(txdb, by="gene")
     checkTrue(all(seqnames(get_grlN[["100130275"]]) == "6"))
 }
-
 
 test_exonsBy <- function()
 {
