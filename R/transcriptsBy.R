@@ -115,7 +115,7 @@
         columns <- c(by_column, "exon_rank", columns)
         df <- TxDb_SELECT_from_splicing_bundle(txdb, columns,
                                                orderby=orderby,
-                                               join_type="INNER")
+                                               cds_join_type="INNER")
         ## Inner metadata columns of the returned GRangesList object.
         mcolumns <- c(columns[c("id", "name")], "exon_rank")
     }

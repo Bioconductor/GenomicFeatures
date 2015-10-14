@@ -19,18 +19,34 @@
     joins[seq(1L, joins_len, by=2L)]
 }
 
+### 'join_type' will be recycled to the nb of joins (= length(joins) %/% 2).
 .build_SQL_FROM <- function(joins, join_type="INNER")
 {
     joins_len <- length(joins)
     stopifnot(joins_len %% 2L == 1L)
     SQL <- joins[[1L]]
-    if (joins_len != 1L) {
-        ON_idx <- 2L * seq_len(joins_len %/% 2L)
-        ON <- joins[ON_idx]
-        Rtables <- joins[ON_idx + 1L]
-        SQL <- c(SQL, paste0(join_type, " JOIN ", Rtables, " ON (", ON, ")"))
-    }
-    SQL
+    if (joins_len == 1L)
+        return(SQL)
+    njoin <- joins_len %/% 2L
+    stopifnot(length(join_type) == 1L || length(join_type) == njoin)
+    ON_idx <- 2L * seq_len(njoin)
+    ON <- joins[ON_idx]
+    Rtables <- joins[ON_idx + 1L]
+    c(SQL, paste0(join_type, " JOIN ", Rtables, " ON (", ON, ")"))
+}
+
+.build_SQL_FROM_splicing <- function(joins, cds_join_type="LEFT")
+{
+    joins_len <- length(joins)
+    stopifnot(joins_len %% 2L == 1L)
+    SQL <- joins[[1L]]
+    if (joins_len == 1L)
+        return(SQL)
+    njoin <- joins_len %/% 2L
+    join_type <- rep.int("INNER", njoin)
+    if (joins[[length(joins)]] == "cds")
+        join_type[[length(join_type)]] <- cds_join_type
+    paste0(.build_SQL_FROM(joins, join_type), collapse=" ")
 }
 
 .build_SQL_WHERE <- function(vals)
@@ -259,7 +275,7 @@ TxDb_SELECT_from_INNER_JOIN <- function(txdb, table, columns, vals=list(),
 ### belong to the tables in TXDB_SPLICING_BUNDLE at the moment.
 TxDb_SELECT_from_splicing_bundle <- function(txdb, columns,
                                              vals=list(), orderby=character(0),
-                                             join_type="LEFT")
+                                             cds_join_type="LEFT")
 {
     tables <- TXDB_column2table(columns, from_table="splicing")
     where_columns <- names(vals)
@@ -273,9 +289,7 @@ TxDb_SELECT_from_splicing_bundle <- function(txdb, columns,
         names(vals) <- .as_qualified(where_tables, where_columns)
         orderby <- .as_qualified(orderby_tables, orderby)
     }
-    ## .build_SQL_SELECT() would use INNER joins but we need to override this
-    ## to use the type of join specified by the user.
-    from <- paste0(.build_SQL_FROM(joins, join_type), collapse=" ")
+    from <- .build_SQL_FROM_splicing(joins, cds_join_type=cds_join_type)
     SQL <- .build_SQL_SELECT(columns, from, distinct=FALSE,
                              vals=vals, orderby=orderby)
     queryAnnotationDb(txdb, SQL)
