@@ -97,8 +97,8 @@
     .split_df_into_GRL(txdb, df, ans_columns, "gene", use.names)
 }
 
-### Extract transcripts grouped by exon or CDS, or extract exons or CDS
-### grouped by transcript.
+### Extract exons or CDS grouped by transcript, or transcripts grouped by exon
+### or CDS.
 .extract_features_by <- function(txdb, proxy_table, by, use.names=FALSE)
 {
     tags <- c(TXDB_CORE_TAGS, "name")
