@@ -32,8 +32,13 @@
 
 ### 'columns' must be a named vector of db columns where the names are user
 ### columns.
-.add_prefix_to_user_columns <- function(columns, prefix)
+.add_prefix_to_user_columns <- function(columns, proxy_table)
 {
+    if (proxy_table == "transcript") {
+        prefix <- "tx"
+    } else {
+        prefix <- proxy_table
+    }
     user_columns <- names(columns)
     has_noname <- user_columns %in% c(NA_character_, "")
     prefix_idx <- which(!has_noname)
@@ -58,10 +63,8 @@
     .assignMetadataList(grl, txdb)
 }
 
-.extract_features_by_gene <- function(txdb, proxy_table, use.names=FALSE)
+.extract_features_by_gene <- function(txdb, proxy_table, columns)
 {
-    tags <- c(TXDB_CORE_TAGS, "name")
-    columns <- TXDB_table_columns(proxy_table)[tags]
     join_column <- columns[["id"]]
     orderby <- c("gene_id", join_column)
 
@@ -71,10 +74,8 @@
     ## 1st SELECT query: get the 2-column 'genes' data frame.
     if (proxy_table == "transcript") {
         table <- "gene"
-        prefix <- "tx"
     } else {
         table <- "splicing"
-        prefix <- proxy_table
     }
     genes <- TxDb_SELECT_from_INNER_JOIN(txdb, table, orderby,
                                          orderby=orderby)
@@ -90,57 +91,36 @@
     Rdf <- TxDb_SELECT_from_INNER_JOIN(txdb, proxy_table, columns)
 
     ## Join the results.
-    df <- .join_genes_and_Rdf(genes, Rdf, join_column)
-
-    ans_columns <- columns[c("id", "name")]
-    ans_columns <- .add_prefix_to_user_columns(ans_columns, prefix)
-    .split_df_into_GRL(txdb, df, ans_columns, "gene", use.names)
+    .join_genes_and_Rdf(genes, Rdf, join_column)
 }
 
-### Extract exons or CDS grouped by transcript, or transcripts grouped by exon
-### or CDS.
 .extract_features_by <- function(txdb, proxy_table, by, use.names=FALSE)
 {
     tags <- c(TXDB_CORE_TAGS, "name")
     columns <- TXDB_table_columns(proxy_table)[tags]
-    if (by == "tx") {
-        ## Extract exons or CDS grouped by transcript.
-        column1 <- TXDB_table_columns("transcript")[["id"]]
-        orderby <- c(column1, "exon_rank")
-        prefix <- proxy_table
+    if (by == "gene") {
+        df <- .extract_features_by_gene(txdb, proxy_table, columns)
+        ## Inner metadata columns of the returned GRangesList object.
+        mcolumns <- columns[c("id", "name")]
     } else {
-        ## Extract transcripts grouped by exon or CDS.
-        column1 <- TXDB_table_columns(by)[["id"]]
-        orderby <- c(column1, columns[["id"]], "exon_rank")
-        prefix <- "tx"
+        if (proxy_table == "transcript") {
+            ## Extract transcripts grouped by exon or CDS.
+            by_column <- TXDB_table_columns(by)[["id"]]
+            orderby <- c(by_column, columns[["id"]], "exon_rank")
+        } else {
+            ## Extract exons or CDS grouped by transcript.
+            by_column <- TXDB_table_columns("transcript")[["id"]]
+            orderby <- c(by_column, "exon_rank")
+        }
+        columns <- c(by_column, "exon_rank", columns)
+        df <- TxDb_SELECT_from_splicing_bundle(txdb, columns,
+                                               orderby=orderby,
+                                               join_type="INNER")
+        ## Inner metadata columns of the returned GRangesList object.
+        mcolumns <- c(columns[c("id", "name")], "exon_rank")
     }
-    ## We use a single SELECT query.
-    columns <- c(column1, "exon_rank", columns)
-    df <- TxDb_SELECT_from_splicing_bundle(txdb, columns,
-                                           orderby=orderby,
-                                           join_type="INNER")
-
-    ans_columns <- c(columns[c("id", "name")], "exon_rank")
-    ans_columns <- .add_prefix_to_user_columns(ans_columns, prefix)
-    .split_df_into_GRL(txdb, df, ans_columns, by, use.names)
-}
-
-.extract_transcripts_by <- function(txdb, by=c("gene", "exon", "cds"),
-                                    use.names=FALSE)
-{
-    by <- match.arg(by)
-    if (by == "gene")
-        return(.extract_features_by_gene(txdb, "transcript", use.names))
-    .extract_features_by(txdb, "transcript", by, use.names)
-}
-
-.extract_exons_or_cds_by <- function(txdb, proxy_table, by=c("tx", "gene"),
-                                     use.names=FALSE)
-{
-    by <- match.arg(by)
-    if (by == "gene")
-        return(.extract_features_by_gene(txdb, proxy_table, use.names))
-    .extract_features_by(txdb, proxy_table, by, use.names)
+    mcolumns <- .add_prefix_to_user_columns(mcolumns, proxy_table)
+    .split_df_into_GRL(txdb, df, mcolumns, by, use.names)
 }
 
 setGeneric("transcriptsBy", signature="x",
@@ -152,7 +132,7 @@ setMethod("transcriptsBy", "TxDb",
     function(x, by=c("gene", "exon", "cds"), use.names=FALSE)
     {
         by <- match.arg(by)
-        .extract_transcripts_by(x, by=by, use.names=use.names)
+        .extract_features_by(x, "transcript", by, use.names=use.names)
     }
 )
 
@@ -164,7 +144,7 @@ setMethod("exonsBy", "TxDb",
     function(x, by=c("tx", "gene"), use.names=FALSE)
     {
         by <- match.arg(by)
-        .extract_exons_or_cds_by(x, "exon", by=by, use.names=use.names)
+        .extract_features_by(x, "exon", by, use.names=use.names)
     }
 )
 
@@ -176,7 +156,7 @@ setMethod("cdsBy", "TxDb",
     function(x, by=c("tx", "gene"), use.names=FALSE)
     {
         by <- match.arg(by)
-        .extract_exons_or_cds_by(x, "cds", by=by, use.names=use.names)
+        .extract_features_by(x, "cds", by, use.names=use.names)
     }
 )
 
