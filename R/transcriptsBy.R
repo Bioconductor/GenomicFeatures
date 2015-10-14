@@ -58,89 +58,89 @@
     .assignMetadataList(grl, txdb)
 }
 
+.extract_features_by_gene <- function(txdb, proxy_table, use.names=FALSE)
+{
+    tags <- c(TXDB_CORE_TAGS, "name")
+    columns <- TXDB_table_columns(proxy_table)[tags]
+    join_column <- columns[["id"]]
+    orderby <- c("gene_id", join_column)
+
+    ## We use 2 SELECT queries and join the results ourselves. This join
+    ## is actually faster than the SQL JOIN.
+
+    ## 1st SELECT query: get the 2-column 'genes' data frame.
+    if (proxy_table == "transcript") {
+        table <- "gene"
+        prefix <- "tx"
+    } else {
+        table <- "splicing"
+        prefix <- proxy_table
+    }
+    genes <- TxDb_SELECT_from_INNER_JOIN(txdb, table, orderby,
+                                         orderby=orderby)
+    if (proxy_table == "cds") {
+        ## Proxy column is from the "splicing" table, not from the "cds"
+        ## table (which was not even involved in the JOIN in the first
+        ## place), so it can contain NAs. Remove these rows.
+        keep_me <- !is.na(genes[[2L]])
+        genes <- genes[keep_me, , drop=FALSE]
+    }
+
+    ## 2nd SELECT query.
+    Rdf <- TxDb_SELECT_from_INNER_JOIN(txdb, proxy_table, columns)
+
+    ## Join the results.
+    df <- .join_genes_and_Rdf(genes, Rdf, join_column)
+
+    ans_columns <- columns[c("id", "name")]
+    ans_columns <- .add_prefix_to_user_columns(ans_columns, prefix)
+    .split_df_into_GRL(txdb, df, ans_columns, "gene", use.names)
+}
+
+### Extract transcripts grouped by exon or CDS, or extract exons or CDS
+### grouped by transcript.
+.extract_features_by <- function(txdb, proxy_table, by, use.names=FALSE)
+{
+    tags <- c(TXDB_CORE_TAGS, "name")
+    columns <- TXDB_table_columns(proxy_table)[tags]
+    if (by == "tx") {
+        ## Extract exons or CDS grouped by transcript.
+        column1 <- TXDB_table_columns("transcript")[["id"]]
+        orderby <- c(column1, "exon_rank")
+        prefix <- proxy_table
+    } else {
+        ## Extract transcripts grouped by exon or CDS.
+        column1 <- TXDB_table_columns(by)[["id"]]
+        orderby <- c(column1, columns[["id"]], "exon_rank")
+        prefix <- "tx"
+    }
+    ## We use a single SELECT query.
+    columns <- c(column1, "exon_rank", columns)
+    df <- TxDb_SELECT_from_splicing_bundle(txdb, columns,
+                                           orderby=orderby,
+                                           join_type="INNER")
+
+    ans_columns <- c(columns[c("id", "name")], "exon_rank")
+    ans_columns <- .add_prefix_to_user_columns(ans_columns, prefix)
+    .split_df_into_GRL(txdb, df, ans_columns, by, use.names)
+}
+
 .extract_transcripts_by <- function(txdb, by=c("gene", "exon", "cds"),
                                     use.names=FALSE)
 {
     by <- match.arg(by)
-    tags <- c(TXDB_CORE_TAGS, "name")
-    columns <- TXDB_table_columns("transcript")[tags]
-    join_column <- columns[["id"]]
-    ans_columns <- columns[c("id", "name")]
-    if (by == "gene") {
-        ## Group by gene.
-        column1 <- "gene_id"
-        orderby <- c(column1, join_column)
-
-        ## We use 2 SELECT queries and join the results ourselves. This join
-        ## is actually faster than the SQL JOIN.
-
-        ## 1st SELECT query.
-        genes <- TxDb_SELECT_from_INNER_JOIN(txdb, "gene", orderby,
-                                             orderby=orderby)
-        ## 2nd SELECT query.
-        Rdf <- TxDb_SELECT_from_INNER_JOIN(txdb, "transcript", columns)
-        ## Join the results.
-        df <- .join_genes_and_Rdf(genes, Rdf, join_column)
-    } else {
-        ## Group by exon or CDS.
-        column1 <- TXDB_table_columns(by)[["id"]]
-        orderby <- c(column1, join_column, "exon_rank")
-        ans_columns <- c(ans_columns, "exon_rank")
-
-        ## We use a single SELECT query.
-        columns <- c(column1, columns, "exon_rank")
-        df <- TxDb_SELECT_from_splicing_bundle(txdb, columns,
-                                               orderby=orderby,
-                                               join_type="INNER")
-    }
-    ans_columns <- .add_prefix_to_user_columns(ans_columns, "tx")
-    .split_df_into_GRL(txdb, df, ans_columns, by, use.names)
+    if (by == "gene")
+        return(.extract_features_by_gene(txdb, "transcript", use.names))
+    .extract_features_by(txdb, "transcript", by, use.names)
 }
 
 .extract_exons_or_cds_by <- function(txdb, proxy_table, by=c("tx", "gene"),
                                      use.names=FALSE)
 {
     by <- match.arg(by)
-    tags <- c(TXDB_CORE_TAGS, "name")
-    columns <- TXDB_table_columns(proxy_table)[tags]
-    join_column <- columns[["id"]]
-    ans_columns <- columns[c("id", "name")]
-    if (by == "tx") {
-        ## Group by transcript.
-        column1 <- TXDB_table_columns("transcript")[["id"]]
-        orderby <- c(column1, "exon_rank")
-        ans_columns <- c(ans_columns, "exon_rank")
-
-        ## We use a single SELECT query.
-        columns <- c(orderby, columns)
-        df <- TxDb_SELECT_from_splicing_bundle(txdb, columns,
-                                               orderby=orderby,
-                                               join_type="INNER")
-    } else {
-        ## Group by gene.
-        column1 <- "gene_id"
-        orderby <- c(column1, join_column)
-
-        ## We use 2 SELECT queries and join the results ourselves. This join
-        ## is actually faster than the SQL JOIN.
-
-        ## 1st SELECT query.
-        genes <- TxDb_SELECT_from_INNER_JOIN(txdb, "splicing", orderby,
-                                             orderby=orderby)
-        if (proxy_table == "cds") {
-            ## Proxy column is from the "splicing" table, not from the "cds"
-            ## table (which was not even involved in the JOIN in the first
-            ## place), so it can contain NAs. Remove these rows.
-            keep_me <- !is.na(genes[[2L]])
-            genes <- genes[keep_me, , drop=FALSE]
-        }
-        ## 2nd SELECT query.
-        Rdf <- TxDb_SELECT_from_INNER_JOIN(txdb, proxy_table, columns)
-        ## Join the results.
-        df <- .join_genes_and_Rdf(genes, Rdf, join_column)
-    }
-    ans_columns <- .add_prefix_to_user_columns(ans_columns, proxy_table)
-    .split_df_into_GRL(txdb, df, ans_columns, by, use.names)
+    if (by == "gene")
+        return(.extract_features_by_gene(txdb, proxy_table, use.names))
+    .extract_features_by(txdb, proxy_table, by, use.names)
 }
 
 setGeneric("transcriptsBy", signature="x",
