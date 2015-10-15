@@ -8,14 +8,16 @@
 ###
 
 ### Return a named list of ordinary data frames, 1 per SELECT query.
-.extract_features <- function(txdb, proxy_table, columns=character(0),
+.extract_features <- function(txdb, proxy_table, mcolumns=character(0),
                               vals=list(), core_columns)
 {
+    schema_version <- TxDb_schema_version(txdb)
+    names(mcolumns) <- TXDB_column2table(mcolumns, from_table=proxy_table,
+                                         schema_version=schema_version)
     proxy_column <- orderby <- core_columns[["id"]]
-    names(columns) <- TXDB_column2table(columns, from_table=proxy_table)
 
     ## 1st SELECT: extract stuff from the proxy table.
-    columns1 <- union(core_columns, columns[names(columns) == proxy_table])
+    columns1 <- union(core_columns, mcolumns[names(mcolumns) == proxy_table])
     df1 <- TxDb_SELECT_from_INNER_JOIN(txdb, proxy_table, columns1,
                                        vals=vals, orderby=orderby)
 
@@ -23,7 +25,7 @@
     ## exception that the satellite tables that belong to TXDB_SPLICING_BUNDLE
     ## are treated as the virtual single table obtained by LEFT JOIN'ing them
     ## together.
-    foreign_columns <- columns[names(columns) != proxy_table]
+    foreign_columns <- mcolumns[names(mcolumns) != proxy_table]
     bundle_idx <- names(foreign_columns) %in% TXDB_SPLICING_BUNDLE
     names(foreign_columns)[bundle_idx] <- "splicing"
     foreign_columns <- split(foreign_columns, names(foreign_columns))
@@ -83,16 +85,16 @@
     sub("^(tx_id|exon_id|cds_id)$", "_\\1", columns)
 
 .extract_features_as_GRanges <- function(txdb, proxy_table,
-                                         columns=character(0), vals=list())
+                                         mcolumns=character(0), vals=list())
 {
-    db_columns <- .as_db_columns(columns)
+    db_mcolumns <- .as_db_columns(mcolumns)
     names(vals) <- .as_db_columns(names(vals))
     core_columns <- TXDB_table_columns(proxy_table)[TXDB_CORE_TAGS]
-    df_list <- .extract_features(txdb, proxy_table, db_columns,
+    df_list <- .extract_features(txdb, proxy_table, db_mcolumns,
                                  vals, core_columns)
     DF <- .make_DataFrame_from_df_list(df_list)
     ans <- makeGRangesFromDataFrame(DF, seqinfo=get_TxDb_seqinfo0(txdb))
-    mcols(ans) <- setNames(DF[db_columns], columns)
+    mcols(ans) <- setNames(DF[db_mcolumns], mcolumns)
     keep_user_seqlevels_from_TxDb(ans, txdb)
 }
 
@@ -157,16 +159,17 @@ translateCols <- function(columns, txdb){
     obj
 }
 
-.extractFromTxDb <- function(txdb, proxy_table, columns=character(0), vals=NULL)
+.extractFromTxDb <- function(txdb, proxy_table,
+                             mcolumns=character(0), vals=NULL)
 {
-    user_columns <- columns
-    columns <- translateCols(columns, txdb)
+    user_mcolumns <- mcolumns
+    mcolumns <- translateCols(mcolumns, txdb)
     if (is.null(vals))
         vals <- list()
     names(vals) <- translateCols(names(vals), txdb)
-    ans <- .extract_features_as_GRanges(txdb, proxy_table, columns, vals)
-    names(mcols(ans)) <- if (is.null(names(user_columns))) user_columns
-                         else names(user_columns)
+    ans <- .extract_features_as_GRanges(txdb, proxy_table, mcolumns, vals)
+    names(mcols(ans)) <- if (is.null(names(user_mcolumns))) user_mcolumns
+                         else names(user_mcolumns)
     .assignMetadataList(ans, txdb)
 }
 
@@ -174,21 +177,21 @@ setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
 
 setMethod("transcripts", "TxDb",
     function(x, vals=NULL, columns=c("tx_id", "tx_name"))
-        .extractFromTxDb(x, "transcript", columns=columns, vals=vals)
+        .extractFromTxDb(x, "transcript", mcolumns=columns, vals=vals)
 )
 
 setGeneric("exons", function(x, ...) standardGeneric("exons"))
 
 setMethod("exons", "TxDb",
     function(x, vals=NULL, columns="exon_id")
-        .extractFromTxDb(x, "exon", columns=columns, vals=vals)
+        .extractFromTxDb(x, "exon", mcolumns=columns, vals=vals)
 )
 
 setGeneric("cds", function(x, ...) standardGeneric("cds"))
 
 setMethod("cds", "TxDb",
     function(x, vals=NULL, columns="cds_id")
-        .extractFromTxDb(x, "cds", columns=columns, vals=vals)
+        .extractFromTxDb(x, "cds", mcolumns=columns, vals=vals)
 )
 
 setGeneric("genes", function(x, ...) standardGeneric("genes"))

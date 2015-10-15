@@ -86,9 +86,8 @@ gc()
 
 load_chrominfo <- function(txdb, set.col.class=FALSE)
 {
-    sql <- c("SELECT chrom, length, is_circular",
-             "FROM chrominfo ORDER BY _chrom_id")
-    chrominfo <- queryAnnotationDb(txdb, sql)
+    chrominfo <- TxDb_SELECT_from_chrominfo(txdb)
+    colnames(chrominfo) <- sub("^_", "", colnames(chrominfo))
     .format_chrominfo(chrominfo, set.col.class=set.col.class)
 }
 
@@ -132,14 +131,8 @@ load_transcripts <- function(txdb, drop.tx_name=FALSE,
                                    drop.tx_type=FALSE,
                                    set.col.class=FALSE)
 {
-    sql <- "SELECT _tx_id AS tx_id, tx_name, "
-    has_tx_type <- .schema_version(dbconn(txdb)) == "1.1"
-    if (has_tx_type)
-        sql <- c(sql, "tx_type, ")
-    sql <- c(sql, "tx_chrom, tx_strand, tx_start, tx_end",
-             "FROM transcript",
-             "ORDER BY tx_id")
-    transcripts <- queryAnnotationDb(txdb, sql)
+    transcripts <- TxDb_SELECT_from_transcript(txdb)
+    colnames(transcripts) <- sub("^_", "", colnames(transcripts))
     .format_transcripts(transcripts, drop.tx_name=drop.tx_name,
                                      drop.tx_type=drop.tx_type,
                                      set.col.class=set.col.class)
@@ -196,18 +189,8 @@ load_splicings <- function(txdb, drop.exon_name=FALSE,
                                  drop.cds_name=FALSE,
                                  set.col.class=FALSE)
 {
-    sql <- c("SELECT _tx_id AS tx_id, exon_rank,",
-             "  splicing._exon_id AS exon_id, exon_name,",
-             "  exon_chrom, exon_strand, exon_start, exon_end,",
-             "  splicing._cds_id AS cds_id, cds_name,",
-             "  cds_start, cds_end",
-             "FROM splicing",
-             "  INNER JOIN exon",
-             "    ON (exon_id=exon._exon_id)",
-             "  LEFT JOIN cds",
-             "    ON (cds_id=cds._cds_id)",
-             "ORDER BY tx_id, exon_rank")
-    splicings <- queryAnnotationDb(txdb, sql)
+    splicings <- TxDb_SELECT_from_splicings(txdb)
+    colnames(splicings) <- sub("^_", "", colnames(splicings))
     .format_splicings(splicings, drop.exon_name=drop.exon_name,
                                  drop.cds_name=drop.cds_name,
                                  set.col.class=set.col.class)
@@ -234,12 +217,8 @@ load_splicings <- function(txdb, drop.exon_name=FALSE,
 
 load_genes <- function(txdb, set.col.class=FALSE)
 {
-    sql <- c("SELECT transcript._tx_id AS tx_id, gene_id",
-             "FROM transcript",
-             "  INNER JOIN gene",
-             "    ON (transcript._tx_id=gene._tx_id)",
-             "ORDER BY tx_id, gene_id")
-    genes <- queryAnnotationDb(txdb, sql)
+    genes <- TxDb_SELECT_from_gene(txdb)
+    colnames(genes) <- sub("^_", "", colnames(genes))
     .format_genes(genes, set.col.class=set.col.class)
 }
 
