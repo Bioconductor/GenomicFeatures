@@ -467,7 +467,7 @@
         internal_tx_id=internal_tx_id,
         check.names=FALSE, stringsAsFactors=FALSE)
     table <- unique(table)
-    table <- table[!is.na(table$gene_id), ]
+    table <- S4Vectors:::extract_data_frame_rows(table, !is.na(table$gene_id))
     ## Create the 'gene' table.
     sql <- c(
         "CREATE TABLE gene (\n",
@@ -640,7 +640,5 @@ makeToyTxDb <- function(splicings, genes=NULL)
 supportedMiRBaseBuildValues <- function(){
   require(mirbase.db)
   res <- toTable(mirbaseSPECIES)[,c("name","genome_assembly")]
-  res <- res[!(res$genome_assembly==""),]
-  rownames(res) <- NULL
-  res
+  S4Vectors:::extract_data_frame_rows(res, res$genome_assembly != "")
 }

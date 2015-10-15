@@ -105,7 +105,8 @@
     table <- unique(table)
     ## for now just drop lines that don't have values for chromStart
     ## we may need to be more stringent
-    table <- table[!is.na(table$chromStart), ]
+    table <- S4Vectors:::extract_data_frame_rows(table,
+                                                 !is.na(table$chromStart))
     ## Create the 'tableName' table.
     sql1 <- c("CREATE TABLE ",tableName," (\n",
               "  chrom TEXT NOT NULL,\n",

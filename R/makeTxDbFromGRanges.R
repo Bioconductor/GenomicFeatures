@@ -558,7 +558,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 .add_missing_transcripts <- function(transcripts, exons)
 {
     is_orphan <- !(exons$tx_id %in% transcripts$tx_id)
-    orphan_exons <- exons[is_orphan, ]
+    orphan_exons <- S4Vectors:::extract_data_frame_rows(exons, is_orphan)
     missing_transcripts <- .infer_transcripts_from_exons(orphan_exons)
     rbind(transcripts, missing_transcripts)
 }
@@ -767,10 +767,10 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         organism <- paste(org[1,2], org[1,3])
         idx <- match("Organism", metadata$name)
         if (!is.na(idx))
-            metadata <- metadata[-idx, , drop=FALSE]
+            metadata <- S4Vectors:::extract_data_frame_rows(metadata, -idx)
         idx <- match("Taxonomy ID", metadata$name)
         if (!is.na(idx))
-            metadata <- metadata[-idx, , drop=FALSE]
+            metadata <- S4Vectors:::extract_data_frame_rows(metadata, -idx)
         df2 <- data.frame(name=c("Organism", "Taxonomy ID"),
                           value=c(organism, taxonomyId),
                           stringsAsFactors=FALSE)
@@ -865,11 +865,16 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     drop3_tx <- unique(drop3_tx)
     drop_tx <- unique(c(drop1_tx, drop2_tx, drop3_tx))
     if (length(drop_tx) != 0L) {
-        exons <- exons[!(exons$tx_id %in% drop_tx), ]
-        cds <- cds[!(cds$tx_id %in% drop_tx), ]
-        stop_codons <- stop_codons[!(stop_codons$tx_id %in% drop_tx), ]
-        transcripts <- transcripts[!(transcripts$tx_id %in% drop_tx), ]
-        genes <- genes[!(genes$tx_id %in% drop_tx), ]
+        exons <- S4Vectors:::extract_data_frame_rows(exons,
+                                     !(exons$tx_id %in% drop_tx))
+        cds <- S4Vectors:::extract_data_frame_rows(cds,
+                                   !(cds$tx_id %in% drop_tx))
+        stop_codons <- S4Vectors:::extract_data_frame_rows(stop_codons,
+                                           !(stop_codons$tx_id %in% drop_tx))
+        transcripts <- S4Vectors:::extract_data_frame_rows(transcripts,
+                                           !(transcripts$tx_id %in% drop_tx))
+        genes <- S4Vectors:::extract_data_frame_rows(genes,
+                                     !(genes$tx_id %in% drop_tx))
         if (length(drop1_tx) != 0L) {
             in1string <- paste0(sort(drop1_tx), collapse=", ")
             warning(wmsg(
@@ -900,9 +905,12 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     splicings <- .make_splicings(exons, cds, stop_codons)
     drop_tx <- .get_rejected_transcripts()
     if (length(drop_tx) != 0L) {
-        transcripts <- transcripts[!(transcripts$tx_id %in% drop_tx), ]
-        splicings <- splicings[!(splicings$tx_id %in% drop_tx), ]
-        genes <- genes[!(genes$tx_id %in% drop_tx), ]
+        transcripts <- S4Vectors:::extract_data_frame_rows(transcripts,
+                                           !(transcripts$tx_id %in% drop_tx))
+        splicings <- S4Vectors:::extract_data_frame_rows(splicings,
+                                         !(splicings$tx_id %in% drop_tx))
+        genes <- S4Vectors:::extract_data_frame_rows(genes,
+                                     !(genes$tx_id %in% drop_tx))
     }
 
     ## Turn the "tx_id" column in 'splicings', 'genes', and 'transcripts' into
@@ -943,8 +951,7 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
                 transcripts$tx_start, transcripts$tx_end,
                 transcripts$tx_strand,
                 transcripts$tx_name)
-    transcripts <- transcripts[oo, , drop=FALSE]
-    rownames(transcripts) <- NULL
+    transcripts <- S4Vectors:::extract_data_frame_rows(transcripts, oo)
 
     keep_cols <- c("exon_rank", "exon_name", "exon_chrom", "exon_strand",
                    "exon_start", "exon_end", "cds_start", "cds_end")
@@ -953,8 +960,7 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
                 splicings$exon_start, splicings$exon_end,
                 splicings$exon_strand,
                 splicings$exon_name)
-    splicings <- splicings[oo, , drop=FALSE]
-    rownames(splicings) <- NULL
+    splicings <- S4Vectors:::extract_data_frame_rows(splicings, oo)
 
     list(transcripts=transcripts, splicings=splicings)
 }

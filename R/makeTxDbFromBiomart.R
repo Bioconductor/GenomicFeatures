@@ -297,7 +297,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     first_three_only <- total_nb_tx > 3L
     if (first_three_only)
         first_tx_names <- first_tx_names[1:3]
-    bm_result <- bm_result[tx_name %in% first_tx_names, , drop=FALSE]
+    bm_result <- S4Vectors:::extract_data_frame_rows(bm_result,
+                                     tx_name %in% first_tx_names)
     bm_result0 <- bm_result[-match(tx_name_colname, names(bm_result))]
     f <- factor(bm_result[[tx_name_colname]], levels=first_tx_names)
     first_tx_tables <- split(bm_result0, f)
@@ -308,9 +309,11 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
                         tx_table <- first_tx_tables[[i]]
                         if ("rank" %in% colnames(tx_table)) {
                             oo <- order(tx_table[["rank"]])
-                            tx_table <- tx_table[oo, , drop=FALSE]
+                            tx_table <-
+                              S4Vectors:::extract_data_frame_rows(tx_table, oo)
+                        } else {
+                            rownames(tx_table) <- NULL
                         }
-                        row.names(tx_table) <- NULL
                         subtitle <- paste0("  ", i, ". Transcript ",
                                            names(first_tx_tables)[i],
                                            ":")
@@ -584,7 +587,8 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
     ## More checking of the CDS of the "valid" transcripts ("valid" here means
     ## with no UTR anomalies).
     .check_cds(ans1[valid_tx_idx], cds_width[valid_tx_idx],
-               bm_result[valid_tx_idx, , drop=FALSE], id_prefix="ensembl_")
+               S4Vectors:::extract_data_frame_rows(bm_result, valid_tx_idx),
+               id_prefix="ensembl_")
     ans1
 }
 
@@ -776,7 +780,7 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
                                        host, port)
     if (!is_full_dataset) {
         keep_idx <- which(chrominfo[ , "chrom"] %in% transcripts$tx_chrom)
-        chrominfo <- chrominfo[keep_idx, , drop=FALSE]
+        chrominfo <- S4Vectors:::extract_data_frame_rows(chrominfo, keep_idx)
     }
     splicings <- .makeBiomartSplicings(filters, mart,
                                        transcripts_tx_id,
@@ -792,10 +796,12 @@ makeTxDbFromBiomart <- function(biomart="ensembl",
                     length(invalid_tx), " transcripts) ... ",
                     appendLF=FALSE)
             keep_idx1 <- !(transcripts$tx_id %in% invalid_tx)
-            transcripts <- transcripts[keep_idx1, ]
+            transcripts <- S4Vectors:::extract_data_frame_rows(transcripts,
+                                                               keep_idx1)
             transcripts_tx_id <- transcripts_tx_id[keep_idx1]
             keep_idx2 <- !(splicings$tx_id %in% invalid_tx)
-            splicings <- splicings[keep_idx2, , drop=FALSE]
+            splicings <- S4Vectors:::extract_data_frame_rows(splicings,
+                                                             keep_idx2)
             message("OK")
         }
         splicings$utr_anomaly <- NULL

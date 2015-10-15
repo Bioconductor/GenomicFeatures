@@ -183,14 +183,14 @@ joinDataFrameWithName2Val <- function(x, join_colname, name2val, vals_colname)
     join_col <- as.character(x[[join_colname]])
     common_names <- intersect(join_col, names(name2val))
     name2val <- name2val[names(name2val) %in% common_names]
-    x <- x[join_col %in% common_names, ]
+    x <- S4Vectors:::extract_data_frame_rows(x, join_col %in% common_names)
     tmp <- split(as.vector(name2val), names(name2val))
     ## as.character() is required below just because 'x[[join_colname]]'
     ## could be a factor (subsetting by a factor is equivalent to subsetting
     ## by an integer vector but this is not what we want here).
     tmp <- tmp[as.character(x[[join_colname]])]
-    x <- x[rep.int(seq_len(nrow(x)), elementLengths(tmp)), ]
-    row.names(x) <- NULL
+    x <- S4Vectors:::extract_data_frame_rows(x,
+                             rep.int(seq_len(nrow(x)), elementLengths(tmp)))
     if (nrow(x) == 0L)
         vals <- name2val[FALSE]
     else if (is.factor(name2val))

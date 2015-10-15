@@ -27,7 +27,8 @@
     gene_id <- genes[ , "gene_id"]
     gene_id <- factor(gene_id, levels=unique(gene_id))
     join_idx <- match(genes[ , using], Rdf[ , using])
-    cbind(gene_id=gene_id, Rdf[join_idx, ])
+    Rdf <- S4Vectors:::extract_data_frame_rows(Rdf, join_idx)
+    cbind(gene_id=gene_id, Rdf)
 }
 
 ### 'columns' must be a named vector of db columns where the names are user
@@ -84,7 +85,7 @@
         ## table (which was not even involved in the JOIN in the first
         ## place), so it can contain NAs. Remove these rows.
         keep_me <- !is.na(genes[[2L]])
-        genes <- genes[keep_me, , drop=FALSE]
+        genes <- S4Vectors:::extract_data_frame_rows(genes, keep_me)
     }
 
     ## 2nd SELECT query.
@@ -189,7 +190,7 @@ setMethod("intronsByTranscript", "TxDb",
 {
     ans <- load_splicings(txdb)
     ids <- unique(ans$tx_id[!is.na(ans$cds_id)])
-    ans[ans$tx_id %in% ids, ]
+    S4Vectors:::extract_data_frame_rows(ans, ans$tx_id %in% ids)
 }
 
 ### 'tx_id': character or integer vector with runs of identical elements (one
@@ -257,7 +258,7 @@ setMethod("intronsByTranscript", "TxDb",
 {
     exons_with_cds <- which(!is.na(splicings$cds_id))
     idx <- .exons_with_5utr(splicings$tx_id, exons_with_cds)
-    splicings <- splicings[idx, ]
+    splicings <- S4Vectors:::extract_data_frame_rows(splicings, idx)
 
     ## Compute the UTR starts/ends.
     utr_start <- splicings$exon_start
@@ -279,7 +280,7 @@ setMethod("intronsByTranscript", "TxDb",
 {
     exons_with_cds <- which(!is.na(splicings$cds_id))
     idx <- .exons_with_3utr(splicings$tx_id, exons_with_cds)
-    splicings <- splicings[idx, ]
+    splicings <- S4Vectors:::extract_data_frame_rows(splicings, idx)
 
     ## Compute the UTR starts/ends.
     utr_start <- splicings$exon_start

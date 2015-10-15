@@ -129,8 +129,7 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
     coord_system <- .Ensembl_getTable(core_url, "coord_system", COLNAMES)
     left2right <- match(ans[["coord_system_id"]],
                         coord_system[["coord_system_id"]])
-    ans_right <- coord_system[left2right, , drop=FALSE]
-    rownames(ans_right) <- NULL
+    ans_right <- S4Vectors:::extract_data_frame_rows(coord_system, left2right)
     ans <- ans[-match("coord_system_id", colnames(ans))]
     cbind(ans, ans_right)
 }
@@ -201,7 +200,7 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
     ## Ordering: First by rank, then by name.
     names_as_int <- rankSeqlevels(ans$name)
     oo <- order(ans$coord_system_rank, names_as_int)
-    ans <- ans[oo, , drop=FALSE]
+    ans <- S4Vectors:::extract_data_frame_rows(ans, oo)
 
     ## 3rd filtering: There can be more than one row per sequence name, but
     ## the pair (name, coord_system_rank) should be unique. We disambiguate
@@ -213,7 +212,7 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
     ans <- ans[i3, j3, drop=FALSE]
 
     ## Final tidying.
-    row.names(ans) <- NULL
+    rownames(ans) <- NULL
     ans
 }
 

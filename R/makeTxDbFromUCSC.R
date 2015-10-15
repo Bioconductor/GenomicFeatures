@@ -674,7 +674,8 @@ supportedUCSCtables <- function()
 
 .makeUCSCGenes <- function(genes, ucsc_txtable)
 {
-    #genes <- genes[genes$tx_name %in% ucsc_txtable$name, ]
+    #genes <- S4Vectors:::extract_data_frame_rows(genes,
+    #                             genes$tx_name %in% ucsc_txtable$name)
     genes
 }
 
@@ -703,8 +704,7 @@ supportedUCSCtables <- function()
                                                    circ_seqs)
     )
     oo <- order(rankSeqlevels(chrominfo[ , "chrom"]))
-    chrominfo <- chrominfo[oo, , drop=FALSE]
-    rownames(chrominfo) <- NULL
+    chrominfo <- S4Vectors:::extract_data_frame_rows(chrominfo, oo)
     message("OK")
     chrominfo
 }
@@ -771,7 +771,8 @@ getChromInfoFromUCSC <- function(genome,
             was not set (i.e. was set to '.')", sum(strand_is_dot))
         warning(paste(strwrap(msg, exdent=2), collapse="\n"))
         keep_idx <- which(!strand_is_dot)
-        ucsc_txtable <- ucsc_txtable[keep_idx, , drop=FALSE]
+        ucsc_txtable <- S4Vectors:::extract_data_frame_rows(ucsc_txtable,
+                                                            keep_idx)
     }
 
     transcripts <- .extractTranscriptsFromUCSCTxTable(ucsc_txtable)
