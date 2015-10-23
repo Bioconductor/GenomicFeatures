@@ -3,9 +3,6 @@
 \alias{makeTxDbFromBiomart}
 \alias{getChromInfoFromBiomart}
 
-% defunct
-\alias{makeTranscriptDbFromBiomart}
-
 \title{
   Make a TxDb object from annotations available on a
   BioMart database

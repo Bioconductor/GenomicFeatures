@@ -4,9 +4,6 @@
 \alias{getChromInfoFromUCSC}
 \alias{makeTxDbFromUCSC}
 
-% defunct
-\alias{makeTranscriptDbFromUCSC}
-
 \title{
   Make a TxDb object from annotations available at the
   UCSC Genome Browser

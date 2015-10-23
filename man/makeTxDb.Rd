@@ -2,9 +2,6 @@
 
 \alias{makeTxDb}
 
-% defunct
-\alias{makeTranscriptDb}
-
 \title{
   Making a TxDb object from user supplied annotations
 }

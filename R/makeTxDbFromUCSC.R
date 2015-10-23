@@ -866,5 +866,3 @@ makeTxDbFromUCSC <- function(genome="hg19",
                              miRBaseBuild=miRBaseBuild)
 }
 
-makeTranscriptDbFromUCSC <- function(...) .Defunct("makeTxDbFromUCSC")
-

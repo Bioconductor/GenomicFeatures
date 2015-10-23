@@ -2,9 +2,6 @@
 
 \alias{makeTxDbFromGFF}
 
-% defunct
-\alias{makeTranscriptDbFromGFF}
-
 \title{
   Make a TxDb object from annotations available as a
   GFF3 or GTF file
@@ -23,12 +20,7 @@ makeTxDbFromGFF(file,
                 circ_seqs=DEFAULT_CIRC_SEQS,
                 chrominfo=NULL,
                 miRBaseBuild=NA,
-                dbxrefTag,
-                exonRankAttributeName=NA,
-                gffGeneIdAttributeName=NA,
-                useGenesAsTranscripts=FALSE,
-                gffTxName="mRNA",
-                species=NA)
+                dbxrefTag)
 }
 \arguments{
   \item{file}{
@@ -80,12 +72,6 @@ makeTxDbFromGFF(file,
     If not missing, the values in the \code{Dbxref} attribute with the
     specified tag (like \dQuote{GeneID}) are used for the feature names.
   }
-  \item{exonRankAttributeName}{this argument is defunct}
-  \item{gffGeneIdAttributeName}{this argument is defunct}
-  \item{useGenesAsTranscripts}{this argument is defunct}
-  \item{gffTxName}{this argument is defunct}
-  \item{species}{this argument was replaced with the \code{organism} argument
-    and is now defunct}
 }
 
 \details{

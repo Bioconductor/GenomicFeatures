@@ -121,13 +121,7 @@ export(
 
   ## coverageByTranscript.R:
   coverageByTranscript,
-  pcoverageByTranscript,
-
-  ## Defunct:
-  makeTranscriptDb,
-  makeTranscriptDbFromUCSC,
-  makeTranscriptDbFromBiomart,
-  makeTranscriptDbFromGFF
+  pcoverageByTranscript
 )
 
 exportMethods(

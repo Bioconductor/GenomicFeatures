@@ -129,26 +129,8 @@ makeTxDbFromGFF <- function(file,
                             circ_seqs=DEFAULT_CIRC_SEQS,
                             chrominfo=NULL,
                             miRBaseBuild=NA,
-                            dbxrefTag,
-                            exonRankAttributeName=NA,     # defunct
-                            gffGeneIdAttributeName=NA,    # defunct
-                            useGenesAsTranscripts=FALSE,  # defunct
-                            gffTxName="mRNA",             # defunct
-                            species=NA)                   # defunct
+                            dbxrefTag)
 {
-    ## Raise error for a bunch of args that are defunct.
-    if (!identical(exonRankAttributeName, NA))
-        .Defunct(msg="the 'exonRankAttributeName' argument is defunct")
-    if (!identical(gffGeneIdAttributeName, NA))
-        .Defunct(msg="the 'gffGeneIdAttributeName' argument is defunct")
-    if (!identical(useGenesAsTranscripts, FALSE))
-        .Defunct(msg="the 'useGenesAsTranscripts' argument is defunct")
-    if (!identical(gffTxName, "mRNA"))
-        .Defunct(msg="the 'gffTxName' argument is defunct")
-    if (!identical(species, NA))
-        .Defunct(msg=wmsg("The 'species' argument is defunct. ",
-                          "Please use 'organism' instead."))
-
     format <- match.arg(format)
     if (format == "auto") {
         format <- .detect_file_format(file)
@@ -187,6 +169,4 @@ makeTxDbFromGFF <- function(file,
     message("OK")
     txdb
 }
-
-makeTranscriptDbFromGFF <- function(...) .Defunct("makeTxDbFromGFF")
 

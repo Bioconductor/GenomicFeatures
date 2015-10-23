@@ -604,8 +604,6 @@ makeTxDb <- function(transcripts, splicings,
     TxDb(conn)
 }
 
-makeTranscriptDb <- function(...) .Defunct("makeTxDb")
-
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### makeToyTxDb().
