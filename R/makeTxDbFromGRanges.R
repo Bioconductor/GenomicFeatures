@@ -444,6 +444,32 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     exons
 }
 
+### For each transcript with no exons, infer a single exon that is the same as
+### the transcript itself. Other heuristics might have been used earlier to
+### give exons to these poor transcripts with no exons (like inferring the
+### exons from the CDS, to support the GeneDB case) and .add_missing_exons()
+### should only be used as the last and desperate solution to give them an
+### exon after the other heuristics have failed to give them one.
+.add_missing_exons <- function(exons, transcripts)
+{
+    is_noextx <- !(transcripts$tx_id %in% exons$tx_id)
+    missing_exons <- S4Vectors:::extract_data_frame_rows(transcripts, is_noextx)
+    if (nrow(missing_exons) == 0L)
+        return(exons)
+    missing_exons$tx_type <- NULL
+    TX2EXON_COLNAMES <- c(
+        tx_id="tx_id",
+        tx_name="exon_name",
+        tx_chrom="exon_chrom",
+        tx_strand="exon_strand",
+        tx_start="exon_start",
+        tx_end="exon_end"
+    )
+    colnames(missing_exons) <- TX2EXON_COLNAMES[colnames(missing_exons)]
+    missing_exons$exon_rank <- 1L
+    rbind(exons, missing_exons)
+}
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extract the 'transcripts' data frame
@@ -848,16 +874,15 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     if (length(noextx_IDX) != 0L) {
         ## Infer exons for transcripts with no exons (noextx).
 
-        ## For a noextx with no CDS (the miRBase case): infer a single exon
-        ## that is the same as the transcript itself.
-        ## TODO: IMPLEMENT THIS!
-
         ## For a noextx with CDS (the GeneDB case): infer 1 exon per CDS that
         ## is the same as the CDS itself.
         cds_with_noextx_parent_IDX <- .get_cds_with_noextx_parent_IDX(
                                               cds_IDX, Parent,
                                               noextx_IDX, ID)
         exon_IDX <- sort(c(exon_IDX, cds_with_noextx_parent_IDX))
+
+        ## For a noextx with no CDS (the miRBase case): we'll take care of
+        ## them later with .add_missing_exons().
     }
 
     ## Extract the 'exons', 'cds', 'stop_codons', 'transcripts',
@@ -899,11 +924,11 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
         exons <- S4Vectors:::extract_data_frame_rows(exons,
                                      !(exons$tx_id %in% drop_tx))
         cds <- S4Vectors:::extract_data_frame_rows(cds,
-                                   !(cds$tx_id %in% drop_tx))
+                                     !(cds$tx_id %in% drop_tx))
         stop_codons <- S4Vectors:::extract_data_frame_rows(stop_codons,
-                                           !(stop_codons$tx_id %in% drop_tx))
+                                     !(stop_codons$tx_id %in% drop_tx))
         transcripts <- S4Vectors:::extract_data_frame_rows(transcripts,
-                                           !(transcripts$tx_id %in% drop_tx))
+                                     !(transcripts$tx_id %in% drop_tx))
         genes <- S4Vectors:::extract_data_frame_rows(genes,
                                      !(genes$tx_id %in% drop_tx))
         if (length(drop1_tx) != 0L) {
@@ -919,19 +944,24 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
             warning(wmsg(
                 "The following transcripts were dropped because no genomic ",
                 "ranges could be found for them and their ranges could not ",
-                "be inferred from their exons either because they have exons ",
-                "on more than one chromosome: ", in1string))
+                "be inferred from their exons either (because they have them ",
+                "on more than one chromosome): ", in1string))
         }
         if (length(drop3_tx) != 0L) {
             in1string <- paste0(sort(drop3_tx), collapse=", ")
             warning(wmsg(
                 "The following transcripts were dropped because no genomic ",
                 "ranges could be found for them and their ranges could not ",
-                "be inferred from their exons either because they have exons ",
-                "on both strands: ", in1string))
+                "be inferred from their exons either (because they have them ",
+                "on both strands): ", in1string))
         }
     }
 
+    ## We might still have transcripts with no exons (noextx). Take care of
+    ## them now.
+    exons <- .add_missing_exons(exons, transcripts)
+
+    ## .make_splicings() can also reject some transcripts.
     .flush_rejected_tx_envir()
     splicings <- .make_splicings(exons, cds, stop_codons)
     drop_tx <- .get_rejected_transcripts()
@@ -945,7 +975,8 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     }
 
     ## Turn the "tx_id" column in 'splicings', 'genes', and 'transcripts' into
-    ## an integer vector. TODO: Maybe makeTxDb() could take care of this.
+    ## an integer vector.
+    ## TODO: Maybe makeTxDb() could take care of that.
     splicings_tx_id <- match(splicings$tx_id, transcripts$tx_id)
     if (any(is.na(splicings_tx_id)))
         stop(wmsg("some exons are linked to transcripts ",
