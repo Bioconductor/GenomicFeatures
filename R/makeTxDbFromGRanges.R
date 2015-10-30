@@ -272,6 +272,21 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     sort(c(which(type %in% .TX_TYPES), gene_as_tx_IDX))
 }
 
+### noextx :== transcript with no exons
+.get_noextx_IDX <- function(tx_IDX, ID, exon_IDX, Parent)
+{
+    tx_IDX[!(ID[tx_IDX] %in% unlist(Parent[exon_IDX], use.names=FALSE))]
+}
+
+### CDS in transcripts with no exons will also be considered exons (i.e. added
+### to the set of exons).
+.get_cds_with_noextx_parent_IDX <- function(cds_IDX, Parent, noextx_IDX, ID)
+{
+    ## as.logical() will fail if a CDS has at least 2 parents and 1 is a
+    ## transcript with no exons and the other is not.
+    cds_IDX[as.logical(unique(Parent[cds_IDX] %in% ID[noextx_IDX]))]
+}
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Management of rejected transcripts
@@ -828,6 +843,22 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     gene_as_tx_IDX <- .get_gene_as_tx_IDX(gene_IDX, ID,
                                           exon_with_gene_parent_IDX, Parent)
     tx_IDX <- .get_tx_IDX(type, gene_as_tx_IDX)
+
+    noextx_IDX <- .get_noextx_IDX(tx_IDX, ID, exon_IDX, Parent)
+    if (length(noextx_IDX) != 0L) {
+        ## Infer exons for transcripts with no exons (noextx).
+
+        ## For a noextx with no CDS (the miRBase case): infer a single exon
+        ## that is the same as the transcript itself.
+        ## TODO: IMPLEMENT THIS!
+
+        ## For a noextx with CDS (the GeneDB case): infer 1 exon per CDS that
+        ## is the same as the CDS itself.
+        cds_with_noextx_parent_IDX <- .get_cds_with_noextx_parent_IDX(
+                                              cds_IDX, Parent,
+                                              noextx_IDX, ID)
+        exon_IDX <- sort(c(exon_IDX, cds_with_noextx_parent_IDX))
+    }
 
     ## Extract the 'exons', 'cds', 'stop_codons', 'transcripts',
     ## and 'genes' data frames.
