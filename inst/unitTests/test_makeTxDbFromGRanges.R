@@ -19,7 +19,7 @@ test_makeTxDbFromGRanges_empty <- function()
     checkIdentical(as.list(txdb1), as.list(txdb2))
 }
 
-test_makeTxDbFromGRanges_no_splicings <- function()
+test_makeTxDbFromGRanges_no_exons_no_cds <- function()
 {
     ## 2 transcripts linked to a gene + 2 orphan transcripts
     gene_ID    <- "gene1"
@@ -46,6 +46,16 @@ test_makeTxDbFromGRanges_no_splicings <- function()
         tx_start=c(5, 101, 151, 201),
         tx_end=c(35, 120, 160, 250)
     )
+    target_splicings <- data.frame(
+        tx_id=target_transcripts$tx_id,
+        exon_rank=1,
+        exon_id=1:4,
+        exon_name=target_transcripts$tx_name,
+        exon_chrom=target_transcripts$tx_chrom,
+        exon_strand=target_transcripts$tx_strand,
+        exon_start=target_transcripts$tx_start,
+        exon_end=target_transcripts$tx_end
+    )
     target_genes <- data.frame(
         tx_id=2:3,
         gene_id="gene1"
@@ -56,6 +66,7 @@ test_makeTxDbFromGRanges_no_splicings <- function()
         is_circular=NA
     )
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
+                                         splicings=target_splicings,
                                          genes=target_genes,
                                          chrominfo=target_chrominfo)
 
@@ -72,6 +83,7 @@ test_makeTxDbFromGRanges_no_splicings <- function()
     gr4 <- gr[mcols(gr)$type != "gene"]  # remove the gene
 
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
+                                         splicings=target_splicings,
                                          chrominfo=target_chrominfo)
 
     current_txdb <- makeTxDbFromGRanges(gr4)
@@ -82,8 +94,12 @@ test_makeTxDbFromGRanges_no_splicings <- function()
 
     target_transcripts2 <- target_transcripts[c(1,4), ]
     target_transcripts2$tx_id <- 1:2
+    target_splicings2 <- target_splicings[c(1,4), ]
+    target_splicings2$tx_id <- 1:2
+    target_splicings2$exon_id <- 1:2
 
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts2,
+                                         splicings=target_splicings2,
                                          chrominfo=target_chrominfo)
 
     current_txdb <- makeTxDbFromGRanges(gr2)
@@ -133,13 +149,14 @@ test_makeTxDbFromGRanges_with_exons_and_cds <- function()
     )
     exon_oo <- c(4:6, 1:3)
     target_splicings <- data.frame(
-        tx_id=rep.int(1:3, 3:1),
-        exon_rank=c(1:3, 1:2, 1),
-        exon_id=c(1:5, 5),
+        tx_id=c(rep(1:3, 3:1), 4),
+        exon_rank=c(1:3, 1:2, 1, 1),
+        exon_id=c(1:5, 5:6),
+        exon_name=c(rep(NA, 6), "tx2"),
         exon_chrom="chr1",
         exon_strand="+",
-        exon_start=exon_start[exon_oo],
-        exon_end=exon_end[exon_oo]
+        exon_start=c(exon_start[exon_oo], 201),
+        exon_end=c(exon_end[exon_oo], 250)
     )
     target_chrominfo <- data.frame(
         chrom="chr1",
@@ -158,8 +175,8 @@ test_makeTxDbFromGRanges_with_exons_and_cds <- function()
     mcols(exon_gr)$ID <- exon_ID
     gr <- c(tx_gr, exon_gr)
 
-    target_splicings$exon_id <- 1:6
-    target_splicings$exon_name <- exon_ID[exon_oo]
+    target_splicings$exon_id <- 1:7
+    target_splicings$exon_name <- c(exon_ID[exon_oo], "tx2")
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
                                          splicings=target_splicings,
                                          chrominfo=target_chrominfo)
@@ -179,9 +196,9 @@ test_makeTxDbFromGRanges_with_exons_and_cds <- function()
     cds_oo <- c(NA, 4:5, 1:3)
     target_splicings <- cbind(
         target_splicings,
-        cds_id=c(NA, 1:5),
-        cds_start=cds_start[cds_oo],
-        cds_end=cds_end[cds_oo]
+        cds_id=c(NA, 1:5, NA),
+        cds_start=c(cds_start[cds_oo], NA),
+        cds_end=c(cds_end[cds_oo], NA)
     )
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
                                          splicings=target_splicings,
@@ -207,14 +224,14 @@ test_makeTxDbFromGRanges_with_exons_and_cds <- function()
     )
     exon_oo <- 1:3
     target_splicings <- data.frame(
-        tx_id=c(1, 1, 2),
-        exon_rank=c(1, 2, 1),
-        exon_id=1:3,
-        exon_name=exon_ID[exon_oo],
+        tx_id=c(1, 1, 2, 3),
+        exon_rank=c(1, 2, 1, 1),
+        exon_id=1:4,
+        exon_name=c(exon_ID[exon_oo], "tx2"),
         exon_chrom="chr1",
         exon_strand="+",
-        exon_start=exon_start[exon_oo],
-        exon_end=exon_end[exon_oo]
+        exon_start=c(exon_start[exon_oo], 201),
+        exon_end=c(exon_end[exon_oo], 250)
     )
 
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
@@ -252,6 +269,16 @@ test_makeTxDbFromGRanges_with_multiple_part_transcripts <- function()
         tx_start=c(5, 101, 145),
         tx_end=c(35, 160, 160)
     )
+    target_splicings <- data.frame(
+        tx_id=target_transcripts$tx_id,
+        exon_rank=1,
+        exon_id=1:3,
+        exon_name=target_transcripts$tx_name,
+        exon_chrom=target_transcripts$tx_chrom,
+        exon_strand=target_transcripts$tx_strand,
+        exon_start=target_transcripts$tx_start,
+        exon_end=target_transcripts$tx_end
+    )
     target_genes <- data.frame(
         tx_id=1:3,
         gene_id=rep.int(c("gene2", "gene1"), c(1, 2))
@@ -262,6 +289,7 @@ test_makeTxDbFromGRanges_with_multiple_part_transcripts <- function()
         is_circular=NA
     )
     target_txdb_dump <- format_txdb_dump(transcripts=target_transcripts,
+                                         splicings=target_splicings,
                                          genes=target_genes,
                                          chrominfo=target_chrominfo)
 
