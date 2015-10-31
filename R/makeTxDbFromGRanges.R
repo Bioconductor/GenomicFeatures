@@ -51,7 +51,8 @@ GTF_COLNAMES <- c("type", "gene_id", "transcript_id", "exon_id")
 
 .GENE_TYPES <- c("gene", "pseudogene")
 .TX_TYPES <- c("transcript", "pseudogenic_transcript", "primary_transcript",
-               "mRNA", "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA")
+               "mRNA", "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA",
+               "miRNA", "miRNA_primary_transcript")
 .EXON_TYPES <- c("exon", "pseudogenic_exon")
 .CDS_TYPES <- "CDS"
 .STOP_CODON_TYPES <- "stop_codon"
