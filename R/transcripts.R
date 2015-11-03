@@ -93,7 +93,11 @@
     df_list <- .extract_features(txdb, proxy_table, db_mcolumns,
                                  vals, core_columns)
     DF <- .make_DataFrame_from_df_list(df_list)
-    ans <- makeGRangesFromDataFrame(DF, seqinfo=get_TxDb_seqinfo0(txdb))
+    ans <- makeGRangesFromDataFrame(DF, seqinfo=get_TxDb_seqinfo0(txdb),
+                                    seqnames.field=core_columns[["chrom"]],
+                                    start.field=core_columns[["start"]],
+                                    end.field=core_columns[["end"]],
+                                    strand.field=core_columns[["strand"]])
     mcols(ans) <- setNames(DF[db_mcolumns], mcolumns)
     keep_user_seqlevels_from_TxDb(ans, txdb)
 }
