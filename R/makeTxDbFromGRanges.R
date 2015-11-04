@@ -78,6 +78,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     factor(type, levels=levels_in_use)
 }
 
+### Return a character vector or NULL.
 .get_gene_id <- function(gr_mcols)
 {
     gene_id <- gr_mcols$gene_id
@@ -88,9 +89,16 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     gene_id
 }
 
-.get_transcript_id <- function(gr_mcols)
+.no_id <- function(id) {is.null(id) || all(is.na(id))}
+
+### Return a character vector, or integer vector (if inferred ids), or NULL.
+.get_transcript_id <- function(gr_mcols, gene_id, type)
 {
     transcript_id <- gr_mcols$transcript_id
+    ## We've seen silly GTF files that contain only lines of type transcript
+    ## but no transcript_id tag.
+    if (!.no_id(gene_id) && .no_id(transcript_id) && all(type %in% .TX_TYPES))
+        return(seq_along(type))  # inferred ids
     if (is.null(transcript_id))
         return(NULL)
     if (!is.character(transcript_id))
@@ -102,8 +110,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 ### don't contain only NAs) then we assume the GRanges object is in GTF format.
 ### Otherwise we assume it's in GFF3 format.
 .is_gtf_format <- function(gene_id, transcript_id)
-    !(is.null(gene_id) || is.null(transcript_id) ||
-      all(is.na(gene_id)) || all(is.na(transcript_id)))
+    !(.no_id(gene_id) || .no_id(transcript_id))
 
 .get_ID <- function(gr_mcols, type, gene_id, transcript_id, gtf.format=FALSE)
 {
@@ -168,7 +175,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     substr(ID, start=nchar(prefix)+1L, stop=nchar(ID))
 }
 
-.get_Name <- function(gr_mcols, type, ID)
+.get_Name <- function(gr_mcols, type, ID, transcript_id)
 {
     Name <- gr_mcols$Name
     if (is.null(Name))
@@ -180,6 +187,9 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     ## has a Name (i.e. Name is NA for all the features of that type), then we
     ## infer their Name from their ID.
     for (type_level in levels(type)) {
+        ## We make an exception for transcripts with inferred ids.
+        if ((type_level %in% .TX_TYPES) && is.integer(transcript_id))
+            next
         idx <- which(type == type_level)
         if (all(is.na(Name[idx])))
             Name[idx] <- .infer_Name_from_ID(ID[idx], type_level)
@@ -556,6 +566,13 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         warning(wmsg("The following transcripts have multiple parts that ",
                      "were merged: ", in1string))
     }
+    ## We've seen silly GTF files where each transcript spans its own contig
+    ## and has no strand. We set the strand to "+" for these transcripts.
+    if (all(transcripts$tx_strand == "*")
+     && anyDuplicated(transcripts$tx_chrom) == 0L
+     && all(transcripts$tx_start == 1L)) {
+        transcripts$tx_strand <- rep.int(strand("+"), nrow(transcripts))
+    }
     transcripts
 }
 
@@ -847,13 +864,13 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     ## Get the metadata columns of interest.
     type <- .get_type(gr_mcols)
     gene_id <- .get_gene_id(gr_mcols)
-    transcript_id <- .get_transcript_id(gr_mcols)
+    transcript_id <- .get_transcript_id(gr_mcols, gene_id, type)
     gtf.format <- .is_gtf_format(gene_id, transcript_id)
     ID <- .get_ID(gr_mcols, type, gene_id, transcript_id,
                   gtf.format=gtf.format)
     Parent <- .get_Parent(gr_mcols, type, gene_id, transcript_id,
                           gtf.format=gtf.format)
-    Name <- .get_Name(gr_mcols, type, ID)
+    Name <- .get_Name(gr_mcols, type, ID, transcript_id)
 
     ## Get the gene, cds, stop_codon, exon, and transcript indices.
     gene_IDX <- .get_gene_IDX(type)
