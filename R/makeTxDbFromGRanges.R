@@ -566,8 +566,10 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         warning(wmsg("The following transcripts have multiple parts that ",
                      "were merged: ", in1string))
     }
-    ## We've seen silly GTF files where each transcript spans its own contig
-    ## and has no strand. We set the strand to "+" for these transcripts.
+    ## We've seen silly GFF/GTF files where each transcript in the file is
+    ## reported to be on its own contig and spans it (start=1) but no strand
+    ## is reported for the transcript. We set the strand to "+" for all these
+    ## transcripts.
     if (all(transcripts$tx_strand == "*")
      && anyDuplicated(transcripts$tx_chrom) == 0L
      && all(transcripts$tx_start == 1L)) {
