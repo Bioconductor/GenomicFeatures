@@ -49,7 +49,7 @@ GFF3_COLNAMES <- c("type", "ID", "Parent", "Name", "Dbxref", "geneID")
 ### Used in R/makeTxDbFromGFF.R
 GTF_COLNAMES <- c("type", "gene_id", "transcript_id", "exon_id")
 
-.GENE_TYPES <- c("gene", "pseudogene")
+.GENE_TYPES <- c("gene", "pseudogene", "transposable_element_gene")
 .TX_TYPES <- c("transcript", "pseudogenic_transcript", "primary_transcript",
                "mRNA", "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA",
                "miRNA", "miRNA_primary_transcript")
@@ -343,6 +343,15 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 ### Extract the 'exons', 'cds', and 'stop_codons' data frames
 ###
 
+.prepare_dropped_msg <- function(dropped, what)
+{
+    msg <- c("The following ", what, " were dropped")
+    if (nrow(dropped) > 6L)
+        msg <- c(msg, " (showing only the 6 first)")
+    c(msg, ":\n", paste(capture.output(print(head(dropped, n=6L))),
+                                       collapse="\n"))
+}
+
 .extract_rank_from_id <- function(id, parent_id)
 {
     if (length(id) == 0L)
@@ -420,6 +429,15 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         is_orphan <- !(tx_id %in% ID)
         norphan <- sum(is_orphan)
         if (norphan != 0L) {
+            dropped <- data.frame(seqid=exon_chrom[is_orphan],
+                                  start=exon_start[is_orphan],
+                                  end=exon_end[is_orphan],
+                                  strand=exon_strand[is_orphan],
+                                  ID=exon_id[is_orphan],
+                                  Parent=tx_id[is_orphan],
+                                  Name=exon_name[is_orphan],
+                                  stringsAsFactors=FALSE)
+            warning(.prepare_dropped_msg(dropped, paste("orphan", what)))
             keep_idx <- which(!is_orphan)
             tx_id <- tx_id[keep_idx]
             exon_id <- exon_id[keep_idx]
@@ -428,7 +446,6 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
             exon_strand <- exon_strand[keep_idx]
             exon_start <- exon_start[keep_idx]
             exon_end <- exon_end[keep_idx]
-            warning(wmsg(norphan, " orphan ", what, "s were dropped"))
         }
     }
 
