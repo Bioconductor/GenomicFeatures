@@ -4,10 +4,9 @@
 ###
 ### For people who want to tap BioMart.
 ### Typical use:
-###   txdb <- makeTxDbFromBiomart(biomart="ensembl",
-###                               dataset="hsapiens_gene_ensembl")
+###   txdb <- makeTxDbFromBiomart("hsapiens_gene_ensembl")
 ### Speed:
-###   - for biomart="ensembl" and dataset="hsapiens_gene_ensembl":
+###   - for biomart="ENSEMBL_MART_ENSEMBL" and dataset="hsapiens_gene_ensembl":
 ###       (1) download takes about 8 min.
 ###       (2) db creation takes about 60-65 sec.
 ###
@@ -18,9 +17,9 @@
 ###
 
 ### A thin wrapper to useMart() that checks the user-supplied arguments.
-.useMart2 <- function(biomart="ensembl",
+.useMart2 <- function(biomart="ENSEMBL_MART_ENSEMBL",
                       dataset="hsapiens_gene_ensembl",
-                      host="www.biomart.org",
+                      host="www.ensembl.org",
                       port=80)
 {
     ### Could be that the user got the 'biomart' and/or 'dataset' values
@@ -251,10 +250,10 @@
 }
 
 ## User-friendly wrapper to .makeBiomartChrominfo().
-getChromInfoFromBiomart <- function(biomart="ensembl",
+getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                                     dataset="hsapiens_gene_ensembl",
                                     id_prefix="ensembl_",
-                                    host="www.biomart.org",
+                                    host="www.ensembl.org",
                                     port=80)
 {
     mart <- .useMart2(biomart=biomart, dataset=dataset, host=host, port=port)
@@ -743,13 +742,13 @@ getChromInfoFromBiomart <- function(biomart="ensembl",
 ### cds(), and genes() extractors which we should also rename 'filter'.
 ###
 
-makeTxDbFromBiomart <- function(biomart="ensembl",
+makeTxDbFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                                 dataset="hsapiens_gene_ensembl",
                                 transcript_ids=NULL,
                                 circ_seqs=DEFAULT_CIRC_SEQS,
                                 filters="",
                                 id_prefix="ensembl_",
-                                host="www.biomart.org",
+                                host="www.ensembl.org",
                                 port=80,
                                 taxonomyId=NA,
                                 miRBaseBuild=NA)

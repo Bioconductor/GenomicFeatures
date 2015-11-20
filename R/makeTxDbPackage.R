@@ -65,7 +65,7 @@
     pkgName <- paste(prefix,species,type,genome,table, sep=".")
   }else if(type=="BioMart"){
     db <- .getMetaDataValue(txdb,'BioMart database')
-    if(db == "ensembl"){
+    if(tolower(substr(db, 1, 7)) == "ensembl"){
     dbVer <- .getMetaDataValue(txdb,'BioMart dataset version')      
       pkgName <- paste(prefix,species,type,db,dbVer, sep=".")      
     }else{
@@ -307,13 +307,13 @@ makeTxDbPackageFromBiomart <- function(
   author,
   destDir=".",
   license="Artistic-2.0",
-  biomart="ensembl",
+  biomart="ENSEMBL_MART_ENSEMBL",
   dataset="hsapiens_gene_ensembl",
   transcript_ids=NULL,   ## optional
   circ_seqs=DEFAULT_CIRC_SEQS, 
   filters="",
   id_prefix="ensembl_",
-  host="www.biomart.org",
+  host="www.ensembl.org",
   port=80,
   taxonomyId=NA,
   miRBaseBuild=NA){

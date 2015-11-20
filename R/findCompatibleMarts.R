@@ -106,11 +106,12 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
 ### available for the corresponding dataset.
 ### Typical use:
 ###   ensembl_attribs_list <- GenomicFeatures:::.get_attribs_for_each_dataset(
-###                                                     "ensembl")
+###                               "ENSEMBL_MART_ENSEMBL")
 ###   sapply(ensembl_attribs_list, nrow)
 ###   table(sapply(ensembl_attribs_list, nrow))
 ### or to walk only on the first 5 datasets:
-###   GenomicFeatures:::.get_attribs_for_each_dataset("ensembl", length.out=5)
+###   GenomicFeatures:::.get_attribs_for_each_dataset("ENSEMBL_MART_ENSEMBL",
+###                               length.out=5)
 .get_attribs_for_each_dataset <- function(mart, length.out=NULL)
 {
     if (!is(mart, "Mart"))
@@ -162,7 +163,7 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
 ### Typical use:
 ###   ensembl_attrib_groups <-
 ###     GenomicFeatures:::.find_available_attrib_groups_for_each_dataset(
-###                           "ensembl")
+###                           "ENSEMBL_MART_ENSEMBL")
 .find_available_attrib_groups_for_each_dataset <-
     function(available_attribs, length.out=NULL)
 {

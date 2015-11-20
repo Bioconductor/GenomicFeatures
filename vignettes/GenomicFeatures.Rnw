@@ -448,9 +448,7 @@ the \Rfunction{makeTxDbFromBiomart} function (not all BioMart
 data sets are currently supported):
 %%
 <<makeTxDbFromBiomart, eval=FALSE>>=
-mmusculusEnsembl <-
-   makeTxDbFromBiomart(biomart = "ensembl",
-                              dataset = "mmusculus_gene_ensembl")
+mmusculusEnsembl <- makeTxDbFromBiomart(dataset="mmusculus_gene_ensembl")
 @
 
 As with the \Rfunction{makeTxDbFromUCSC} function, the

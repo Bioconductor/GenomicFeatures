@@ -52,7 +52,9 @@ GTF_COLNAMES <- c("type", "gene_id", "transcript_id", "exon_id")
 .GENE_TYPES <- c("gene", "pseudogene", "transposable_element_gene")
 .TX_TYPES <- c("transcript", "pseudogenic_transcript", "primary_transcript",
                "mRNA", "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA",
-               "miRNA", "miRNA_primary_transcript")
+               "miRNA", "miRNA_primary_transcript",
+               "RNase_P_RNA", "RNase_MRP_RNA", "SRP_RNA", "misc_RNA",
+               "antisense_RNA", "antisense")
 .EXON_TYPES <- c("exon", "pseudogenic_exon")
 .CDS_TYPES <- "CDS"
 .STOP_CODON_TYPES <- "stop_codon"
@@ -1092,9 +1094,8 @@ test_makeTxDbFromGRanges_on_Ensembl_organism_gtf <- function(organism)
     dataset <- paste0(substr(dataset[[1L]], 1L, 1L),
                       dataset[[2L]],
                       "_gene_ensembl")
-    cat("txdb2 <- makeTxDbFromBiomart(\"ensembl\", ",
-                                     "\"", dataset, "\") ... ", sep="")
-    txdb2 <- try(makeTxDbFromBiomart("ensembl", dataset))
+    cat("txdb2 <- makeTxDbFromBiomart(\"", dataset, "\") ... ", sep="")
+    txdb2 <- try(makeTxDbFromBiomart(dataset))
     if (is(txdb2, "try-error")) {
         cat("ABORT\n")
         return(NA)
