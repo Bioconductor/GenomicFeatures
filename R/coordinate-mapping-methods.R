@@ -177,7 +177,7 @@ setMethod("mapToTranscripts", c("ANY", "TxDb"),
 setMethod("pmapToTranscripts", c("GenomicRanges", "GenomicRanges"), 
     function(x, transcripts, ignore.strand=FALSE) 
     {
-        grl <- splitAsList(transcripts, seq_along(transcripts))
+        grl <- as(transcripts, "List")
         pmapToTranscripts(x, grl, ignore.strand)
     }
 )
