@@ -58,9 +58,16 @@ test_mapIdsToRanges_duplicate_ranges <- function()
 
     #names match input
     checkEquals(names(res), keys[[1]])
-
     # but values are the same
     checkTrue(all.equal(res[[1]], res[[2]], check.attributes = FALSE))
+}
+
+test_mapIdsToRanges_duplicate_ids <- function() {
+    keys <- list(tx_name = c("ENST00000371582", "ENST00000494752",
+                             "ENST00000371582"))
+    res <- mapIdsToRanges(txdb, keys = keys, type = "gene")
+    checkEquals(names(res), keys[[1]])
+    checkEquals(res[[1]], res[[3]])
 }
 
 test_mapRangesToIds_empty <- function()
