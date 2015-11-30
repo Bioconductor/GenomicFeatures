@@ -151,5 +151,6 @@ exportMethods(
   asBED, asGFF,
   distance,
   mapToTranscripts, pmapToTranscripts,
-  mapFromTranscripts, pmapFromTranscripts
+  mapFromTranscripts, pmapFromTranscripts,
+  mapIdsToRanges, mapRangesToIds
 )

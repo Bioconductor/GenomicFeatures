@@ -43,6 +43,7 @@ Collate: utils.R
         makeTxDbFromGRanges.R
         makeTxDbFromGFF.R
         makeFeatureDbFromUCSC.R
+        mapIdsToRanges.R
         id2name.R
         transcripts.R
         transcriptsBy.R
