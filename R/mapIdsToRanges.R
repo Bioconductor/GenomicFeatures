@@ -23,12 +23,14 @@ setMethod("mapIdsToRanges", "TxDb",
                   gene = genes)
 
     res <- fun(x, keys, columns = unique(c(names(keys), columns)))
-    matches <- match(mcols(res)[[names(keys)]], keys[[1]])
+    dups <- duplicated(keys[[1]])
+    nms <- keys[[1]][!dups]
+    matches <- match(mcols(res)[[names(keys)]], nms)
     ranges <- rep(res, lengths(matches))
 
     f <- factor(keys[[1]][unlist(matches, use.names = FALSE)],
                 levels = keys[[1]])
-    splitAsList(ranges, f, drop = FALSE)
+    splitAsList(ranges, f, drop = FALSE)[keys[[1]]]
 })
 
 setGeneric("mapRangesToIds", signature="x",
