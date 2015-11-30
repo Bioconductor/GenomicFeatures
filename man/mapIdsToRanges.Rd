@@ -4,24 +4,23 @@
 \alias{mapIdsToRanges,TxDb-method}
 \title{Map IDs to Genomic Ranges}
 \usage{
-mapIdsToRanges(db, ...)
+mapIdsToRanges(x, ...)
 
-\S4method{mapIdsToRanges}{TxDb}(db, vals, type = c("cds", "exon", "tx",
-  "gene"), columns = NULL, ...)
+\S4method{mapIdsToRanges}{TxDb}(x, keys, type = c("cds", "exon", "tx",
+  "gene"), columns = NULL)
 }
 \arguments{
-\item{db}{Database to use for mapping}
+\item{x}{Database to use for mapping}
 
-\item{...}{Additional arguments passed to methods}
-
-\item{vals}{Values to lookup, passed to \code{\link{transcripts}} et. al.}
+\item{keys}{Values to lookup, passed to \code{\link{transcripts}} et. al.}
 
 \item{type}{Types of feature to return}
 
 \item{columns}{Additional metadata columns to include in the output}
+
 }
 \value{
-\code{\link[GenomicRanges]{GRangesList}} corresponding to the vals
+\code{\link[GenomicRanges]{GRangesList}} corresponding to the keys
 }
 \description{
 Map IDs to Genomic Ranges
@@ -31,9 +30,10 @@ Map IDs to Genomic Ranges
 \item \code{TxDb}: TxDb method
 }}
 \examples{
-txdb <- makeTxDbFromGRanges(
-    readRDS(system.file(package = "GenomicFeatures", "extdata", "sample_ranges.rds")))
+fl <- system.file(package = "GenomicFeatures", "extdata", "sample_ranges.rds")
+txdb <- makeTxDbFromGRanges(readRDS(fl))
 
-vals <- list(tx_name = c("ENST00000371582", "ENST00000371588", "ENST00000494752", "ENST00000614008", "ENST00000496771"))
-mapIdsToRanges(txdb, vals = vals, type = "tx")
+keys <- list(tx_name = c("ENST00000371582", "ENST00000371588",
+    "ENST00000494752", "ENST00000614008", "ENST00000496771"))
+mapIdsToRanges(txdb, keys = keys, type = "tx")
 }

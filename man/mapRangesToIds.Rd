@@ -4,21 +4,22 @@
 \alias{mapRangesToIds,TxDb-method}
 \title{Map Genomic Ranges to IDs}
 \usage{
-mapRangesToIds(db, ...)
+mapRangesToIds(x, ...)
 
-\S4method{mapRangesToIds}{TxDb}(db, ranges, type = c("cds", "exon", "tx",
+\S4method{mapRangesToIds}{TxDb}(x, ranges, type = c("cds", "exon", "tx",
   "gene"), columns = NULL, ...)
 }
 \arguments{
-\item{db}{Database to use for mapping}
-
-\item{...}{Additional arguments passed to methods}
+\item{x}{Database to use for mapping}
 
 \item{ranges}{range object used to subset}
 
 \item{type}{of feature to return}
 
 \item{columns}{additional metadata columns to include in the output.}
+
+\item{...}{Additional arguments passed to
+  \code{\link[GenomicRanges:findOverlaps-methods]{findOverlaps}}}
 }
 \value{
 \code{\link[S4Vectors]{DataFrame}} of mcols from the database.
@@ -31,10 +32,11 @@ Map Genomic Ranges to IDs
 \item \code{TxDb}: TxDb method
 }}
 \examples{
-txdb <- makeTxDbFromGRanges(
-    readRDS(system.file(package = "GenomicFeatures", "extdata", "sample_ranges.rds")))
+fl <- system.file(package = "GenomicFeatures", "extdata", "sample_ranges.rds")
+txdb <- makeTxDbFromGRanges(readRDS(fl))
 
-vals <- list(tx_name = c("ENST00000371582", "ENST00000371588", "ENST00000494752", "ENST00000614008", "ENST00000496771"))
+vals <- list(tx_name = c("ENST00000371582", "ENST00000371588",
+    "ENST00000494752", "ENST00000614008", "ENST00000496771"))
 res <- mapIdsToRanges(txdb, vals = vals, type = "tx")
 mapRangesToIds(txdb, res, "tx")
 }
