@@ -188,7 +188,7 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
         if (!length(x))
             return(GRanges())
         if (is.null(names(transcripts)))
-            stop ("'transcripts' must have names")
+            names(transcripts) <- as.character(seq_along(transcripts))
         if (ignore.strand) {
             strand(transcripts) <- "*"
         } else if (!all(elementLengths(runLength(strand(transcripts))) == 1)) {
