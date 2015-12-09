@@ -182,6 +182,15 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GenomicRanges"),
     }
 )
 
+setMethod("pmapToTranscripts", c("GRangesList", "GRangesList"),
+          function(x, transcripts, ignore.strand=FALSE) 
+          {
+              gr <- unlist(x, use.names=FALSE)
+              ans <- pmapToTranscripts(gr, transcripts[togroup(x)],
+                                       ignore.strand)
+              reduce(relist(ans, x))
+          })
+
 setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"), 
     function(x, transcripts, ignore.strand=FALSE) 
     {
