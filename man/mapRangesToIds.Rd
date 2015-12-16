@@ -35,7 +35,7 @@ Map Genomic Ranges to IDs
 fl <- system.file(package = "GenomicFeatures", "extdata", "sample_ranges.rds")
 txdb <- makeTxDbFromGRanges(readRDS(fl))
 
-vals <- list(tx_name = c("ENST00000371582", "ENST00000371588",
+keys <- list(tx_name = c("ENST00000371582", "ENST00000371588",
     "ENST00000494752", "ENST00000614008", "ENST00000496771"))
 res <- mapIdsToRanges(txdb, keys = keys, type = "tx")
 mapRangesToIds(txdb, res, "tx")
