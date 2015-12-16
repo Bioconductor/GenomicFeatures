@@ -18,6 +18,7 @@ mapIdsToRanges(x, ...)
 
 \item{columns}{Additional metadata columns to include in the output}
 
+\item{...}{Additional arguments passed to methods}
 }
 \value{
 \code{\link[GenomicRanges]{GRangesList}} corresponding to the keys
