@@ -14,8 +14,6 @@
   available at the UCSC Genome Browser.
 }
 \usage{
-supportedUCSCtables()
-
 makeTxDbFromUCSC(
         genome="hg19",
         tablename="knownGene",
@@ -25,6 +23,8 @@ makeTxDbFromUCSC(
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
         taxonomyId=NA,
         miRBaseBuild=NA)
+
+supportedUCSCtables(genome="hg19")
 
 getChromInfoFromUCSC(
         genome,
@@ -37,7 +37,7 @@ getChromInfoFromUCSC(
   \item{tablename}{name of the UCSC table containing the transcript
     annotations to retrieve. Use the \code{supportedUCSCtables} utility
     function to get the list of supported tables. Note that not all
-    tables are available for all genomes.}
+    tables are available for all genome builds.}
   \item{transcript_ids}{optionally, only retrieve transcript
     annotation data for the specified set of transcript ids.
     If this is used, then the meta information displayed for the

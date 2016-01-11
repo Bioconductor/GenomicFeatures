@@ -154,16 +154,24 @@ UCSCGenomeToOrganism <- function(genome){
   "wgEncodeGencodePolyaV3",           "Gencode Genes",     "Gencode PolyA",
 
   ## Tables/tracks specific to hg19.
+  "wgEncodeGencodeBasicV19",          "GENCODE Genes V19", NA,
+  "wgEncodeGencodeCompV19",           "GENCODE Genes V19", NA,
+  "wgEncodeGencodePseudoGeneV19",     "GENCODE Genes V19", NA,
+  "wgEncodeGencode2wayConsPseudoV19", "GENCODE Genes V19", NA,
+  "wgEncodeGencodePolyaV19",          "GENCODE Genes V19", NA,
+
   "wgEncodeGencodeBasicV17",          "GENCODE Genes V17", NA,
   "wgEncodeGencodeCompV17",           "GENCODE Genes V17", NA,
   "wgEncodeGencodePseudoGeneV17",     "GENCODE Genes V17", NA,
   "wgEncodeGencode2wayConsPseudoV17", "GENCODE Genes V17", NA,
   "wgEncodeGencodePolyaV17",          "GENCODE Genes V17", NA,
+
   "wgEncodeGencodeBasicV14",          "GENCODE Genes V14", NA,
   "wgEncodeGencodeCompV14",           "GENCODE Genes V14", NA,
   "wgEncodeGencodePseudoGeneV14",     "GENCODE Genes V14", NA,
   "wgEncodeGencode2wayConsPseudoV14", "GENCODE Genes V14", NA,
   "wgEncodeGencodePolyaV14",          "GENCODE Genes V14", NA,
+
   "wgEncodeGencodeBasicV7",           "GENCODE Genes V7",  NA,
   "wgEncodeGencodeCompV7",            "GENCODE Genes V7",  NA,
   "wgEncodeGencodePseudoGeneV7" ,     "GENCODE Genes V7",  NA,
@@ -179,25 +187,28 @@ UCSCGenomeToOrganism <- function(genome){
   "sgdGene",                          "SGD Genes",         NA
 )
 
-supportedUCSCtables <- function()
+supportedUCSCtables <- function(genome="hg19")
 {
+    if (!isSingleString(genome))
+        stop("'genome' must be a single string")
     mat <- matrix(.SUPPORTED_UCSC_TABLES, ncol=3, byrow=TRUE)
     colnames(mat) <- c("tablename", "track", "subtrack")
-    data.frame(track=mat[ , "track"], subtrack=mat[ , "subtrack"],
-               row.names=mat[ , "tablename"],
-               stringsAsFactors=FALSE)
+    ans <- data.frame(track=mat[ , "track"], subtrack=mat[ , "subtrack"],
+                      row.names=mat[ , "tablename"],
+                      stringsAsFactors=FALSE)
+    if (genome %in% c("hg17", "hg16", "mm8", "mm7", "rn3")) {
+        ans$track[rownames(ans) == "knownGene"] <- "Known Genes"
+    } else if (genome %in% "hg38") {
+        ans$track[rownames(ans) == "knownGene"] <- "GENCODE v22"
+    }
+    ans
 }
 
 .tablename2track <- function(tablename, genome)
 {
     if (!isSingleString(tablename))
         stop("'tablename' must be a single string")
-    if (!isSingleString(genome))
-        stop("'genome' must be a single string")
-    if (tablename == "knownGene"
-     && genome %in% c("hg17", "hg16", "mm8", "mm7", "rn3"))
-        return("Known Genes")
-    track <- supportedUCSCtables()[tablename, "track"]
+    track <- supportedUCSCtables(genome)[tablename, "track"]
     if (is.na(track))
         stop("UCSC table \"", tablename, "\" is not supported")
     track
@@ -724,7 +735,8 @@ getChromInfoFromUCSC <- function(genome,
 ### Prepare the 'metadata' data frame.
 ###
 
-.prepareUCSCMetadata <- function(genome, tablename, gene_id_type, full_dataset,
+.prepareUCSCMetadata <- function(genome, tablename, track, gene_id_type,
+                                 full_dataset,
                                  taxonomyId=NA, miRBaseBuild=NA)
 {
     message("Prepare the 'metadata' data frame ... ",
@@ -738,12 +750,16 @@ getChromInfoFromUCSC <- function(genome,
     }
         
     metadata <- data.frame(
-        name=c("Data source", "Genome", "Organism", "Taxonomy ID", "UCSC Table",
-               "Resource URL", "Type of Gene ID", "Full dataset",
+        name=c("Data source", "Genome", "Organism", "Taxonomy ID",
+               "UCSC Table", "UCSC Track",
+               "Resource URL", "Type of Gene ID",
+               "Full dataset",
                "miRBase build ID"),
         value=c("UCSC", genome, UCSCGenomeToOrganism(genome), taxonomyId,
-                tablename, "http://genome.ucsc.edu/", gene_id_type,
-                ifelse(full_dataset, "yes", "no"), miRBaseBuild)
+                tablename, track,
+                "http://genome.ucsc.edu/", gene_id_type,
+                ifelse(full_dataset, "yes", "no"),
+                miRBaseBuild)
     )
     message("OK")
     metadata
@@ -755,7 +771,7 @@ getChromInfoFromUCSC <- function(genome,
 ###
 
 .makeTxDbFromUCSCTxTable <- function(ucsc_txtable, genes,
-        genome, tablename, gene_id_type,
+        genome, tablename, track, gene_id_type,
         full_dataset,
         circ_seqs=DEFAULT_CIRC_SEQS,
         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
@@ -780,8 +796,9 @@ getChromInfoFromUCSC <- function(genome,
                                                   transcripts$tx_id)
     genes <- .makeUCSCGenes(genes, ucsc_txtable)
     chrominfo <- .makeUCSCChrominfo(genome, circ_seqs, goldenPath_url)
-    metadata <- .prepareUCSCMetadata(genome, tablename, gene_id_type,
-                                     full_dataset, taxonomyId,  miRBaseBuild)
+    metadata <- .prepareUCSCMetadata(genome, tablename, track, gene_id_type,
+                                     full_dataset,
+                                     taxonomyId,  miRBaseBuild)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTxDb(transcripts, splicings, genes=genes,
@@ -857,7 +874,7 @@ makeTxDbFromUCSC <- function(genome="hg19",
         stop("GenomicFeatures internal error: invalid 'mapdef'")
     }
     .makeTxDbFromUCSCTxTable(ucsc_txtable, txname2geneid$genes,
-                             genome, tablename,
+                             genome, tablename, track,
                              txname2geneid$gene_id_type,
                              full_dataset=is.null(transcript_ids),
                              circ_seqs=circ_seqs,

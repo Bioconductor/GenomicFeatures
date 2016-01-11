@@ -83,7 +83,7 @@ test_makeTxDbFromUCSCTxTable <- function()
                         gene_id=hg19_knownToLocusLink_sample$gene_id)
     txdb1 <- GenomicFeatures:::.makeTxDbFromUCSCTxTable(
                  hg19_knownGene_sample, genes,
-                 "hg19", "knownGene", "Entrez Gene ID", FALSE,
+                 "hg19", "knownGene", "UCSC Genes", "Entrez Gene ID", FALSE,
                  circ_seqs="chrM")
 
     ## compare
