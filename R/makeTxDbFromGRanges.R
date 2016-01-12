@@ -108,11 +108,11 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     transcript_id
 }
 
-### If we have "gene_id" and "transcript_id" metadata columns (and if they
-### don't contain only NAs) then we assume the GRanges object is in GTF format.
-### Otherwise we assume it's in GFF3 format.
-.is_gtf_format <- function(gene_id, transcript_id)
-    !(.no_id(gene_id) || .no_id(transcript_id))
+### If we have no "ID" metadata column but "gene_id" and "transcript_id"
+### metadata columns (and if they don't contain only NAs) then we assume the
+### GRanges object is in GTF format. Otherwise we assume it's in GFF3 format.
+.is_gtf_format <- function(ID, gene_id, transcript_id)
+    (.no_id(ID) && !.no_id(gene_id) && !.no_id(transcript_id))
 
 .get_ID <- function(gr_mcols, type, gene_id, transcript_id, gtf.format=FALSE)
 {
@@ -886,7 +886,7 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     type <- .get_type(gr_mcols)
     gene_id <- .get_gene_id(gr_mcols)
     transcript_id <- .get_transcript_id(gr_mcols, gene_id, type)
-    gtf.format <- .is_gtf_format(gene_id, transcript_id)
+    gtf.format <- .is_gtf_format(gr_mcols$ID, gene_id, transcript_id)
     ID <- .get_ID(gr_mcols, type, gene_id, transcript_id,
                   gtf.format=gtf.format)
     Parent <- .get_Parent(gr_mcols, type, gene_id, transcript_id,
