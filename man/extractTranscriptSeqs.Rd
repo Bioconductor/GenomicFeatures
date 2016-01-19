@@ -17,7 +17,7 @@ extractTranscriptSeqs(x, transcripts, ...)
 
 \S4method{extractTranscriptSeqs}{DNAString}(x, transcripts, strand="+")
 
-\S4method{extractTranscriptSeqs}{ANY}(x, transcripts)
+\S4method{extractTranscriptSeqs}{ANY}(x, transcripts, ...)
 }
 
 \arguments{
@@ -46,7 +46,7 @@ extractTranscriptSeqs(x, transcripts, ...)
             for which \code{\link{exonsBy}} is implemented (e.g. a \link{TxDb}
             object). If the latter, then it's first turned into a
             \link[GenomicRanges]{GRangesList} object with
-            \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
+            \code{\link{exonsBy}(transcripts, by="tx", ...)}.
     }
 
     Note that, for each transcript, the exons must be ordered by ascending
@@ -59,6 +59,11 @@ extractTranscriptSeqs(x, transcripts, ...)
   }
   \item{...}{
     Additional arguments, for use in specific methods.
+
+    For the default method, additional arguments are allowed only when
+    \code{transcripts} is not a \link[GenomicRanges]{GRangesList} object,
+    in which case they are passed to the internal call to \code{\link{exonsBy}}
+    (see above).
   }
   \item{strand}{
     Only supported when \code{x} is a \link[Biostrings]{DNAString} object.
@@ -188,6 +193,9 @@ tx_seqs
 
 ## A sanity check:
 stopifnot(identical(width(tx_seqs), unname(sum(width(transcripts)))))
+
+## Note that 'tx_seqs' can also be obtained with:
+extractTranscriptSeqs(genome, txdb, use.names=TRUE)
 
 ## ---------------------------------------------------------------------
 ## 3. USING extractTranscriptSeqs() TO EXTRACT CDS SEQUENCES

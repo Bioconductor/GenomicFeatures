@@ -170,15 +170,19 @@ if (FALSE) {
 }
 
 setMethod("extractTranscriptSeqs", "ANY",
-    function(x, transcripts)
+    function(x, transcripts, ...)
     {
-        if (!is(transcripts, "GRangesList")) {
-            transcripts <- try(exonsBy(transcripts, by="tx", use.names=TRUE),
+        if (is(transcripts, "GRangesList")) {
+            if (length(list(...)) != 0L)
+                stop(wmsg("additional arguments are allowed only when ",
+                          "'transcripts' is not a GRangesList object"))
+        } else {
+            transcripts <- try(exonsBy(transcripts, by="tx", ...),
                                silent=TRUE)
             if (is(transcripts, "try-error"))
                 stop(wmsg("failed to extract the exon ranges ",
-                          "from 'transcripts' with ",
-                          "exonsBy(transcripts, by=\"tx\", use.names=TRUE)"))
+                          "from 'transcripts' ",
+                          "with exonsBy(transcripts, by=\"tx\", ...)"))
         }
         idx1 <- which(elementLengths(transcripts) != 0L)
         tx1 <- transcripts[idx1]

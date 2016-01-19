@@ -367,7 +367,8 @@ with an appropriate \Rpackage{BSgenome} package).
 
 <<extract>>=
 library(BSgenome.Hsapiens.UCSC.hg19)
-tx_seqs1 <- extractTranscriptSeqs(Hsapiens, TxDb.Hsapiens.UCSC.hg19.knownGene)
+tx_seqs1 <- extractTranscriptSeqs(Hsapiens, TxDb.Hsapiens.UCSC.hg19.knownGene,
+                                  use.names=TRUE)
 @
 
 And, once these sequences have been extracted, you can translate them
@@ -387,7 +388,8 @@ to only translate only the coding regions.
 \end{Exercise}
 \begin{Solution}
 <<betterTranslation>>=
-cds_seqs <- extractTranscriptSeqs(Hsapiens, cdsBy(txdb, by="tx"))
+cds_seqs <- extractTranscriptSeqs(Hsapiens,
+                                  cdsBy(txdb, by="tx", use.names=TRUE))
 translate(cds_seqs)
 @ 
 \end{Solution}
