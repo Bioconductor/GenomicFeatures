@@ -215,7 +215,7 @@
     biomart <- biomaRt:::martBM(mart)
     dataset <- biomaRt:::martDataset(mart)
     is_ensembl_mart <- tolower(substr(biomart, 1, 7)) == "ensembl"
-    is_plants_mart <- tolower(substr(biomart, 1, 12)) == "plants_mart_"
+    is_plants_mart <- tolower(substr(biomart, 1, 11)) == "plants_mart"
     if (is_ensembl_mart || is_plants_mart) {
         message("Download and preprocess the 'chrominfo' data frame ... ",
                 appendLF=FALSE)
