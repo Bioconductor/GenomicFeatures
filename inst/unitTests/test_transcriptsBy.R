@@ -133,7 +133,7 @@ test_transcriptsBy_seqlevelsStyleSwap <- function(){
     checkTrue(all(seqnames(get_grl[["100130275"]]) =="chr6"))
     
     seqlevelsStyle(txdb) <- "NCBI"
-    checkTrue(seqlevelsStyle(txdb) == "NCBI")    
+    checkTrue(seqlevelsStyle(txdb)[1] == "NCBI")    
     get_grlN <- transcriptsBy(txdb, by="gene")
     checkTrue(all(seqnames(get_grlN[["100130275"]]) == "6"))
 }

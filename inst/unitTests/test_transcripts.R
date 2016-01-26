@@ -62,7 +62,7 @@ test_transcripts_seqlevelsStyleSwap <- function(){
     ## extra test to make sure that we can change names via seqlevelsStyle
     checkTrue(seqlevelsStyle(txdb) == "UCSC")
     seqlevelsStyle(txdb) <- "NCBI"
-    checkTrue(seqlevelsStyle(txdb) == "NCBI")    
+    checkTrue(seqlevelsStyle(txdb)[1] == "NCBI")    
     get_grg <- transcripts(txdb, vals=list(gene_id=c("220004", "1183", "10186")),
                                  columns=c("tx_id", "tx_name", "gene_id"))
     checkTrue(all(seqnames(get_grg) == c("13", "X", "X")))
