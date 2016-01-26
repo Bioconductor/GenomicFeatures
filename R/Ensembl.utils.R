@@ -38,14 +38,23 @@ ls_ftp_url <- function(url)
 }
 
 .ENSEMBL.PUB_FTP_URL <- "ftp://ftp.ensembl.org/pub/"
+.ENSEMBLGRCh37.PUB_FTP_URL <- "ftp://ftp.ensembl.org/pub/grch37/"
 
-ftp_url_to_Ensembl_mysql <- function(release=NA)
+ftp_url_to_Ensembl_mysql <- function(release=NA, use.grch37=FALSE)
 {
-    if (is.na(release))
-        pub_subdir <- "current_mysql"
-    else
+    if (is.na(release)) {
+        if (use.grch37)
+            pub_subdir <- "current/mysql"
+        else 
+            pub_subdir <- "current_mysql"
+    } else {
         pub_subdir <- paste0("release-", release, "/mysql")
-    paste0(.ENSEMBL.PUB_FTP_URL, pub_subdir, "/")
+    }
+    if (use.grch37)
+        pub_ftp_url <- .ENSEMBLGRCh37.PUB_FTP_URL
+    else
+        pub_ftp_url <- .ENSEMBL.PUB_FTP_URL
+    paste0(pub_ftp_url, pub_subdir, "/")
 }
 
 ftp_url_to_Ensembl_gtf <- function(release=NA)
@@ -62,10 +71,11 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 ### .Ensembl_getMySQLCoreUrl()
 ###
 
-.Ensembl_listMySQLCoreDirs <- function(release=NA, url=NA)
+.Ensembl_listMySQLCoreDirs <- function(release=NA, url=NA,
+                                       use.grch37=FALSE)
 {
     if (is.na(url))
-        url <- ftp_url_to_Ensembl_mysql(release)
+        url <- ftp_url_to_Ensembl_mysql(release, use.grch37=use.grch37)
     core_dirs <- ls_ftp_url(url)
     pattern <- "_core_"
     if (!is.na(release))
@@ -73,11 +83,13 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
     core_dirs[grep(pattern, core_dirs, fixed=TRUE)]
 }
 
-.Ensembl_getMySQLCoreDir <- function(dataset, release=NA, url=NA)
+.Ensembl_getMySQLCoreDir <- function(dataset, release=NA, url=NA,
+                                     use.grch37=FALSE)
 {
     if (is.na(url))
-        url <- ftp_url_to_Ensembl_mysql(release)
-    core_dirs <- .Ensembl_listMySQLCoreDirs(release=release, url=url)
+        url <- ftp_url_to_Ensembl_mysql(release, use.grch37=use.grch37)
+    core_dirs <- .Ensembl_listMySQLCoreDirs(release=release, url=url,
+                                            use.grch37=use.grch37)
     shortnames <- sapply(strsplit(core_dirs, "_", fixed=TRUE),
                          function(x)
                            paste0(substr(x[1L], 1L, 1L), x[2L]))
@@ -90,11 +102,13 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 }
 
 ### Return URL of Ensemble Core DB (FTP access).
-.Ensembl_getMySQLCoreUrl <- function(dataset, release=NA, url=NA)
+.Ensembl_getMySQLCoreUrl <- function(dataset, release=NA, url=NA,
+                                     use.grch37=FALSE)
 {
     if (is.na(url))
-        url <- ftp_url_to_Ensembl_mysql(release)
-    core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release, url=url)
+        url <- ftp_url_to_Ensembl_mysql(release, use.grch37=use.grch37)
+    core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release, url=url,
+                                         use.grch37=use.grch37)
     paste0(url, core_dir, "/")
 }
 
@@ -221,10 +235,11 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 ### fetchChromLengthsFromEnsembl() and fetchChromLengthsFromEnsemblPlants()
 ###
 
-fetchChromLengthsFromEnsembl <- function(dataset, release=NA,
+fetchChromLengthsFromEnsembl <- function(dataset, release=NA, use.grch37=FALSE,
                                          extra_seqnames=NULL)
 {
-    core_url <- .Ensembl_getMySQLCoreUrl(dataset, release=release)
+    core_url <- .Ensembl_getMySQLCoreUrl(dataset, release=release,
+                                         use.grch37=use.grch37)
     .Ensembl_fetchChromLengthsFromCoreUrl(core_url,
                                           extra_seqnames=extra_seqnames)
 }

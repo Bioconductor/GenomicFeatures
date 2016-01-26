@@ -220,13 +220,22 @@
         message("Download and preprocess the 'chrominfo' data frame ... ",
                 appendLF=FALSE)
         if (is_ensembl_mart) {
-            ## Ensembl mart
-            db_version <- .getBiomartDbVersion(mart, host, port, biomart)
-            ensembl_release <- .extractEnsemblReleaseFromDbVersion(db_version)
-            chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
-                                    release=ensembl_release,
-                                    extra_seqnames=extra_seqnames),
-                                silent=TRUE)
+            if (tolower(host) == "grch37.ensembl.org") {
+                ## Ensembl GRCh37 mart
+                chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
+                                        use.grch37=TRUE,
+                                        extra_seqnames=extra_seqnames),
+                                    silent=TRUE)
+            } else {
+                ## Ensembl mart
+                db_version <- .getBiomartDbVersion(mart, host, port, biomart)
+                ensembl_release <-
+                              .extractEnsemblReleaseFromDbVersion(db_version)
+                chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
+                                        release=ensembl_release,
+                                        extra_seqnames=extra_seqnames),
+                                    silent=TRUE)
+            }
         } else {
             ## Plants mart
             chromlengths <- try(fetchChromLengthsFromEnsemblPlants(dataset,
