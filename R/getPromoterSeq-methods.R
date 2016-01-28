@@ -21,7 +21,7 @@ setMethod("getPromoterSeq", "GRangesList",
     result <- getSeq(subject, promoter.granges)
     md <- mcols(unlist(query))
     geneIDs <- names(query)
-    geneID.counts <- elementLengths(query)
+    geneID.counts <- elementNROWS(query)
     geneIDs <- rep(geneIDs, geneID.counts)
     md$geneID <- geneIDs
     mcols(result) <- md

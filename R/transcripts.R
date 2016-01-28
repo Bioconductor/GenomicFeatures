@@ -244,7 +244,7 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     ## may happen one day and is the reason behind the choice to represent
     ## the 'gene_id' as a CharacterList object instead of a character vector).
     gene_id <- mcols(tx)[ , "gene_id"]
-    ngene_per_tx <- elementLengths(gene_id)
+    ngene_per_tx <- elementNROWS(gene_id)
     tx <- tx[rep.int(seq_along(ngene_per_tx), ngene_per_tx)]
     mcols(tx)$gene_id <- unlist(gene_id, use.names=FALSE)
 
@@ -268,7 +268,7 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     if (!single.strand.genes.only)
         return(genes)
 
-    keep_idx <- which(elementLengths(genes) == 1L)
+    keep_idx <- which(elementNROWS(genes) == 1L)
     genes <- genes[keep_idx]
     ans <- unlist(genes, use.names=FALSE)
     mcols(ans) <- mcols(genes)

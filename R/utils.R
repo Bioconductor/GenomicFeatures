@@ -190,7 +190,7 @@ joinDataFrameWithName2Val <- function(x, join_colname, name2val, vals_colname)
     ## by an integer vector but this is not what we want here).
     tmp <- tmp[as.character(x[[join_colname]])]
     x <- S4Vectors:::extract_data_frame_rows(x,
-                             rep.int(seq_len(nrow(x)), elementLengths(tmp)))
+                             rep.int(seq_len(nrow(x)), elementNROWS(tmp)))
     if (nrow(x) == 0L)
         vals <- name2val[FALSE]
     else if (is.factor(name2val))

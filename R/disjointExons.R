@@ -55,7 +55,7 @@ setMethod("disjointExons", "TxDb",
  {
     nm <- names[unlist(indexList, use.names=FALSE)]
     rl <- relist(nm, indexList)
-    el <- elementLengths(indexList) > 1
+    el <- elementNROWS(indexList) > 1
     rl[el] <- base::lapply(rl[el], base::paste, collapse="+")
     unlist(rl, use.names=FALSE)
 }

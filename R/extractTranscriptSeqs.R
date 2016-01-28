@@ -7,8 +7,8 @@
 {
     if (is.list(strand) || is(strand, "List")) {
         ## 'strand' is a list-like object.
-        if (!identical(unname(elementLengths(strand)),
-                       unname(elementLengths(transcripts))))
+        if (!identical(unname(elementNROWS(strand)),
+                       unname(elementNROWS(transcripts))))
             stop(wmsg("when 'strand' is a list-like object, it must have ",
                       "the same \"shape\" as 'transcripts' (i.e. same length ",
                       "plus 'strand[[i]]' must have the same length as ",
@@ -21,7 +21,7 @@
     strand <- strand(strand)
     strand <- S4Vectors:::V_recycle(strand, transcripts,
                                     "strand", "transcripts")
-    rep.int(strand, elementLengths(transcripts))
+    rep.int(strand, elementNROWS(transcripts))
 }
 
 setGeneric("extractTranscriptSeqs", signature="x",
@@ -50,7 +50,7 @@ setMethod("extractTranscriptSeqs", "DNAString",
 .check_exon_chrom <- function(tx1)
 {
     run_lens <- runLength(seqnames(tx1))
-    idx <- which(elementLengths(run_lens) != 1L)
+    idx <- which(elementNROWS(run_lens) != 1L)
     if (length(idx) == 0L)
         return()
     tx1_names <- names(tx1)
@@ -98,8 +98,8 @@ setMethod("extractTranscriptSeqs", "DNAString",
     if (any(min_rank < 1L))
         stop(wmsg("\"exon_rank\" inner metadata column in GRangesList ",
                   "object 'transcripts' contains ranks < 1"))
-    tx1_eltlens <- elementLengths(partitioning)
-    target <- S4Vectors:::fancy_mseq(tx1_eltlens,
+    tx1_eltNROWS <- elementNROWS(partitioning)
+    target <- S4Vectors:::fancy_mseq(tx1_eltNROWS,
                                      offset=min_rank - 1L)
     if (!identical(target, unname(exon_rank)))
         stop(wmsg("\"exon_rank\" inner metadata column in GRangesList ",
@@ -184,7 +184,7 @@ setMethod("extractTranscriptSeqs", "ANY",
                           "from 'transcripts' ",
                           "with exonsBy(transcripts, by=\"tx\", ...)"))
         }
-        idx1 <- which(elementLengths(transcripts) != 0L)
+        idx1 <- which(elementNROWS(transcripts) != 0L)
         tx1 <- transcripts[idx1]
         .check_exon_chrom(tx1)
         .check_exon_rank(tx1)

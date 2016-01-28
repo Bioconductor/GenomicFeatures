@@ -144,7 +144,7 @@
     tNames <- lapply(tNames,function(x){x[1]})
     ## then continue on...  
     tabAbbrevs <- substr(unlist(tNames),1,1)
-    names(tabAbbrevs) <- rep(names(tNames),elementLengths(tNames))   
+    names(tabAbbrevs) <- rep(names(tNames),elementNROWS(tNames))   
   if(abbrev==TRUE){
     paste(paste0(tabAbbrevs, ".", names(tabAbbrevs)), collapse=", ")
   }else{

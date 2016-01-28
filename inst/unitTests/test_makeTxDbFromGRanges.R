@@ -8,7 +8,7 @@ test_makeTxDbFromGRanges_empty <- function()
     gr1 <- GRanges(type=character(0), ID=character(0))
     txdb1 <- makeTxDbFromGRanges(gr1)
     checkTrue(validObject(txdb1))
-    checkTrue(all(elementLengths(as.list(txdb1)) == 0L))
+    checkTrue(all(elementNROWS(as.list(txdb1)) == 0L))
     checkIdentical(0L, length(seqinfo(txdb1)))
     checkIdentical(NA_character_, organism(txdb1))
 

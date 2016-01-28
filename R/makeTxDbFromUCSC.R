@@ -535,15 +535,15 @@ supportedUCSCtables <- function(genome="hg19")
     exon_start <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonStarts)
     exon_end <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonEnds)
     if (is.null(exon_count)) {
-        if (!identical(elementLengths(exon_start),
-                       elementLengths(exon_end)))
+        if (!identical(elementNROWS(exon_start),
+                       elementNROWS(exon_end)))
             stop("UCSC data anomaly: shape of 'ucsc_txtable$exonStarts' ",
                  "and 'ucsc_txtable$exonEnds' differ")
     } else {
-        if (!identical(elementLengths(exon_start), exon_count))
+        if (!identical(elementNROWS(exon_start), exon_count))
             stop("UCSC data anomaly: 'ucsc_txtable$exonStarts' ",
                  "inconsistent with 'ucsc_txtable$exonCount'")
-        if (!identical(elementLengths(exon_end), exon_count))
+        if (!identical(elementNROWS(exon_end), exon_count))
             stop("UCSC data anomaly: 'ucsc_txtable$exonEnds' ",
                  "inconsistent with 'ucsc_txtable$exonCount'")
     }

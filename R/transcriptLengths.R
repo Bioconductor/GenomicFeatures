@@ -17,11 +17,11 @@
 
 ### 'rglist' must be a named RangesList or GRangesList.
 ### 'tx_id' must be a character vector.
-.eltlens <- function(rglist, tx_id)
+.eltNROWS <- function(rglist, tx_id)
 {
     ans <- integer(length(tx_id))
     m <- .match_and_check(names(rglist), tx_id)
-    ans[m] <- elementLengths(rglist)
+    ans[m] <- elementNROWS(rglist)
     ans
 }
 
@@ -56,7 +56,7 @@ transcriptLengths <- function(txdb, with.cds_len=FALSE,
     tx_id <- as.character(ans$tx_id)  # because match() will want a character
 
     rg_by_tx <- exonsBy(txdb, by="tx")
-    ans$nexon <- .eltlens(rg_by_tx, tx_id)
+    ans$nexon <- .eltNROWS(rg_by_tx, tx_id)
     ans$tx_len <- .sum_width(rg_by_tx, tx_id)
     if (with.cds_len) {
         rg_by_tx <- cdsBy(txdb, by="tx")

@@ -76,7 +76,7 @@
     } else {
         bm_filters <- names(filters)
         bm_values <- unname(filters)
-        bm_values[elementLengths(bm_values) == 0L] <- paste0(
+        bm_values[elementNROWS(bm_values) == 0L] <- paste0(
             "____this_is_a_very_unlikely_valid_value_but_you_never_know_",
             "this_is_just_a_dirty_hack_to_work_around_getBM_",
             "misinterpretation_of_empty_list_elements_in_values____")

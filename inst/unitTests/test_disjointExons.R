@@ -8,12 +8,12 @@ test_disjointExons <- function()
     checkTrue(is(de$gene_id, "CharacterList"))
     checkTrue(is(de$tx_name, "CharacterList"))
     checkTrue(is(de$exonic_part, "integer"))
-    checkIdentical(sum(elementLengths(de$gene_id) == 1), 653L)
-    checkIdentical(sum(elementLengths(de$gene_id) == 2), 0L)
+    checkIdentical(sum(elementNROWS(de$gene_id) == 1), 653L)
+    checkIdentical(sum(elementNROWS(de$gene_id) == 2), 0L)
 
     de <- disjointExons(txdb, TRUE, FALSE)
     checkTrue(all(names(mcols(de)) %in% c("gene_id", "exonic_part")))
-    checkIdentical(sum(elementLengths(de$gene_id) == 1), 653L)
-    checkIdentical(sum(elementLengths(de$gene_id) == 2), 0L)
+    checkIdentical(sum(elementNROWS(de$gene_id) == 1), 653L)
+    checkIdentical(sum(elementNROWS(de$gene_id) == 2), 0L)
 }
 

@@ -206,7 +206,7 @@ stopifnot(identical(as.character(strand(single_strand_genes)),
 
 all_genes <- genes(txdb, columns=cols, single.strand.genes.only=FALSE)
 all_genes  # a GRangesList object
-multiple_strand_genes <- all_genes[elementLengths(all_genes) >= 2]
+multiple_strand_genes <- all_genes[elementNROWS(all_genes) >= 2]
 multiple_strand_genes
 mcols(multiple_strand_genes)
 

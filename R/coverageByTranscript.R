@@ -167,7 +167,7 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     ## Set transcriptome-based seqnames.
     if (length(ans_seqlevels) != 1L) {
         ans_seqnames <- relist(Rle(factor(ans_seqlevels, levels=ans_seqlevels),
-                                   elementLengths(x)), x)
+                                   elementNROWS(x)), x)
         seqnames(x) <- ans_seqnames
     }
 
@@ -260,8 +260,8 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
         }
     }
 
-    x_eltlens <- elementLengths(x)
-    transcripts2 <- rep.int(transcripts, x_eltlens)
+    x_eltNROWS <- elementNROWS(x)
+    transcripts2 <- rep.int(transcripts, x_eltNROWS)
     unlisted_x <- unlist(x, use.names=FALSE)
     y <- .project_GRanges_on_transcripts(unlisted_x, transcripts2,
                                          ignore.strand, keep.nohit.exons,

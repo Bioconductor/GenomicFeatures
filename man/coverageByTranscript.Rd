@@ -79,7 +79,7 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
   An \link[IRanges]{RleList} object \emph{parallel} to \code{transcripts},
   that is, the i-th element in it is an integer-\link[S4Vectors]{Rle}
   representing the coverage of the i-th transcript in \code{transcripts}.
-  Its \code{elementLengths()} is guaranteed to be identical to
+  Its \code{elementNROWS()} is guaranteed to be identical to
   \code{sum(width(transcripts))}. The names and metadata columns on
   \code{transcripts} are propagated to it.
 }
@@ -134,7 +134,7 @@ tx_cvg <- coverageByTranscript(reads, transcripts, ignore.strand=TRUE)
 tx_cvg
 
 ## A sanity check:
-stopifnot(identical(elementLengths(tx_cvg), sum(width(transcripts))))
+stopifnot(identical(elementNROWS(tx_cvg), sum(width(transcripts))))
 
 ## We can also use pcoverageByTranscript() to compute 'tx_cvg'.
 ## For this we first create a GAlignmentsList object "parallel" to
@@ -172,7 +172,7 @@ cds_cvg <- coverageByTranscript(reads, cds, ignore.strand=TRUE)
 cds_cvg
 
 ## A sanity check:
-stopifnot(identical(elementLengths(cds_cvg), sum(width(cds))))
+stopifnot(identical(elementNROWS(cds_cvg), sum(width(cds))))
 
 ## ---------------------------------------------------------------------
 ## 3. ALTERNATIVELY, THE CDS COVERAGE CAN BE OBTAINED FROM THE
@@ -191,8 +191,8 @@ utr3_width <- tx_lens$utr3_len
 
 trimListElements <- function(x, ltrim=0, rtrim=0)
 {
-    x_eltlens <- elementLengths(x)
-    n1 <- pmax(x_eltlens - rtrim, 0)
+    x_eltNROWS <- elementNROWS(x)
+    n1 <- pmax(x_eltNROWS - rtrim, 0)
     n2 <- pmax(n1 - ltrim, 0)
     ptail(phead(x, n=n1), n=n2)
 }

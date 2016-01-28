@@ -360,9 +360,9 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         return(integer(0))
     id_parts <- strsplit(id, "\\.|:")
     ## Fix non-sensical output of strsplit() on empty strings.
-    id_parts[elementLengths(id_parts) == 0L] <- ""
+    id_parts[elementNROWS(id_parts) == 0L] <- ""
     unlisted_id_parts <- unlist(id_parts, use.names=FALSE)
-    idx <- cumsum(elementLengths(id_parts))
+    idx <- cumsum(elementNROWS(id_parts))
     rank <- unlisted_id_parts[idx]
     rank <- suppressWarnings(as.integer(rank))
     if (any(is.na(rank)))
@@ -371,7 +371,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     tmp <- unname(splitAsList(rank, parent_id))
     if (any(any(duplicated(tmp))))
         return(NULL)
-    if (!(all(min(tmp) == 1L) && all(max(tmp) == elementLengths(tmp))))
+    if (!(all(min(tmp) == 1L) && all(max(tmp) == elementNROWS(tmp))))
         return(NULL)
     rank
 }
@@ -381,19 +381,19 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 {
     chrom_by_tx <- split(Rle(exon_chrom), tx_id)
     tx_chrom <- runValue(chrom_by_tx)
-    bad_tx1 <- names(which(elementLengths(tx_chrom) > 1L))
+    bad_tx1 <- names(which(elementNROWS(tx_chrom) > 1L))
 
     strand_by_tx <- split(Rle(exon_strand), tx_id)
     tx_strand <- runValue(strand_by_tx)
-    is_bad <- elementLengths(tx_strand) > 1L
+    is_bad <- elementNROWS(tx_strand) > 1L
     bad_tx2 <- names(which(is_bad))
     tx_strand[is_bad] <- "*"
     minus_idx <- which(as.character(tx_strand) == "-")
 
     ex_by_tx <- split(IRanges(exon_start, exon_end), tx_id)
     reduced_ex_by_tx <- reduce(ex_by_tx, min.gapwidth=0L)
-    bad_tx3 <- names(which(elementLengths(reduced_ex_by_tx) !=
-                           elementLengths(ex_by_tx)))
+    bad_tx3 <- names(which(elementNROWS(reduced_ex_by_tx) !=
+                           elementNROWS(ex_by_tx)))
 
     start_by_tx <- start(ex_by_tx)
     start_by_tx[minus_idx] <- start_by_tx[minus_idx] * (-1L)
@@ -418,7 +418,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         stop(wmsg("some ", what, "s are mapped twice to the same transcript"))
 
     tx_id <- factor(unlist(exon_Parent, use.names=FALSE))
-    nparent_per_ex <- elementLengths(exon_Parent)
+    nparent_per_ex <- elementNROWS(exon_Parent)
     exon_id <- rep.int(ID[exon_IDX], nparent_per_ex)
     exon_name <- rep.int(Name[exon_IDX], nparent_per_ex)
     exon_chrom <- rep.int(seqnames(gr)[exon_IDX], nparent_per_ex)
@@ -515,7 +515,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     tx_id <- names(transcripts_by_id)
 
     tx_name <- unique(transcripts_by_id[ , "tx_name"])
-    bad_tx <- names(which(elementLengths(tx_name) != 1L))
+    bad_tx <- names(which(elementNROWS(tx_name) != 1L))
     if (length(bad_tx) != 0L) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
         stop(wmsg("The following transcripts have multiple parts that cannot ",
@@ -524,7 +524,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     tx_name <- as.character(tx_name)
 
     tx_type <- unique(transcripts_by_id[ , "tx_type"])
-    bad_tx <- names(which(elementLengths(tx_type) != 1L))
+    bad_tx <- names(which(elementNROWS(tx_type) != 1L))
     if (length(bad_tx) != 0L) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
         stop(wmsg("The following transcripts have multiple parts that cannot ",
@@ -533,7 +533,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     tx_type <- as.character(tx_type)
 
     tx_chrom <- unique(transcripts_by_id[ , "tx_chrom"])
-    bad_tx <- names(which(elementLengths(tx_chrom) != 1L))
+    bad_tx <- names(which(elementNROWS(tx_chrom) != 1L))
     if (length(bad_tx) != 0L) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
         stop(wmsg("The following transcripts have multiple parts that cannot ",
@@ -542,7 +542,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     tx_chrom <- as.character(tx_chrom)
 
     tx_strand <- unique(transcripts_by_id[ , "tx_strand"])
-    bad_tx <- names(which(elementLengths(tx_strand) != 1L))
+    bad_tx <- names(which(elementNROWS(tx_strand) != 1L))
     if (length(bad_tx) != 0L) {
         in1string <- paste0(sort(bad_tx), collapse=", ")
         stop(wmsg("The following transcripts have multiple parts that cannot ",
@@ -613,11 +613,11 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     tx_type <- rep.int("inferred_from_exons", length(tx_id))
 
     tx_chrom <- unique(exons_by_id[ , "exon_chrom"])
-    tx_chrom[elementLengths(tx_chrom) != 1L] <- NA_character_
+    tx_chrom[elementNROWS(tx_chrom) != 1L] <- NA_character_
     tx_chrom <- as.character(tx_chrom)
 
     tx_strand <- unique(exons_by_id[ , "exon_strand"])
-    tx_strand[elementLengths(tx_strand) != 1L] <- NA_character_
+    tx_strand[elementNROWS(tx_strand) != 1L] <- NA_character_
     tx_strand <- as.character(tx_strand)
 
     tx_start <- unname(min(exons_by_id[ , "exon_start"]))
@@ -756,7 +756,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 
     ## First we try to find their parent via the Dbxref tag, if present.
     if (!is.null(Dbxref)) {
-        idx0 <- which(elementLengths(tx2genes) == 0L)
+        idx0 <- which(elementNROWS(tx2genes) == 0L)
         tx_Dbxref <- Dbxref[tx_IDX[idx0]]
         gene_Dbxref <- Dbxref[gene_IDX]
         tx_Dbxref_unlisted <- unlist(tx_Dbxref, use.names=FALSE)
@@ -780,12 +780,12 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     ## Then, if we still have transcripts with no parent, we use the geneID
     ## tag (if present) to assign them an external gene id.
     if (!is.null(geneID)) {
-        idx0 <- which(elementLengths(tx2genes) == 0L)
+        idx0 <- which(elementNROWS(tx2genes) == 0L)
         tx2genes[idx0] <- geneID[tx_IDX[idx0]]
         tx2genes <- tx2genes[!is.na(tx2genes)]
     }
 
-    tx_id <- rep.int(tx_id, elementLengths(tx2genes))
+    tx_id <- rep.int(tx_id, elementNROWS(tx2genes))
     gene_id <- unlist(tx2genes, use.names=FALSE)
     data.frame(tx_id=tx_id, gene_id=gene_id, stringsAsFactors=FALSE)
 }

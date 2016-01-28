@@ -46,7 +46,7 @@ test_makeTxDbFromBiomart <- function()
     ## Check nb of exons per transcript.
     ex_by_tx <- exonsBy(current_txdb, by="tx", use.names=TRUE)
     checkTrue(setequal(TARGET_TX_NAME, names(ex_by_tx)))
-    nexons_per_tx <- elementLengths(ex_by_tx)[TARGET_TX_NAME]
+    nexons_per_tx <- elementNROWS(ex_by_tx)[TARGET_TX_NAME]
     checkIdentical(TARGET_NEXONS_PER_TX, as.integer(nexons_per_tx))
 
     ## Check CDS'es.

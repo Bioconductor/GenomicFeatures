@@ -36,8 +36,7 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 ### differs from sort() in that "-" strand elements are returned 
 ### highest value to lowest.
 .orderElementsByTranscription <- function(x) {
-    original <- unlist(sapply(elementLengths(x), function(xx) 1:xx), 
-                       use.names=FALSE)
+    original <- sequence(elementNROWS(x))
     ## order by position
     gr <- unlist(x, use.names = FALSE)
     idx <- order(togroup(x), start(gr))
@@ -61,7 +60,7 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 .listCumsumShifted <- function(x) {
     cs <- unlist(cumsum(x), use.names=FALSE)
     shifted <- c(0L, head(cs, -1))
-    shifted[start(PartitioningByWidth(elementLengths(x)))] <- 0L
+    shifted[start(PartitioningByWidth(elementNROWS(x)))] <- 0L
     shifted
 }
 
@@ -129,7 +128,7 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"),
             stop ("'transcripts' must have names")
         if (ignore.strand) {
             strand(transcripts) <- "*"
-        } else if (any(elementLengths(runValue(strand(transcripts))) > 1)) {
+        } else if (any(elementNROWS(runValue(strand(transcripts))) > 1)) {
                 stop(paste0("when ignore.strand=TRUE all inner list elements",
                             "of 'transcripts' must be the same strand"))
         }
@@ -200,7 +199,7 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
             names(transcripts) <- as.character(seq_along(transcripts))
         if (ignore.strand) {
             strand(transcripts) <- "*"
-        } else if (!all(elementLengths(runLength(strand(transcripts))) == 1)) {
+        } else if (!all(elementNROWS(runLength(strand(transcripts))) == 1)) {
             stop(paste0("when ignore.strand=TRUE all inner list elements ",
                         "of 'transcripts' must be the same strand"))
         }
@@ -334,7 +333,7 @@ setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"),
 
         if (ignore.strand) {
             strand(transcripts) <- "*"
-        } else if (!all(elementLengths(runLength(strand(transcripts))) == 1)) {
+        } else if (!all(elementNROWS(runLength(strand(transcripts))) == 1)) {
             stop(paste0("when ignore.strand=TRUE all inner list ",
                         "elements of 'transcripts' must be the same strand"))
         }
@@ -352,7 +351,7 @@ setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"),
         match1 <- match(xNames, txNames)
         group0 <- splitAsList(seq_along(txNames), match0)
         group1 <- group0[match(na.omit(match1), names(group0))]
-        xHits <- rep(which(!is.na(match1)), elementLengths(group1))
+        xHits <- rep(which(!is.na(match1)), elementNROWS(group1))
         txHits <- unlist(group1, use.names=FALSE)
         if (!length(xHits <- na.omit(xHits)))
             stop ("none of 'names(x)' are in 'names(transcripts)'")
@@ -436,7 +435,7 @@ setMethod("pmapFromTranscripts", c("Ranges", "GRangesList"),
     {
         if (!length(x) || !length(transcripts))
             return(GRangesList())
-        if (!all(elementLengths(runLength(strand(transcripts))) == 1)) {
+        if (!all(elementNROWS(runLength(strand(transcripts))) == 1)) {
             stop(paste0("when ignore.strand=TRUE all inner list ",
                         "elements of 'transcripts' must have the same strand"))
         }
@@ -478,7 +477,7 @@ setMethod("pmapFromTranscripts", c("GenomicRanges", "GRangesList"),
 
         if (ignore.strand) {
             strand(transcripts) <- "*"
-        } else if (!all(elementLengths(runLength(strand(transcripts))) == 1)) {
+        } else if (!all(elementNROWS(runLength(strand(transcripts))) == 1)) {
             stop(paste0("when ignore.strand=TRUE all inner list ",
                         "elements of 'transcripts' must have the same strand"))
         }
