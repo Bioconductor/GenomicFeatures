@@ -57,7 +57,7 @@ cdsByOverlaps(x, ranges,
 \details{
   These functions subset the results of \code{\link{transcripts}},
   \code{\link{exons}}, and \code{\link{cds}} function calls with
-  using the results of \code{\link[IRanges:IntervalTree-class]{findOverlaps}}
+  using the results of \code{\link[IRanges]{findOverlaps}}
   calls based on the specified \code{ranges}.
 }
 \value{ a GRanges object }
