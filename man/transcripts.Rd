@@ -120,7 +120,7 @@ genes(x, ...)
 }
 
 \author{
-  M. Carlson, P. Aboyoun and H. Pages
+  M. Carlson, P. Aboyoun and H. Pagès
 }
 
 \seealso{

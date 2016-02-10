@@ -99,9 +99,7 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
   this.
 }
 
-\author{
-  H. Pages
-}
+\author{Hervé Pagès}
 
 \seealso{
   \itemize{

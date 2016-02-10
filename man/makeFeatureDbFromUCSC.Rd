@@ -95,9 +95,7 @@ makeFeatureDbFromUCSC(
   the case of \code{supportedUCSCFeatureDbTracks} and
   \code{UCSCFeatureDbTableSchema} a named character vector}
 
-\author{
-  M. Carlson and H. Pages
-}
+\author{M. Carlson}
 
 \seealso{
   \code{\link[rtracklayer]{ucscGenomes}},

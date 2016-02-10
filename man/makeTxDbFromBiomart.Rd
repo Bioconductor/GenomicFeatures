@@ -114,7 +114,7 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
 }
 
 \author{
-  M. Carlson and H. Pages
+  M. Carlson and H. Pagès
 }
 
 \seealso{

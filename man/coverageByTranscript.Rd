@@ -84,9 +84,7 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
   \code{transcripts} are propagated to it.
 }
 
-\author{
-  H. Pages
-}
+\author{Hervé Pagès}
 
 \seealso{
   \itemize{

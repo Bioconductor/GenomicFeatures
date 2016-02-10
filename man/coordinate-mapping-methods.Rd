@@ -206,7 +206,7 @@
   }
 }
 
-\author{V. Obenchain, M. Lawrence and H. Pages}
+\author{V. Obenchain, M. Lawrence and H. Pagès}
 
 \examples{
 

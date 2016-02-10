@@ -104,9 +104,7 @@ extractTranscriptSeqs(x, transcripts, ...)
   of the i-th transcript in \code{transcripts}.
 }
 
-\author{
-  H. Pages
-}
+\author{Hervé Pagès}
 
 \seealso{
   \itemize{

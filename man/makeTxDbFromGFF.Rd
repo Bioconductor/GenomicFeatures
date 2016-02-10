@@ -83,7 +83,7 @@ makeTxDbFromGFF(file,
 \value{A \link{TxDb} object.}
 
 \author{
-  M. Carlson and H. Pages
+  M. Carlson and H. Pagès
 }
 
 \seealso{

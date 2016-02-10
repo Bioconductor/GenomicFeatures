@@ -67,9 +67,7 @@ transcriptWidths(exonStarts=list(), exonEnds=list())
   transcript.
 }
 
-\author{
-  H. Pages
-}
+\author{Hervé Pagès}
 
 \seealso{
   \itemize{

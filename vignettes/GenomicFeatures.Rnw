@@ -26,7 +26,7 @@ BiocStyle::latex()
 
 
 \title{Making and Utilizing TxDb Objects}
-\author{Marc Carlson, Patrick Aboyoun, Herve Pages, Seth Falcon, Martin Morgan}
+\author{Marc Carlson, Patrick Aboyoun, Hervé Pagès, Seth Falcon, Martin Morgan}
 
 
 \begin{document}

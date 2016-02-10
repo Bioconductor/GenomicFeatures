@@ -88,7 +88,7 @@ threeUTRsByTranscript(x, ...)
 }
 \value{A \link[GenomicRanges]{GRangesList} object.}
 \author{
-  M. Carlson, P. Aboyoun and H. Pages
+  M. Carlson, P. Aboyoun and H. Pagès
 }
 \seealso{
   \itemize{

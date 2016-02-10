@@ -72,7 +72,7 @@ getChromInfoFromUCSC(
 }
 
 \author{
-  M. Carlson and H. Pages
+  M. Carlson and H. Pagès
 }
 
 \seealso{

@@ -37,9 +37,14 @@ id2name(txdb, feature.type=c("tx", "exon", "cds"))
   name is not guaranteed to be unique or even defined (the column
   can contain \code{NA}s).
 }
-\value{A named character vector where the names are the internal
-ids and the values the external names.}
-\author{H. Pages}
+
+\value{
+  A named character vector where the names are the internal ids and the
+  values the external names.
+}
+
+\author{Hervé Pagès}
+
 \seealso{
   \itemize{
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
@@ -49,17 +54,17 @@ ids and the values the external names.}
   }
 }
 \examples{
-  txdb1_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
-                            package="GenomicFeatures")
-  txdb1 <- loadDb(txdb1_file)
-  id2name(txdb1, feature.type="tx")[1:4]
-  id2name(txdb1, feature.type="exon")[1:4]
-  id2name(txdb1, feature.type="cds")[1:4]
+txdb1_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
+                          package="GenomicFeatures")
+txdb1 <- loadDb(txdb1_file)
+id2name(txdb1, feature.type="tx")[1:4]
+id2name(txdb1, feature.type="exon")[1:4]
+id2name(txdb1, feature.type="cds")[1:4]
 
-  txdb2_file <- system.file("extdata", "Biomart_Ensembl_sample.sqlite",
-                            package="GenomicFeatures")
-  txdb2 <- loadDb(txdb2_file)
-  id2name(txdb2, feature.type="tx")[1:4]
-  id2name(txdb2, feature.type="exon")[1:4]
-  id2name(txdb2, feature.type="cds")[1:4]
+txdb2_file <- system.file("extdata", "Biomart_Ensembl_sample.sqlite",
+                          package="GenomicFeatures")
+txdb2 <- loadDb(txdb2_file)
+id2name(txdb2, feature.type="tx")[1:4]
+id2name(txdb2, feature.type="exon")[1:4]
+id2name(txdb2, feature.type="cds")[1:4]
 }

@@ -77,9 +77,7 @@ transcriptLengths(txdb, with.cds_len=FALSE,
   }
 }
 
-\author{
-  H. Pages
-}
+\author{Hervé Pagès}
 
 \seealso{
   \itemize{

@@ -92,7 +92,7 @@
   }
 }
 
-\author{H. Pages, Marc Carlson}
+\author{Hervé Pagès, Marc Carlson}
 
 \seealso{
   \itemize{
