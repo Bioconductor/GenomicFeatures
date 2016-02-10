@@ -50,9 +50,18 @@ extractTranscriptSeqs(x, transcripts, ...)
     }
 
     Note that, for each transcript, the exons must be ordered by ascending
-    rank, that is, by their position in the transcript. This means that,
-    for a transcript located on the minus strand, the exons should typically
-    be ordered by descending position on the reference genome.
+    \emph{rank}, that is, by ascending position \emph{in the transcript}
+    (when going in the 5' to 3' direction). This generally means (but not
+    always) that they are also ordered from 5' to 3' on the reference genome.
+    More precisely:
+    \itemize{
+      \item For a transcript located on the plus strand, the exons will
+            typically (but not necessarily) be ordered by ascending position
+            on the reference genome.
+      \item For a transcript located on the minus strand, the exons will
+            typically (but not necessarily) be ordered by descending position
+            on the reference genome.
+    }
     If \code{transcripts} was obtained with \code{\link{exonsBy}} (see above),
     then the exons are guaranteed to be ordered by ascending rank. See
     \code{?\link{exonsBy}} for more information.
