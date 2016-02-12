@@ -62,7 +62,7 @@ Collate: utils.R
         transcriptLocs2refLocs.R
         coordinate-mapping-methods.R
         coverageByTranscript.R
-        test_GenomicFeatures_package.R
+        zzz.R
 VignetteBuilder: knitr
 biocViews: Genetics, Infrastructure, Annotation, Sequencing,
         GenomeAnnotation
