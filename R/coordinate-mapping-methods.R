@@ -357,7 +357,8 @@ setMethod("mapFromTranscripts", c("GenomicRanges", "GRangesList"),
             stop ("none of 'names(x)' are in 'names(transcripts)'")
 
         ## construct Hits
-        hits <- Hits(xHits, txHits, length(x), length(transcripts))
+        hits <- Hits(xHits, txHits, length(x), length(transcripts),
+                     sort.by.query=TRUE)
         map <- .mapFromTranscripts(x, transcripts, hits, ignore.strand) 
         ## remove zero-width ranges 
         if (any(zeroWidth <- width(map) == 0L))
@@ -463,7 +464,8 @@ setMethod("pmapFromTranscripts", c("GenomicRanges", "GenomicRanges"),
         transcripts <- .pmap_recycle(transcripts, maxlen)
 
         ## map i-th elements
-        hits <- Hits(seq_along(x), seq_along(x), length(x), length(x))
+        hits <- Hits(seq_along(x), seq_along(x), length(x), length(x),
+                     sort.by.query=TRUE)
         .mapFromTranscripts(x, transcripts, hits, ignore.strand)
     }
 )
@@ -488,7 +490,8 @@ setMethod("pmapFromTranscripts", c("GenomicRanges", "GRangesList"),
         transcripts <- .pmap_recycle(transcripts, maxlen)
 
         ## map i-th elements
-        hits <- Hits(seq_along(x), seq_along(x), length(x), length(x))
+        hits <- Hits(seq_along(x), seq_along(x), length(x), length(x),
+                     sort.by.query=TRUE)
         map <- .mapFromTranscripts(x, 
                                    .orderElementsByTranscription(transcripts), 
                                    hits, ignore.strand)
