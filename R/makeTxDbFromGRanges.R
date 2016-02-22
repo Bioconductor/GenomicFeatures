@@ -762,10 +762,10 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         tx_Dbxref_unlisted <- unlist(tx_Dbxref, use.names=FALSE)
         gene_Dbxref_unlisted <- unlist(gene_Dbxref, use.names=FALSE)
         hits <- findMatches(tx_Dbxref_unlisted, gene_Dbxref_unlisted)
-        hits <- remapHits(hits, query.map=togroup(tx_Dbxref),
-                                new.queryLength=length(tx_Dbxref),
-                                subject.map=togroup(gene_Dbxref),
-                                new.subjectLength=length(gene_Dbxref))
+        hits <- remapHits(hits, Lnodes.remapping=togroup(tx_Dbxref),
+                                new.nLnode=length(tx_Dbxref),
+                                Rnodes.remapping=togroup(gene_Dbxref),
+                                new.nRnode=length(gene_Dbxref))
         tx2genes[idx0] <- relist(ID[gene_IDX][subjectHits(hits)],
                                  as(hits, "PartitioningByEnd"))
     }
