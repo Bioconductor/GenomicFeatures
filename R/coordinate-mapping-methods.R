@@ -36,12 +36,12 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 ### differs from sort() in that "-" strand elements are returned 
 ### highest value to lowest.
 .orderElementsByTranscription <- function(x) {
-    original <- sequence(elementNROWS(x))
+    part <- PartitioningByWidth(x)
+    original <- sequence(elementNROWS(part))
     ## order by position
     gr <- unlist(x, use.names = FALSE)
-    idx <- order(togroup(x), start(gr))
+    idx <- order(togroup(part), start(gr))
     gr <- gr[idx]
-    part <- PartitioningByWidth(x)
     ## handle zero-width ranges
     pstart <- start(part)[width(part) != 0L]
     pend <- end(part)[width(part) != 0L]
@@ -99,7 +99,7 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
             xrange <- shift(xrange, shifted[txHits])
         }
         ## seqnames come from 'transcripts'
-        txGroup <- togroup(transcripts)[txHits]
+        txGroup <- togroup(PartitioningByWidth(transcripts))[txHits]
         GRanges(names(transcripts)[txGroup], 
                 xrange, strand(flat)[txHits],
                 DataFrame(xHits, transcriptsHits=txGroup))
@@ -185,8 +185,9 @@ setMethod("pmapToTranscripts", c("GRangesList", "GRangesList"),
           function(x, transcripts, ignore.strand=FALSE) 
           {
               gr <- unlist(x, use.names=FALSE)
-              ans <- pmapToTranscripts(gr, transcripts[togroup(x)],
-                                       ignore.strand)
+              ans <- pmapToTranscripts(gr,
+                  transcripts[togroup(PartitioningByWidth(x))],
+                  ignore.strand)
               reduce(relist(ans, x))
           })
 
@@ -216,7 +217,8 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
         ## map i-th elements
         hits <- findOverlaps(x, unlist(transcripts, use.names=FALSE), 
                              type="within", ignore.strand=ignore.strand)
-        ith <- queryHits(hits) == togroup(transcripts)[subjectHits(hits)]
+        ith <- queryHits(hits) ==
+               togroup(PartitioningByWidth(transcripts))[subjectHits(hits)]
         map <- .mapToTranscripts(x, transcripts, hits[ith], ignore.strand)
 
         ## non-hits

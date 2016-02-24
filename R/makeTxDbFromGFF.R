@@ -53,7 +53,7 @@
 .rename_by_dbxrefTag <- function(gr, dbxrefTag) {
     dbxref <- unlist(gr$Dbxref, use.names=FALSE)
     m <- grepl(paste0("^", dbxrefTag, ":"), dbxref)
-    gr$Name[togroup(gr$Dbxref)[m]] <- dbxref[m]
+    gr$Name[S4Vectors:::quick_togroup(gr$Dbxref)[m]] <- dbxref[m]
     gr
 }
 
