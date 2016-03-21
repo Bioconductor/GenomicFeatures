@@ -1,13 +1,15 @@
-library(GenomicFeatures)
+### This script is called from makeTerminalDBPkgs.R
+### which is part of the release build code base. The
+### version is set in the user workspace/env and not 
+### explicitly passed.
 
-## Best if I pass this down (from makeTerminal)
-## version = "2.7.0" ## best if I pass this down (from makeTerminal)
-## TxDbOutDir = paste(outDir,"_TxDbs",sep="")  
+library(GenomicFeatures)
 
 maintainer = "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
 author = "Marc Carlson"
 
 ## Human HG18
+cat("building hg18 \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -16,6 +18,7 @@ makeTxDbPackageFromUCSC(version=version,
                         tablename="knownGene")
 
 ## Human HG19
+cat("building hg19 \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -25,6 +28,7 @@ makeTxDbPackageFromUCSC(version=version,
                         miRBaseBuild="GRCh37")
 
 ## Human HG19 lincRNAs
+cat("building hg19 lincRNAs \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -46,6 +50,7 @@ makeTxDbPackageFromUCSC(version=version,
 
 
 ## Mouse mm9
+cat("building mm9 \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -54,6 +59,7 @@ makeTxDbPackageFromUCSC(version=version,
                         tablename="knownGene")
 
 ## Mouse mm10
+cat("building mm10 \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -62,6 +68,7 @@ makeTxDbPackageFromUCSC(version=version,
                         tablename="ensGene")
 
 ## Mouse mm10 knownGene
+cat("building mm10 knownGene \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -71,6 +78,7 @@ makeTxDbPackageFromUCSC(version=version,
 
 
 ## c elegans enseble track
+cat("building ce6 \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -79,6 +87,7 @@ makeTxDbPackageFromUCSC(version=version,
                         tablename="ensGene")
                         
 ## Drosophila ensembl track
+cat("building dm3 \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -90,6 +99,7 @@ makeTxDbPackageFromUCSC(version=version,
 ## There is apparently a problem with this resource here:
 ## It looks like the for the splicing is has missing fields...
 ## Arabidopsis biomaRt
+cat("building plants_mart_28 \n")
 makeTxDbPackageFromBiomart(version=version,
                           maintainer=maintainer,
                           author=author,
@@ -99,6 +109,7 @@ makeTxDbPackageFromBiomart(version=version,
                                          
 
 ## Rat rn4 ensembl track
+cat("building rn4 \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -107,6 +118,7 @@ makeTxDbPackageFromUCSC(version=version,
                         tablename="ensGene")
 
 ## Rat rn5 ensembl track
+cat("building rn5 \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -118,6 +130,7 @@ makeTxDbPackageFromUCSC(version=version,
 
 ## yeast ensembl genes is no longer available?
 ## Yeast sacCer2 ensembl track
+cat("building sacCer2 \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
@@ -125,6 +138,7 @@ makeTxDbPackageFromUCSC(version=version,
                         genome="sacCer2",
                         tablename="sgdGene")
 
+cat("building sacCer3 \n")
 makeTxDbPackageFromUCSC(version=version,
                         maintainer=maintainer,
                         author=author,
