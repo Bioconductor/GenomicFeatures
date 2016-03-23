@@ -99,14 +99,22 @@ makeTxDbPackageFromUCSC(version=version,
 ## There is apparently a problem with this resource here:
 ## It looks like the for the splicing is has missing fields...
 ## Arabidopsis biomaRt
-cat("building plants_mart_28 \n")
+cat("building plants_mart \n")
 makeTxDbPackageFromBiomart(version=version,
                           maintainer=maintainer,
                           author=author,
 		 	  destDir=TxDbOutDir,
-                          biomart="plants_mart_28",
+                          host="plants.ensembl.org",
+                          biomart="plants_mart",
                           dataset="athaliana_eg_gene")
-                                         
+                        
+#Warning message:
+#In .warning_on_BioMart_data_anomaly(bm_result, idx, id_prefix, msg) :
+#  BioMart data anomaly: in the following transcripts, 
+#  the CDS/UTR genomic coordinates are inconsistent with the 
+#  "cds_start" and "cds_end" attributes.
+#  (Showing only the first 3 out of 40 transcripts.)
+                 
 
 ## Rat rn4 ensembl track
 cat("building rn4 \n")
@@ -117,6 +125,13 @@ makeTxDbPackageFromUCSC(version=version,
                         genome="rn4",
                         tablename="ensGene")
 
+#Warning message:
+#In .extractCdsLocsFromUCSCTxTable(ucsc_txtable, exon_locs) :
+#  UCSC data anomaly in 71 transcript(s): the cds cumulative length is not
+#  a multiple of 3 for transcripts ‘ENSRNOT00000064456’
+#  ‘ENSRNOT00000056007’ ‘ENSRNOT00000055902’ ‘ENSRNOT00000001880’
+
+
 ## Rat rn5 ensembl track
 cat("building rn5 \n")
 makeTxDbPackageFromUCSC(version=version,
@@ -126,6 +141,13 @@ makeTxDbPackageFromUCSC(version=version,
                         genome="rn5",
                         tablename="refGene")
 
+
+#Warning message:
+#In .extractCdsLocsFromUCSCTxTable(ucsc_txtable, exon_locs) :
+#  UCSC data anomaly in 1179 transcript(s): the cds cumulative length is
+#  not a multiple of 3 for transcripts ‘NM_031007’ ‘NM_001113372’
+#  ‘NM_001077677’ ‘NM_001113371’ ‘NM_032071’ ‘NM_012693’ ‘NM_031069’
+#
 
 
 ## yeast ensembl genes is no longer available?
@@ -152,29 +174,3 @@ makeTxDbPackageFromUCSC(version=version,
 ##			   destDir=TxDbOutDir,
 ##                         genome="sacCer2",
 ##                         tablename="ensGene")
-
-
-
-
-## ## ## Human biomaRt (just used for testing)
-## transcript_ids <- c(
-##                     "ENST00000268655",
-##                     "ENST00000313243",
-##                     "ENST00000341724",
-##                     "ENST00000400839",
-##                     "ENST00000400840",
-##                     "ENST00000435657",
-##                     "ENST00000478783"
-##                     )
-## ## #debug(GenomicFeatures:::.prepareBiomartMetadata)
-## makeTxDbPackageFromBiomart(version=version,
-##                            maintainer=maintainer,
-##                            author=author,
-## 			      destDir=TxDbOutDir,
-##                            biomart="ensembl",
-##                            dataset="hsapiens_gene_ensembl",
-##                            transcript_ids=transcript_ids,
-##                            miRBaseBuild="GRCh37")
-                                         
-
-
