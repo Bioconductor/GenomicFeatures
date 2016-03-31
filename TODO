@@ -1,5 +1,10 @@
-o Fix handling of the 'vals' arg (transcripts(), etc...) when the txdb has
+o Fix handling of the 'filter' arg (transcripts(), etc...) when the txdb has
   user seqlevels on.
+
+o Add 'filter' arg to transcriptsBy(), exonsBy(), cdsBy(),
+  fiveUTRByTranscript(), and threeUTRByTranscript(). exonsBy(), cdsBy(), and
+  *UTRByTranscript() should at least support filtering by gene or transcript
+  id.
 
 o makeTxDbFromUCSC() - Address the CDS non-completeness issue.
   The status of the CDS (complete or not) can be inferred from the

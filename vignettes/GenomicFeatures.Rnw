@@ -229,7 +229,7 @@ retrieve a subset of the transcripts available such as those on the
 $+$-strand of chromosome 1.
 
 <<transcripts2>>=
-GR <- transcripts(txdb, vals <- list(tx_chrom = "chr15", tx_strand = "+"))
+GR <- transcripts(txdb, filter=list(tx_chrom = "chr15", tx_strand = "+"))
 length(GR)
 unique(strand(GR))
 @

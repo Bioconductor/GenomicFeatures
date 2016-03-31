@@ -6,7 +6,7 @@ test_transcripts <- function()
                                       package="GenomicFeatures"))
 
     checkException(transcripts(data.frame()), silent=TRUE)
-    checkException(transcripts(txdb, vals=list(bad=1:10)), silent=TRUE)
+    checkException(transcripts(txdb, filter=list(bad=1:10)), silent=TRUE)
     checkException(transcripts(txdb, columns="bad"), silent=TRUE)
 
     seqinfo <- seqinfo(txdb)
@@ -23,9 +23,10 @@ test_transcripts <- function()
     want_grg <- GenomicFeatures:::.assignMetadataList(want_grg, txdb)
     checkIdentical(get_grg, want_grg)
 
-    vals <- list(tx_chrom=c("chr12", "chr14"), tx_strand="-")
-    get_grg <- transcripts(txdb, vals, columns=c("tx_id", "tx_name",
-                                                 "exon_id", "exon_rank"))
+    filter <- list(tx_chrom=c("chr12", "chr14"), tx_strand="-")
+    get_grg <- transcripts(txdb, columns=c("tx_id", "tx_name",
+                                           "exon_id", "exon_rank"),
+                                 filter=filter)
     want_grg <- GRanges(seqnames=factor("chr12", levels=seqlevels),
                         ranges=IRanges(start=52753790, end=52761309),
                         strand=strand("-"),
@@ -37,8 +38,9 @@ test_transcripts <- function()
     want_grg <- GenomicFeatures:::.assignMetadataList(want_grg, txdb)
     checkIdentical(get_grg, want_grg)
 
-    get_grg <- transcripts(txdb, vals=list(gene_id=c("220004", "1183", "10186")),
-                                 columns=c("tx_id", "tx_name", "gene_id"))
+    filter <- list(gene_id=c("220004", "1183", "10186"))
+    get_grg <- transcripts(txdb, columns=c("tx_id", "tx_name", "gene_id"),
+                                 filter=filter)
     tx_id_col <- c(91L, 136:137)
     gene_id_col <- CharacterList("10186", "1183", "1183")
     want_grg <- GRanges(seqnames=factor(c("chr13", "chrX", "chrX"),
@@ -62,9 +64,10 @@ test_transcripts_seqlevelsStyleSwap <- function(){
     ## extra test to make sure that we can change names via seqlevelsStyle
     checkTrue(seqlevelsStyle(txdb) == "UCSC")
     seqlevelsStyle(txdb) <- "NCBI"
-    checkTrue(seqlevelsStyle(txdb)[1] == "NCBI")    
-    get_grg <- transcripts(txdb, vals=list(gene_id=c("220004", "1183", "10186")),
-                                 columns=c("tx_id", "tx_name", "gene_id"))
+    checkTrue(seqlevelsStyle(txdb)[1] == "NCBI")
+    filter <- list(gene_id=c("220004", "1183", "10186"))
+    get_grg <- transcripts(txdb, columns=c("tx_id", "tx_name", "gene_id"),
+                                 filter=filter)
     checkTrue(all(seqnames(get_grg) == c("13", "X", "X")))
 
     tx_id_col <- c(91L, 136:137)
@@ -89,7 +92,7 @@ test_exons <- function()
                                       package="GenomicFeatures"))
 
     checkException(exons(data.frame()), silent=TRUE)
-    checkException(exons(txdb, vals=list(bad=1:10)), silent=TRUE)
+    checkException(exons(txdb, filter=list(bad=1:10)), silent=TRUE)
 
     seqinfo <- seqinfo(txdb)
     seqlevels <- seqlevels(seqinfo)
@@ -104,8 +107,9 @@ test_exons <- function()
     want_grg <- GenomicFeatures:::.assignMetadataList(want_grg, txdb)
     checkIdentical(get_grg, want_grg)
 
-    vals <- list(exon_chrom=c("chr5", "chr14"), exon_strand="-")
-    get_grg <- exons(txdb, vals=vals, columns=c("exon_id", "tx_name", "gene_id"))
+    filter <- list(exon_chrom=c("chr5", "chr14"), exon_strand="-")
+    get_grg <- exons(txdb, columns=c("exon_id", "tx_name", "gene_id"),
+                           filter=filter)
     want_ranges <- IRanges(start=c(134363424, 134366966, 134369403, 170732985),
                            end  =c(134365011, 134367198, 134369964, 170735759))
     want_grg <- GRanges(seqnames=factor("chr5", levels=seqlevels),
@@ -126,7 +130,7 @@ test_cds <- function()
                          package="GenomicFeatures"))
 
     checkException(cds(data.frame()), silent=TRUE)
-    checkException(cds(txdb, vals=list(bad=1:10)), silent=TRUE)
+    checkException(cds(txdb, filter=list(bad=1:10)), silent=TRUE)
 
     seqinfo <- seqinfo(txdb)
     seqlevels <- seqlevels(seqinfo)
@@ -141,8 +145,9 @@ test_cds <- function()
     want_grg <- GenomicFeatures:::.assignMetadataList(want_grg, txdb)
     checkIdentical(get_grg, want_grg)
 
-    vals <- list(cds_chrom=c("chr5", "chr14"), cds_strand="-")
-    get_grg <- cds(txdb, vals=vals, columns=c("exon_id", "tx_name", "gene_id"))
+    filter <- list(cds_chrom=c("chr5", "chr14"), cds_strand="-")
+    get_grg <- cds(txdb, columns=c("exon_id", "tx_name", "gene_id"),
+                         filter=filter)
     want_ranges <- IRanges(start=c(134364469, 134366966, 134369403, 170735359),
                            end  =c(134365011, 134367198, 134369571, 170735634))
     want_grg <- GRanges(seqnames=factor("chr5", levels=seqlevels),

@@ -9,7 +9,7 @@
 
 ### Return a named list of ordinary data frames, 1 per SELECT query.
 .extract_features <- function(txdb, proxy_table, mcolumns=character(0),
-                              vals=list(), core_columns)
+                              filter=list(), core_columns)
 {
     schema_version <- TxDb_schema_version(txdb)
     names(mcolumns) <- TXDB_column2table(mcolumns, from_table=proxy_table,
@@ -19,7 +19,7 @@
     ## 1st SELECT: extract stuff from the proxy table.
     columns1 <- union(core_columns, mcolumns[names(mcolumns) == proxy_table])
     df1 <- TxDb_SELECT_from_INNER_JOIN(txdb, proxy_table, columns1,
-                                       vals=vals, orderby=orderby)
+                                       filter=filter, orderby=orderby)
 
     ## Additional SELECTs: 1 additional SELECT per satellite table with the
     ## exception that the satellite tables that belong to TXDB_SPLICING_BUNDLE
@@ -33,10 +33,10 @@
     names(satellite_tables) <- satellite_tables
     df_list <- lapply(satellite_tables, function(satellite_table) {
         columns2 <- foreign_columns[[satellite_table]]
-        if (length(vals) == 0L) {
-            vals2 <- list()
+        if (length(filter) == 0L) {
+            filter2 <- list()
         } else {
-            vals2 <- setNames(list(df1[[proxy_column]]), proxy_column)
+            filter2 <- setNames(list(df1[[proxy_column]]), proxy_column)
         }
         if (satellite_table == "splicing") {
             columns2 <- c(proxy_column, columns2)
@@ -46,12 +46,12 @@
                 orderby <- c(proxy_column, "_tx_id")
             }
             TxDb_SELECT_from_splicing_bundle(txdb, columns2,
-                                             vals=vals2, orderby=orderby)
+                                             filter=filter2, orderby=orderby)
         } else if (satellite_table == "gene") {
             columns2 <- c(proxy_column, columns2)
             orderby <- c("_tx_id", "gene_id")
             TxDb_SELECT_from_INNER_JOIN(txdb, "gene", columns2,
-                                        vals=vals2, orderby=orderby)
+                                        filter=filter2, orderby=orderby)
         } else {
             stop(satellite_table, ": unsupported satellite table")
         }
@@ -85,13 +85,13 @@
     sub("^(tx_id|exon_id|cds_id)$", "_\\1", columns)
 
 .extract_features_as_GRanges <- function(txdb, proxy_table,
-                                         mcolumns=character(0), vals=list())
+                                         mcolumns=character(0), filter=list())
 {
     db_mcolumns <- .as_db_columns(mcolumns)
-    names(vals) <- .as_db_columns(names(vals))
+    names(filter) <- .as_db_columns(names(filter))
     core_columns <- TXDB_table_columns(proxy_table)[TXDB_CORE_TAGS]
     df_list <- .extract_features(txdb, proxy_table, db_mcolumns,
-                                 vals, core_columns)
+                                 filter, core_columns)
     DF <- .make_DataFrame_from_df_list(df_list)
     ans <- makeGRangesFromDataFrame(DF, seqinfo=get_TxDb_seqinfo0(txdb),
                                     seqnames.field=core_columns[["chrom"]],
@@ -105,11 +105,6 @@
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Primary extractors: transcripts(), exons(), cds(), and genes().
-###
-### TODO: Rename the 'vals' arg -> 'filter' so it's consistent with the
-### 'filters' arg of makeTxDbFromBiomart() which we should also rename
-### 'filter'. Also place it *after* the 'columns' argument.
-### Other proposal: rename the 'columns' arg -> 'colnames'
 ###
 
 .dbSchemaHasTxType <- function(txdb){
@@ -163,15 +158,28 @@ translateCols <- function(columns, txdb){
     obj
 }
 
-.extractFromTxDb <- function(txdb, proxy_table,
-                             mcolumns=character(0), vals=NULL)
+.get_filter_from_filter_or_vals <- function(filter=NULL, vals=NULL)
 {
+    if (is.null(vals))
+        return(filter)
+    msg <- wmsg("The 'vals' argument has been renamed 'filter'. ",
+                "Please use the 'filter' argument instead.")
+    .Deprecated(msg=msg)
+    if (!is.null(filter))
+        stop("only one of 'filter' or 'vals' can be specified")
+    vals
+}
+
+.extractFromTxDb <- function(txdb, proxy_table,
+                             mcolumns=character(0), filter=NULL, vals=NULL)
+{
+    filter <- .get_filter_from_filter_or_vals(filter, vals)
     user_mcolumns <- mcolumns
     mcolumns <- translateCols(mcolumns, txdb)
-    if (is.null(vals))
-        vals <- list()
-    names(vals) <- translateCols(names(vals), txdb)
-    ans <- .extract_features_as_GRanges(txdb, proxy_table, mcolumns, vals)
+    if (is.null(filter))
+        filter <- list()
+    names(filter) <- translateCols(names(filter), txdb)
+    ans <- .extract_features_as_GRanges(txdb, proxy_table, mcolumns, filter)
     names(mcols(ans)) <- if (is.null(names(user_mcolumns))) user_mcolumns
                          else names(user_mcolumns)
     .assignMetadataList(ans, txdb)
@@ -180,22 +188,23 @@ translateCols <- function(columns, txdb){
 setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
 
 setMethod("transcripts", "TxDb",
-    function(x, vals=NULL, columns=c("tx_id", "tx_name"))
-        .extractFromTxDb(x, "transcript", mcolumns=columns, vals=vals)
+    function(x, columns=c("tx_id", "tx_name"), filter=NULL, vals=NULL)
+        .extractFromTxDb(x, "transcript", mcolumns=columns, filter=filter,
+                                                            vals=vals)
 )
 
 setGeneric("exons", function(x, ...) standardGeneric("exons"))
 
 setMethod("exons", "TxDb",
-    function(x, vals=NULL, columns="exon_id")
-        .extractFromTxDb(x, "exon", mcolumns=columns, vals=vals)
+    function(x, columns="exon_id", filter=NULL, vals=NULL)
+        .extractFromTxDb(x, "exon", mcolumns=columns, filter=filter, vals=vals)
 )
 
 setGeneric("cds", function(x, ...) standardGeneric("cds"))
 
 setMethod("cds", "TxDb",
-    function(x, vals=NULL, columns="cds_id")
-        .extractFromTxDb(x, "cds", mcolumns=columns, vals=vals)
+    function(x, columns="cds_id", filter=NULL, vals=NULL)
+        .extractFromTxDb(x, "cds", mcolumns=columns, filter=filter, vals=vals)
 )
 
 setGeneric("genes", function(x, ...) standardGeneric("genes"))
@@ -227,7 +236,7 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
 ### different chromosomes are dropped. In that case, the genes are returned
 ### in a GRanges object. Otherwise, they're returned in a GRangesList object
 ### with the metadata columns requested thru 'columns' set at the top level.
-.TxDb.genes <- function(x, vals=NULL, columns="gene_id",
+.TxDb.genes <- function(x, columns="gene_id", filter=NULL, vals=NULL,
                         single.strand.genes.only=TRUE)
 {
     if (!is.character(columns))
@@ -235,7 +244,7 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     if (!isTRUEorFALSE(single.strand.genes.only))
         stop("'single.strand.genes.only' must be TRUE or FALSE")
     columns2 <- union(columns, "gene_id")
-    tx <- transcripts(x, vals=vals, columns=columns2)
+    tx <- transcripts(x, columns=columns2, filter=filter, vals=vals)
 
     ## Unroll 'tx' along the 'gene_id' metadata column.
     ## Note that the number of genes per transcript will generally be 1 or 0.

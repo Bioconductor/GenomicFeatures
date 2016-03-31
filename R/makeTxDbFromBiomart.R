@@ -42,7 +42,7 @@
     useMart(biomart=biomart, dataset=dataset, host=host, port=port)
 }
 
-### TODO: Share this with normalization of 'vals' arg in the transcripts(),
+### TODO: Share this with normalization of 'filter' arg in the transcripts(),
 ### exons(), cds(), and genes() extractors.
 .normarg_filters <- function(filters)
 {
@@ -747,8 +747,8 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
 ### makeTxDbFromBiomart()
 ###
 ### TODO: Rename the 'filters' arg -> 'filter' and set its default to NULL
-### so it's consistent with the 'vals' arg of the transcripts(), exons(),
-### cds(), and genes() extractors which we should also rename 'filter'.
+### so it's consistent with the 'filter' arg of the transcripts(), exons(),
+### cds(), and genes() extractors.
 ###
 
 makeTxDbFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",

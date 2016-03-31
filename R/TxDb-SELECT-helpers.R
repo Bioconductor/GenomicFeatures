@@ -49,32 +49,32 @@
     paste0(.build_SQL_FROM(joins, join_type), collapse=" ")
 }
 
-.build_SQL_WHERE <- function(vals)
+.build_SQL_WHERE <- function(filter)
 {
-    if (length(vals) == 0L)
+    if (length(filter) == 0L)
         return("")
-    sql <-
-      lapply(seq_len(length(vals)), function(i) {
-               v <- vals[[i]]
-               if (!is.numeric(v))
-                 v <- paste0("'", v, "'")
-               v <- paste0("(", paste0(v, collapse=","), ")")
-               v <- paste0(names(vals)[i], " IN ", v)
-               paste0("(", v, ")")
-            })
+    sql <- lapply(seq_len(length(filter)),
+             function(i) {
+               fi <- filter[[i]]
+               if (!is.numeric(fi))
+                 fi <- paste0("'", fi, "'")
+               fi <- paste0("(", paste0(fi, collapse=","), ")")
+               fi <- paste0(names(filter)[i], " IN ", fi)
+               paste0("(", fi, ")")
+           })
     paste0(unlist(sql), collapse=" AND ")
 }
 
 .build_SQL_SELECT <- function(columns, joins, distinct=FALSE,
-                              vals=list(), orderby=character(0))
+                              filter=list(), orderby=character(0))
 {
     SQL <- "SELECT"
     if (distinct)
         SQL <- c(SQL, "DISTINCT")
     SQL <- c(SQL, paste0(columns, collapse=", "),
              "FROM", .build_SQL_FROM(joins))
-    if (length(vals) != 0L)
-        SQL <- c(SQL, "WHERE", .build_SQL_WHERE(vals))
+    if (length(filter) != 0L)
+        SQL <- c(SQL, "WHERE", .build_SQL_WHERE(filter))
     if (length(orderby) != 0L)
         SQL <- c(SQL, "ORDER BY", paste0(orderby, collapse=", "))
     SQL
@@ -277,15 +277,15 @@ TxDb_schema_version <- function(txdb)
 ### They should satisfy the needs of most extractors defined in the package.
 ###
 
-### The columns in 'columns' + those involved thru 'vals' and 'orderby' are
+### The columns in 'columns' + those involved thru 'filter' and 'orderby' are
 ### collected and their corresponding tables are INNER JOIN'ed.
-TxDb_SELECT_from_INNER_JOIN <- function(txdb, table, columns, vals=list(),
+TxDb_SELECT_from_INNER_JOIN <- function(txdb, table, columns, filter=list(),
                                         orderby=character(0))
 {
     schema_version <- TxDb_schema_version(txdb)
     tables <- TXDB_column2table(columns, from_table=table,
                                 schema_version=schema_version)
-    where_columns <- names(vals)
+    where_columns <- names(filter)
     where_tables <- TXDB_column2table(where_columns, from_table=table,
                                       schema_version=schema_version)
     joins <- .TXDB_join_tables(c(table, tables, where_tables))
@@ -295,25 +295,26 @@ TxDb_SELECT_from_INNER_JOIN <- function(txdb, table, columns, vals=list(),
     use_joins <- length(joins) > 1L
     if (use_joins) {
         columns <- .as_qualified(tables, columns)
-        names(vals) <- .as_qualified(where_tables, where_columns)
+        names(filter) <- .as_qualified(where_tables, where_columns)
         orderby <- .as_qualified(orderby_tables, orderby)
     }
     ## .build_SQL_SELECT() uses INNER joins.
     SQL <- .build_SQL_SELECT(columns, joins, distinct=use_joins,
-                             vals=vals, orderby=orderby)
+                             filter=filter, orderby=orderby)
     queryAnnotationDb(txdb, SQL)
 }
 
-### Can only involve columns (thru 'columns', 'vals', and 'orderby') that
+### Can only involve columns (thru 'columns', 'filter', and 'orderby') that
 ### belong to the tables in TXDB_SPLICING_BUNDLE at the moment.
 TxDb_SELECT_from_splicing_bundle <- function(txdb, columns,
-                                             vals=list(), orderby=character(0),
+                                             filter=list(),
+                                             orderby=character(0),
                                              cds_join_type="LEFT")
 {
     schema_version <- TxDb_schema_version(txdb)
     tables <- TXDB_column2table(columns, from_table="splicing",
                                 schema_version=schema_version)
-    where_columns <- names(vals)
+    where_columns <- names(filter)
     where_tables <- TXDB_column2table(where_columns, from_table="splicing",
                                       schema_version=schema_version)
     orderby_tables <- TXDB_column2table(orderby, from_table="splicing",
@@ -323,12 +324,12 @@ TxDb_SELECT_from_splicing_bundle <- function(txdb, columns,
     use_joins <- length(joins) > 1L
     if (use_joins) {
         columns <- .as_qualified(tables, columns)
-        names(vals) <- .as_qualified(where_tables, where_columns)
+        names(filter) <- .as_qualified(where_tables, where_columns)
         orderby <- .as_qualified(orderby_tables, orderby)
     }
     from <- .build_SQL_FROM_splicing(joins, cds_join_type=cds_join_type)
     SQL <- .build_SQL_SELECT(columns, from, distinct=FALSE,
-                             vals=vals, orderby=orderby)
+                             filter=filter, orderby=orderby)
     queryAnnotationDb(txdb, SQL)
 }
 
@@ -338,27 +339,27 @@ TxDb_SELECT_from_splicing_bundle <- function(txdb, columns,
 ### from a given TxDb table
 ###
 
-TxDb_SELECT_from_chrominfo <- function(txdb, vals=list(),
+TxDb_SELECT_from_chrominfo <- function(txdb, filter=list(),
                                        orderby="_chrom_id")
 {
     schema_version <- TxDb_schema_version(txdb)
     columns <- TXDB_table_columns("chrominfo", schema_version=schema_version)
     TxDb_SELECT_from_INNER_JOIN(txdb, "chrominfo", columns,
-                                vals=vals, orderby=orderby)
+                                filter=filter, orderby=orderby)
 }
 
-TxDb_SELECT_from_transcript <- function(txdb, vals=list(),
+TxDb_SELECT_from_transcript <- function(txdb, filter=list(),
                                         orderby="_tx_id")
 {
     schema_version <- TxDb_schema_version(txdb)
     columns <- TXDB_table_columns("transcript", schema_version=schema_version)
     TxDb_SELECT_from_INNER_JOIN(txdb, "transcript", columns,
-                                vals=vals, orderby=orderby)
+                                filter=filter, orderby=orderby)
 }
 
 ### Select rows from the virtual table obtained by joining the "splicing",
 ### "exon", and "cds" tables together.
-TxDb_SELECT_from_splicings <- function(txdb, vals=list(),
+TxDb_SELECT_from_splicings <- function(txdb, filter=list(),
                                        orderby=c("_tx_id", "exon_rank"),
                                        cds_join_type="LEFT")
 {
@@ -368,16 +369,16 @@ TxDb_SELECT_from_splicings <- function(txdb, vals=list(),
     cds_columns <- cds_columns[c("id", "name", "start", "end")]
     columns <- unique(c("_tx_id", "exon_rank", exon_columns, cds_columns))
     TxDb_SELECT_from_splicing_bundle(txdb, columns,
-                                     vals=vals, orderby=orderby,
+                                     filter=filter, orderby=orderby,
                                      cds_join_type=cds_join_type)
 }
 
-TxDb_SELECT_from_gene <- function(txdb, vals=list(),
+TxDb_SELECT_from_gene <- function(txdb, filter=list(),
                                   orderby=c("_tx_id", "gene_id"))
 {
     schema_version <- TxDb_schema_version(txdb)
     columns <- TXDB_table_columns("gene", schema_version=schema_version)
     TxDb_SELECT_from_INNER_JOIN(txdb, "gene", columns,
-                                vals=vals, orderby=orderby)
+                                filter=filter, orderby=orderby)
 }
 
