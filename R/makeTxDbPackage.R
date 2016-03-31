@@ -311,7 +311,7 @@ makeTxDbPackageFromBiomart <- function(
   dataset="hsapiens_gene_ensembl",
   transcript_ids=NULL,   ## optional
   circ_seqs=DEFAULT_CIRC_SEQS, 
-  filters="",
+  filter=NULL,
   id_prefix="ensembl_",
   host="www.ensembl.org",
   port=80,
@@ -349,7 +349,7 @@ makeTxDbPackageFromBiomart <- function(
                                 dataset=dataset,
                                 transcript_ids=transcript_ids,
                                 circ_seqs=circ_seqs,
-                                filters=filters,
+                                filter=filter,
                                 id_prefix=id_prefix,
                                 host=host,
                                 port=port,

@@ -17,7 +17,7 @@ makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
                     dataset="hsapiens_gene_ensembl",
                     transcript_ids=NULL,
                     circ_seqs=DEFAULT_CIRC_SEQS,
-                    filters="",
+                    filter=NULL,
                     id_prefix="ensembl_",
                     host="www.ensembl.org",
                     port=80,
@@ -49,8 +49,8 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
     Otherwise it will say 'Full dataset: yes'.}
   \item{circ_seqs}{a character vector to list out which chromosomes
     should be marked as circular.}
-  \item{filters}{Additional filters to use in the BioMart query. Must be
-    a named list. An example is \code{filters=list(source="entrez")}}
+  \item{filter}{Additional filters to use in the BioMart query. Must be
+    a named list. An example is \code{filter=list(source="entrez")}}
   \item{id_prefix}{Specifies the prefix used in BioMart attributes. For
     example, some BioMarts may have an attribute specified as
     \code{"ensembl_transcript_id"} whereas others have the same attribute
@@ -207,7 +207,7 @@ head(listFilters(mart))
 ## Retrieve transcript dataset for Ensembl gene ENSG00000011198:
 my_filter <- list(ensembl_gene_id="ENSG00000011198")
 txdb4 <- makeTxDbFromBiomart(dataset="hsapiens_gene_ensembl",
-                             filters=my_filter)
+                             filter=my_filter)
 txdb4
 transcripts(txdb4, columns=c("tx_id", "tx_name", "gene_id"))
 transcriptLengths(txdb4)
