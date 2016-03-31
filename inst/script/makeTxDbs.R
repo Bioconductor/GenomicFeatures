@@ -2,7 +2,7 @@
 ### release build code base. It creates new TxDb packages for a release and 
 ### updates existing packages that have modified tracks.
 
-.TxDbPackagesForRelease <- 
+TxDbPackagesForRelease <- 
     function(version, 
              destDir='.',
              maintainer= paste0("Bioconductor Package Maintainer ",
