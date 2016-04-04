@@ -87,7 +87,7 @@
   distance(gr, txdb, id=c("4", "4097"), type="tx")
 
   ## 'id' "4" is on chr2L and "4097" is on chr2R. 
-  transcripts(txdb, list(tx_id=c("4", "4097")))
+  transcripts(txdb, filter=list(tx_id=c("4", "4097")))
 
   ## If we reverse the 'id' the chromosomes are incompatable with gr.
   distance(gr, txdb, id=c("4097", "4"), type="tx")

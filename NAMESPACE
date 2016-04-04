@@ -1,12 +1,14 @@
 import(methods)
 
-importFrom(utils, download.file, installed.packages, read.table, as.person)
+importFrom(stats, setNames)
+importFrom(utils, download.file, installed.packages, read.table, as.person,
+                  capture.output, str)
 importFrom(tools, file_ext, file_path_sans_ext)
 
 importFrom(RCurl, getURL)
 importMethodsFrom(DBI, dbCommit, dbConnect,
-                  dbDisconnect, dbExistsTable, dbGetQuery,
-                  dbReadTable, dbWriteTable, dbListTables, dbListFields)
+                       dbDisconnect, dbExistsTable, dbGetQuery,
+                       dbReadTable, dbWriteTable, dbListTables, dbListFields)
 
 importFrom(RSQLite, SQLite, SQLITE_RO)
 importMethodsFrom(RSQLite, dbBegin, dbGetPreparedQuery)
@@ -24,12 +26,14 @@ importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
 importFrom(Biostrings, DNAStringSet, reverseComplement, getSeq)
 
 importFrom(biomaRt, getBM, listAttributes, listDatasets, listFilters,
-           listMarts, useDataset, useMart)
+                    listMarts, useDataset, useMart)
 
 importFrom(rtracklayer, FileForFormat, import, asBED, asGFF, browserSession,
-           ucscTableQuery, tableNames, getTable, trackNames, ucscSchema)
+                        ucscTableQuery, tableNames, getTable, trackNames,
+                        ucscSchema)
 
-importFrom(AnnotationDbi, columns, keys, keytypes, select, mapIds, metadata, dbconn, dbfile, loadDb, saveDb)
+importFrom(AnnotationDbi, columns, keys, keytypes, select, mapIds, metadata,
+                          dbconn, dbfile, loadDb, saveDb)
 
 exportClasses(TxDb, FeatureDb)
 

@@ -17,9 +17,9 @@ setMethod("distance", c("GenomicRanges", "TxDb"),
             stop("'id' must be a character")
         rng <- switch(type,
                       gene=.extractByGeneID(y, id),
-                      tx=transcripts(y, list(tx_id=id), "tx_id"),
-                      exon=exons(y, list(exon_id=id), "exon_id"),
-                      cds=cds(y, list(cds_id=id), "cds_id"))
+                      tx=transcripts(y, "tx_id", filter=list(tx_id=id)),
+                      exon=exons(y, "exon_id", filter=list(exon_id=id)),
+                      cds=cds(y, "cds_id", filter=list(cds_id=id)))
         if (type != "gene") {
             rng <- .subsetByID(rng, id)
             if (!identical(length(x), length(rng)))
@@ -32,7 +32,7 @@ setMethod("distance", c("GenomicRanges", "TxDb"),
 
 .extractByGeneID <- function(y, id)
 {
-    tx <- transcripts(y, list(gene_id=id), "gene_id")
+    tx <- transcripts(y, "gene_id", filter=list(gene_id=id))
     f <- factor(unlist(tx$gene_id, use.names=FALSE))
     missing <- !id %in% levels(f) 
     if (any(missing))

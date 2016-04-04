@@ -12,7 +12,7 @@ test_transcripts <- function()
     seqinfo <- seqinfo(txdb)
     seqlevels <- seqlevels(seqinfo)
 
-    get_grg <- transcripts(txdb, list(gene_id="139231"))
+    get_grg <- transcripts(txdb, filter=list(gene_id="139231"))
     want_grg <- GRanges(seqnames=factor("chrX", levels=seqlevels),
                         ranges=IRanges(start=c(103411156, 103430747),
                                        end  =c(103440582, 103440582)),
@@ -97,7 +97,7 @@ test_exons <- function()
     seqinfo <- seqinfo(txdb)
     seqlevels <- seqlevels(seqinfo)
 
-    get_grg <- exons(txdb, list(tx_name="uc001gde.2"))
+    get_grg <- exons(txdb, filter=list(tx_name="uc001gde.2"))
     want_grg <- GRanges(seqnames=factor("chr1", levels=seqlevels),
                         ranges=IRanges(start=c(165513478, 165532742),
                                        end  =c(165514155, 165533185)),
@@ -135,7 +135,7 @@ test_cds <- function()
     seqinfo <- seqinfo(txdb)
     seqlevels <- seqlevels(seqinfo)
 
-    get_grg <- cds(txdb, list(tx_name="uc001gde.2"))
+    get_grg <- cds(txdb, filter=list(tx_name="uc001gde.2"))
     want_grg <- GRanges(seqnames=factor("chr1", levels=seqlevels),
                         ranges=IRanges(start=c(165513534, 165532742),
                                        end  =c(165514155, 165533061)),
