@@ -14,28 +14,21 @@ TxDbPackagesForRelease <-
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="galGal4",
-                            tablename="refGene")
-    cat("building susScr3 \n")
-    makeTxDbPackageFromUCSC(version=version,
-                            maintainer=maintainer,
-                            author=author,
-                            destDir=TxDbOutDir,
-                            genome="susScr3",
                             tablename="refGene")
     cat("building ce11 \n")
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="ce11",
                             tablename="refGene")
     cat("building dm6 \n")
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="dm6",
                             tablename="ensGene")
 
@@ -43,7 +36,7 @@ TxDbPackagesForRelease <-
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="rn6",
                             tablename="refGene")
 
@@ -51,7 +44,7 @@ TxDbPackagesForRelease <-
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="panTro4",
                             tablename="refGene")
 
@@ -59,7 +52,7 @@ TxDbPackagesForRelease <-
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="bostau8",
                             tablename="refGene")
 
@@ -67,7 +60,7 @@ TxDbPackagesForRelease <-
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="canFam3",
                             tablename="refGene")
 
@@ -75,7 +68,7 @@ TxDbPackagesForRelease <-
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="danRer10",
                             tablename="refGene")
  
@@ -83,7 +76,7 @@ TxDbPackagesForRelease <-
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="rheMac3",
                             tablename="refGene")
 
@@ -91,7 +84,7 @@ TxDbPackagesForRelease <-
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="susScr3",
                             tablename="refGene")
 
@@ -100,7 +93,7 @@ TxDbPackagesForRelease <-
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
-                            destDir=TxDbOutDir,
+                            destDir=txdbDir,
                             genome="rn5",
                             tablename="refGene")
 }
@@ -112,7 +105,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="hg18",
 #                        tablename="knownGene")
 #
@@ -121,7 +114,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="hg19",
 #                        tablename="knownGene",
 #                        miRBaseBuild="GRCh37")
@@ -131,7 +124,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="hg19",
 #                        tablename="lincRNAsTranscripts",
 #                        miRBaseBuild="GRCh37")
@@ -140,7 +133,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="hg38",
 #                        tablename="knownGene")
 #
@@ -149,7 +142,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="mm9",
 #                        tablename="knownGene")
 #
@@ -158,7 +151,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="mm10",
 #                        tablename="ensGene")
 #
@@ -167,7 +160,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="mm10",
 #                        tablename="knownGene")
 #
@@ -176,7 +169,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="ce6",
 #                        tablename="ensGene")
 # 
@@ -185,7 +178,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="dm3",
 #                        tablename="ensGene")
 #
@@ -194,7 +187,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromBiomart(version=version,
 #                          maintainer=maintainer,
 #                          author=author,
-#		 	  destDir=TxDbOutDir,
+#		 	  destDir=txdbDir,
 #                          host="plants.ensembl.org",
 #                          biomart="plants_mart",
 #                          dataset="athaliana_eg_gene")
@@ -204,7 +197,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="rn4",
 #                        tablename="ensGene")
 #
@@ -213,7 +206,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="sacCer2",
 #                        tablename="sgdGene")
 #
@@ -221,7 +214,7 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#			destDir=TxDbOutDir,
+#			destDir=txdbDir,
 #                        genome="sacCer3",
 #                        tablename="sgdGene")
 #
@@ -229,6 +222,6 @@ TxDbPackagesForRelease <-
 #makeTxDbPackageFromUCSC(version=version,
 #                        maintainer=maintainer,
 #                        author=author,
-#                        destDir=TxDbOutDir,
+#                        destDir=txdbDir,
 #                        genome="sacCer2",
 #                        tablename="ensGene")
