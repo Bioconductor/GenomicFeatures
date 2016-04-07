@@ -10,6 +10,20 @@ TxDbPackagesForRelease <-
              author="Bioconductor Core Team")
 {
     ## New packages for Bioconductor 3.3
+    cat("building galGal4 \n")
+    makeTxDbPackageFromUCSC(version=version,
+                            maintainer=maintainer,
+                            author=author,
+                            destDir=TxDbOutDir,
+                            genome="galGal4",
+                            tablename="refGene")
+    cat("building susScr3 \n")
+    makeTxDbPackageFromUCSC(version=version,
+                            maintainer=maintainer,
+                            author=author,
+                            destDir=TxDbOutDir,
+                            genome="susScr3",
+                            tablename="refGene")
     cat("building ce11 \n")
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
