@@ -283,10 +283,10 @@ makeIdsForUniqueDataFrameRows <- function(x)
     }
     ## Features with no type (e.g. tx_type is NA) go last.
     type[is.na(type)] <- .Machine$integer.max
-    oo <- S4Vectors:::orderIntegerPairs(name, type)
+    oo <- orderIntegerPairs(name, type)
     ans <- integer(length(oo))
     ans[oo] <- seq_along(oo)
-    sm <- S4Vectors:::selfmatchIntegerPairs(name, type)
+    sm <- selfmatchIntegerPairs(name, type)
     ans[sm]
 }
 
@@ -322,23 +322,23 @@ makeFeatureIds <- function(chrom_ids, strand, start, end,
         d <- .rank_name_type(name, type)
     }
     if (!same.id.for.dups) {
-        oo <- S4Vectors:::orderIntegerQuads(a, b, c, d)
+        oo <- orderIntegerQuads(a, b, c, d)
         ans <- integer(length(oo))
         ans[oo] <- seq_len(length(oo))
         return(ans)
     }
     ## There should be a better way to do this...
-    is_not_dup <- !S4Vectors:::duplicatedIntegerQuads(a, b, c ,d)
+    is_not_dup <- !duplicatedIntegerQuads(a, b, c ,d)
     ua <- a[is_not_dup]
     ub <- b[is_not_dup]
     uc <- c[is_not_dup]
     ud <- d[is_not_dup]
-    oo <- S4Vectors:::orderIntegerQuads(ua, ub, uc, ud)
+    oo <- orderIntegerQuads(ua, ub, uc, ud)
     ua <- ua[oo]
     ub <- ub[oo]
     uc <- uc[oo]
     ud <- ud[oo]
-    S4Vectors:::matchIntegerQuads(a, b, c, d, ua, ub, uc, ud)
+    matchIntegerQuads(a, b, c, d, ua, ub, uc, ud)
 }
 
 

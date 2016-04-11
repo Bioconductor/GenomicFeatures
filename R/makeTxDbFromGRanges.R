@@ -20,7 +20,7 @@
                   "only supports 'ties.method=\"first\"' at the moment"))
     x_partitioning <- PartitioningByEnd(x)
     unlisted_x <- unlist(x, use.names=FALSE)
-    oo <- S4Vectors:::orderIntegerPairs(togroup(x_partitioning), unlisted_x)
+    oo <- orderIntegerPairs(togroup(x_partitioning), unlisted_x)
     unlisted_ans <- integer(length(oo))
     unlisted_ans[oo] <- seq_along(oo)
     ans <- relist(unlisted_ans, x_partitioning)
@@ -797,7 +797,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     ## Keep only unique (tx_id, gene_id) pairs.
     tx_id <- factor(transcript_id, levels=unique(transcript_id))
     gene_id <- factor(gene_id, levels=unique(gene_id))
-    keep_idx <- which(!S4Vectors:::duplicatedIntegerPairs(tx_id, gene_id))
+    keep_idx <- which(!duplicatedIntegerPairs(tx_id, gene_id))
     tx_id <- tx_id[keep_idx]
     gene_id <- gene_id[keep_idx]
 
