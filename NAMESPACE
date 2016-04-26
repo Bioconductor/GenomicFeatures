@@ -1,5 +1,4 @@
 import(methods)
-
 importFrom(stats, setNames)
 importFrom(utils, download.file, installed.packages, read.table, as.person,
                   capture.output, str)
@@ -13,6 +12,7 @@ importMethodsFrom(DBI, dbCommit, dbConnect,
 importFrom(RSQLite, SQLite, SQLITE_RO)
 importMethodsFrom(RSQLite, dbBegin, dbGetPreparedQuery)
 
+import(AnnotationDbi)
 import(BiocGenerics)
 import(S4Vectors)
 import(IRanges)
@@ -32,8 +32,6 @@ importFrom(rtracklayer, FileForFormat, import, asBED, asGFF, browserSession,
                         ucscTableQuery, tableNames, getTable, trackNames,
                         ucscSchema)
 
-importFrom(AnnotationDbi, columns, keys, keytypes, select, mapIds, metadata,
-                          dbconn, dbfile, loadDb, saveDb)
 
 exportClasses(TxDb, FeatureDb)
 
@@ -42,7 +40,7 @@ export(
   DEFAULT_CIRC_SEQS,
 
   ## makeTxDb.R:
-  makeTxDb,
+  makeTxDb, makePackageName,
 
   ## makeTxDbFromUCSC.R:
   supportedUCSCtables,

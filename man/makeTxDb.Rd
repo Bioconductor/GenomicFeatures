@@ -1,6 +1,7 @@
 \name{makeTxDb}
 
 \alias{makeTxDb}
+\alias{makePackageName}
 
 \title{
   Making a TxDb object from user supplied annotations

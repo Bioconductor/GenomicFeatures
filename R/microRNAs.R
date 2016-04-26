@@ -89,7 +89,7 @@ setMethod("microRNAs", "TxDb", function(x){.microRNAs(x)} )
 .tRNAs <- function(txdb){
   require(FDb.UCSC.tRNAs)
   ## get the current package name
-  pkgName <- .makePackageName(txdb)
+  pkgName <- makePackageName(txdb)
   ## from here we know what the FDB should MUST look like
   fdbName <- sub("TxDb","FDb",pkgName)
   fdbName <- unlist(strsplit(fdbName,"\\."))

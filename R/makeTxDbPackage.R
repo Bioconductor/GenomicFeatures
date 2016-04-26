@@ -54,7 +54,7 @@
   prefix
 }
 
-.makePackageName <- function(txdb){
+makePackageName <- function(txdb){
   prefix <- .choosePrefix(txdb)
   con <- dbconn(txdb)
   species <- .abbrevOrganismName(.getMetaDataValue(txdb,'Organism'))  
@@ -163,7 +163,7 @@ makeTxDbPackage <- function(txdb,
                             pkgname=NULL){
    ## every package has a name We will generate this according to a heuristic
    if(is.null(pkgname)){
-       pkgname <- .makePackageName(txdb)
+       pkgname <- makePackageName(txdb)
    }
    dbType <- .getMetaDataValue(txdb,'Db type')
    authors <- .normAuthor(author, maintainer)

@@ -47,6 +47,15 @@ test_mapFromTranscripts_strand <- function()
     checkIdentical(ranges(ans), ranges(ignore))
     checkTrue(unique(as.character(strand(ignore))) == "*")
 
+
+    ## '-' strand
+    xx <- GRanges("tx1", IRanges(12, 14), strand="-")
+    gg <- GRanges("chr1", IRanges(c(1, 20), width=10), strand="-")
+    aa = GRangesList(gg)
+    names(aa) <- "tx1" 
+    ans <- mapFromTranscripts(xx, aa)
+    checkIdentical(ranges(ans), IRanges(7, 9))
+
     ## invalid mixed strand 
     strand(align[[1]][1]) <- "-"
     checkException(mapFromTranscripts(x, align, FALSE), silent=TRUE) 

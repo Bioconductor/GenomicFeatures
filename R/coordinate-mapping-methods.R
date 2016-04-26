@@ -252,7 +252,7 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
         xHits <- queryHits(hits)
         txHits <- subjectHits(hits)
 
-        ## We check strand in this helper because 'hits' was not constructed 
+        ## Check strand in this helper because 'hits' was not constructed 
         ## with findOverlaps() or any other strand-aware method.
         if (is(transcripts, "GRangesList"))
             txstrand <- unlist(runValue(strand(transcripts)), use.names=FALSE)

@@ -190,10 +190,9 @@
   if('skipValidKeysTest' %in% names(extraArgs)){
       skipValidKeysTest<-extraArgs[["skipValidKeysTest"]]}else{
           skipValidKeysTest<-FALSE}
-  AnnotationDbi:::.testSelectArgs(x, keys=keys, cols=columns,
-                                  keytype=keytype,
-                                  skipValidKeysTest=skipValidKeysTest)
-  
+          testSelectArgs(x, keys=keys, cols=columns, keytype=keytype,
+                         skipValidKeysTest=skipValidKeysTest)
+ 
   ## 1st we check the keytype to see if it is valid:
   if(is.na(keys(x, keytype)[1]) & length(keys(x, keytype))==1){ 
     stop(paste("There do not appear to be any keys",
@@ -256,12 +255,12 @@
   ## been appended to make a joind (like TXID)
   res <- res[,.reverseColAbbreviations(x,cnames),drop=FALSE]
 
-  ## Then sort rows and columns and drop the filtered rows etc. using .resort
+  ## Then sort rows and columns and drop the filtered rows etc. using resort_base
   ## from AnnotationDbi
   joinType <- .reverseColAbbreviations(x, keytype)
   if(dim(res)[1]>0){
-    res <- AnnotationDbi:::.resort(res, keys, joinType,
-                                   .reverseColAbbreviations(x,cnames))
+    res <- resort_base(res, keys, joinType,
+                       .reverseColAbbreviations(x,cnames))
   }
   
 #  ## Then I need to filter out rows of NAs
@@ -325,7 +324,7 @@ setMethod("columns", "TxDb",
 ## method for keys()
 ## PHEW, There are a lot of types.  But names are not always available so...
 .keys <- function(x, keytype){
-    AnnotationDbi:::.testForValidKeytype(x, keytype)
+    testForValidKeytype(x, keytype)
     res <- switch(EXPR = keytype,
              "GENEID" = AnnotationDbi:::dbQuery(dbconn(x),
                "SELECT DISTINCT gene_id FROM gene", 1L),
@@ -493,7 +492,7 @@ setMethod("keytypes", "TxDb",
 ###############################################
 ############ Cleared up
 ###############################################
-## Also this gives me a strange answer (one that is not really filtered quite right) - There may be a problem with AnnotationDbi:::.resort() - OR maybe I can just put a "DISTINCT" into the query? - and maybe I should really do both???
+## Also this gives me a strange answer (one that is not really filtered quite right) - There may be a problem with AnnotationDbi:::resort_base() - OR maybe I can just put a "DISTINCT" into the query? - and maybe I should really do both???
 
 ## cols = c("GENEID","TXNAME", "TXID"); k = head(keys(txdb, "TXID"));foo = select(txdb, k, cols = cols, keytype="TXID"); head(foo)
 
@@ -535,7 +534,7 @@ setMethod("keytypes", "TxDb",
 ## The following wasn't working because the key column must always be part of
 ## the query. (fixed)
 
-##  debug(AnnotationDbi:::.resort); AnnotationDbi:::debugSQL();
+##  debug(AnnotationDbi:::resort_base); AnnotationDbi:::debugSQL();
 ##  cols = c("GENEID","TXNAME", "TXID", "CDSNAME"); k = head(keys(txdb, "CDSID"));foo = select(txdb, k, cols = cols, keytype="CDSID"); head(foo)
 
 ## Drop rows that contain only NAs. - This is a good cleanup generalyl, and also if you drop the column that you sorted on then you may have added a bunch of NA rows for where there was no data, and now those are just silly. - DONE

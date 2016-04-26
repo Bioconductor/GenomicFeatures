@@ -8,6 +8,7 @@
 \alias{pmapToTranscripts}
 \alias{pmapToTranscripts,GenomicRanges,GenomicRanges-method}
 \alias{pmapToTranscripts,GenomicRanges,GRangesList-method}
+\alias{pmapToTranscripts,GRangesList,GRangesList-method}
 
 \alias{mapFromTranscripts}
 \alias{mapFromTranscripts,GenomicRanges,GenomicRanges-method}
