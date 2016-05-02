@@ -1,3 +1,70 @@
+CHANGES IN VERSION 1.24
+-----------------------
+
+NEW FEATURES
+
+    o Add mapRangesToIds() and mapIdsToRanges() for mapping genomic ranges to
+      IDs and vice-versa.
+
+    o Support makeTxDbFromUCSC("hg38", "knownGene") (gets "GENCODE v22" track).
+
+    o Add pmapToTranscripts,GRangesList,GRangesList method.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Rename the 'vals' argument of the transcripts(), exons(), cds(), and
+      genes() extractors -> 'filter'. The 'vals' argument is still available
+      but deprecated.
+
+    o Rename the 'filters' argument of makeTxDbFromBiomart() and
+      makeTxDbPackage() -> 'filter'.
+
+    o When grouping the transcripts by exon or CDS, transcriptsBy() now returns
+      a GRangesList object with the "exon_rank" information (as an inner
+      metadata column).
+
+    o For transcripts with no exons (like in the GFF3 files from GeneDB),
+      makeTxDbFromGRanges() now infers the exons from the CDS.
+
+    o For transcripts with no exons and no CDS (like in the GFF3 files from
+      miRBase), makeTxDbFromGRanges() now infers the exon from the transcript.
+
+    o makeTxDbFromGRanges() and makeTxDbFromGFF() now support GFF/GTF files
+      with one (or both) of the following peculiarities:
+      - The file is GTF and contains only lines of type transcript but no
+        transcript_id tag (not clear this is valid GTF but some users are
+        working with this kind of file).
+      - Each transcript in the file is reported to be on its own contig and
+        spans it (start=1) but no strand is reported for the transcript.
+        makeTxDbFromGRanges() now sets the strand to "+" for all these
+        transcripts.
+
+    o makeTxDbFromGRanges() now recognizes features of type miRNA,
+      miRNA_primary_transcript, SRP_RNA, RNase_P_RNA, RNase_MRP_RNA, misc_RNA,
+      antisense_RNA, and antisense as transcripts. It also now recognizes
+      features of type transposable_element_gene as genes.
+
+    o makeTxDbFromBiomart() now points to the Ensembl mart by default instead
+      of the central mart service.
+
+    o Add some commonly used alternative names (Mito, mitochondrion,
+      dmel_mitochondrion_genome, Pltd, ChrC, Pt, chloroplast, Chloro, 2uM) for
+      the mitochondrial and chloroplast genomes to DEFAULT_CIRC_SEQS.
+
+DEPRECATED AND DEFUNCT
+
+    o Remove the makeTranscriptDb*() functions (were defunct in BioC 3.2).
+
+    o Remove the 'exonRankAttributeName', 'gffGeneIdAttributeName',
+      'useGenesAsTranscripts', 'gffTxName', and 'species' arguments from the
+      makeTxDbFromGFF() function (were defunct in BioC 3.2).
+
+BUG FIXES
+
+    o Try to improve heuristic used in makeTxDbFromGRanges() for detecting the
+      format (GFF3 or GTF) of input GRanges object 'x'.
+
+
 CHANGES IN VERSION 1.22
 -----------------------
 
