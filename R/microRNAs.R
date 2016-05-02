@@ -30,26 +30,26 @@
 }
 
 ## main function
-.microRNAs <- function(txdb){
+.microRNAs <- function(x){
   ## get the data about whether or not we have any info.
-  con <- dbconn(txdb)
+  con <- dbconn(x)
   bld <- dbGetQuery(con,
            "SELECT value FROM metadata WHERE name='miRBase build ID'")
-  src <- DBI::dbGetQuery(con,
+  src <- dbGetQuery(con,
            "SELECT value FROM metadata WHERE name='Data source'")[[1]]
 
   ## And if not - bail out with message
   if(is.na(bld) || dim(bld)[1]==0){
     stop("this TxDb does not have a miRBase build ID specified")}
   ## now connect to mirbase
-  require(mirbase.db) ## strictly required
+  loadNamespace("mirbase.db") ## strictly required
 
   ## What I need is the join of mirna with mirna_chromosome_build (via _id),
   ## that is then filtered to only have rows that match the species which goes
   ## with the build.
   
   ## connection
-  mcon <- mirbase_dbconn()
+  mcon <- mirbase.db::mirbase_dbconn()
   ## 1st lets get the organism abbreviation
   sql <- paste0("SELECT organism FROM mirna_species WHERE genome_assembly",
                 " LIKE '", bld, "%'")
@@ -75,43 +75,40 @@
                  strand=data$strand)
   
   ## Filter seqinfo
-  .syncSeqlevel(txdb, ans)
+  .syncSeqlevel(x, ans)
 }
 
 setGeneric("microRNAs", function(x) standardGeneric("microRNAs"))
 
 ## Then set our method
-setMethod("microRNAs", "TxDb", function(x){.microRNAs(x)} )
+setMethod("microRNAs", "TxDb", .microRNAs)
 
 
 
 ## main function
-.tRNAs <- function(txdb){
-  require(FDb.UCSC.tRNAs)
+.tRNAs <- function(x) {
+  fdbpkg <- "FDb.UCSC.tRNAs"
+  fdbenv <- loadNamespace(fdbpkg)
   ## get the current package name
-  pkgName <- makePackageName(txdb)
+  pkgName <- makePackageName(x)
   ## from here we know what the FDB should MUST look like
   fdbName <- sub("TxDb","FDb",pkgName)
   fdbName <- unlist(strsplit(fdbName,"\\."))
   fdbName[5] <- "tRNAs"
   fdbString <- paste(fdbName,collapse=".")
-  if(!exists(fdbString)){
-    stop("there is no tRNA data available for this organism/source")
-  }else{
-    ans <- features(eval(parse(text=fdbString)))
+  if (!exists(fdbString, envir=fdbenv)) {
+      stop("there is no tRNA data available for this organism/source")
+  } else {
+      fdb <- get(fdbString, fdbenv)
+      ans <- features(fdb)
   }
   ## Now check active seqs and set the seqlevels
-  ans <- .syncSeqlevel(txdb,ans)
-  ## now return
-  ans
+  .syncSeqlevel(x, ans)
 }
 
 setGeneric("tRNAs", function(x) standardGeneric("tRNAs"))
 
-setMethod("tRNAs", "TxDb", function(x){.tRNAs(x)} )
-
-
-
+setMethod("tRNAs", "TxDb", .tRNAs)
 
 
 ## Test code for new TXTYPE support (BC vs new code)

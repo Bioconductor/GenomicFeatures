@@ -40,8 +40,6 @@ makeTxDbFromGRanges(gr, drop.stop.codons=FALSE, metadata=NULL, taxonomyId=NA)
     as well}
 }
 
-\details{
-}
 
 \value{A \link{TxDb} object.}
 
