@@ -28,9 +28,6 @@
   }
   res
 }
-## usage
-## .abbrevOrganismName('Homo sapiens neanderthalensis subtype1 subsubtype2 23')
-## "HsapiensNeanderthalensisSubtype1Subsubtype223"
 
 ## simplify DB retrievals from metadata table
 .getMetaDataValue <- function(txdb, name){
@@ -41,7 +38,6 @@
       stop("metadata table missing a value for '", name, "'")
   res
 }
-
 
 ## helper functions
 .choosePrefix <- function(txdb){
@@ -83,28 +79,19 @@ makePackageName <- function(txdb){
   paste(c(strs[2:length(strs)],strs[1]), collapse="_")
 }
 
-
 .getTxDbVersion <- function(txdb){
-  type <- .getMetaDataValue(txdb,'Data source')
-  if(type=="UCSC"){  
-    version <- paste(.getMetaDataValue(txdb,'Genome'),"genome based on the", 
-      .getMetaDataValue(txdb,'UCSC Table'), "table")
-  }else if(type=="BioMart"){
-    version <- .getMetaDataValue(txdb,'BioMart database version')   
-  }else{
-    version <-  .getMetaDataValue(txdb,'Data source')   
-  }
-  version 
-}
-
-.getResourceURLInfo <- function(txdb){
     type <- .getMetaDataValue(txdb,'Data source')
-    if(type=="UCSC" || type=="BioMart"){
-        url <- .getMetaDataValue(txdb,'Resource URL')
-    }else{
-        url <- .getMetaDataValue(txdb,'Data source')
+
+    if (type=="UCSC") { 
+        version <- paste(.getMetaDataValue(txdb,'Genome'),
+                         "genome based on the", 
+                         .getMetaDataValue(txdb,'UCSC Table'), "table")
+    } else if(type=="BioMart") {
+      version <- .getMetaDataValue(txdb,'BioMart database version') 
+    } else {
+      version <- .getMetaDataValue(txdb,'Data source') 
     }
-    url
+    version 
 }
 
 .normMaintainer <- function(maintainer) {
@@ -160,14 +147,20 @@ makeTxDbPackage <- function(txdb,
                             author,
                             destDir=".",
                             license="Artistic-2.0",
-                            pkgname=NULL){
+                            pkgname=NULL,
+                            provider=NULL,
+                            providerVersion=NULL){
    ## every package has a name We will generate this according to a heuristic
    if(is.null(pkgname)){
        pkgname <- makePackageName(txdb)
    }
+   if (is.null(provider))
+       provider <- .getMetaDataValue(txdb,'Data source')
+   if (is.null(providerVersion))
+       providerVersion <- .getTxDbVersion(txdb)
    dbType <- .getMetaDataValue(txdb,'Db type')
    authors <- .normAuthor(author, maintainer)
-   
+ 
    ## there should only be one template
    template_path <- system.file("txdb-template",package="GenomicFeatures")
    ## We need to define some symbols in order to have the 
@@ -187,10 +180,10 @@ makeTxDbPackage <- function(txdb,
     DBTYPE= dbType,
     ORGANISM=.getMetaDataValue(txdb,'Organism'),
     SPECIES=.getMetaDataValue(txdb,'Organism'),
-    PROVIDER=.getMetaDataValue(txdb,'Data source'),
-    PROVIDERVERSION=.getTxDbVersion(txdb),
-    RELEASEDATE= .getMetaDataValue(txdb,'Creation time'),
-    SOURCEURL= .getResourceURLInfo(txdb),
+    PROVIDER=provider,
+    PROVIDERVERSION=providerVersion,
+    RELEASEDATE=.getMetaDataValue(txdb,'Creation time'),
+    SOURCEURL=.getMetaDataValue(txdb,'Resource URL'),
     ORGANISMBIOCVIEW=gsub(" ","_",.getMetaDataValue(txdb,'Organism')),
     ## For now: keep conventional object names
     TXDBOBJNAME=pkgname ## .makeObjectName(pkgname)

@@ -82,7 +82,9 @@ makeFDbPackageFromUCSC(
                   author,
   	          destDir=".",
                   license="Artistic-2.0",
-                  pkgname=NULL)
+                  pkgname=NULL,
+                  provider=NULL,
+                  providerVersion=NULL)
 
   supportedMiRBaseBuildValues()
 }
@@ -168,7 +170,12 @@ makeFDbPackageFromUCSC(
     override this value, then the package and it's object will be
     instead named after this value.  Be aware that the standard rules
     for package names will apply, (so don't include spaces,
-    underscores or dashes)}  
+    underscores or dashes)} 
+  \item{provider}{If not given, a default is taken from the 
+    'Data source' field of the metadata table.}
+  \item{providerVersion}{If not given, a default is taken from one of
+    'UCSC table', 'BioMart version' or 'Data source' fields of the 
+    metadata table.}
 }
 \details{
   \code{makeTxDbPackageFromUCSC} is a convenience function that calls
