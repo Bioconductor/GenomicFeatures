@@ -13,7 +13,7 @@
 
 \usage{
 transcriptLengths(txdb, with.cds_len=FALSE,
-                        with.utr5_len=FALSE, with.utr3_len=FALSE)
+                  with.utr5_len=FALSE, with.utr3_len=FALSE, ...)
 }
 
 \arguments{
@@ -23,6 +23,10 @@ transcriptLengths(txdb, with.cds_len=FALSE,
   \item{with.cds_len, with.utr5_len, with.utr3_len}{
     \code{TRUE} or \code{FALSE}. Whether or not to also extract and return
      the CDS, 5' UTR, and 3' UTR lengths for each transcript.
+  }
+  \item{\dots}{
+    Additional arguments used by \code{transcripts} and other accessor 
+    functions.
   }
 }
 

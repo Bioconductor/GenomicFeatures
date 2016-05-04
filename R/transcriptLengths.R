@@ -42,7 +42,8 @@
 ###   TxDb object directly in SQL instead of calling exonsBy(), cdsBy(),
 ###   fiveUTRsByTranscript(), and threeUTRsByTranscript() successively.
 transcriptLengths <- function(txdb, with.cds_len=FALSE,
-                                    with.utr5_len=FALSE, with.utr3_len=FALSE)
+                                    with.utr5_len=FALSE, with.utr3_len=FALSE,
+				    ...)
 {
     if (!isTRUEorFALSE(with.cds_len))
         stop("'with.cds_len' must be TRUE or FALSE")
@@ -50,24 +51,24 @@ transcriptLengths <- function(txdb, with.cds_len=FALSE,
         stop("'with.utr5_len' must be TRUE or FALSE")
     if (!isTRUEorFALSE(with.cds_len))
         stop("'with.utr3_len' must be TRUE or FALSE")
-    tx <- transcripts(txdb, columns=c("tx_id", "tx_name", "gene_id"))
+    tx <- transcripts(txdb, columns=c("tx_id", "tx_name", "gene_id"),...)
     ans <- mcols(tx)
     ans$gene_id <- as.character(ans$gene_id)
     tx_id <- as.character(ans$tx_id)  # because match() will want a character
 
-    rg_by_tx <- exonsBy(txdb, by="tx")
+    rg_by_tx <- exonsBy(txdb, by="tx", ...)
     ans$nexon <- .eltNROWS(rg_by_tx, tx_id)
     ans$tx_len <- .sum_width(rg_by_tx, tx_id)
     if (with.cds_len) {
-        rg_by_tx <- cdsBy(txdb, by="tx")
+        rg_by_tx <- cdsBy(txdb, by="tx", ...)
         ans$cds_len <- .sum_width(rg_by_tx, tx_id)
     }
     if (with.utr5_len) {
-        rg_by_tx <- fiveUTRsByTranscript(txdb)
+        rg_by_tx <- fiveUTRsByTranscript(txdb, ...)
         ans$utr5_len <- .sum_width(rg_by_tx, tx_id)
     }
     if (with.utr3_len) {
-        rg_by_tx <- threeUTRsByTranscript(txdb)
+        rg_by_tx <- threeUTRsByTranscript(txdb, ...)
         ans$utr3_len <- .sum_width(rg_by_tx, tx_id)
     }
     as.data.frame(ans)
