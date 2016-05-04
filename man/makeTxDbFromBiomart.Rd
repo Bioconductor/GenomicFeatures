@@ -170,9 +170,12 @@ transcript_ids <- c(
     "ENST00000384428",
     "ENST00000478783"
 )
+
+if (interactive()) {
 txdb2 <- makeTxDbFromBiomart(dataset="hsapiens_gene_ensembl",
                              transcript_ids=transcript_ids)
 txdb2  # note that these annotations match the GRCh38 genome assembly
+}
 
 ## ---------------------------------------------------------------------
 ## B. USING A HOST OTHER THAN www.ensembl.org
@@ -187,11 +190,13 @@ listMarts(host="useast.ensembl.org")
 
 ## Therefore in addition to setting 'host' to "uswest.ensembl.org" we
 ## might also need to specify the 'biomart' argument:
+if (interactive()) {
 txdb3 <- makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
                              dataset="hsapiens_gene_ensembl",
                              transcript_ids=transcript_ids,
                              host="useast.ensembl.org")
 txdb3
+}
 
 ## ---------------------------------------------------------------------
 ## C. USING FILTERS
@@ -206,11 +211,14 @@ head(listFilters(mart))
 
 ## Retrieve transcript dataset for Ensembl gene ENSG00000011198:
 my_filter <- list(ensembl_gene_id="ENSG00000011198")
+
+if (interactive()) {
 txdb4 <- makeTxDbFromBiomart(dataset="hsapiens_gene_ensembl",
                              filter=my_filter)
 txdb4
 transcripts(txdb4, columns=c("tx_id", "tx_name", "gene_id"))
 transcriptLengths(txdb4)
+}
 
 ## ---------------------------------------------------------------------
 ## D. RETRIEVING CHROMOSOME INFORMATION ONLY
