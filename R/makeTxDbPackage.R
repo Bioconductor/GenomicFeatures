@@ -151,13 +151,16 @@ makeTxDbPackage <- function(txdb,
                             provider=NULL,
                             providerVersion=NULL){
    ## every package has a name We will generate this according to a heuristic
-   if(is.null(pkgname)){
+   if (is.null(pkgname))
        pkgname <- makePackageName(txdb)
-   }
    if (is.null(provider))
        provider <- .getMetaDataValue(txdb,'Data source')
+   else if (!isSingleString(provider))
+       stop("'provider' must be a single string")
    if (is.null(providerVersion))
        providerVersion <- .getTxDbVersion(txdb)
+   else if (!isSingleString(as.character(providerVersion)))
+       stop("'providerVersion' must be a single string")
    dbType <- .getMetaDataValue(txdb,'Db type')
    authors <- .normAuthor(author, maintainer)
  
