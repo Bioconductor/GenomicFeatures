@@ -80,9 +80,33 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 ### No need to have Ranges methods when mapping to transcripts. Plain
 ### ranges only make sense in the transcript space.
 
-.mapToTranscripts <- function(x, transcripts, hits, ignore.strand) 
+.mapToTranscripts <- function(x, transcripts, hits, 
+                              ignore.strand, intronJunctions=FALSE) 
 {
     flat <- unlist(transcripts, use.names=FALSE)
+
+    if (intronJunctions) {
+        ## introns must fall between ranges; not off the ends
+        nonHits <- !seq_along(x) %in% queryHits(hits)
+        follows <- follow(x[nonHits], flat, ignore.strand=ignore.strand)
+        precedes <- precede(x[nonHits], flat, ignore.strand=ignore.strand)
+        introns <- logical(length(nonHits))
+        introns[nonHits] <-  !is.na(follows & precedes)
+        if (any(introns)) {
+            ## modify 'x'
+            subjectIdx <- na.omit(follows[follows & precedes])
+            stopifnot(length(subjectIdx) == sum(introns))
+            nstrand <- as.logical(strand(flat[subjectIdx]) == "-")
+            starts <- end(flat[subjectIdx]) 
+            starts[nstrand] <- start(flat[subjectIdx[nstrand]]) - 1L
+            ranges(x[introns]) <- IRanges(start=starts, width=2L)
+            ## modify 'hits'
+            query <- c(queryHits(hits), seq_along(x)[introns])
+            subject <- c(subjectHits(hits), subjectIdx) 
+            hits <- Hits(query, subject, length(x), length(flat),
+                         sort.by.query=TRUE)
+        }
+    }
     if (length(hits)) {
         xHits <- queryHits(hits)
         txHits <- subjectHits(hits)
@@ -120,7 +144,7 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GenomicRanges"),
 )
 
 setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"), 
-    function(x, transcripts, ignore.strand=FALSE) 
+    function(x, transcripts, ignore.strand=FALSE, intronJunctions=FALSE) 
     {
         if (!length(x) && !length(transcripts))
             return(GRanges(xHits=integer(), transcriptsHits=integer()))
@@ -140,7 +164,7 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"),
         ## findOverlaps determines pairs
         hits <- findOverlaps(x, unlist(transcripts, use.names=FALSE), 
                              type="within", ignore.strand=ignore.strand)
-        .mapToTranscripts(x, transcripts, hits, ignore.strand)
+        .mapToTranscripts(x, transcripts, hits, ignore.strand, intronJunctions)
     }
 )
 

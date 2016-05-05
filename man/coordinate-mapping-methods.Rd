@@ -32,8 +32,10 @@
 
 \usage{
 ## mapping to transcripts
-\S4method{mapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
+\S4method{mapToTranscripts}{GenomicRanges,GenomicRanges}(x, transcripts, 
           ignore.strand = FALSE) 
+\S4method{mapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
+          ignore.strand = FALSE, intronJunctions=FALSE) 
 \S4method{mapToTranscripts}{ANY,TxDb}(x, transcripts, ignore.strand = FALSE, 
           extractor.fun = GenomicFeatures::transcripts, ...) 
 \S4method{pmapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
@@ -76,6 +78,20 @@
 
     Mapped position is computed by counting from the transcription start site 
     (TSS) and is not affected by the value of \code{ignore.strand}.
+  }
+  \item{intronJunctions}{
+    Logical to indicate if intron ranges in \code{x} should return a range that
+    spans the intron gap. Ranges in \code{x} that do not fall \sQuote{within} a
+    range in \code{transcripts} are considered a non-hit and have no mapping.
+    When \code{intronJunctions} is TRUE, these no-hits map to a range of width
+    2 that spans the junction (i.e., the start and end of the ranges they fall
+    between). The range in \code{x} must fall between ranges in
+    \code{transcripts}. Ranges that 'fall off' either end or overlap both the
+    gap and a range in \code{transcripts} are not considered intron ranges and
+    will not be mapped.
+
+    This argument is only supported in \code{mapToTranscripts} when 
+    \code{transcripts} is a GRangesList.
   }
   \item{extractor.fun}{
     Function to extract genomic features from a \code{TxDb} object.

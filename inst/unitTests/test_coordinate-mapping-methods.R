@@ -359,3 +359,30 @@ test_pmapToTranscripts <- function()
     ans <- pmapToTranscripts(x, align) 
     checkIdentical(seqnames(ans), Rle(as.factor("UNMAPPED"), 4)) 
 }
+
+test_mapToTranscripts_intronJunctions <- function()
+{
+    ## 2 out of bounds, intron, true hit
+    x <- GRanges("chr1", IRanges(start=c(1, 6, 8, 15), width=1))
+    align <- GRangesList(
+        "A"=GRanges("chr1", IRanges(start=c(5, 10), end=c(6, 12))))
+    ans <- mapToTranscripts(x, align, intronJunctions=TRUE)
+    checkTrue(length(ans) == 2)
+    checkEquals(mcols(ans)$xHits, c(2, 3))
+    checkEquals(width(ans), c(1, 2))
+    checkEquals(start(ans), c(2, 2))
+
+    ans <- mapToTranscripts(rev(x), align, intronJunctions=TRUE)
+    checkEquals(width(ans), c(2, 1))
+
+    strand(x) <- strand(align) <- "-"
+    ans <- mapToTranscripts(x, align, intronJunctions=TRUE)
+    checkTrue(length(ans) == 2)
+    checkEquals(width(ans), c(1, 2))
+    checkEquals(start(ans), c(4, 3))
+
+    ## spans intron and exon
+    x <- GRanges("chr1", IRanges(start=6, end=7))
+    ans <- mapToTranscripts(x, align, intronJunctions=TRUE)
+    checkTrue(length(ans) == 0)
+}
