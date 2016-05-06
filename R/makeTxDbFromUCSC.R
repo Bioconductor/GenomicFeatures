@@ -142,6 +142,7 @@ UCSCGenomeToOrganism <- function(genome){
   "geneid",                           "Geneid Genes",      NA,
   "genscan",                          "Genscan Genes",     NA,
   "exoniphy",                         "Exoniphy",          NA,
+  "augustusGene",                     "Augustus",          NA,
   "augustusHints",                    "Augustus",          "Augustus Hints",
   "augustusXRA",                      "Augustus",          "Augustus De Novo",
   "augustusAbinitio",                 "Augustus",          "Augustus Ab Initio",
@@ -187,30 +188,89 @@ UCSCGenomeToOrganism <- function(genome){
   "sgdGene",                          "SGD Genes",         NA
 )
 
-supportedUCSCtables <- function(genome="hg19")
+### Return a data.frame with 3 columns (tablename, track, and subtrack) and
+### 1 row per UCSC table known to work with makeTxDbFromUCSC().
+### A note about the current implementation:
+### Current implementation uses hard-coded .SUPPORTED_UCSC_TABLES matrix
+### above which is not satisfying in the long run (the matrix needs to be
+### manually updated from times to times, a long and boring and error-prone
+### process, and is probably out-of-sync at the moment). Ideally we'd like
+### to be able to generate the 3-column data.frame programmatically in
+### reasonable time. For this we need to be able to retrieve all the "central
+### tables" for all the transcript-centric tracks available for a given
+### organism. Using a combination of calls to rtracklayer::trackNames(session)
+### and rtracklayer::tableNames(ucscTableQuery(session, track=track)) would
+### partly achieve this but is unfortunately very slow.
+supportedUCSCtables <- function(genome="hg19",
+                                url="http://genome.ucsc.edu/cgi-bin/")
 {
-    if (!isSingleString(genome))
-        stop("'genome' must be a single string")
+    if (is(genome, "UCSCSession")) {
+        if (!missing(url))
+            warning("'url' is ignored when 'genome' is a UCSCSession object")
+    } else {
+        if (!isSingleStringOrNA(genome))
+            stop("'genome' must be a single string or NA")
+        if (!isSingleString(url))
+            stop("'url' must be a single string")
+    }
     mat <- matrix(.SUPPORTED_UCSC_TABLES, ncol=3, byrow=TRUE)
     colnames(mat) <- c("tablename", "track", "subtrack")
-    ans <- data.frame(track=mat[ , "track"], subtrack=mat[ , "subtrack"],
-                      row.names=mat[ , "tablename"],
+    ans_tablename <- mat[ , "tablename"]
+    ans_track <- factor(mat[ , "track"], levels=unique(mat[ , "track"]))
+    ans_subtrack <- mat[ , "subtrack"]
+    ans <- data.frame(tablename=ans_tablename,
+                      track=ans_track,
+                      subtrack=ans_subtrack,
                       stringsAsFactors=FALSE)
-    if (genome %in% c("hg17", "hg16", "mm8", "mm7", "rn3")) {
-        ans$track[rownames(ans) == "knownGene"] <- "Known Genes"
-    } else if (genome %in% "hg38") {
-        ans$track[rownames(ans) == "knownGene"] <- "GENCODE v22"
+    if (isSingleStringOrNA(genome) && is.na(genome))
+        return(ans)
+    if (is(genome, "UCSCSession")) {
+        session <- genome
+        genome <- genome(session)
+    } else {
+        session <- browserSession(url=url)
+        genome(session) <- genome
     }
+    ## trackNames() returns a mapping from track names to "central table" names
+    ## in the form of a named character vector where the names are the track
+    ## names and the values the "central table" names (more than 1 table can
+    ## be connected to a given track via joins thru the "central table").
+    ## Unfortunately such mapping cannot handle the situation where a track is
+    ## mapped to more than 1 "central table". This happens for example when a
+    ## track has subtracks (e.g. the Augustus track for hg18 has 3 subtracks),
+    ## in which case there is 1 "central table" per subtrack. So trackNames()
+    ## alone cannot be used to get the one-to-many mapping from tracks to
+    ## "central tables". Calling tableNames(ucscTableQuery(session,
+    ## track=track)) in a loop on all the tracks returned by trackNames()
+    ## would work but is very slow :-/
+    genome_tracknames <- trackNames(session)
+    ans <- ans[ans$track %in% names(genome_tracknames), , drop=FALSE]
+    rownames(ans) <- NULL
+    ans_track <- as.character(ans$track)
+    if (genome %in% c("hg17", "hg16", "mm8", "mm7", "rn3")) {
+        ans_track[ans$tablename == "knownGene"] <- "Known Genes"
+    } else if (genome %in% "hg38") {
+        ans_track[ans$tablename == "knownGene"] <- "GENCODE v22"
+    }
+    ans$track <- factor(ans_track, levels=unique(ans_track))
     ans
 }
 
-.tablename2track <- function(tablename, genome)
+.tablename2track <- function(tablename, session)
 {
     if (!isSingleString(tablename))
         stop("'tablename' must be a single string")
-    track <- supportedUCSCtables(genome)[tablename, "track"]
-    if (is.na(track))
+    supported_tables <- supportedUCSCtables(session)
+    idx <- which(supported_tables$tablename == tablename)
+    if (length(idx) == 0L)
         stop("UCSC table \"", tablename, "\" is not supported")
+    ## Sanity check.
+    stopifnot(length(idx) == 1L)  # should never happen
+    track <- as.character(supported_tables$track[idx])
+    track_tables <- tableNames(ucscTableQuery(session, track=track))
+    if (!(tablename %in% track_tables))
+        stop("UCSC table \"", tablename, "\" does not exist ",
+             "for genome \"", genome(session), "\", sorry")
     track
 }
 
@@ -825,7 +885,6 @@ makeTxDbFromUCSC <- function(genome="hg19",
         taxonomyId=NA,
         miRBaseBuild=NA)
 {
-    track <- .tablename2track(tablename, genome)
     if (!is.null(transcript_ids)) {
         if (!is.character(transcript_ids) || any(is.na(transcript_ids)))
             stop("'transcript_ids' must be a character vector with no NAs")
@@ -838,13 +897,7 @@ makeTxDbFromUCSC <- function(genome="hg19",
     ## Create an UCSC Genome Browser session.
     session <- browserSession(url=url)
     genome(session) <- genome
-    track_tables <- tableNames(ucscTableQuery(session, track=track))
-    if (!(tablename %in% track_tables))
-        stop("GenomicFeatures internal error: ", tablename, " table doesn't ",
-             "exist or is not associated with ", track, " track. ",
-             "Thank you for reporting this to the GenomicFeatures maintainer ",
-             "or to the Bioconductor mailing list, and sorry for the ",
-             "inconvenience.")
+    track <- .tablename2track(tablename, session)
 
     ## Download the transcript table.
     message("Download the ", tablename, " table ... ", appendLF=FALSE)

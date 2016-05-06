@@ -118,9 +118,9 @@ makeFDbPackageFromUCSC(
     \code{supportedUCSCFeatureDbTracks} to get the list of available
         tracks for a particular genome}
   \item{tablename}{name of the UCSC table containing the transcript
-    annotations to retrieve. Use the \code{supportedUCSCtables} utility
-    function to get the list of supported tables. Note that not all
-    tables are available for all genomes.}
+    annotations to retrieve. Use the \code{\link{supportedUCSCtables}}
+    utility function to get the list of tables known to work with
+    \code{makeTxDbFromUCSC}.}
   \item{transcript_ids}{optionally, only retrieve transcript
     annotation data for the specified set of transcript ids.
     If this is used, then the meta information displayed for the
@@ -204,8 +204,8 @@ makeFDbPackageFromUCSC(
 
 \examples{
 ## First consider relevant helper/discovery functions:
-## Display the list of tables supported by makeTxDbPackageFromUCSC():
-supportedUCSCtables()
+## Get the list of tables known to work with makeTxDbPackageFromUCSC():
+supportedUCSCtables(genome="hg19")
 
 ## Can also list all the possible values for the miRBaseBuild argument:
 supportedMiRBaseBuildValues()

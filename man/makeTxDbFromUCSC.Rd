@@ -24,7 +24,7 @@ makeTxDbFromUCSC(
         taxonomyId=NA,
         miRBaseBuild=NA)
 
-supportedUCSCtables(genome="hg19")
+supportedUCSCtables(genome="hg19", url="http://genome.ucsc.edu/cgi-bin/")
 
 getChromInfoFromUCSC(
         genome,
@@ -35,9 +35,9 @@ getChromInfoFromUCSC(
     \code{\link[rtracklayer]{ucscGenomes}()[ , "db"]}.
     For example: \code{"hg19"}.}
   \item{tablename}{name of the UCSC table containing the transcript
-    annotations to retrieve. Use the \code{supportedUCSCtables} utility
-    function to get the list of supported tables. Note that not all
-    tables are available for all genome builds.}
+    annotations to retrieve. Use the \code{supportedUCSCtables}
+    utility function to get the list of tables known to work with
+    \code{makeTxDbFromUCSC}.}
   \item{transcript_ids}{optionally, only retrieve transcript
     annotation data for the specified set of transcript ids.
     If this is used, then the meta information displayed for the
@@ -65,10 +65,17 @@ getChromInfoFromUCSC(
 }
 
 \value{
-  A \link{TxDb} object for \code{makeTxDbFromUCSC}.
+  For \code{makeTxDbFromUCSC}: A \link{TxDb} object.
 
-  A data frame with 1 row per chromosome (or scaffold) and with columns
-  \code{chrom} and \code{length} for \code{getChromInfoFromUCSC}.
+  For \code{supportedUCSCtables}: A data frame with 3 columns
+  (\code{tablename}, \code{track}, and \code{subtrack}) and 1 row
+  per table known to work with \code{makeTxDbFromUCSC}.
+  IMPORTANT NOTE: In the returned data frame, the set of tables associated
+  with a track with subtracks might contain tables that don't exist for the
+  specified genome.
+
+  For \code{getChromInfoFromUCSC}: A data frame with 1 row per chromosome
+  (or scaffold) and with columns \code{chrom} and \code{length}.
 }
 
 \author{
@@ -109,7 +116,7 @@ getChromInfoFromUCSC(
 library(rtracklayer)
 ucscGenomes()[ , "db"]
 
-## Display the list of tables supported by makeTxDbFromUCSC():
+## Display the list of tables known to work with makeTxDbFromUCSC():
 supportedUCSCtables()
 
 ## Retrieve a full transcript dataset for Yeast from UCSC:
@@ -133,7 +140,19 @@ txdb2 <- makeTxDbFromUCSC(genome="mm10", tablename="knownGene",
 txdb2
 
 ## ---------------------------------------------------------------------
-## B. RETRIEVING CHROMOSOME INFORMATION ONLY
+## B. IMPORTANT NOTE ABOUT supportedUCSCtables()
+## ---------------------------------------------------------------------
+
+## In the data frame returned by supportedUCSCtables(), the set of
+## tables associated with a track with subtracks might contain tables
+## that don't exist for the specified genome:
+supported_tables <- supportedUCSCtables("hg38")
+"augustusHints" %in% supported_tables$tablename
+if (interactive())
+    makeTxDbFromUCSC(genome="hg38", tablename="augustusHints")  # error!
+
+## ---------------------------------------------------------------------
+## C. RETRIEVING CHROMOSOME INFORMATION ONLY
 ## ---------------------------------------------------------------------
 
 chrominfo <- getChromInfoFromUCSC(genome="hg38")

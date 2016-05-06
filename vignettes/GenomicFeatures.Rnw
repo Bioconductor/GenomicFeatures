@@ -411,15 +411,15 @@ details.
 The function \Rfunction{makeTxDbFromUCSC} downloads UCSC
 Genome Bioinformatics transcript tables (e.g. \Rcode{"knownGene"},
 \Rcode{"refGene"}, \Rcode{"ensGene"}) for a genome build (e.g.
-\Rcode{"mm9"}, \Rcode{"hg19"}).  Use the
-\Rfunction{supportedUCSCtables} utility function to get the list of
-supported tables.
+\Rcode{"mm9"}, \Rcode{"hg19"}).  Use the \Rfunction{supportedUCSCtables}
+utility function to get the list of tables known to work with
+\Rcode{makeTxDbFromUCSC}.
 %%
 <<supportedUCSCtables>>=
-supportedUCSCtables()[1:4, ]
+supportedUCSCtables(genome="mm9")
 @
 <<makeTxDbFromUCSC, eval=FALSE>>=
-mm9KG <- makeTxDbFromUCSC(genome = "mm9", tablename = "knownGene")
+mm9KG_txdb <- makeTxDbFromUCSC(genome="mm9", tablename="knownGene")
 @
 
 The function \Rfunction{makeTxDbFromUCSC} also takes an
@@ -491,14 +491,14 @@ it is not possible to serialize a \Rclass{TxDb} object using
 \R's \Rfunction{save} function.
 
 <<saveDb-1, eval=FALSE>>=
-saveDb(mm9KG, file="fileName.sqlite")
+saveDb(mm9KG_txdb, file="fileName.sqlite")
 @
 
 And as was mentioned earlier, a saved \Rclass{TxDb} object can
 be initialized from a .sqlite file by simply using \Rfunction{loadDb}.
 
 <<loadDb-1, eval=FALSE>>=
-mm9KG <- loadDb("fileName.sqlite")
+mm9KG_txdb <- loadDb("fileName.sqlite")
 @
 
 
