@@ -123,7 +123,7 @@ ucscGenomes()[ , "db"]
 ## Display the list of tables known to work with makeTxDbFromUCSC():
 supportedUCSCtables()
 
-## Browse the UCSC track page for a given table:
+## Browse the UCSC track page for a given organism/table:
 browseUCSCtrack(genome="sacCer3", tablename="ensGene")
 
 ## Retrieve a full transcript dataset for Yeast from UCSC:
