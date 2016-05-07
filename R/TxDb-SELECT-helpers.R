@@ -359,39 +359,6 @@ TxDb_SELECT_from_transcript <- function(txdb, filter=list(),
 
 ### Select rows from the virtual table obtained by joining the "splicing",
 ### "exon", and "cds" tables together.
-TxDb_SELECT_from_splicings0 <- function(txdb,
-                                        orderby=c("_tx_id", "exon_rank"),
-                                        cds_join_type="LEFT")
-{
-    schema_version <- TxDb_schema_version(txdb)
-
-    ## SELECT from "splicing".
-    columns <- TXDB_table_columns("splicing", schema_version=schema_version)
-    splicings <- TxDb_SELECT_from_INNER_JOIN(txdb, "splicing", columns)
-    tx_id <- splicings[ , "_tx_id"]
-    exon_rank <- splicings[ , "exon_rank"]
-    oo <- S4Vectors:::orderIntegerPairs(tx_id, exon_rank)
-    splicings <- S4Vectors:::extract_data_frame_rows(splicings, oo)
-
-    ## SELECT from "exon".
-    columns <- TXDB_table_columns("exon", schema_version=schema_version)
-    exons <- TxDb_SELECT_from_INNER_JOIN(txdb, "exon", columns)
-
-    ## SELECT from "cds".
-    columns <- TXDB_table_columns("cds", schema_version=schema_version)
-    columns <- columns[!(names(columns) %in% c("chrom", "strand"))]
-    cds <- TxDb_SELECT_from_INNER_JOIN(txdb, "cds", columns)
-
-    ## Join.
-    df1 <- splicings[ , c("_tx_id", "exon_rank"), drop=FALSE]
-    using <- "_exon_id"
-    exon_join_idx <- match(splicings[ , using], exons[ , using])
-    df2 <- S4Vectors:::extract_data_frame_rows(exons, exon_join_idx)
-    using <- "_cds_id"
-    cds_join_idx <- match(splicings[ , using], cds[ , using])
-    df3 <- S4Vectors:::extract_data_frame_rows(cds, cds_join_idx)
-    cbind(df1, df2, df3)
-}
 TxDb_SELECT_from_splicings <- function(txdb, filter=list(),
                                        orderby=c("_tx_id", "exon_rank"),
                                        cds_join_type="LEFT")
@@ -414,3 +381,4 @@ TxDb_SELECT_from_gene <- function(txdb, filter=list(),
     TxDb_SELECT_from_INNER_JOIN(txdb, "gene", columns,
                                 filter=filter, orderby=orderby)
 }
+
