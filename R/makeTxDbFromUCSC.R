@@ -127,7 +127,12 @@ UCSCGenomeToOrganism <- function(genome){
   ## all of them for hg18 (i.e. with 'genome="hg18"').
   ## Note: the "acembly" table contains more than 250000 transcripts!
   "knownGene",                        "UCSC Genes",        NA,
+  "knownGeneOld8",                    "Old UCSC Genes",    NA,
+  "knownGeneOld7",                    "Old UCSC Genes",    NA,
+  "knownGeneOld6",                    "Old UCSC Genes",    NA,
+  "knownGeneOld4",                    "Old UCSC Genes",    NA,
   "knownGeneOld3",                    "Old UCSC Genes",    NA,
+  "knownGenePrevious",                "Old Known Genes",   NA,
   "ccdsGene",                         "CCDS",              NA,
   "refGene",                          "RefSeq Genes",      NA,
   "xenoRefGene",                      "Other RefSeq",      NA,
@@ -216,20 +221,29 @@ supportedUCSCtables <- function(genome="hg19",
     mat <- matrix(.SUPPORTED_UCSC_TABLES, ncol=3, byrow=TRUE)
     colnames(mat) <- c("tablename", "track", "subtrack")
     ans_tablename <- mat[ , "tablename"]
-    ans_track <- factor(mat[ , "track"], levels=unique(mat[ , "track"]))
+    ans_track <- mat[ , "track"]
     ans_subtrack <- mat[ , "subtrack"]
     ans <- data.frame(tablename=ans_tablename,
                       track=ans_track,
                       subtrack=ans_subtrack,
                       stringsAsFactors=FALSE)
-    if (isSingleStringOrNA(genome) && is.na(genome))
+    if (isSingleStringOrNA(genome) && is.na(genome)) {
+        ans$track <- factor(ans_track, levels=unique(ans_track))
         return(ans)
+    }
     if (is(genome, "UCSCSession")) {
         session <- genome
         genome <- genome(session)
     } else {
         session <- browserSession(url=url)
         genome(session) <- genome
+    }
+    if (genome %in% c("hg17", "hg16", "mm8", "mm7", "rn3")) {
+        ans_track[ans$tablename == "knownGene"] <- "Known Genes"
+        ans$track <- ans_track
+    } else if (genome %in% "hg38") {
+        ans_track[ans$tablename == "knownGene"] <- "GENCODE v22"
+        ans$track <- ans_track
     }
     ## trackNames() returns a mapping from track names to "central table" names
     ## in the form of a named character vector where the names are the track
@@ -245,15 +259,25 @@ supportedUCSCtables <- function(genome="hg19",
     ## would work but is very slow :-/
     genome_tracknames <- trackNames(session)
     ans <- ans[ans$track %in% names(genome_tracknames), , drop=FALSE]
+    ans$track <- factor(ans$track, levels=unique(ans$track))
     rownames(ans) <- NULL
-    ans_track <- as.character(ans$track)
-    if (genome %in% c("hg17", "hg16", "mm8", "mm7", "rn3")) {
-        ans_track[ans$tablename == "knownGene"] <- "Known Genes"
-    } else if (genome %in% "hg38") {
-        ans_track[ans$tablename == "knownGene"] <- "GENCODE v22"
-    }
-    ans$track <- factor(ans_track, levels=unique(ans_track))
     ans
+}
+
+### Can be used to quickly check that a combination of genome/tablename
+### actually exists.
+browseUCSCtrack <- function(genome="hg19",
+                            tablename="knownGene",
+                            url="http://genome.ucsc.edu/cgi-bin/")
+{
+    if (!isSingleString(genome))
+        stop("'genome' must be a single string")
+    if (!isSingleString(tablename))
+        stop("'tablename' must be a single string")
+    if (!isSingleString(url))
+        stop("'url' must be a single string")
+    url <- sprintf("%s/hgTrackUi?db=%s&g=%s", url, genome, tablename)
+    browseURL(url)
 }
 
 .tablename2track <- function(tablename, session)

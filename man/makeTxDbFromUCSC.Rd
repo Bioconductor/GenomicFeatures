@@ -1,6 +1,7 @@
 \name{makeTxDbFromUCSC}
 
 \alias{supportedUCSCtables}
+\alias{browseUCSCtrack}
 \alias{getChromInfoFromUCSC}
 \alias{makeTxDbFromUCSC}
 
@@ -25,6 +26,9 @@ makeTxDbFromUCSC(
         miRBaseBuild=NA)
 
 supportedUCSCtables(genome="hg19", url="http://genome.ucsc.edu/cgi-bin/")
+
+browseUCSCtrack(genome="hg19", tablename="knownGene",
+                url="http://genome.ucsc.edu/cgi-bin/")
 
 getChromInfoFromUCSC(
         genome,
@@ -119,6 +123,9 @@ ucscGenomes()[ , "db"]
 ## Display the list of tables known to work with makeTxDbFromUCSC():
 supportedUCSCtables()
 
+## Browse the track page on the UCSC Genome Browser for a given table:
+browseUCSCtrack(genome="sacCer3", tablename="ensGene")
+
 ## Retrieve a full transcript dataset for Yeast from UCSC:
 txdb1 <- makeTxDbFromUCSC(genome="sacCer3", tablename="ensGene",
                           circ_seqs="chrM")
@@ -147,9 +154,7 @@ txdb2
 ## tables associated with a track with subtracks might contain tables
 ## that don't exist for the specified genome:
 supported_tables <- supportedUCSCtables("hg38")
-"augustusHints" %in% supported_tables$tablename
-if (interactive())
-    makeTxDbFromUCSC(genome="hg38", tablename="augustusHints")  # error!
+browseUCSCtrack(genome="hg38", tablename="augustusHints")  # no such table
 
 ## ---------------------------------------------------------------------
 ## C. RETRIEVING CHROMOSOME INFORMATION ONLY
