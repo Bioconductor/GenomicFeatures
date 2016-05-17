@@ -117,7 +117,7 @@
       \item{threeUTRsByTranscript}
       \item{microRNAs}
       \item{tRNAs}
-    }    
+    } 
   }
   \item{\dots}{
     Additional arguments passed to \code{extractor.fun} functions. 
@@ -131,7 +131,7 @@
   and GenomicAlignments. Additionally, the mapped position is computed
   from the TSS and does not depend on the \code{ignore.strand} argument.
   See the section on \code{ignore.strand} for details.
-  
+ 
   \itemize{
     \item{\code{mapToTranscripts}, \code{pmapToTranscripts}}{
       The genomic range in \code{x} is mapped to the local position in the
@@ -175,7 +175,7 @@
       differentially expressed regions where the expressed regions in \code{x} 
       would only be related to a subset of regions in \code{transcripts}. 
       This method does not return unmapped ranges.
-     
+ 
       \code{pmapFromTranscripts} maps the i-th range in \code{x} to the i-th
       range in \code{transcripts} and therefore does not use name matching.
       Recycling is supported in \code{pmapFromTranscripts} when either
@@ -191,7 +191,7 @@
 
   \code{pmapToTranscripts} returns a \code{GRanges} the same length as
   \code{x}.
-  
+ 
   \code{pmapFromTranscripts} returns a \code{GRanges} when \code{transcripts}
   is a \code{GRanges} and a \code{GRangesList} when \code{transcripts}
   is a \code{GRangesList}. In both cases the return object is the same
@@ -208,6 +208,9 @@
   (similar to the \code{queryHits} and \code{subjectHits} of a \code{Hits}
   object) indicate elements of \code{x} and \code{transcripts} used in 
   the mapping.
+
+  When \code{intronJunctions} is TRUE, \code{mapToTranscripts} returns an
+  extra metdata column named \code{intronHits} to identify the intron ranges.
 
   When mapping to transcript coordinates, seqlevels of the output are the names 
   on the \code{transcripts} object and most often these will be transcript

@@ -84,28 +84,31 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
                               ignore.strand, intronJunctions=FALSE) 
 {
     flat <- unlist(transcripts, use.names=FALSE)
-
     if (intronJunctions) {
         ## introns must fall between ranges; not off the ends
         nonHits <- !seq_along(x) %in% queryHits(hits)
-        follows <- follow(x[nonHits], flat, ignore.strand=ignore.strand)
-        precedes <- precede(x[nonHits], flat, ignore.strand=ignore.strand)
-        introns <- logical(length(nonHits))
-        introns[nonHits] <-  !is.na(follows & precedes)
-        if (any(introns)) {
-            ## modify 'x'
-            subjectIdx <- na.omit(follows[follows & precedes])
-            stopifnot(length(subjectIdx) == sum(introns))
-            nstrand <- as.logical(strand(flat[subjectIdx]) == "-")
-            starts <- end(flat[subjectIdx]) 
-            starts[nstrand] <- start(flat[subjectIdx[nstrand]]) - 1L
-            ranges(x[introns]) <- IRanges(start=starts, width=2L)
-            ## modify 'hits'
-            query <- c(queryHits(hits), seq_along(x)[introns])
-            subject <- c(subjectHits(hits), subjectIdx) 
-            hits <- Hits(query, subject, length(x), length(flat),
-                         sort.by.query=TRUE)
-        }
+        if (any(nonHits)) {
+            follows <- follow(x[nonHits], flat, ignore.strand=ignore.strand)
+            precedes <- precede(x[nonHits], flat, ignore.strand=ignore.strand)
+            introns <- logical(length(nonHits))
+            introns[nonHits] <-  !is.na(follows & precedes)
+            if (any(introns)) {
+                ## modify 'x'
+                subjectIdx <- na.omit(follows[follows & precedes])
+                stopifnot(length(subjectIdx) == sum(introns))
+                nstrand <- as.logical(strand(flat[subjectIdx]) == "-")
+                starts <- end(flat[subjectIdx]) 
+                starts[nstrand] <- start(flat[subjectIdx[nstrand]]) - 1L
+                ranges(x[introns]) <- IRanges(start=starts, width=2L)
+                ## modify 'hits'
+                query <- c(queryHits(hits), seq_along(x)[introns])
+                subject <- c(subjectHits(hits), subjectIdx) 
+                intronHits <- c(logical(length(queryHits(hits))), 
+                                !logical(sum(introns)))
+                hits <- Hits(query, subject, length(x), length(flat),
+                             intronHits=intronHits, sort.by.query=TRUE)
+            }
+        } else mcols(hits)$intronHits <- logical(length(hits))
     }
     if (length(hits)) {
         xHits <- queryHits(hits)
@@ -122,14 +125,20 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
             shifted <- .listCumsumShifted(width(transcripts))
             xrange <- shift(xrange, shifted[txHits])
         }
+
         ## seqnames come from 'transcripts'
-        txGroup <- togroup(PartitioningByWidth(transcripts))[txHits]
-        GRanges(names(transcripts)[txGroup], 
-                xrange, strand(flat)[txHits],
-                DataFrame(xHits, transcriptsHits=txGroup))
+        transcriptsHits=togroup(PartitioningByWidth(transcripts))[txHits]
+        df <- DataFrame(xHits=xHits, transcriptsHits=transcriptsHits)
+        if (intronJunctions)
+            df$intronHits <- mcols(hits)$intronHits
+        GRanges(names(transcripts)[transcriptsHits],
+                xrange, strand(flat)[txHits], df)
     } else {
         ans <- GRanges()
-        mcols(ans) <- DataFrame(xHits=integer(), transcriptsHits=integer())
+        df <- DataFrame(xHits=integer(), transcriptsHits=integer())
+        if (intronJunctions)
+            df$intronHits <- logical()
+        mcols(ans) <- df 
         ans
     }
 }
