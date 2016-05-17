@@ -371,11 +371,11 @@ test_mapToTranscripts_intronJunctions <- function()
     checkEquals(mcols(ans)$xHits, c(2, 3))
     checkEquals(width(ans), c(1, 2))
     checkEquals(start(ans), c(2, 2))
-    checkEquals(mcols(ans)$intronHits, c(FALSE, TRUE))
+    checkEquals(mcols(ans)$intronic, c(FALSE, TRUE))
 
     ans <- mapToTranscripts(rev(x), align, intronJunctions=TRUE)
     checkEquals(width(ans), c(2, 1))
-    checkEquals(mcols(ans)$intronHits, c(TRUE, FALSE))
+    checkEquals(mcols(ans)$intronic, c(TRUE, FALSE))
 
     ## span intron and exon
     x <- GRanges("chr1", IRanges(start=6, end=7))
@@ -386,7 +386,7 @@ test_mapToTranscripts_intronJunctions <- function()
     x <- GRanges("chr1", IRanges(start=5, end=6))
     ans <- mapToTranscripts(x, align, intronJunctions=TRUE)
     checkTrue(ranges(ans) == IRanges(1, 2))
-    checkEquals(mcols(ans)$intronHits, logical(1))
+    checkEquals(mcols(ans)$intronic, logical(1))
 
     ## negative strand
     x <- GRanges("chr1", IRanges(start=c(1, 6, 8, 15), width=1))

@@ -210,7 +210,7 @@
   the mapping.
 
   When \code{intronJunctions} is TRUE, \code{mapToTranscripts} returns an
-  extra metdata column named \code{intronHits} to identify the intron ranges.
+  extra metdata column named \code{intronic} to identify the intron ranges.
 
   When mapping to transcript coordinates, seqlevels of the output are the names 
   on the \code{transcripts} object and most often these will be transcript

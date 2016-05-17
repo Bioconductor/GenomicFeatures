@@ -103,12 +103,12 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
                 ## modify 'hits'
                 query <- c(queryHits(hits), seq_along(x)[introns])
                 subject <- c(subjectHits(hits), subjectIdx) 
-                intronHits <- c(logical(length(queryHits(hits))), 
+                intronic <- c(logical(length(queryHits(hits))), 
                                 !logical(sum(introns)))
                 hits <- Hits(query, subject, length(x), length(flat),
-                             intronHits=intronHits, sort.by.query=TRUE)
+                             intronic=intronic, sort.by.query=TRUE)
             }
-        } else mcols(hits)$intronHits <- logical(length(hits))
+        } else mcols(hits)$intronic <- logical(length(hits))
     }
     if (length(hits)) {
         xHits <- queryHits(hits)
@@ -130,14 +130,14 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
         transcriptsHits=togroup(PartitioningByWidth(transcripts))[txHits]
         df <- DataFrame(xHits=xHits, transcriptsHits=transcriptsHits)
         if (intronJunctions)
-            df$intronHits <- mcols(hits)$intronHits
+            df$intronic <- mcols(hits)$intronic
         GRanges(names(transcripts)[transcriptsHits],
                 xrange, strand(flat)[txHits], df)
     } else {
         ans <- GRanges()
         df <- DataFrame(xHits=integer(), transcriptsHits=integer())
         if (intronJunctions)
-            df$intronHits <- logical()
+            df$intronic <- logical()
         mcols(ans) <- df 
         ans
     }
