@@ -80,15 +80,16 @@
     (TSS) and is not affected by the value of \code{ignore.strand}.
   }
   \item{intronJunctions}{
-    Logical to indicate if intron ranges in \code{x} should return a range that
-    spans the intron gap. Ranges in \code{x} that do not fall \sQuote{within} a
-    range in \code{transcripts} are considered a non-hit and have no mapping.
-    When \code{intronJunctions} is TRUE, these no-hits map to a range of width
-    2 that spans the junction (i.e., the start and end of the ranges they fall
-    between). The range in \code{x} must fall between ranges in
-    \code{transcripts}. Ranges that 'fall off' either end or overlap both the
-    gap and a range in \code{transcripts} are not considered intron ranges and
-    will not be mapped.
+    Logical to indicate whether intronic ranges in \code{x} should be reported.
+ 
+    Ranges in \code{x} that do not fall \sQuote{within} a range in
+    \code{transcripts} are considered a non-hit and have no mapping.  When
+    \code{intronJunctions=TRUE} the non-hits that fall between 2 ranges in
+    \code{transcripts} are reported as a zero-width range (start and end
+    taken from the ranges they fall between). To be considered 'intronic',
+    the \code{x} range must fall between ranges in \code{transcripts}. Those
+    that 'fall off' either end or overlap the intron gap and a range in
+    \code{transcripts} will not be mapped.
 
     This argument is only supported in \code{mapToTranscripts} when 
     \code{transcripts} is a GRangesList.

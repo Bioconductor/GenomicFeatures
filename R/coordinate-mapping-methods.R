@@ -97,9 +97,9 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
                 subjectIdx <- na.omit(follows[follows & precedes])
                 stopifnot(length(subjectIdx) == sum(introns))
                 nstrand <- as.logical(strand(flat[subjectIdx]) == "-")
-                starts <- end(flat[subjectIdx]) 
-                starts[nstrand] <- start(flat[subjectIdx[nstrand]]) - 1L
-                ranges(x[introns]) <- IRanges(start=starts, width=2L)
+                ends <- end(flat[subjectIdx]) 
+                ends[nstrand] <- start(flat[subjectIdx[nstrand]]) - 1L
+                ranges(x[introns]) <- IRanges(end=ends, width=0L)
                 ## modify 'hits'
                 query <- c(queryHits(hits), seq_along(x)[introns])
                 subject <- c(subjectHits(hits), subjectIdx) 

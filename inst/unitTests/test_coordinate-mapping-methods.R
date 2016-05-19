@@ -369,12 +369,12 @@ test_mapToTranscripts_intronJunctions <- function()
     ans <- mapToTranscripts(x, align, intronJunctions=TRUE)
     checkTrue(length(ans) == 2)
     checkEquals(mcols(ans)$xHits, c(2, 3))
-    checkEquals(width(ans), c(1, 2))
-    checkEquals(start(ans), c(2, 2))
+    checkEquals(width(ans), c(1, 0))
+    checkEquals(start(ans), c(2, 3))
     checkEquals(mcols(ans)$intronic, c(FALSE, TRUE))
 
     ans <- mapToTranscripts(rev(x), align, intronJunctions=TRUE)
-    checkEquals(width(ans), c(2, 1))
+    checkEquals(width(ans), c(0, 1))
     checkEquals(mcols(ans)$intronic, c(TRUE, FALSE))
 
     ## span intron and exon
@@ -395,6 +395,6 @@ test_mapToTranscripts_intronJunctions <- function()
     strand(x) <- strand(align) <- "-"
     ans <- mapToTranscripts(x, align, intronJunctions=TRUE)
     checkTrue(length(ans) == 2)
-    checkEquals(width(ans), c(1, 2))
-    checkEquals(start(ans), c(4, 3))
+    checkEquals(width(ans), c(1, 0))
+    checkEquals(start(ans), c(4, 4))
 }
