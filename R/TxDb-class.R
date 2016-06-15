@@ -328,10 +328,9 @@ TxDb <- function(conn) .TxDb$new(conn=conn)
 setMethod("species", "TxDb",
     function(object)
     {
-         msg <- c("  Calling species() on a ", class(object), " object ",
-                  "is *deprecated*.\n  Please use organism() instead.")
-        .Deprecated(msg=msg)
-        organism(object)
+         msg <- wmsg("Calling species() on a ", class(object), " object ",
+                     "is defunct.\n  Please use organism() instead.")
+        .Defunct(msg=msg)
     }
 )
 setMethod("organism", "TxDb",

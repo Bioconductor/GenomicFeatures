@@ -158,22 +158,14 @@ translateCols <- function(columns, txdb){
     obj
 }
 
-.get_filter_from_filter_or_vals <- function(filter=NULL, vals=NULL)
-{
-    if (is.null(vals))
-        return(filter)
-    msg <- wmsg("The 'vals' argument has been renamed 'filter'. ",
-                "Please use the 'filter' argument instead.")
-    .Deprecated(msg=msg)
-    if (!is.null(filter))
-        stop("only one of 'filter' or 'vals' can be specified")
-    vals
-}
-
 .extractFromTxDb <- function(txdb, proxy_table,
                              mcolumns=character(0), filter=NULL, vals=NULL)
 {
-    filter <- .get_filter_from_filter_or_vals(filter, vals)
+    if (!is.null(vals)) {
+        msg <- wmsg("The 'vals' argument has been renamed 'filter'. ",
+                    "Please use the 'filter' argument instead.")
+        .Defunct(msg=msg)
+    }
     user_mcolumns <- mcolumns
     mcolumns <- translateCols(mcolumns, txdb)
     if (is.null(filter))

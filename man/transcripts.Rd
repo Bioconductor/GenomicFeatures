@@ -75,7 +75,7 @@ genes(x, ...)
     \code{"cds_chrom"}, \code{"cds_strand"} and \code{"exon_rank"}.
   }
   \item{vals}{
-    Deprecated. Please use the \code{filter} argument instead.
+    Defunct. Please use the \code{filter} argument instead.
   }
   \item{single.strand.genes.only}{
     \code{TRUE} or \code{FALSE}. If \code{TRUE} (the default), then genes
