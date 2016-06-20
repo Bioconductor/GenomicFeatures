@@ -110,21 +110,20 @@ library(rtracklayer)
 ucscGenomes()[ , "db"]
 
 ## Display the list of Tracks supported by makeFeatureDbFromUCSC():
-# supportedUCSCFeatureDbTracks("mm9")
+# supportedUCSCFeatureDbTracks("mm10")
 
 ## Display the list of tables supported by your track:
-supportedUCSCFeatureDbTables(genome="mm9",
-                             track="oreganno")
+supportedUCSCFeatureDbTables(genome="mm10",
+                             track="qPCR Primers")
 
 ## Display fields that could be passed in to colnames:
-UCSCFeatureDbTableSchema(genome="mm9",
-                         track="oreganno",
-                         tablename="oreganno")
+UCSCFeatureDbTableSchema(genome="mm10",
+                         track="qPCR Primers",
+                         tablename="qPcrPrimers")
 
-## Retrieving a full transcript dataset for Yeast from UCSC:
-fdb <- makeFeatureDbFromUCSC(genome="mm9",
-                              track="oreganno",
-                              tablename="oreganno")
+## Retrieving a full transcript dataset for Mouse from UCSC:
+fdb <- makeFeatureDbFromUCSC(genome="mm10",
+                              track="qPCR Primers",
+                              tablename="qPcrPrimers")
 fdb
-
 }
