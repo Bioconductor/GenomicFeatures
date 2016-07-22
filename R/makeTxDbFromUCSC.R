@@ -314,7 +314,7 @@ browseUCSCtrack <- function(genome="hg19",
     ),
     refGene=list(
         L2Rchain=list(
-            c(tablename="refLink",
+            c(tablename="hgFixed.refLink",
               Lcolname="mrnaAcc",
               Rcolname="locusLinkId")
         ),
@@ -540,11 +540,16 @@ browseUCSCtrack <- function(genome="hg19",
         Lcolname <- L2Rlink[["Lcolname"]]
         Rcolname <- L2Rlink[["Rcolname"]]
         message("Download the ", tablename, " table ... ", appendLF=FALSE)
-        ## The tables involved in the "left join" don't necessarily belong
-        ## to the track of the leftmost table (e.g. "wgEncodeGencodeAttrsV17"
-        ## table does NOT belong to the "GENCODE Genes V17" track).
-        #query <- ucscTableQuery(session, track, table=tablename)
-        query <- ucscTableQuery(session, table=tablename)
+        if (tablename == "hgFixed.refLink") {
+            query <- ucscTableQuery(session, track, table=tablename)
+        } else {
+            ## The tables involved in the "left join" don't necessarily belong
+            ## to the track of the leftmost table (e.g.
+            ## "wgEncodeGencodeAttrsV17" table does NOT belong to the "GENCODE
+            ## Genes V17" track).
+            #query <- ucscTableQuery(session, track, table=tablename)
+            query <- ucscTableQuery(session, table=tablename)
+        }
         ucsc_table <- getTable(query)
         message("OK")
         if (!all(has_col(ucsc_table, c(Lcolname, Rcolname))))
