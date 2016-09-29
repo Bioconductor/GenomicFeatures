@@ -242,7 +242,7 @@ supportedUCSCtables <- function(genome="hg19",
         ans_track[ans$tablename == "knownGene"] <- "Known Genes"
         ans$track <- ans_track
     } else if (genome %in% "hg38") {
-        ans_track[ans$tablename == "knownGene"] <- "GENCODE v22"
+        ans_track[ans$tablename == "knownGene"] <- "GENCODE v24"
         ans$track <- ans_track
     }
     ## trackNames() returns a mapping from track names to "central table" names
