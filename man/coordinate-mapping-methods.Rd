@@ -402,16 +402,16 @@ genome(snps) <- genome(cDNA)
 ## Map all 5 SNPS to all 4 transcripts:
 mapToTranscripts(snps, unlist(cDNA))
 
-## Map the first SNP to transcript uc002pct.1 and the second to uc002pcu.1.
+## Map the first SNP to transcript uc002pct.2 and the second to uc002pcu.2.
 pmapToTranscripts(snps[1:2], unlist(cDNA)[1:2])
 
 ## The cdsBy() extractor returns coding regions by gene or by transcript.
-## Extract the coding regions for transcript uc002pct.1.
-cds <- cdsBy(txdb, "tx", use.names=TRUE)["uc002pct.1"]
+## Extract the coding regions for transcript uc002pct.2.
+cds <- cdsBy(txdb, "tx", use.names=TRUE)["uc002pct.2"]
 cds
 
 ## The 'cds' object is a GRangesList of length 1 containing all cds ranges
-## for the single transcript uc002pct.1.
+## for the single transcript uc002pct.2.
 
 ## To map to the concatenated group of ranges leave 'cds' as a GRangesList.
 mapToTranscripts(snps, cds)
@@ -424,17 +424,9 @@ mapToTranscripts(snps[2], unlist(cds))
 ## transcript were on the "-" strand the difference in concatenated vs
 ## non-concatenated position would be more obvious.
 
-## Change the strand of 'cds':
-strand(cds) <- "-"
-
-## Re-map using 'ignore.strand'. The 'ignore.strand' argument is used
-## in overlaps operations but does not affect the mapped position.
-
-## Map to concatenated group of cds regions:
-mapToTranscripts(snps[2], cds, ignore.strand=TRUE)
-
-## Map to individual cds regions:
-mapToTranscripts(snps[2], unlist(cds), ignore.strand=TRUE)
+## Change strand:
+strand(cds) <- strand(snps) <- "-"
+mapToTranscripts(snps[2], unlist(cds))
 }
 
 \keyword{methods}
