@@ -1,3 +1,26 @@
+CHANGES IN VERSION 1.26
+-----------------------
+
+NEW FEATURES
+
+    o makeTxDbFromGRanges() now recognizes features of type lnc_RNA,
+     antisense_lncRNA, transcript_region, and pseudogenic_tRNA, as transcripts.
+
+    o Add 'intronJunctions' argument to mapToTranscripts().
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+DEPRECATED AND DEFUNCT
+
+    o The 'vals' argument of the "transcripts", "exons", "cds", and "genes"
+      methods for TxDb objects is now defunct (was deprecated in BioC 3.3).
+
+    o The "species" method for TxDb object is now defunct (was deprecated in
+      BioC 3.3).
+
+BUG FIXES
+
+
 CHANGES IN VERSION 1.24
 -----------------------
 
