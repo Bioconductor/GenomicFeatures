@@ -159,13 +159,8 @@ translateCols <- function(columns, txdb){
 }
 
 .extractFromTxDb <- function(txdb, proxy_table,
-                             mcolumns=character(0), filter=NULL, vals=NULL)
+                             mcolumns=character(0), filter=NULL)
 {
-    if (!is.null(vals)) {
-        msg <- wmsg("The 'vals' argument has been renamed 'filter'. ",
-                    "Please use the 'filter' argument instead.")
-        .Defunct(msg=msg)
-    }
     user_mcolumns <- mcolumns
     mcolumns <- translateCols(mcolumns, txdb)
     if (is.null(filter))
@@ -180,23 +175,22 @@ translateCols <- function(columns, txdb){
 setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
 
 setMethod("transcripts", "TxDb",
-    function(x, columns=c("tx_id", "tx_name"), filter=NULL, vals=NULL)
-        .extractFromTxDb(x, "transcript", mcolumns=columns, filter=filter,
-                                                            vals=vals)
+    function(x, columns=c("tx_id", "tx_name"), filter=NULL)
+        .extractFromTxDb(x, "transcript", mcolumns=columns, filter=filter)
 )
 
 setGeneric("exons", function(x, ...) standardGeneric("exons"))
 
 setMethod("exons", "TxDb",
-    function(x, columns="exon_id", filter=NULL, vals=NULL)
-        .extractFromTxDb(x, "exon", mcolumns=columns, filter=filter, vals=vals)
+    function(x, columns="exon_id", filter=NULL)
+        .extractFromTxDb(x, "exon", mcolumns=columns, filter=filter)
 )
 
 setGeneric("cds", function(x, ...) standardGeneric("cds"))
 
 setMethod("cds", "TxDb",
-    function(x, columns="cds_id", filter=NULL, vals=NULL)
-        .extractFromTxDb(x, "cds", mcolumns=columns, filter=filter, vals=vals)
+    function(x, columns="cds_id", filter=NULL)
+        .extractFromTxDb(x, "cds", mcolumns=columns, filter=filter)
 )
 
 setGeneric("genes", function(x, ...) standardGeneric("genes"))
@@ -228,15 +222,15 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
 ### different chromosomes are dropped. In that case, the genes are returned
 ### in a GRanges object. Otherwise, they're returned in a GRangesList object
 ### with the metadata columns requested thru 'columns' set at the top level.
-.TxDb.genes <- function(x, columns="gene_id", filter=NULL, vals=NULL,
-                        single.strand.genes.only=TRUE)
+.TxDb.genes <- function(x, columns="gene_id", filter=NULL,
+                           single.strand.genes.only=TRUE)
 {
     if (!is.character(columns))
         stop("'columns' must be a character vector")
     if (!isTRUEorFALSE(single.strand.genes.only))
         stop("'single.strand.genes.only' must be TRUE or FALSE")
     columns2 <- union(columns, "gene_id")
-    tx <- transcripts(x, columns=columns2, filter=filter, vals=vals)
+    tx <- transcripts(x, columns=columns2, filter=filter)
 
     ## Unroll 'tx' along the 'gene_id' metadata column.
     ## Note that the number of genes per transcript will generally be 1 or 0.

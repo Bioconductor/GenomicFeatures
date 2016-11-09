@@ -22,17 +22,16 @@
 
 \usage{
 transcripts(x, ...)
-\S4method{transcripts}{TxDb}(x, columns=c("tx_id", "tx_name"), filter=NULL, vals=NULL)
+\S4method{transcripts}{TxDb}(x, columns=c("tx_id", "tx_name"), filter=NULL)
 
 exons(x, ...)
-\S4method{exons}{TxDb}(x, columns="exon_id", filter=NULL, vals=NULL)
+\S4method{exons}{TxDb}(x, columns="exon_id", filter=NULL)
 
 cds(x, ...)
-\S4method{cds}{TxDb}(x, columns="cds_id", filter=NULL, vals=NULL)
+\S4method{cds}{TxDb}(x, columns="cds_id", filter=NULL)
 
 genes(x, ...)
-\S4method{genes}{TxDb}(x, columns="gene_id", filter=NULL, vals=NULL,
-         single.strand.genes.only=TRUE)
+\S4method{genes}{TxDb}(x, columns="gene_id", filter=NULL, single.strand.genes.only=TRUE)
 
 \S4method{promoters}{TxDb}(x, upstream=2000, downstream=200, ...)
 }
@@ -73,9 +72,6 @@ genes(x, ...)
     \code{"exon_chrom"}, \code{"exon_strand"},
     \code{"cds_id"}, \code{"cds_name"},
     \code{"cds_chrom"}, \code{"cds_strand"} and \code{"exon_rank"}.
-  }
-  \item{vals}{
-    Defunct. Please use the \code{filter} argument instead.
   }
   \item{single.strand.genes.only}{
     \code{TRUE} or \code{FALSE}. If \code{TRUE} (the default), then genes
