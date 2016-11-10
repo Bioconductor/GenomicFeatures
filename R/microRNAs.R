@@ -25,7 +25,7 @@
   n2oNames <- levels(seqnames(ans))
   n2o <- match(seqnames(seqinfo(txdb)), n2oNames)
   seqinfo(ans, new2old=n2o) <- seqinfo(txdb)
-  seqlevels(ans, force=TRUE) <- names(isActSeq)[isActSeq]
+  seqlevels(ans, pruning.mode="coarse") <- names(isActSeq)[isActSeq]
   ans
 }
 

@@ -150,7 +150,7 @@ if (FALSE) {
 
 .extractTranscriptSeqsFromOneSeq <- function(seqlevel, x, transcripts)
 {
-    seqlevels(transcripts, force=TRUE) <- seqlevel
+    seqlevels(transcripts, pruning.mode="coarse") <- seqlevel
     strand <- strand(transcripts)
     transcripts <- ranges(transcripts)
     if (seqlevel %in% seqlevels(x)) {

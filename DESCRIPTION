@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.27.1
+Version: 1.27.2
 Encoding: UTF-8
 Author: M. Carlson, H. Pagès, P. Aboyoun, S. Falcon, M. Morgan,
         D. Sarkar, M. Lawrence
@@ -17,7 +17,7 @@ Description: A set of tools and methods for making and manipulating
         format.
 Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
 Depends: BiocGenerics (>= 0.1.0), S4Vectors (>= 0.9.47), IRanges (>= 2.3.21),
-        GenomeInfoDb (>= 1.5.16), GenomicRanges (>= 1.21.32),
+        GenomeInfoDb (>= 1.11.4), GenomicRanges (>= 1.27.6),
         AnnotationDbi (>= 1.33.15)
 Imports: methods, utils, stats, tools, DBI, RSQLite, RCurl,
         XVector, Biostrings (>= 2.23.3), rtracklayer (>= 1.29.24),

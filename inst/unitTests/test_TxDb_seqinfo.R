@@ -10,12 +10,12 @@ test_rename_seqlevels <- function(){
 test_restrict_seqlevels <- function(){
     ## This should work
     txdb <- restoreSeqlevels(txdb)    
-    seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+    seqlevels(txdb, pruning.mode="coarse") <- c(chr5 = "5")
     checkTrue(length(seqinfo(txdb))==1)
     
     ## This should work
     txdb <- restoreSeqlevels(txdb)
-    seqlevels(txdb, force=TRUE) <- c(chr5 = "5", chr6="6", chr4="4")
+    seqlevels(txdb, pruning.mode="coarse") <- c(chr5 = "5", chr6="6", chr4="4")
     checkTrue(length(seqinfo(txdb))==3)
     checkIdentical(c('5','6','4'), seqlevels(txdb))
     checkTrue(seqlengths(txdb)[2] == min(seqlengths(txdb)))
@@ -23,7 +23,7 @@ test_restrict_seqlevels <- function(){
     
     ## And this should NOT work
     txdb <- restoreSeqlevels(txdb)
-    checkException(seqlevels(txdb, force=TRUE) <- c(foo = "2"))
+    checkException(seqlevels(txdb, pruning.mode="coarse") <- c(foo = "2"))
 }
 
 
@@ -57,9 +57,9 @@ test_noChange_lengths <- function(){
 test_transcripts_accessor <- function(){
     txdb <- restoreSeqlevels(txdb)
     txs1 <- transcripts(txdb)
-    seqlevels(txs1, force=TRUE) <- c(chr5 = "5")
+    seqlevels(txs1, pruning.mode="coarse") <- c(chr5 = "5")
     ## Then change seqlevels for txdb
-    seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+    seqlevels(txdb, pruning.mode="coarse") <- c(chr5 = "5")
     txs2 <- transcripts(txdb)
     checkIdentical(txs1, txs2)
 }
@@ -67,9 +67,9 @@ test_transcripts_accessor <- function(){
 test_exons_accessor <- function(){
     txdb <- restoreSeqlevels(txdb)
     exs1 <- exons(txdb)
-    seqlevels(exs1, force=TRUE) <- c(chr5 = "5")
+    seqlevels(exs1, pruning.mode="coarse") <- c(chr5 = "5")
     ## Then change seqlevels for txdb
-    seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+    seqlevels(txdb, pruning.mode="coarse") <- c(chr5 = "5")
     exs2 <- exons(txdb)
     checkIdentical(exs1, exs2)
 }
@@ -77,9 +77,9 @@ test_exons_accessor <- function(){
 test_cds_accessor <- function(){
     txdb <- restoreSeqlevels(txdb)
     cds1 <- cds(txdb)
-    seqlevels(cds1, force=TRUE) <- c(chr5 = "5")
+    seqlevels(cds1, pruning.mode="coarse") <- c(chr5 = "5")
     ## Then change seqlevels for txdb
-    seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+    seqlevels(txdb, pruning.mode="coarse") <- c(chr5 = "5")
     cds2 <- cds(txdb)
     checkIdentical(cds1, cds2)
 }
@@ -87,9 +87,9 @@ test_cds_accessor <- function(){
 test_promoters_accessor <- function(){
     txdb <- restoreSeqlevels(txdb)
     prm1 <- promoters(txdb)
-    seqlevels(prm1, force=TRUE) <- c(chr5 = "5")
+    seqlevels(prm1, pruning.mode="coarse") <- c(chr5 = "5")
     ## Then change seqlevels for txdb
-    seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+    seqlevels(txdb, pruning.mode="coarse") <- c(chr5 = "5")
     prm2 <- promoters(txdb)
     checkIdentical(prm1, prm2)
 }
@@ -102,9 +102,9 @@ test_transcriptsBy_accessors <- function(){
     ## but NOT for txs4...   Hmmmm.
     txdb <- restoreSeqlevels(txdb)
     txs3 <- transcriptsBy(txdb, by="gene")
-    seqlevels(txs3, force=TRUE) <- c(chr5 = "5")
+    seqlevels(txs3, pruning.mode="coarse") <- c(chr5 = "5")
     ## Then change seqlevels for txdb
-    seqlevels(txdb, force=TRUE) <- c(chr5 = "5")
+    seqlevels(txdb, pruning.mode="coarse") <- c(chr5 = "5")
     txs4 <- transcriptsBy(txdb, by="gene")
 ##    checkIdentical(txs3, txs4)  ## TROUBLE!!
     

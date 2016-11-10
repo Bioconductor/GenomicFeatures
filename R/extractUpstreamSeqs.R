@@ -44,7 +44,7 @@ setMethod("extractUpstreamSeqs", "TxDb",
             idx <- match(exclude.seqlevels, seqlevels(genes))
             if (any(is.na(idx)))
                 stop("'exclude.seqlevels' contains invalid seqlevels")
-            seqlevels(genes, force=TRUE) <- seqlevels(genes)[-idx]
+            seqlevels(genes, pruning.mode="coarse") <- seqlevels(genes)[-idx]
         }
         callGeneric(x, genes, width=width)
     }

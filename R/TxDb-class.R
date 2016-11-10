@@ -362,7 +362,9 @@ setMethod("seqlevels0", "TxDb",
 ### Adapted from default "seqlevels<-" method defined in GenomeInfoDb.
 ### We only support "renaming" and "strict subsetting" modes.
 setReplaceMethod("seqlevels", "TxDb",
-    function(x, force=FALSE, value)
+    function(x, force=FALSE,
+             pruning.mode=c("error", "coarse", "fine", "tidy"),
+             value)
     {
         x_seqlevels0 <- seqlevels0(x)  # "real" seqlevels (from the db)
         if (identical(value, x_seqlevels0))
@@ -503,7 +505,7 @@ keep_user_seqlevels_from_TxDb <- function(x, txdb)
     to_seqlevels <- txdb$user_seqlevels
     new_seqlevels <- setNames(to_seqlevels, from_seqlevels)
     new_seqlevels <- new_seqlevels[txdb$isActiveSeq[txdb$user2seqlevels0]]
-    seqlevels(x, force=TRUE) <- new_seqlevels
+    seqlevels(x, pruning.mode="coarse") <- new_seqlevels
     x
 }
 
