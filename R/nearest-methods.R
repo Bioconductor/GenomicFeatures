@@ -39,11 +39,11 @@ setMethod("distance", c("GenomicRanges", "TxDb"),
           stop("'", paste(id[missing], sep=","), "'", " not found in 'y'")
 
     rng <- unlist(range(split(tx, f)), use.names=FALSE)
-    rng <- rng[match(id, levels(f))]
     if (length(rng) != length(id))
         stop("gene regions in annotation 'y' cannot be collapsed ",
              "into a single range")
-    rng 
+    
+    rng[match(id, levels(f))]
 }
 
 .subsetByID <- function(rng, id)
