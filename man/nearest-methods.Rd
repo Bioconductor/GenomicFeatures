@@ -50,8 +50,14 @@
        ranges are used in the distance calculation with the ranges in 
        \code{x}.
 
-       The behavior of \code{distance} has changed in Bioconductor 2.12.
-       See the man page \code{?distance} in IRanges for details.
+       The method returns \code{NA} values when the genomic region defined
+       by \code{id} cannot be collapsed into a single range (e.g.,
+       when a gene spans multiple chromosomes) or if the \code{id}
+       is not found in \code{y}.
+
+       The behavior of \code{distance} with respect to zero-width ranges
+       has changed in Bioconductor 2.12. See the man page \code{?distance} 
+       in IRanges for details.
     }
   }
 }

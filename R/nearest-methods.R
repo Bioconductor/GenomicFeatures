@@ -15,43 +15,53 @@ setMethod("distance", c("GenomicRanges", "TxDb"),
             stop("length(id) must equal length(x)")
         if (!is.character(id))
             stop("'id' must be a character")
-        rng <- switch(type,
-                      gene=.extractByGeneID(y, id),
-                      tx=transcripts(y, "tx_id", filter=list(tx_id=id)),
-                      exon=exons(y, "exon_id", filter=list(exon_id=id)),
-                      cds=cds(y, "cds_id", filter=list(cds_id=id)))
-        if (type != "gene") {
-            rng <- .subsetByID(rng, id)
-            if (!identical(length(x), length(rng)))
-            stop(paste0(type, " regions in annotation cannot be collapsed ",
-                        "into a single range"))
+
+        if (type == "gene") {
+            .extractByGeneID(x, y, ignore.strand, id)
+        } else {
+            rng <- switch(type,
+                          tx=transcripts(y, "tx_id", filter=list(tx_id=id)),
+                          exon=exons(y, "exon_id", filter=list(exon_id=id)),
+                          cds=cds(y, "cds_id", filter=list(cds_id=id)))
+            f <- factor(mcols(rng)[,])
+            missing <- !id %in% levels(f) 
+            if (any(missing))
+                  warning(paste0("id(s): '", paste(unique(id[missing]), 
+                                 sep=","), "' were not found in 'y'"))
+            ## rep out ranges according to 'id'
+            rng <- rng[match(id[!missing], levels(f))]
+            ans <- rep(NA_integer_, length(x))
+            ans[!missing] <- distance(x[!missing], rng, 
+                                      ignore.strand=ignore.strand)
+            stopifnot(length(ans) == length(id))
+            ans
         }
-        distance(x, rng, ignore.strand=ignore.strand)
     }
 )
 
-.extractByGeneID <- function(y, id)
+.extractByGeneID <- function(x, y, ignore.strand, id)
 {
-    tx <- transcripts(y, "gene_id", filter=list(gene_id=id))
-    f <- factor(unlist(tx$gene_id, use.names=FALSE))
-    missing <- !id %in% levels(f) 
+    tx <- transcriptsBy(y, "gene")
+    missing <- !id %in% names(tx) 
     if (any(missing))
-          stop("'", paste(id[missing], sep=","), "'", " not found in 'y'")
+          warning(paste0("id(s): '", paste(unique(id[missing]), sep=","), 
+                  "' were not found in 'y'"))
 
-    rng <- unlist(range(split(tx, f)), use.names=FALSE)
-    if (length(rng) != length(id))
-        stop("gene regions in annotation 'y' cannot be collapsed ",
-             "into a single range")
-    
-    rng[match(id, levels(f))]
+    group <- range(tx[names(tx) %in% id], ignore.strand=ignore.strand)
+    multiRange <- lengths(group) > 1L
+    if (any(multiRange)) {
+        warning(paste0("id(s): '", paste(unique(names(multiRange)[multiRange]), 
+                       sep=','), 
+                       "' could not be collapsed to a single gene region"))
+        group <- group[!multiRange]
+    }
+
+    valid <- (!id %in% names(multiRange)[multiRange]) & !missing 
+    ## rep out ranges according to 'id'
+    rng <- unlist(group, use.names=FALSE)
+    rng <- rng[match(id[valid], names(group))]
+    ans <- rep(NA_integer_, length(x))
+    ans[valid] <- distance(x[valid], rng, ignore.strand=ignore.strand)
+    stopifnot(length(ans) == length(id))
+    ans
 }
-
-.subsetByID <- function(rng, id)
-{
-    f <- factor(mcols(rng)[,])
-    missing <- !id %in% levels(f) 
-    if (any(missing))
-          stop("'", paste(id[missing], sep=","), "'", " not found in 'y'")
-    rng[match(id, levels(f))]
-}
-
