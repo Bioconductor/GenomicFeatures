@@ -361,49 +361,59 @@ setMethod("seqlevels0", "TxDb",
 
 ### Adapted from default "seqlevels<-" method defined in GenomeInfoDb.
 ### We only support "renaming" and "strict subsetting" modes.
-setReplaceMethod("seqlevels", "TxDb",
+.set_TxDb_seqlevels <-
     function(x, force=FALSE,
              pruning.mode=c("error", "coarse", "fine", "tidy"),
              value)
-    {
-        x_seqlevels0 <- seqlevels0(x)  # "real" seqlevels (from the db)
-        if (identical(value, x_seqlevels0))
-            return(x$initialize())
-        x_seqlevels <- seqlevels(x)
-        ## Map the new sequence levels to the old ones.
-        new2old <- GenomeInfoDb:::getSeqlevelsReplacementMode(value,
-                                                              x_seqlevels)
-        if (identical(new2old, -3L)) {
-            ## "renaming" mode
-            x$user_seqlevels <- value
-            return(x)
-        }
-        if (identical(new2old, -2L) || identical(new2old, -1L)) {
-            ## "subsetting" mode
-            new2old <- match(value, x_seqlevels)
-        }
-        user2seqlevels0 <- x$user2seqlevels0[new2old]
-        na_idx <- which(is.na(user2seqlevels0))
-        if (length(na_idx) != 0L) {
-            user2seqlevels0[na_idx] <- match(value[na_idx], x_seqlevels0)
-            if (anyNA(user2seqlevels0))
-                stop(wmsg("adding seqlevels to a TxDb object is not supported"))
-            any_dup <- anyDuplicated(user2seqlevels0)
-            if (any_dup) {
-                idx0 <- user2seqlevels0[any_dup]
-                in1string <- paste(value[user2seqlevels0 == idx0],
-                                   collapse=", ")
-                seqlevel0 <- x_seqlevels0[idx0]
-                stop(wmsg("more than one user-supplied seqlevels ",
-                          "(", in1string, ") refer to the same seqlevel ",
-                          "stored in the db (", seqlevel0, ")"))
-            }
-        }
-        x$user_seqlevels <- unname(value)
-        x$user2seqlevels0 <- user2seqlevels0
-        x
+{
+    x_seqlevels0 <- seqlevels0(x)  # "real" seqlevels (from the db)
+    if (identical(value, x_seqlevels0))
+        return(x$initialize())
+    x_seqlevels <- seqlevels(x)
+    ## First we compare the user-supplied seqlevels with 'x_seqlevels0' to
+    ## detect the situation where the user intention is to subset the "real"
+    ## seqlevels.
+    mode <- GenomeInfoDb:::getSeqlevelsReplacementMode(value, x_seqlevels0)
+    if (mode == -2L) {
+        ## "subsetting of the real seqlevels" mode
+        x$user_seqlevels <- value
+        x$user2seqlevels0 <- match(value, x_seqlevels0)
+        return(x)
     }
-)
+    ## Then we compare the user-supplied seqlevels with the current user-
+    ## defined seqlevels.
+    new2old <- GenomeInfoDb:::getSeqlevelsReplacementMode(value, x_seqlevels)
+    if (identical(new2old, -3L)) {
+        ## "renaming of user-defined seqlevels" mode
+        x$user_seqlevels <- value
+        return(x)
+    }
+    if (identical(new2old, -2L) || identical(new2old, -1L)) {
+        ## "subsetting of user-defined seqlevels" mode
+        new2old <- match(value, x_seqlevels)
+    }
+    user2seqlevels0 <- x$user2seqlevels0[new2old]
+    na_idx <- which(is.na(user2seqlevels0))
+    if (length(na_idx) != 0L) {
+        user2seqlevels0[na_idx] <- match(value[na_idx], x_seqlevels0)
+        if (anyNA(user2seqlevels0))
+            stop(wmsg("adding seqlevels to a TxDb object is not supported"))
+        any_dup <- anyDuplicated(user2seqlevels0)
+        if (any_dup) {
+            idx0 <- user2seqlevels0[any_dup]
+            in1string <- paste(value[user2seqlevels0 == idx0], collapse=", ")
+            seqlevel0 <- x_seqlevels0[idx0]
+            stop(wmsg("more than one user-supplied seqlevels ",
+                      "(", in1string, ") refer to the same seqlevel ",
+                      "stored in the db (", seqlevel0, ")"))
+        }
+    }
+    x$user_seqlevels <- unname(value)
+    x$user2seqlevels0 <- user2seqlevels0
+    x
+}
+
+setReplaceMethod("seqlevels", "TxDb", .set_TxDb_seqlevels)
 
 get_TxDb_seqinfo0 <- function(x)
 {
