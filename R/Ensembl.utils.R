@@ -232,6 +232,20 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### get_organism_from_Ensembl_Mart_dataset()
+###
+
+get_organism_from_Ensembl_Mart_dataset <- function(dataset)
+{
+    core_dir <- .Ensembl_getMySQLCoreDir(dataset)
+    organism <- sub("_core.*", "", core_dir)
+    organism <- sub("_", " ", organism)
+    substr(organism, 1L, 1L) <- toupper(substr(organism, 1L, 1L))
+    organism
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### fetchChromLengthsFromEnsembl() and fetchChromLengthsFromEnsemblPlants()
 ###
 
