@@ -58,15 +58,15 @@
 }
 
 .prepareGFFMetadata <- function(file, dataSource=NA, organism=NA,
-                                taxonomyId=NA, miRBaseBuild=NA)
+                                taxonomyId=NA, miRBaseBuild=NA, metadata)
 {
     message("Prepare the 'metadata' data frame ... ", appendLF=FALSE)
     if (!isSingleStringOrNA(dataSource))
-        stop("'dataSource' must be a a single string or NA")
+        stop("'dataSource' must be a single string or NA")
     if (!isSingleStringOrNA(organism))
-        stop("'organism' must be a a single string or NA")
+        stop("'organism' must be a single string or NA")
     if (!isSingleStringOrNA(miRBaseBuild))
-        stop("'miRBaseBuild' must be a a single string or NA")
+        stop("'miRBaseBuild' must be a single string or NA")
     if (identical(dataSource, NA)) {
         if (is.character(file)) {
             dataSource <- file
@@ -80,15 +80,10 @@
     }else{
         GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
     }
-    metadata <- data.frame(
-                   name=c("Data source",
-                          "Organism",
-                          "Taxonomy ID",
-                          "miRBase build ID"),
-                   value=c(dataSource, organism,
-                     taxonomyId,
-                     miRBaseBuild)
-                   )
+    df <- data.frame(
+        name=c("Data source", "Organism", "Taxonomy ID", "miRBase build ID"),
+        value=c(dataSource, organism, taxonomyId, miRBaseBuild))
+    metadata <- rbind(df, metadata)
     message("OK")
     metadata
 }
@@ -129,6 +124,7 @@ makeTxDbFromGFF <- function(file,
                             circ_seqs=DEFAULT_CIRC_SEQS,
                             chrominfo=NULL,
                             miRBaseBuild=NA,
+                            metadata=NULL,
                             dbxrefTag)
 {
     format <- match.arg(format)
@@ -162,7 +158,7 @@ makeTxDbFromGFF <- function(file,
     message("OK")
 
     metadata <- .prepareGFFMetadata(file, dataSource, organism, taxonomyId,
-                                    miRBaseBuild)
+                                    miRBaseBuild, metadata)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTxDbFromGRanges(gr, metadata=metadata)

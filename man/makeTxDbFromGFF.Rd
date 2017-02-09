@@ -20,6 +20,7 @@ makeTxDbFromGFF(file,
                 circ_seqs=DEFAULT_CIRC_SEQS,
                 chrominfo=NULL,
                 miRBaseBuild=NA,
+                metadata=NULL,
                 dbxrefTag)
 }
 \arguments{
@@ -67,6 +68,11 @@ makeTxDbFromGFF(file,
     to use for microRNAs. This can be learned by calling
     \code{supportedMiRBaseBuildValues}. By default, this value will be set to
     \code{NA}, which will inactivate the \code{microRNAs} accessor.
+  }
+  \item{metadata}{
+    A 2-column data frame containing meta information to be included in the
+    \link{TxDb} object. See \code{?\link{makeTxDb}} for more information about 
+    the format of \code{metadata}.
   }
   \item{dbxrefTag}{
     If not missing, the values in the \code{Dbxref} attribute with the
@@ -127,9 +133,11 @@ gtfFile <- system.file("extdata","GTF_files","Aedes_aegypti.partial.gtf",
 chrominfo <- data.frame(chrom = c('supercont1.1','supercont1.2'),
                         length=c(5220442, 5300000),
                         is_circular=c(FALSE, FALSE))
+metadata <- data.frame(name="Resource URL",
+                       value=paste0("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
+                                    "release-13/gtf/aedes_aegypti/"))
 txdb2 <- makeTxDbFromGFF(file=gtfFile,
              chrominfo=chrominfo,
-             dataSource=paste("ftp://ftp.ensemblgenomes.org/pub/metazoa/",
-                              "release-13/gtf/aedes_aegypti/",sep=""),
-             organism="Aedes aegypti")
+             organism="Aedes aegypti",
+             metadata=metadata)
 }

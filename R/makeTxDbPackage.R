@@ -34,7 +34,7 @@
   con <- dbconn(txdb)
   res <- dbGetQuery(con, 
     paste0("SELECT value FROM metadata WHERE name='", name, "'"))[[1]]  
-  if(!is.character(res))
+  if(!length(res))
       stop("metadata table missing a value for '", name, "'")
   res
 }
