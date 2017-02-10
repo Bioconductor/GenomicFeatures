@@ -138,6 +138,7 @@ metadata <- data.frame(name="Resource URL",
                                     "release-13/gtf/aedes_aegypti/"))
 txdb2 <- makeTxDbFromGFF(file=gtfFile,
              chrominfo=chrominfo,
+             dataSource="ensemblgenomes",
              organism="Aedes aegypti",
              metadata=metadata)
 }

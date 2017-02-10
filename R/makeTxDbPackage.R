@@ -202,13 +202,13 @@ makeTxDbPackage <- function(txdb,
        bad_syms <- paste(names(is_OK)[!is_OK], collapse=", ")
        stop("values for symbols ", bad_syms, " are not single strings")
    }
-   createPackage(pkgname=pkgname,
-		             destinationDir=destDir,
-                 originDir=template_path,
-                 symbolValues=symvals)
+   createPackage(pkgname=pkgname, destinationDir=destDir,
+                 originDir=template_path, symbolValues=symvals)
    ## then copy the contents of the database into the extdata dir
    db_path <- file.path(destDir, pkgname, "inst", "extdata", 
-     paste(pkgname,"sqlite",sep="."))
+                        paste(pkgname,"sqlite",sep="."))
+   if (!dir.exists(dirname(db_path)))
+       dir.create(dirname(db_path), recursive=TRUE)
    saveDb(txdb, file=db_path)
 }
 
