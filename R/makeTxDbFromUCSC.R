@@ -93,7 +93,19 @@ UCSCGenomeToOrganism <- function(genome){
                     "geoFor"= "Geospiza fortis",
                     "oreNil"= "Oreochromis niloticus",
                     "chrPic"= "Chrysemys picta",
-                    "melGal"= "Meleagris gallopavo"                  
+                    "melGal"= "Meleagris gallopavo",
+                    "panPan"= "Pan paniscus",
+                    "aptMan"= "Apteryx australis",
+                    "criGri"= "Cricetulus griseus",
+                    "macFas"= "Macaca fascicularis",
+                    "musFur"= "Mustela putorius",
+                    "chlSab"= "Chlorocebus sabaeus",
+                    "galVar"= "Galeopterus variegatus",
+                    "balAcu"= "Balaenoptera acutorostrata",
+                    "tarSyr"= "Tarsius syrichta",
+                    "allMis"= "Alligator mississippiensis",
+                    "calMil"= "Callorhinchus milii",
+                    "eboVir"= "Filoviridae ebolavirus"
                   )
   genome2org[genome]
 }

@@ -64,13 +64,13 @@ dbEasyPreparedQuery <- function(conn, SQL, bind.data)
             paste(dim(bind.data), collapse=" x "), "\n", sep="")
         st <- system.time({
                   dbBegin(conn)
-                  dbGetPreparedQuery(conn, SQL, bind.data)
+                  dbGetQuery(conn, SQL, unclass(unname(bind.data)))
                   dbCommit(conn)})
         cat("[debugSQL]               time: ", st["user.self"],
             " seconds\n", sep="")
     } else {
         dbBegin(conn)
-        dbGetPreparedQuery(conn, SQL, bind.data)
+        dbGetQuery(conn, SQL, unclass(unname(bind.data)))
         dbCommit(conn)
     }
 }
