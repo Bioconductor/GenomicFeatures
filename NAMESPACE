@@ -10,7 +10,7 @@ importMethodsFrom(DBI, dbCommit, dbConnect,
                        dbReadTable, dbWriteTable, dbListTables, dbListFields)
 
 importFrom(RSQLite, SQLite, SQLITE_RO)
-importMethodsFrom(RSQLite, dbBegin, dbGetPreparedQuery)
+importMethodsFrom(RSQLite, dbBegin)
 
 import(AnnotationDbi)
 import(BiocGenerics)
