@@ -86,6 +86,9 @@ export(
   ## transcriptLengths.R:
   transcriptLengths,
 
+  ## exonicParts.R:
+  exonicParts, intronicParts,
+
   ## disjointExons.R:
   disjointExons,
 

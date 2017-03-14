@@ -1,68 +1,70 @@
 Package: GenomicFeatures
 Title: Tools for making and manipulating transcript centric annotations
-Version: 1.27.9
+Version: 1.27.10
 Encoding: UTF-8
 Author: M. Carlson, H. Pagès, P. Aboyoun, S. Falcon, M. Morgan,
-        D. Sarkar, M. Lawrence
+	D. Sarkar, M. Lawrence
 License: Artistic-2.0
 Description: A set of tools and methods for making and manipulating
-        transcript centric annotations. With these tools the user can
-        easily download the genomic locations of the transcripts, exons
-        and cds of a given organism, from either the UCSC Genome
-        Browser or a BioMart database (more sources will be supported
-        in the future). This information is then stored in a local
-        database that keeps track of the relationship between
-        transcripts, exons, cds and genes. Flexible methods are
-        provided for extracting the desired features in a convenient
-        format.
+	transcript centric annotations. With these tools the user can
+	easily download the genomic locations of the transcripts, exons
+	and cds of a given organism, from either the UCSC Genome
+	Browser or a BioMart database (more sources will be supported
+	in the future). This information is then stored in a local
+	database that keeps track of the relationship between
+	transcripts, exons, cds and genes. Flexible methods are
+	provided for extracting the desired features in a convenient
+	format.
 Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
-Depends: BiocGenerics (>= 0.1.0), S4Vectors (>= 0.9.47), IRanges (>= 2.3.21),
-        GenomeInfoDb (>= 1.11.4), GenomicRanges (>= 1.27.6),
-        AnnotationDbi (>= 1.33.15)
+Depends: BiocGenerics (>= 0.1.0), S4Vectors (>= 0.9.47), IRanges (>= 2.9.19),
+	GenomeInfoDb (>= 1.11.4), GenomicRanges (>= 1.27.6),
+	AnnotationDbi (>= 1.33.15)
 Imports: methods, utils, stats, tools, DBI, RSQLite, RCurl,
-        XVector, Biostrings (>= 2.23.3), rtracklayer (>= 1.29.24),
-        biomaRt (>= 2.17.1), Biobase (>= 2.15.1)
+	XVector, Biostrings (>= 2.23.3), rtracklayer (>= 1.29.24),
+	biomaRt (>= 2.17.1), Biobase (>= 2.15.1)
 Suggests: org.Mm.eg.db, org.Hs.eg.db,
-        BSgenome, BSgenome.Hsapiens.UCSC.hg19 (>= 1.3.17),
-        BSgenome.Celegans.UCSC.ce2, BSgenome.Dmelanogaster.UCSC.dm3 (>=
-        1.3.17), mirbase.db, FDb.UCSC.tRNAs,
-        TxDb.Hsapiens.UCSC.hg19.knownGene,
-        TxDb.Dmelanogaster.UCSC.dm3.ensGene (>= 2.7.1), 
-        TxDb.Mmusculus.UCSC.mm10.knownGene,
-        TxDb.Hsapiens.UCSC.hg19.lincRNAsTranscripts,
-        TxDb.Hsapiens.UCSC.hg38.knownGene,
-        SNPlocs.Hsapiens.dbSNP141.GRCh38,
-        Rsamtools, pasillaBamSubset (>= 0.0.5), GenomicAlignments,
-        RUnit, BiocStyle, knitr
+	BSgenome, BSgenome.Hsapiens.UCSC.hg19 (>= 1.3.17),
+	BSgenome.Celegans.UCSC.ce2,
+	BSgenome.Dmelanogaster.UCSC.dm3 (>= 1.3.17),
+	mirbase.db, FDb.UCSC.tRNAs,
+	TxDb.Hsapiens.UCSC.hg19.knownGene,
+	TxDb.Dmelanogaster.UCSC.dm3.ensGene (>= 2.7.1),
+	TxDb.Mmusculus.UCSC.mm10.knownGene,
+	TxDb.Hsapiens.UCSC.hg19.lincRNAsTranscripts,
+	TxDb.Hsapiens.UCSC.hg38.knownGene,
+	SNPlocs.Hsapiens.dbSNP141.GRCh38,
+	Rsamtools, pasillaBamSubset (>= 0.0.5), GenomicAlignments,
+	RUnit, BiocStyle, knitr
 Collate: utils.R
-        TxDb-SELECT-helpers.R
-        Ensembl.utils.R findCompatibleMarts.R
-        TxDb-class.R FeatureDb-class.R
-        makeTxDb.R
-        makeTxDbFromUCSC.R
-        makeTxDbFromBiomart.R
-        makeTxDbFromGRanges.R
-        makeTxDbFromGFF.R
-        makeFeatureDbFromUCSC.R
-        mapIdsToRanges.R
-        id2name.R
-        transcripts.R
-        transcriptsBy.R
-        transcriptsByOverlaps.R
-        transcriptLengths.R
-        disjointExons.R
-        features.R
-        microRNAs.R
-        extractTranscriptSeqs.R
-        extractUpstreamSeqs.R
-        getPromoterSeq-methods.R
-        makeTxDbPackage.R
-        select-methods.R
-        nearest-methods.R
-        transcriptLocs2refLocs.R
-        coordinate-mapping-methods.R
-        coverageByTranscript.R
-        zzz.R
+	TxDb-SELECT-helpers.R
+	Ensembl.utils.R findCompatibleMarts.R
+	TxDb-class.R FeatureDb-class.R
+	makeTxDb.R
+	makeTxDbFromUCSC.R
+	makeTxDbFromBiomart.R
+	makeTxDbFromGRanges.R
+	makeTxDbFromGFF.R
+	makeFeatureDbFromUCSC.R
+	mapIdsToRanges.R
+	id2name.R
+	transcripts.R
+	transcriptsBy.R
+	transcriptsByOverlaps.R
+	transcriptLengths.R
+	exonicParts.R
+	disjointExons.R
+	features.R
+	microRNAs.R
+	extractTranscriptSeqs.R
+	extractUpstreamSeqs.R
+	getPromoterSeq-methods.R
+	makeTxDbPackage.R
+	select-methods.R
+	nearest-methods.R
+	transcriptLocs2refLocs.R
+	coordinate-mapping-methods.R
+	coverageByTranscript.R
+	zzz.R
 VignetteBuilder: knitr
 biocViews: Genetics, Infrastructure, Annotation, Sequencing,
-        GenomeAnnotation
+	GenomeAnnotation
