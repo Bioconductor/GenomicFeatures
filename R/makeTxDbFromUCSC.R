@@ -134,7 +134,7 @@ UCSCGenomeToOrganism <- function(genome){
 
   ## Tables/tracks shared by hg18/hg19.
   ## All the tables/tracks listed in this section belong to the "Genes and
-  ## Gene Prediction" group of tracks for hg18 and hg19.
+  ## Gene Prediction" group of tracks for hg18, hg19, hg38, mm10, and sacCer2.
   ## On Aug 13 2010, makeTxDbFromUCSC() was successfully tested by hand on
   ## all of them for hg18 (i.e. with 'genome="hg18"').
   ## Note: the "acembly" table contains more than 250000 transcripts!
@@ -196,6 +196,13 @@ UCSCGenomeToOrganism <- function(genome){
   "wgEncodeGencode2wayConsPseudoV7",  "GENCODE Genes V7",  NA,
   "wgEncodeGencodePolyaV7",           "GENCODE Genes V7",  NA,
 
+  ## Tables/tracks specific to hg38.
+  "ncbiRefSeq",                       "NCBI RefSeq",       "RefSeq All",
+  "ncbiRefSeqCurated",                "NCBI RefSeq",       "RefSeq Curated",
+  "ncbiRefSeqPredicted",              "NCBI RefSeq",       "RefSeq Predicted",
+  "ncbiRefSeqOther",                  "NCBI RefSeq",       "RefSeq Other",
+  "ncbiRefSeqPsl",                    "NCBI RefSeq",       "RefSeq Alignments",
+
   ## Tables/tracks specific to D. melanogaster.
   "flyBaseGene",                      "FlyBase Genes",     NA,
 
@@ -255,7 +262,10 @@ supportedUCSCtables <- function(genome="hg19",
         ans$track <- ans_track
     } else if (genome %in% "hg38") {
         ans_track[ans$tablename == "knownGene"] <- "GENCODE v24"
+        ans_track[ans$tablename == "refGene"] <- "NCBI RefSeq"
+        ans_subtrack[ans$tablename == "refGene"] <- "UCSC RefSeq"
         ans$track <- ans_track
+        ans$subtrack <- ans_subtrack
     }
     ## trackNames() returns a mapping from track names to "central table" names
     ## in the form of a named character vector where the names are the track
@@ -553,7 +563,19 @@ browseUCSCtrack <- function(genome="hg19",
         Rcolname <- L2Rlink[["Rcolname"]]
         message("Download the ", tablename, " table ... ", appendLF=FALSE)
         if (tablename == "hgFixed.refLink") {
-            query <- ucscTableQuery(session, track, table=tablename)
+            ## For some unexplained reason, doing
+            ## ucscTableQuery(session, track, table=tablename) doesn't work
+            ## when genome(session) is set to "hg38". However, we know that it
+            ## works when it's set to "hg19" and 'track' is set to "RefSeq
+            ## Genes". Since the hgFixed.refLink table is not genome-specific
+            ## (it's shared across all genomes) then setting the genome or
+            ## track to arbitrary values doesn't change the result.
+            old_genome <- genome(session)
+            if (old_genome != "hg19")
+                genome(session) <- "hg19"
+            query <- ucscTableQuery(session, "RefSeq Genes", table=tablename)
+            if (old_genome != "hg19")
+                genome(session) <- old_genome
         } else {
             ## The tables involved in the "left join" don't necessarily belong
             ## to the track of the leftmost table (e.g.
