@@ -374,7 +374,7 @@ setMethod("seqlevels0", "TxDb",
     ## detect the situation where the user intention is to subset the "real"
     ## seqlevels.
     mode <- GenomeInfoDb:::getSeqlevelsReplacementMode(value, x_seqlevels0)
-    if (mode == -2L) {
+    if (identical(mode, -2L)) {
         ## "subsetting of the real seqlevels" mode
         x$user_seqlevels <- value
         x$user2seqlevels0 <- match(value, x_seqlevels0)
