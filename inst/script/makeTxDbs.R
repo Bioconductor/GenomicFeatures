@@ -2,6 +2,9 @@
 ### release build code base. It creates new TxDb packages for a release and 
 ### updates existing packages that have modified tracks.
 
+### Check for new or updated tracks at
+###  https://genome.ucsc.edu/cgi-bin/hgGateway?hgsid=587155737_kHXGzURQSTDan47Ux2E8zNtqcI0A
+
 TxDbPackagesForRelease <- 
     function(version, 
              destDir='.',
@@ -9,46 +12,31 @@ TxDbPackagesForRelease <-
                          "<maintainer@bioconductor.org>"),
              author="Bioconductor Core Team")
 {
-    ## Build new tracks for Bioconductor 3.4
-    cat("building rheMac8 \n")
+    ## New tracks for Bioconductor 3.5
+    cat("building galGal5 \n")
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
                             destDir=destDir,
-                            genome="rheMac8",
+                            genome="galGal5",
                             tablename="refGene")
-    ## Update active tracks for Bioconductor 3.4
+
+
+    ## Existing live tracks for Bioconductor 3.5
     cat("building ce11 \n")
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
                             author=author,
                             destDir=destDir,
                             genome="ce11",
-                            tablename="refGene")
-    cat("building hg38 \n")
-    makeTxDbPackageFromUCSC(version=version,
-                            maintainer=maintainer,
-                            author=author,
-                            destDir=destDir,
-                            genome="hg38",
-                            tablename="knownGene")
-
-    cat("building mm10 \n")
-    makeTxDbPackageFromUCSC(version=version,
-                            maintainer=maintainer,
-                            author=author,
-                            destDir=destDir,
-                            genome="mm10",
-                            tablename="knownGene")
-
-    cat("building mm10 \n")
-    makeTxDbPackageFromUCSC(version=version,
-                            maintainer=maintainer,
-                            author=author,
-                            destDir=destDir,
-                            genome="mm10",
                             tablename="ensGene")
-
+    cat("building dm6 \n")
+    makeTxDbPackageFromUCSC(version=version,
+                            maintainer=maintainer,
+                            author=author,
+                            destDir=destDir,
+                            genome="dm6",
+                            tablename="ensGene")
     cat("building rn5 \n")
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
@@ -63,53 +51,5 @@ TxDbPackagesForRelease <-
                             author=author,
                             destDir=destDir,
                             genome="rn6",
-                            tablename="refGene")
-
-    cat("building bosTau8 \n")
-    makeTxDbPackageFromUCSC(version=version,
-                            maintainer=maintainer,
-                            author=author,
-                            destDir=destDir,
-                            genome="bosTau8",
-                            tablename="refGene")
-
-    cat("building susScr3 \n")
-    makeTxDbPackageFromUCSC(version=version,
-                            maintainer=maintainer,
-                            author=author,
-                            destDir=destDir,
-                            genome="susScr3",
-                            tablename="refGene")
- 
-    cat("building panTro4 \n")
-    makeTxDbPackageFromUCSC(version=version,
-                            maintainer=maintainer,
-                            author=author,
-                            destDir=destDir,
-                            genome="panTro4",
-                            tablename="refGene")
-
-    cat("building danRer10 \n")
-    makeTxDbPackageFromUCSC(version=version,
-                            maintainer=maintainer,
-                            author=author,
-                            destDir=destDir,
-                            genome="danRer10",
-                            tablename="refGene")
-
-    cat("building rheMac3 \n")
-    makeTxDbPackageFromUCSC(version=version,
-                            maintainer=maintainer,
-                            author=author,
-                            destDir=destDir,
-                            genome="rheMac3",
-                            tablename="refGene")
-
-    cat("building galGal4 \n")
-    makeTxDbPackageFromUCSC(version=version,
-                            maintainer=maintainer,
-                            author=author,
-                            destDir=destDir,
-                            genome="galGal4",
                             tablename="refGene")
 }
