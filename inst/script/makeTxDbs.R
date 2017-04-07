@@ -12,7 +12,7 @@ TxDbPackagesForRelease <-
                          "<maintainer@bioconductor.org>"),
              author="Bioconductor Core Team")
 {
-    ## New tracks for Bioconductor 3.5
+    ## Build new tracks for Bioconductor 3.5
     cat("building galGal5 \n")
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
@@ -22,7 +22,7 @@ TxDbPackagesForRelease <-
                             tablename="refGene")
 
 
-    ## Existing live tracks for Bioconductor 3.5
+    ## Update live tracks for Bioconductor 3.5
     cat("building ce11 \n")
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
