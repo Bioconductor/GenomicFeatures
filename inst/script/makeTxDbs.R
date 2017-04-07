@@ -29,7 +29,7 @@ TxDbPackagesForRelease <-
                             author=author,
                             destDir=destDir,
                             genome="ce11",
-                            tablename="ensGene")
+                            tablename="refGene")
     cat("building dm6 \n")
     makeTxDbPackageFromUCSC(version=version,
                             maintainer=maintainer,
