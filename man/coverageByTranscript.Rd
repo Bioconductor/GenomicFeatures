@@ -140,7 +140,7 @@ my_reads <- GRanges(c("chr2L:7531-7630",
 coverage(my_reads)
 
 ## As you can see, all the genomic positions in the 3 ranges participate
-## to the coverage. This can be verified be comparing:
+## to the coverage. This can be confirmed by comparing:
 sum(coverage(my_reads))
 ## with:
 sum(width(my_reads))
