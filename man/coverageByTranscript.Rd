@@ -114,7 +114,7 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
 
 \examples{
 ## ---------------------------------------------------------------------
-## 1. A SIMPLE EXAMPLE WITH ONLY ONE TRANSCRIPT
+## 1. A SIMPLE ARTIFICIAL EXAMPLE WITH ONLY ONE TRANSCRIPT
 ## ---------------------------------------------------------------------
 
 ## Get some transcripts:
@@ -127,7 +127,7 @@ dm3_transcripts
 ## intron:
 my_transcript <- dm3_transcripts["FBtr0300689"]
 
-## Let's create 3 artifical aligned reads. We represent them as a
+## Let's create 3 artificial aligned reads. We represent them as a
 ## GRanges object of length 3 that contains the genomic positions of
 ## the 3 reads. Note that these reads are simple alignments i.e. each
 ## of them can be represented with a single range. This would not be
@@ -154,7 +154,10 @@ sum(width(my_reads))
 ## The 1st read is fully contained within the 1st exon:
 coverageByTranscript(my_reads[1], my_transcript)
 
-## The 2nd and 3rd reads overlap the 2 exons and the intron:
+## Note that the length of the Rle (1880) is the length of the transcript.
+
+## The 2nd and 3rd reads overlap the 2 exons and the intron. Only the
+## parts that overlap the exons participate to coverage:
 coverageByTranscript(my_reads[2], my_transcript)
 coverageByTranscript(my_reads[3], my_transcript)
 
