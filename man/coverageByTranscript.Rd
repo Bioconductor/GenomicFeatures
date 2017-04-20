@@ -51,12 +51,12 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
 
     Alternatively \code{transcripts} can be any object for which
     \code{\link{exonsBy}} is implemented (e.g. a \link{TxDb} object), in
-    which case it is replaced by the \link[GenomicRanges]{GRangesList} object
+    which case it is replaced with the \link[GenomicRanges]{GRangesList} object
     returned by \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
 
     For \code{pcoverageByTranscript}, \code{transcripts} should have the
     length of \code{x} or length 1. If the latter, it is recycled to the
-    length of \code{x}).
+    length of \code{x}.
   }
   \item{ignore.strand}{
     TRUE or FALSE. If FALSE (the default) then the strand of a range in
@@ -69,7 +69,7 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
     \code{\link[GenomicRanges]{grglist}()}.
     More precisely, when \code{x} is not a \link[GenomicRanges]{GRanges}
     or \link[GenomicRanges]{GRangesList} object,
-    \code{pcoverageByTranscript} replace it by the
+    \code{pcoverageByTranscript} replace it with the
     \link[GenomicRanges]{GRangesList} object returned by
     \code{\link[GenomicRanges]{grglist}(x, ...)}.
   }
@@ -79,7 +79,7 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
   An \link[IRanges]{RleList} object \emph{parallel} to \code{transcripts},
   that is, the i-th element in it is an integer-\link[S4Vectors]{Rle}
   representing the coverage of the i-th transcript in \code{transcripts}.
-  Its \code{elementNROWS()} is guaranteed to be identical to
+  Its \code{lengths()} is guaranteed to be identical to
   \code{sum(width(transcripts))}. The names and metadata columns on
   \code{transcripts} are propagated to it.
 }
@@ -114,7 +114,63 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
 
 \examples{
 ## ---------------------------------------------------------------------
-## 1. COMPUTE TRANSCRIPTOME COVERAGE OF A SET OF ALIGNED READS
+## 1. A SIMPLE EXAMPLE WITH ONLY ONE TRANSCRIPT
+## ---------------------------------------------------------------------
+
+## Get some transcripts:
+library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
+txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
+dm3_transcripts <- exonsBy(txdb, by="tx", use.names=TRUE)
+dm3_transcripts
+
+## Let's pick up the 1st transcript: FBtr0300689. It as 2 exons and 1
+## intron:
+my_transcript <- dm3_transcripts["FBtr0300689"]
+
+## Let's create 3 artifical aligned reads. We represent them as a
+## GRanges object of length 3 that contains the genomic positions of
+## the 3 reads. Note that these reads are simple alignments i.e. each
+## of them can be represented with a single range. This would not be
+## the case if they were junction reads.
+my_reads <- GRanges(c("chr2L:7531-7630",
+                      "chr2L:8101-8200",
+                      "chr2L:8141-8240"))
+
+## The coverage of the 3 reads on the reference genome is:
+coverage(my_reads)
+
+## As you can see, all the genomic positions in the 3 ranges participate
+## to the coverage. This can be verified be comparing:
+sum(coverage(my_reads))
+## with:
+sum(width(my_reads))
+## They should always be the same.
+
+## When computing the coverage on a transcript, only the part of the
+## read that overlaps with the transcript participates to the coverage.
+## Let's look at the individual coverage of each read on transcript
+## FBtr0300689:
+
+## The 1st read is fully contained within the 1st exon:
+coverageByTranscript(my_reads[1], my_transcript)
+
+## The 2nd and 3rd reads overlap the 2 exons and the intron:
+coverageByTranscript(my_reads[2], my_transcript)
+coverageByTranscript(my_reads[3], my_transcript)
+
+## The coverage of the 3 reads together is:
+coverageByTranscript(my_reads, my_transcript)
+
+## Note that this is the sum of the individual coverages. This can be
+## checked with:
+stopifnot(all(
+  coverageByTranscript(my_reads, my_transcript)
+  ==
+  Reduce("+", lapply(my_reads, coverageByTranscript, my_transcript), 0L)
+))
+
+## ---------------------------------------------------------------------
+## 2. COMPUTE THE FULL TRANSCRIPTOME COVERAGE OF A SET OF ALIGNED READS
 ## ---------------------------------------------------------------------
 
 ## Load the aligned reads:
@@ -122,46 +178,42 @@ library(pasillaBamSubset)
 library(GenomicAlignments)
 reads <- readGAlignments(untreated1_chr4())
 
-## Load the transcripts:
-library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
-txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
-transcripts <- exonsBy(txdb, by="tx", use.names=TRUE)
-
-## Compute the transcript coverage with coverageByTranscript():
-tx_cvg <- coverageByTranscript(reads, transcripts, ignore.strand=TRUE)
+## Compute the full transcriptome coverage by calling
+## coverageByTranscript() on 'dm3_transcripts':
+tx_cvg <- coverageByTranscript(reads, dm3_transcripts, ignore.strand=TRUE)
 tx_cvg
 
 ## A sanity check:
-stopifnot(identical(elementNROWS(tx_cvg), sum(width(transcripts))))
+stopifnot(identical(lengths(tx_cvg), sum(width(dm3_transcripts))))
 
 ## We can also use pcoverageByTranscript() to compute 'tx_cvg'.
 ## For this we first create a GAlignmentsList object "parallel" to
-## 'transcripts' where the i-th list element contains the aligned reads
-## that overlap with the i-th transcript:
-hits <- findOverlaps(reads, transcripts, ignore.strand=TRUE)
-tx2reads <- setNames(as(t(hits), "List"), names(transcripts))
+## 'dm3_transcripts' where the i-th list element contains the aligned
+## reads that overlap with the i-th transcript:
+hits <- findOverlaps(reads, dm3_transcripts, ignore.strand=TRUE)
+tx2reads <- setNames(as(t(hits), "List"), names(dm3_transcripts))
 reads_by_tx <- extractList(reads, tx2reads)  # GAlignmentsList object
 reads_by_tx
 
 ## Call pcoverageByTranscript():
-tx_cvg2 <- pcoverageByTranscript(reads_by_tx, transcripts,
+tx_cvg2 <- pcoverageByTranscript(reads_by_tx, dm3_transcripts,
                                  ignore.strand=TRUE)
 stopifnot(identical(tx_cvg, tx_cvg2))
 
 ## A more meaningful coverage is obtained by counting for each
 ## transcript only the reads that are *compatible* with its splicing:
-compat_hits <- findCompatibleOverlaps(reads, transcripts)
-tx2reads <- setNames(as(t(compat_hits), "List"), names(transcripts))
+compat_hits <- findCompatibleOverlaps(reads, dm3_transcripts)
+tx2reads <- setNames(as(t(compat_hits), "List"), names(dm3_transcripts))
 compat_reads_by_tx <- extractList(reads, tx2reads)
 
 tx_compat_cvg <- pcoverageByTranscript(compat_reads_by_tx,
-                                       transcripts,
+                                       dm3_transcripts,
                                        ignore.strand=TRUE)
 ## A sanity check:
 stopifnot(all(all(tx_compat_cvg <= tx_cvg)))
 
 ## ---------------------------------------------------------------------
-## 2. COMPUTE CDS COVERAGE OF A SET OF ALIGNED READS
+## 3. COMPUTE CDS COVERAGE OF A SET OF ALIGNED READS
 ## ---------------------------------------------------------------------
 
 ## coverageByTranscript() can also be used to compute CDS coverage:
@@ -170,10 +222,10 @@ cds_cvg <- coverageByTranscript(reads, cds, ignore.strand=TRUE)
 cds_cvg
 
 ## A sanity check:
-stopifnot(identical(elementNROWS(cds_cvg), sum(width(cds))))
+stopifnot(identical(lengths(cds_cvg), sum(width(cds))))
 
 ## ---------------------------------------------------------------------
-## 3. ALTERNATIVELY, THE CDS COVERAGE CAN BE OBTAINED FROM THE
+## 4. ALTERNATIVELY, THE CDS COVERAGE CAN BE OBTAINED FROM THE
 ##    TRANSCRIPT COVERAGE BY TRIMMING THE 5' AND 3' UTRS
 ## ---------------------------------------------------------------------
 
@@ -189,8 +241,8 @@ utr3_width <- tx_lens$utr3_len
 
 trimListElements <- function(x, ltrim=0, rtrim=0)
 {
-    x_eltNROWS <- elementNROWS(x)
-    n1 <- pmax(x_eltNROWS - rtrim, 0)
+    x_lens <- lengths(x)
+    n1 <- pmax(x_lens - rtrim, 0)
     n2 <- pmax(n1 - ltrim, 0)
     ptail(phead(x, n=n1), n=n2)
 }
