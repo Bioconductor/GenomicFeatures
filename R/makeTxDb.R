@@ -488,8 +488,8 @@
                                    "SELECT COUNT(*) FROM transcript")[[1L]]
     exon_nrow <- dbEasyQuery(conn, "SELECT COUNT(*) FROM exon")[[1L]]
     cds_nrow <- dbEasyQuery(conn, "SELECT COUNT(*) FROM cds")[[1L]]
-    thispkg_version <- installed.packages()['GenomicFeatures', 'Version']
-    rsqlite_version <- installed.packages()['RSQLite', 'Version']
+    thispkg_version <- packageDescription("GenomicFeatures")$Version
+    rsqlite_version <- packageDescription("RSQLite")$Version
     mat1 <- matrix(c(
         DB_TYPE_NAME, DB_TYPE_VALUE,
         "Supporting package", "GenomicFeatures"),

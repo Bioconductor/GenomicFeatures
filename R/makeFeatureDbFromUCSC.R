@@ -77,9 +77,9 @@
 ### Some of the metadata is added later.
 .writeMetadataFeatureTable <- function(conn, metadata, tableName) {
     data_nrow <- dbEasyQuery(conn, paste("SELECT COUNT(*) FROM ",tableName,
-                                         collapse=""))[[1L]]    
-    thispkg_version <- installed.packages()['GenomicFeatures', 'Version']
-    rsqlite_version <- installed.packages()['RSQLite', 'Version']
+                                         collapse=""))[[1L]]
+    thispkg_version <- packageDescription("GenomicFeatures")$Version
+    rsqlite_version <- packageDescription("RSQLite")$Version
     mat <- matrix(c(
         DB_TYPE_NAME, "FeatureDb",
         "Supporting package", "GenomicFeatures",
