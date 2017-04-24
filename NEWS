@@ -1,3 +1,46 @@
+CHANGES IN VERSION 1.28
+-----------------------
+
+NEW FEATURES
+
+    o makeTxDbFromUCSC() supports new composite "NCBI RefSeq" track for hg38.
+
+    o Add 'metadata' argument to makeTxDbFromGFF().
+
+    o Add exonicParts() as an alternative to disjointExons():
+      - exonicParts() has a 'linked.to.single.gene.only' argument (FALSE by
+        default) that is similar to the 'aggregateGenes' argument of
+        disjointExons() but with opposite meaning. More precisely
+        'exonicParts(txdb, linked.to.single.gene.only=TRUE)' returns the same
+        exonic parts as 'disjointExons(txdb, aggregateGenes=FALSE)'.
+      - Unlike 'disjointExons(txdb, aggregateGenes=TRUE)',
+        'exonicParts(txdb, linked.to.single.gene.only=FALSE)' does NOT discard
+        exon parts that are not linked to a gene.
+      - exonicParts() is almost twice more efficient than disjointExons().
+
+    o Add intronicParts(): similar to exonicParts() but returns intronic parts.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Some work on distance,GenomicRanges,TxDb method:
+      - pass ignore.strand to range() and distance()
+      - return NA when 'id' cannot be collapsed into a single range or when
+        'id' is not found in 'y'
+
+DEPRECATED AND DEFUNCT
+
+    o Argument 'force' of seqlevels() setters is deprecated in favor of new and
+      more flexible 'pruning.mode' argument.
+
+    o Remove the 'vals' argument of the "transcripts", "exons", "cds", and
+      "genes" methods for TxDb objects (was defunct in BioC 3.4).
+
+BUG FIXES
+
+    o Fix bug in seqlevels() setter for TxDb objects reported here:
+        https://support.bioconductor.org/p/90226/
+
+
 CHANGES IN VERSION 1.26
 -----------------------
 
