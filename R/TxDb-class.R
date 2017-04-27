@@ -362,7 +362,7 @@ setMethod("seqlevels0", "TxDb",
 ### Adapted from default "seqlevels<-" method defined in GenomeInfoDb.
 ### We only support "renaming" and "strict subsetting" modes.
 .set_TxDb_seqlevels <-
-    function(x, force=FALSE,
+    function(x,
              pruning.mode=c("error", "coarse", "fine", "tidy"),
              value)
 {
