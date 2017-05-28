@@ -71,8 +71,7 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 ### .Ensembl_getMySQLCoreUrl()
 ###
 
-.Ensembl_listMySQLCoreDirs <- function(release=NA, url=NA,
-                                       use.grch37=FALSE)
+.Ensembl_listMySQLCoreDirs <- function(release=NA, url=NA, use.grch37=FALSE)
 {
     if (is.na(url))
         url <- ftp_url_to_Ensembl_mysql(release, use.grch37=use.grch37)
@@ -90,10 +89,13 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
         url <- ftp_url_to_Ensembl_mysql(release, use.grch37=use.grch37)
     core_dirs <- .Ensembl_listMySQLCoreDirs(release=release, url=url,
                                             use.grch37=use.grch37)
-    shortnames <- sapply(strsplit(core_dirs, "_", fixed=TRUE),
-                         function(x)
-                           paste0(substr(x[1L], 1L, 1L), x[2L]))
-    shortname0 <- strsplit(dataset, "_", fixed=TRUE)[[1L]][1L]
+    trimmed_core_dirs <- sub("_core_.*$", "", core_dirs)
+    shortnames <- sub("^(.)[^_]*_", "\\1", trimmed_core_dirs)
+    if (dataset == "mfuro_gene_ensembl") {
+        shortname0 <- "mputorius_furo"
+    } else {
+        shortname0 <- strsplit(dataset, "_", fixed=TRUE)[[1L]][1L]
+    }
     core_dir <- core_dirs[shortnames == shortname0]
     if (length(core_dir) != 1L)
         stop("found 0 or more than 1 subdir for \"", dataset,
