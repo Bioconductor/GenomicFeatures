@@ -43,9 +43,8 @@ BioMart\footnote{\url{http://www.biomart.org/}} data resources. The
 package is useful for ChIP-chip, ChIP-seq, and RNA-seq analyses.
 
 <<loadGenomicFeatures>>=
-library("GenomicFeatures")
+suppressPackageStartupMessages(library('GenomicFeatures'))
 @
-
 
 
 \section{\Rclass{TxDb} Objects}
@@ -65,7 +64,6 @@ gene identifiers.
 
 
 \section{Retrieving Data from \Rclass{TxDb} objects}
-
 
 \subsection{Loading Transcript Data}
 
@@ -90,7 +88,6 @@ txdb
 In this case, the \Rclass{TxDb} object has been returned by
 the \Rfunction{loadDb} method.
 
-
 More commonly however, we expect that users will just load a
 TxDb annotation package like this:
 
@@ -105,15 +102,11 @@ object, and by default that object will have the same name as the
 package itself.
 
 
-
-
-
 \subsection{Pre-filtering data based on Chromosomes}
 It is possible to filter the data that is returned from a
 \Rclass{TxDb} object based on it's chromosome.  This can be a
 useful way to limit the things that are returned if you are only
 interested in studying a handful of chromosomes.
-
 
 To determine which chromosomes are currently active, use the
 \Rfunction{seqlevels} method.  For example:
@@ -141,7 +134,6 @@ to the seqlevels stored in the db), then set the seqlevels to
 seqlevels(txdb) <- seqlevels0(txdb)
 @ 
 
-
 \begin{Exercise}
 Use \Rfunction{seqlevels} to set only chromsome 15 to be active.  BTW,
 the rest of this vignette will assume you have succeeded at this.
@@ -149,9 +141,9 @@ the rest of this vignette will assume you have succeeded at this.
 \begin{Solution}
 <<seqlevels4>>=
 seqlevels(txdb) <- "chr15"
+seqlevels(txdb)
 @
 \end{Solution}
-
 
 
 \subsection{Retrieving data using the select method}
@@ -189,9 +181,6 @@ select(txdb, keys=keys, columns=cols, keytype="GENEID")
 \end{Solution}
 
 
-
-%% TODO: add exercises to the sections that follow
-
 \subsection{Methods for returning \Rclass{GRanges} objects}
 
 Retrieving data with select is useful, but sometimes it is more
@@ -223,15 +212,38 @@ strand on the left side and then present related metadata on the right
 side.  At the bottom, the seqlengths display all the possible seqnames
 along with the length of each sequence.
 
+The \Rfunction{strand} function is used to obtain the strand 
+information from the transcripts.  The sum of the Lengths of the 
+\Rclass{Rle} object that \Rfunction{strand} returns is equal to the 
+length of the \Rclass{GRanges} object.
+
+<<transcripts2>>=
+tx_strand <- strand(GR)
+tx_strand
+sum(runLength(tx_strand))
+length(GR)
+@
 
 In addition, the \Rfunction{transcripts} function can also be used to
 retrieve a subset of the transcripts available such as those on the
 $+$-strand of chromosome 1.
 
-<<transcripts2>>=
+<<transcripts3>>=
 GR <- transcripts(txdb, filter=list(tx_chrom = "chr15", tx_strand = "+"))
 length(GR)
 unique(strand(GR))
+@
+
+The \Rfunction{promoters} function computes a \Rclass{GRanges} object 
+that spans the promoter region around the transcription start site 
+for the transcripts in a \Rclass{TxDb} object.  The \Rcode{upstream} 
+and \Rcode{downstream} arguments define the number of bases upstream 
+and downstream from the transcription start site that make up the 
+promoter region.
+
+<<transcripts4>>=
+PR <- promoters(txdb, upstream=2000, downstream=400)
+PR
 @
 
 The \Rfunction{exons} and \Rfunction{cds} functions can also be used
@@ -275,7 +287,7 @@ class object.  As with \Rclass{GRanges} objects, you can learn more
 about these objects by reading the \Rpackage{GenomicRanges}
 introductory vignette.  The \Rfunction{show} method for a
 \Rclass{GRangesList} object will display as a list of \Rclass{GRanges}
-objects.  And, at the bottom the seqlengths will be displayed once for
+objects.  And, at the bottom the seqinfo will be displayed once for
 the entire list.
 
 For each of these three functions, there is a limited set of options
@@ -283,7 +295,6 @@ that can be passed into the \Rcode{by} argument to allow grouping.
 For the \Rfunction{transcriptsBy} function, you can group by gene,
 exon or cds, whereas for the \Rfunction{exonsBy} and \Rfunction{cdsBy}
 functions can only be grouped by transcript (tx) or gene.
-
 
 So as a further example, to extract all the exons for each transcript
 you can call:
@@ -313,7 +324,6 @@ was the case in the 2nd example.  Even though the results will
 sometimes have to come back to you as synthetic IDs, you can still
 always retrieve the original IDs.  
 
-
 \begin{Exercise}
 Starting with the tx\_ids that are the names of the GRList object we
 just made, use \Rfunction{select} to retrieve that matching transcript
@@ -327,7 +337,6 @@ tx_ids <- names(GRList)
 head(select(txdb, keys=tx_ids, columns="TXNAME", keytype="TXID"))
 @ 
 \end{Solution}
-
 
 Finally, the order of the results in a \Rclass{GRangesList} object can
 vary with the way in which things were grouped. In most cases the
@@ -355,15 +364,11 @@ length(threeUTRsByTranscript(txdb))
 @
 
 
-
-
-
 \subsection{Getting the actual sequence data}
 
 The \Rpackage{GenomicFeatures} package also provides provides
 functions for converting from ranges to actual sequence (when paired
 with an appropriate \Rpackage{BSgenome} package).
-
 
 <<extract>>=
 library(BSgenome.Hsapiens.UCSC.hg19)
@@ -393,7 +398,6 @@ cds_seqs <- extractTranscriptSeqs(Hsapiens,
 translate(cds_seqs)
 @ 
 \end{Solution}
-
 
 
 \section{Creating New \Rclass{TxDb} Objects or Packages}
