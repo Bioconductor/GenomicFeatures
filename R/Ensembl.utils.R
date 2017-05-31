@@ -26,10 +26,12 @@
 ###
 
 ### Uses RCurl to access and list the content of an FTP dir.
-ls_ftp_url <- function(url)
+ls_ftp_url <- function(url, subdirs.only=FALSE)
 {
     doc <- getURL(url)
     listing <- strsplit(doc, "\n", fixed=TRUE)[[1L]]
+    if (subdirs.only)
+        listing <- listing[substr(listing, 1L, 1L) == "d"]
     ## Keep field no. 8 only
     pattern <- paste(c("^", rep.int("[^[:space:]]+[[:space:]]+", 8L)),
                      collapse="")
@@ -75,7 +77,7 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 {
     if (is.na(url))
         url <- ftp_url_to_Ensembl_mysql(release, use.grch37=use.grch37)
-    core_dirs <- ls_ftp_url(url)
+    core_dirs <- ls_ftp_url(url, subdirs.only=TRUE)
     pattern <- "_core_"
     if (!is.na(release))
         pattern <- paste0(pattern, release, "_")
