@@ -1121,7 +1121,7 @@ test_makeTxDbFromGRanges_on_Ensembl_gtf <- function(all=FALSE)
 {
     gtf_url <- ftp_url_to_Ensembl_gtf()
     if (all) {
-        organisms <- ls_ftp_url(gtf_url)
+        organisms <- ls_ftp_url(gtf_url, subdirs.only=TRUE)
     } else {
         organisms <- c("caenorhabditis_elegans",
                        "ciona_intestinalis",
