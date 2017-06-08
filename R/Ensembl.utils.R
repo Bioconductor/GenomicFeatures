@@ -239,9 +239,11 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 ### get_organism_from_Ensembl_Mart_dataset()
 ###
 
-get_organism_from_Ensembl_Mart_dataset <- function(dataset)
+get_organism_from_Ensembl_Mart_dataset <- function(dataset, release=NA, url=NA,
+                                                   use.grch37=FALSE)
 {
-    core_dir <- .Ensembl_getMySQLCoreDir(dataset)
+    core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release, url=url,
+                                         use.grch37=use.grch37)
     organism <- sub("_core.*", "", core_dir)
     organism <- sub("_", " ", organism)
     substr(organism, 1L, 1L) <- toupper(substr(organism, 1L, 1L))

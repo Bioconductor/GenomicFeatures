@@ -115,13 +115,6 @@
     filter
 }
 
-## helper to extract the organism (as Genus and Species) from the dataset
-## string.
-.extractOrganismFromDatasetDesc <- function(description){
-  vals <- unlist(strsplit(description, " "))
-  paste(vals[[1]], vals[[2]])
-}
-
 .getBiomartDbVersion <- function(mart, host, port, biomart) 
 {
     marts <- listMarts(mart=mart, host=host, port=port)
@@ -136,8 +129,7 @@
 .extractEnsemblReleaseFromDbVersion <- function(db_version)
 {
     db_version <- tolower(db_version)
-    #sub("^ensembl genes ([^[:space:]]+) \\(sanger uk\\)", "\\1", db_version)
-    sub("^ensembl genes ([0-9]+).*$", "\\1", db_version)
+    sub("^ensembl( genes)? ([0-9]+).*$", "\\2", db_version)
 }
 
 
@@ -705,7 +697,9 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                   "\" has no (or more than one) \"", dataset, "\" datasets"))
     description <- as.character(datasets$dataset)[dataset_rowidx]
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
-    organism <- get_organism_from_Ensembl_Mart_dataset(description)
+    ensembl_release <- .extractEnsemblReleaseFromDbVersion(db_version)
+    organism <- get_organism_from_Ensembl_Mart_dataset(description,
+                                                       release=ensembl_release)
     if(is.na(taxonomyId)){
         taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
     }else{
