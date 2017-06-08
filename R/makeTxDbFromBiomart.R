@@ -115,13 +115,6 @@
     filter
 }
 
-## helper to extract the organism (as Genus and Species) from the dataset
-## string.
-.extractOrganismFromDatasetDesc <- function(description){
-  vals <- unlist(strsplit(description, " "))
-  paste(vals[[1]], vals[[2]])
-}
-
 .getBiomartDbVersion <- function(mart, host, port, biomart) 
 {
     marts <- listMarts(mart=mart, host=host, port=port)
@@ -136,8 +129,7 @@
 .extractEnsemblReleaseFromDbVersion <- function(db_version)
 {
     db_version <- tolower(db_version)
-    #sub("^ensembl genes ([^[:space:]]+) \\(sanger uk\\)", "\\1", db_version)
-    sub("^ensembl genes ([0-9]+).*$", "\\1", db_version)
+    sub("^ensembl( genes)? ([0-9]+).*$", "\\2", db_version)
 }
 
 
