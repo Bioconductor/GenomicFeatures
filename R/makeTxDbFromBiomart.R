@@ -697,7 +697,9 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                   "\" has no (or more than one) \"", dataset, "\" datasets"))
     description <- as.character(datasets$dataset)[dataset_rowidx]
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
-    organism <- get_organism_from_Ensembl_Mart_dataset(description)
+    ensembl_release <- .extractEnsemblReleaseFromDbVersion(db_version)
+    organism <- get_organism_from_Ensembl_Mart_dataset(description,
+                                                       release=ensembl_release)
     if(is.na(taxonomyId)){
         taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
     }else{
