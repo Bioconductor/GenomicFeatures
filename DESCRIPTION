@@ -36,6 +36,7 @@ Suggests: org.Mm.eg.db, org.Hs.eg.db,
 	Rsamtools, pasillaBamSubset (>= 0.0.5), GenomicAlignments,
 	RUnit, BiocStyle, knitr
 Collate: utils.R
+	TxDb-schema.R
 	TxDb-SELECT-helpers.R
 	Ensembl.utils.R findCompatibleMarts.R
 	TxDb-class.R FeatureDb-class.R
