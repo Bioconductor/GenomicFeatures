@@ -62,7 +62,12 @@ insert_data_into_table <- function(conn, table, data)
     stopifnot(is.list(data))
     placeholders <- paste(rep.int("?", length(data)), collapse=",")
     SQL <- sprintf("INSERT INTO %s VALUES (%s)", table, placeholders)
-    dbExecute(conn, SQL, params=unname(unclass(data)))
+    ## dbExecute() emits annoying warnings if 'params' is a named list or if
+    ## some of its list elements are factors.
+    params <- unname(as.list(data))
+    params <- lapply(params,
+        function(x) if (is.factor(x)) as.character(x) else x)
+    dbExecute(conn, SQL, params=params)
 }
 
 
