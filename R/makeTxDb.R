@@ -347,107 +347,106 @@
 ### These functions deal with writing data to the database.
 ###
 
-.writeChrominfoTable <- function(conn, chrominfo)
+.write_chrominfo_table <- function(conn, chrominfo)
 {
-    table <- data.frame(
+    data <- data.frame(
         internal_chrom_id=seq_len(nrow(chrominfo)),
         chrom=as.character(chrominfo$chrom),
         length=chrominfo$length,
         is_circular=chrominfo$is_circular,
         check.names=FALSE, stringsAsFactors=FALSE)
-    ## Create the 'chrominfo' table.
+
+    ## Create the table.
     SQL <- build_SQL_CREATE_chrominfo_table()
-    dbEasyQuery(conn, SQL)
-    ## Fill the 'chrominfo' table.
-    SQL <- "INSERT INTO chrominfo VALUES (?,?,?,?)"
-    dbEasyPreparedQuery(conn, SQL, table)
+    dbExecute(conn, SQL)
+
+    ## Fill the table.
+    insert_data_into_table(conn, "chrominfo", data)
 }
 
-.writeFeatureTable <- function(conn, tablename,
-                               internal_id, name, type,
-                               chrom, strand,
-                               start, end,
-                               feature_shortname=NA)
+.write_feature_table <- function(conn, table,
+                                 internal_id, name, type,
+                                 chrom, strand,
+                                 start, end,
+                                 feature_shortname=NA)
 {
     if (is.na(feature_shortname))
-        feature_shortname <- tablename
+        feature_shortname <- table
     colnames <- makeFeatureColnames(feature_shortname)
     if (is.null(name))
         name <- rep.int(NA_character_, length(internal_id))
-    table <- data.frame(
+    data <- data.frame(
         internal_id=internal_id,
         name=name,
         check.names=FALSE, stringsAsFactors=FALSE)
     if ("type" %in% names(colnames)) {
         if (is.null(type))
             type <- rep.int(NA_character_, length(internal_id))
-        table$type <- type
+        data$type <- type
     }
-    table <- cbind(table,
-                   data.frame(
-                       chrom=chrom,
-                       strand=strand,
-                       start=start,
-                       end=end,
-                       check.names=FALSE, stringsAsFactors=FALSE))
-    table <- unique(table)
+    data <- cbind(data,
+                  data.frame(
+                      chrom=chrom,
+                      strand=strand,
+                      start=start,
+                      end=end,
+                      check.names=FALSE, stringsAsFactors=FALSE))
+    data <- unique(data)
 
-    ## Create the '<tablename>' table.
-    SQL <- build_SQL_CREATE_feature_table(tablename)
-    dbEasyQuery(conn, SQL)
+    ## Create the table.
+    SQL <- build_SQL_CREATE_feature_table(table)
+    dbExecute(conn, SQL)
 
-    ## Fill the '<tablename>' table.
-    values <- paste0(rep.int("?", ncol(table)), collapse=",")
-    SQL <- c("INSERT INTO ", tablename, " VALUES (", values, ")")
-    dbEasyPreparedQuery(conn, paste(SQL, collapse=""), table)
+    ## Fill the table.
+    insert_data_into_table(conn, table, data)
 }
 
-.writeSplicingTable <- function(conn,
-                                internal_tx_id,
-                                exon_rank,
-                                internal_exon_id,
-                                internal_cds_id)
+.write_splicing_table <- function(conn,
+                                  internal_tx_id,
+                                  exon_rank,
+                                  internal_exon_id,
+                                  internal_cds_id)
 {
-    table <- data.frame(
+    data <- data.frame(
         internal_tx_id=internal_tx_id,
         exon_rank=exon_rank,
         internal_exon_id=internal_exon_id,
         internal_cds_id=internal_cds_id,
         check.names=FALSE, stringsAsFactors=FALSE)
-    table <- unique(table)
+    data <- unique(data)
 
     ## Create the 'splicing' table and related indices.
     SQL <- build_SQL_CREATE_splicing_table()
-    dbEasyQuery(conn, SQL)
+    dbExecute(conn, SQL)
     #Temporarily drop the indices.
     #indexed_columns <- c("_tx_id", "_exon_id", "_cds_id")
     #SQL <- paste(sprintf("CREATE INDEX splicing%s ON splicing (%s)",
     #                     indexed_columns, indexed_columns),
     #             collapse="; ")
-    #dbEasyQuery(conn, SQL)
+    #dbExecute(conn, SQL)
 
     ## Fill the 'splicing' table.
-    SQL <- "INSERT INTO splicing VALUES (?,?,?,?)"
-    dbEasyPreparedQuery(conn, SQL, table)
+    insert_data_into_table(conn, "splicing", data)
 }
 
-.writeGeneTable <- function(conn, gene_id, internal_tx_id)
+.write_gene_table <- function(conn, gene_id, internal_tx_id)
 {
-    table <- data.frame(
+    data <- data.frame(
         gene_id=gene_id,
         internal_tx_id=internal_tx_id,
         check.names=FALSE, stringsAsFactors=FALSE)
-    table <- unique(table)
-    table <- S4Vectors:::extract_data_frame_rows(table, !is.na(table$gene_id))
-    ## Create the 'gene' table.
+    data <- unique(data)
+    data <- S4Vectors:::extract_data_frame_rows(data, !is.na(data$gene_id))
+
+    ## Create the table.
     SQL <- build_SQL_CREATE_gene_table()
-    dbEasyQuery(conn, SQL)
-    ## Fill the 'gene' table.
-    SQL <- "INSERT INTO gene VALUES (?,?)"
-    dbEasyPreparedQuery(conn, SQL, table)
+    dbExecute(conn, SQL)
+
+    ## Fill the table.
+    insert_data_into_table(conn, "gene", data)
 }
 
-.writeMetadataTable <- function(conn, metadata)
+.write_metadata_table <- function(conn, metadata)
 {
     transcript_nrow <- dbEasyQuery(conn,
                                    "SELECT COUNT(*) FROM transcript")[[1L]]
@@ -482,7 +481,7 @@
 
 .importTranscripts <- function(conn, transcripts, internal_tx_id)
 {
-    .writeFeatureTable(conn, "transcript",
+    .write_feature_table(conn, "transcript",
         internal_tx_id, transcripts$tx_name, transcripts$tx_type,
         transcripts$tx_chrom, transcripts$tx_strand,
         transcripts$tx_start, transcripts$tx_end,
@@ -491,7 +490,7 @@
 
 .importExons <- function(conn, splicings, internal_exon_id)
 {
-    .writeFeatureTable(conn, "exon",
+    .write_feature_table(conn, "exon",
         internal_exon_id, splicings$exon_name, NULL,
         splicings$exon_chrom, splicings$exon_strand,
         splicings$exon_start, splicings$exon_end)
@@ -506,7 +505,7 @@
     cds_strand <- splicings$exon_strand[not_NA]
     cds_start <- splicings$cds_start[not_NA]
     cds_end <- splicings$cds_end[not_NA]
-    .writeFeatureTable(conn, "cds",
+    .write_feature_table(conn, "cds",
         internal_cds_id, cds_name, NULL,
         cds_chrom, cds_strand,
         cds_start, cds_end)
@@ -555,17 +554,17 @@ makeTxDb <- function(transcripts, splicings,
                                                              chrominfo$chrom)
     ## Create the db in a temp file.
     conn <- dbConnect(SQLite(), dbname="")
-    .writeChrominfoTable(conn, chrominfo)  # must come first
+    .write_chrominfo_table(conn, chrominfo)  # must come first
     .importTranscripts(conn, transcripts, transcripts_internal_tx_id)
     .importExons(conn, splicings, splicings_internal_exon_id)
     .importCDS(conn, splicings, splicings_internal_cds_id)
-    .writeSplicingTable(conn,
-                        splicings_internal_tx_id,
-                        splicings$exon_rank,
-                        splicings_internal_exon_id,
-                        splicings_internal_cds_id)
-    .writeGeneTable(conn, genes$gene_id, genes_internal_tx_id)
-    .writeMetadataTable(conn, metadata)  # must come last!
+    .write_splicing_table(conn,
+                          splicings_internal_tx_id,
+                          splicings$exon_rank,
+                          splicings_internal_exon_id,
+                          splicings_internal_cds_id)
+    .write_gene_table(conn, genes$gene_id, genes_internal_tx_id)
+    .write_metadata_table(conn, metadata)  # must come last!
     TxDb(conn)
 }
 
