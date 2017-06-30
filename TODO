@@ -16,7 +16,6 @@ o Too many helper functions are defined and used internally to query the
     different definitions.
   - AnnotationDbi:::dbQuery() is the same as GenomicFeatures:::dbEasyQuery()
   - queryAnnotationDb()
-  - GenomicFeatures:::dbEasyPreparedQuery()
   Clean this mess!
 
 o DB schema change: Replace tx_chrom, exon_chrom, and cds_chrom columns with

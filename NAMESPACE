@@ -5,12 +5,11 @@ importFrom(utils, download.file, installed.packages, read.table, browseURL,
 importFrom(tools, file_ext, file_path_sans_ext)
 
 importFrom(RCurl, getURL)
-importMethodsFrom(DBI, dbCommit, dbConnect,
-                       dbDisconnect, dbExistsTable, dbGetQuery,
-                       dbReadTable, dbWriteTable, dbListTables, dbListFields)
+importMethodsFrom(DBI, dbConnect, dbExecute, dbGetQuery,
+                       dbReadTable, dbWriteTable, dbListTables,
+                       dbListFields)
 
 importFrom(RSQLite, SQLite, SQLITE_RO)
-importMethodsFrom(RSQLite, dbBegin)
 
 import(AnnotationDbi)
 import(BiocGenerics)

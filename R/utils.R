@@ -50,36 +50,24 @@ dbEasyQuery <- function(conn, SQL, j0=NA)
         data0[[j0]]
 }
 
-dbEasyPreparedQuery <- function(conn, SQL, bind.data)
-{
-    ## sqliteExecStatement() (SQLite backend for dbSendPreparedQuery()) fails
-    ## when the nb of rows to insert is 0, hence the early bail out.
-    if (nrow(bind.data) == 0L)
-        return()
-    if (get("debugSQL", envir=RTobjs)) {
-        if (!is.character(SQL) || length(SQL) != 1L || is.na(SQL))
-            stop("[debugSQL] 'SQL' must be a single string")
-        cat("[debugSQL] SQL prepared query: ", SQL, "\n", sep="")
-        cat("[debugSQL]     dim(bind.data): ",
-            paste(dim(bind.data), collapse=" x "), "\n", sep="")
-        st <- system.time({
-                  dbBegin(conn)
-                  dbGetQuery(conn, SQL, unclass(unname(bind.data)))
-                  dbCommit(conn)})
-        cat("[debugSQL]               time: ", st["user.self"],
-            " seconds\n", sep="")
-    } else {
-        dbBegin(conn)
-        dbGetQuery(conn, SQL, unclass(unname(bind.data)))
-        dbCommit(conn)
-    }
-}
-
 ### TODO: Put this in AnnotationDbi.
 queryAnnotationDb <- function(annotationdb, sql)
 {
     AnnotationDbi:::dbEasyQuery(dbconn(annotationdb),
                                 paste(sql, collapse="\n"))
+}
+
+insert_data_into_table <- function(conn, table, data)
+{
+    stopifnot(is.list(data))
+    placeholders <- paste(rep.int("?", length(data)), collapse=",")
+    SQL <- sprintf("INSERT INTO %s VALUES (%s)", table, placeholders)
+    ## dbExecute() emits annoying warnings if 'params' is a named list or if
+    ## some of its list elements are factors.
+    params <- unname(as.list(data))
+    params <- lapply(params,
+        function(x) if (is.factor(x)) as.character(x) else x)
+    dbExecute(conn, SQL, params=params)
 }
 
 

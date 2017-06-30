@@ -100,14 +100,13 @@
 
 
 ## The following writes the data contents of our generic table
-.writeGenericFeatureTable <- function(conn, table, tableName, columns)
+.writeGenericFeatureTable <- function(conn, data, tableName, columns)
 {
-    table <- unique(table)
+    data <- unique(data)
     ## for now just drop lines that don't have values for chromStart
     ## we may need to be more stringent
-    table <- S4Vectors:::extract_data_frame_rows(table,
-                                                 !is.na(table$chromStart))
-    ## Create the 'tableName' table.
+    data <- S4Vectors:::extract_data_frame_rows(data, !is.na(data$chromStart))
+    ## Create the table.
     sql1 <- c("CREATE TABLE ",tableName," (\n",
               "  chrom TEXT NOT NULL,\n",
               "  strand TEXT NOT NULL,\n",
@@ -118,14 +117,9 @@
     sql <- c(sql1, sql2,")")
     ## remove final comma
     sql[length(sql)-1] <- sub(",","",sql[length(sql)-1])
-    dbEasyQuery(conn, paste(sql, collapse=""))
-    ## Fill the  table.
-    sqlVals <- paste0("$", names(columns), ",")
-    sqlVals[length(sqlVals)] <- sub(",","",sqlVals[length(sqlVals)])
-    sql <- paste(c("INSERT INTO ",tableName,
-                 " VALUES ($chrom,$strand,$chromStart,$chromEnd,",
-                 sqlVals,")"), collapse="")
-    dbEasyPreparedQuery(conn, sql, table)
+    dbExecute(conn, paste(sql, collapse=""))
+    ## Fill the table.
+    insert_data_into_table(conn, tableName, data)
 }
 
 
@@ -213,11 +207,11 @@ UCSCFeatureDbTableSchema <- function(genome,
 
 
 ## I will need a function to actually make the DB
-makeFeatureDb <- function(table, tableName, columns, metadata=NULL, ...)
+makeFeatureDb <- function(data, tableName, columns, metadata=NULL, ...)
 {
     ## Create the db in a temp file.
     conn <- dbConnect(SQLite(), dbname="")
-    .writeGenericFeatureTable(conn, table, tableName, columns)
+    .writeGenericFeatureTable(conn, data, tableName, columns)
     .writeMetadataFeatureTable(conn, metadata, tableName)  # must come last!
     FeatureDb(conn) 
 }
@@ -320,15 +314,15 @@ makeFeatureDbFromUCSC <- function(genome,
     ## base table type 1st:
     .UCSC_GENERICCOL2CLASS = c(.UCSC_GENERICCOL2CLASS, columns)
     ucsc_table <- setDataFrameColClass(ucsc_table ,.UCSC_GENERICCOL2CLASS,
-                                     drop.extra.cols=TRUE)    
+                                       drop.extra.cols=TRUE)    
     
     ## Compile some of the metadata
     metadata <- .prepareUCSCFeatureMetadata(genome, tablename, taxonomyId)
     
     message("Make the AnnoDb object ... ")
-    makeFeatureDb(table=ucsc_table, tableName=tablename,
-                metadata=metadata,
-                columns)
+    makeFeatureDb(data=ucsc_table, tableName=tablename,
+                  metadata=metadata,
+                  columns)
 }
 
 

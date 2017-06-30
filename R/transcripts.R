@@ -89,7 +89,7 @@
 {
     db_mcolumns <- .as_db_columns(mcolumns)
     names(filter) <- .as_db_columns(names(filter))
-    core_columns <- TXDB_table_columns(proxy_table)[TXDB_CORE_TAGS]
+    core_columns <- TXDB_table_columns(proxy_table)[TXDB_CORE_COLTAGS]
     df_list <- .extract_features(txdb, proxy_table, db_mcolumns,
                                  filter, core_columns)
     DF <- .make_DataFrame_from_df_list(df_list)
