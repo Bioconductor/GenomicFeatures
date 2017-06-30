@@ -1,6 +1,6 @@
 import(methods)
 importFrom(stats, setNames)
-importFrom(utils, download.file, installed.packages, read.table, browseURL,
+importFrom(utils, download.file, packageDescription, read.table, browseURL,
                   as.person, capture.output, str)
 importFrom(tools, file_ext, file_path_sans_ext)
 
