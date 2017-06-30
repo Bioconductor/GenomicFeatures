@@ -97,7 +97,7 @@
 
 .extract_features_by <- function(txdb, proxy_table, by, use.names=FALSE)
 {
-    tags <- c(TXDB_CORE_TAGS, "name")
+    tags <- c(TXDB_CORE_COLTAGS, "name")
     columns <- TXDB_table_columns(proxy_table)[tags]
     if (by == "gene") {
         df <- .extract_features_by_gene(txdb, proxy_table, columns)

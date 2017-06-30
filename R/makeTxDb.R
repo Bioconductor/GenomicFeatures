@@ -356,17 +356,11 @@
         is_circular=chrominfo$is_circular,
         check.names=FALSE, stringsAsFactors=FALSE)
     ## Create the 'chrominfo' table.
-    sql <- c(
-        "CREATE TABLE chrominfo (\n",
-        "  _chrom_id INTEGER PRIMARY KEY,\n",
-        "  chrom TEXT UNIQUE NOT NULL,\n",
-        "  length INTEGER NULL,\n",
-        "  is_circular INTEGER NULL\n",
-        ")")
-    dbEasyQuery(conn, paste(sql, collapse=""))
+    SQL <- build_SQL_CREATE_chrominfo_table()
+    dbEasyQuery(conn, SQL)
     ## Fill the 'chrominfo' table.
-    sql <- "INSERT INTO chrominfo VALUES (?,?,?,?)"
-    dbEasyPreparedQuery(conn, sql, table)
+    SQL <- "INSERT INTO chrominfo VALUES (?,?,?,?)"
+    dbEasyPreparedQuery(conn, SQL, table)
 }
 
 .writeFeatureTable <- function(conn, tablename,
@@ -399,25 +393,13 @@
     table <- unique(table)
 
     ## Create the '<tablename>' table.
-    sql <- c(
-        "CREATE TABLE ", tablename, " (\n",
-        "  ", colnames[["id"]], " INTEGER PRIMARY KEY,\n",
-        "  ", colnames[["name"]], " TEXT NULL,\n")
-    if ("type" %in% names(colnames))
-        sql <- c(sql, "  ", colnames[["type"]], " TEXT NULL,\n")
-    sql <- c(sql,
-        "  ", colnames[["chrom"]], " TEXT NOT NULL,\n",
-        "  ", colnames[["strand"]], " TEXT NOT NULL,\n",
-        "  ", colnames[["start"]], " INTEGER NOT NULL,\n",
-        "  ", colnames[["end"]], " INTEGER NOT NULL,\n",
-        "  FOREIGN KEY (", colnames[["chrom"]], ") REFERENCES chrominfo (chrom)\n",
-        ")")
-    dbEasyQuery(conn, paste(sql, collapse=""))
+    SQL <- build_SQL_CREATE_feature_table(tablename)
+    dbEasyQuery(conn, SQL)
 
     ## Fill the '<tablename>' table.
     values <- paste0(rep.int("?", ncol(table)), collapse=",")
-    sql <- c("INSERT INTO ", tablename, " VALUES (", values, ")")
-    dbEasyPreparedQuery(conn, paste(sql, collapse=""), table)
+    SQL <- c("INSERT INTO ", tablename, " VALUES (", values, ")")
+    dbEasyPreparedQuery(conn, paste(SQL, collapse=""), table)
 }
 
 .writeSplicingTable <- function(conn,
@@ -435,29 +417,18 @@
     table <- unique(table)
 
     ## Create the 'splicing' table and related indices.
-    sql <- c(
-        "CREATE TABLE splicing (\n",
-        "  _tx_id INTEGER NOT NULL,\n",
-        "  exon_rank INTEGER NOT NULL,\n",
-        "  _exon_id INTEGER NOT NULL,\n",
-        "  _cds_id INTEGER NULL,\n",
-        "  UNIQUE (_tx_id, exon_rank),\n",
-        "  FOREIGN KEY (_tx_id) REFERENCES transcript,\n",
-        "  FOREIGN KEY (_exon_id) REFERENCES exon,\n",
-        "  FOREIGN KEY (_cds_id) REFERENCES cds\n",
-        ")")
-    dbEasyQuery(conn, paste(sql, collapse=""))
-    sql <- c(
-        "CREATE INDEX F_tx_id ON splicing (_tx_id);\n",
-        "CREATE INDEX F_exon_id ON splicing (_exon_id);\n",
-        "CREATE INDEX F_cds_id ON splicing (_cds_id)"
-    )
-    #Temporarily droped the indices.
-    #dbEasyQuery(conn, paste(sql, collapse=""))
+    SQL <- build_SQL_CREATE_splicing_table()
+    dbEasyQuery(conn, SQL)
+    #Temporarily drop the indices.
+    #indexed_columns <- c("_tx_id", "_exon_id", "_cds_id")
+    #SQL <- paste(sprintf("CREATE INDEX splicing%s ON splicing (%s)",
+    #                     indexed_columns, indexed_columns),
+    #             collapse="; ")
+    #dbEasyQuery(conn, SQL)
 
     ## Fill the 'splicing' table.
-    sql <- "INSERT INTO splicing VALUES (?,?,?,?)"
-    dbEasyPreparedQuery(conn, sql, table)
+    SQL <- "INSERT INTO splicing VALUES (?,?,?,?)"
+    dbEasyPreparedQuery(conn, SQL, table)
 }
 
 .writeGeneTable <- function(conn, gene_id, internal_tx_id)
@@ -469,17 +440,11 @@
     table <- unique(table)
     table <- S4Vectors:::extract_data_frame_rows(table, !is.na(table$gene_id))
     ## Create the 'gene' table.
-    sql <- c(
-        "CREATE TABLE gene (\n",
-        "  gene_id TEXT NOT NULL,\n",
-        "  _tx_id INTEGER NOT NULL,\n",
-        "  UNIQUE (gene_id, _tx_id),\n",
-        "  FOREIGN KEY (_tx_id) REFERENCES transcript\n",
-        ")")
-    dbEasyQuery(conn, paste(sql, collapse=""))
+    SQL <- build_SQL_CREATE_gene_table()
+    dbEasyQuery(conn, SQL)
     ## Fill the 'gene' table.
-    sql <- "INSERT INTO gene VALUES (?,?)"
-    dbEasyPreparedQuery(conn, sql, table)
+    SQL <- "INSERT INTO gene VALUES (?,?)"
+    dbEasyPreparedQuery(conn, SQL, table)
 }
 
 .writeMetadataTable <- function(conn, metadata)

@@ -4,54 +4,82 @@
 ###
 ### Nothing in this file is exported.
 ###
+### 7 tables:
+###   - chrominfo
+###   - transcript
+###   - exon
+###   - cds
+###   - splicing
+###   - gene
+###   - metadata (not described here)
 
 
-TXDB_CHROMINFO_COLUMNS <- c(
-    "_chrom_id",
-    "chrom",
-    "length",
-    "is_circular"
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Table columns
+###
+
+### 'chrominfo' table
+
+TXDB_CHROMINFO_COLDEFS <- c(
+    `_chrom_id`="INTEGER PRIMARY KEY",
+    chrom="TEXT UNIQUE NOT NULL",
+    length="INTEGER NULL",
+    is_circular="INTEGER NULL"
 )
 
-TXDB_TRANSCRIPT_COLUMNS <- c(
-    id="_tx_id",
-    name="tx_name",
-    type="tx_type",
-    chrom="tx_chrom",
-    strand="tx_strand",
-    start="tx_start",
-    end="tx_end"
+TXDB_CHROMINFO_COLUMNS <- names(TXDB_CHROMINFO_COLDEFS)
+
+### 'transcript', 'exon', and 'cds' tables (a.k.a. "feature tables")
+
+TXDB_FEATURE_COLDEFS <- c(
+    id="INTEGER PRIMARY KEY",
+    name="TEXT NULL",
+    type="TEXT NULL",
+    chrom="TEXT NOT NULL",
+    strand="TEXT NOT NULL",
+    start="INTEGER NOT NULL",
+    end="INTEGER NOT NULL"
 )
 
-TXDB_EXON_COLUMNS <- c(
-    id="_exon_id",
-    name="exon_name",
-    chrom="exon_chrom",
-    strand="exon_strand",
-    start="exon_start",
-    end="exon_end"
+### Tables "transcript", "exon", and "cds" must at least have columns with
+### the core column tags.
+TXDB_CORE_COLTAGS <- c("id", "chrom", "strand", "start", "end")
+TXDB_ALL_COLTAGS <- names(TXDB_FEATURE_COLDEFS)
+TXDB_EXON_OR_CDS_COLTAGS <- TXDB_ALL_COLTAGS[TXDB_ALL_COLTAGS != "type"]
+
+.make_feature_columns <- function(prefix, tags)
+{
+    fmt <- paste0("%s_", tags)
+    id_pos <- match("id", tags)
+    stopifnot(identical(id_pos, 1L))
+    fmt[[id_pos]] <- paste0("_", fmt[[id_pos]])
+    setNames(sprintf(fmt, prefix), tags)
+}
+
+TXDB_TRANSCRIPT_COLUMNS <- .make_feature_columns("tx", TXDB_ALL_COLTAGS)
+TXDB_EXON_COLUMNS <- .make_feature_columns("exon", TXDB_EXON_OR_CDS_COLTAGS)
+TXDB_CDS_COLUMNS <- .make_feature_columns("cds", TXDB_EXON_OR_CDS_COLTAGS)
+
+### 'splicing' table
+
+TXDB_SPLICING_COLDEFS <- c(
+    `_tx_id`="INTEGER NOT NULL",
+    exon_rank="INTEGER NOT NULL",
+    `_exon_id`="INTEGER NOT NULL",
+    `_cds_id`="INTEGER NULL"
 )
 
-TXDB_CDS_COLUMNS <- c(
-    id="_cds_id",
-    name="cds_name",
-    chrom="cds_chrom",
-    strand="cds_strand",
-    start="cds_start",
-    end="cds_end"
+TXDB_SPLICING_COLUMNS <- names(TXDB_SPLICING_COLDEFS)
+
+### 'gene' table
+
+TXDB_GENE_COLDEFS <- c(
+    gene_id="TEXT NOT NULL",
+    `_tx_id`="INTEGER NOT NULL"
 )
 
-TXDB_SPLICING_COLUMNS <- c(
-    "_tx_id",
-    "exon_rank",
-    "_exon_id",
-    "_cds_id"
-)
+TXDB_GENE_COLUMNS <- names(TXDB_GENE_COLDEFS)
 
-TXDB_GENE_COLUMNS <- c(
-    "gene_id",
-    "_tx_id"
-)
 
 ### Order of tables matters! "transcript" must be before "splicing" and "gene",
 ### and "exon" and "cds" must be before "splicing". See TXDB_column2table()
@@ -65,8 +93,57 @@ TXDB_COLUMNS <- list(
     gene=TXDB_GENE_COLUMNS
 )
 
-### Tables "transcript", "exon", and "cds", must have these tags (at a minimum).
-TXDB_CORE_TAGS <- c("id", "chrom", "strand", "start", "end")
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Build CREATE TABLE statements
+###
+
+.build_SQL_CREATE_TABLE <- function(table, coldefs, constraints=NULL)
+{
+    SQL <- "CREATE TABLE %s (%s\n)"
+    coldefs <- c(paste(names(coldefs), coldefs), constraints)
+    coldefs <- paste("\n  ", coldefs, collapse=",")
+    sprintf(SQL, table, coldefs)
+}
+
+build_SQL_CREATE_chrominfo_table <- function()
+{
+    .build_SQL_CREATE_TABLE("chrominfo", TXDB_CHROMINFO_COLDEFS)
+}
+
+build_SQL_CREATE_feature_table <- function(table)
+{
+    columns <- TXDB_COLUMNS[[table]]
+    coldefs <- setNames(TXDB_FEATURE_COLDEFS[names(columns)], columns)
+    foreign_key <- sprintf("FOREIGN KEY (%s) REFERENCES chrominfo (chrom)",
+                           columns[["chrom"]])
+    .build_SQL_CREATE_TABLE(table, coldefs, foreign_key)
+}
+
+build_SQL_CREATE_splicing_table <- function()
+{
+    unique_key <- "UNIQUE (_tx_id, exon_rank)"
+    foreign_keys <- sprintf("FOREIGN KEY (_%s_id) REFERENCES %s",
+                            c("tx", "exon", "cds"),
+                            c("transcript", "exon", "cds"))
+    constraints <- c(unique_key, foreign_keys)
+    .build_SQL_CREATE_TABLE("splicing", TXDB_SPLICING_COLDEFS, constraints)
+}
+
+build_SQL_CREATE_gene_table <- function()
+{
+    unique_key <- "UNIQUE (gene_id, _tx_id)"
+    foreign_key <- "FOREIGN KEY (_tx_id) REFERENCES transcript"
+    constraints <- c(unique_key, foreign_key)
+    .build_SQL_CREATE_TABLE("gene", TXDB_GENE_COLDEFS, constraints)
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Relationship between the 'splicing' table and the "feature tables"
+###
+### The 'splicing' table is the glue between the "feature tables".
+###
 
 ### The "splicing right tables" can be bundled to the "splicing" table with
 ### a LEFT JOIN using the TXDB_SPLICING_JOIN_USING columns.
@@ -74,6 +151,11 @@ TXDB_SPLICING_RTABLES <- c("transcript", "exon", "cds")
 TXDB_SPLICING_JOIN_USING <- setNames(c("_tx_id", "_exon_id", "_cds_id"),
                                      TXDB_SPLICING_RTABLES)
 TXDB_SPLICING_BUNDLE <- c("splicing", TXDB_SPLICING_RTABLES)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Helper functions
+###
 
 TXDB_tables <- function() names(TXDB_COLUMNS)
 
