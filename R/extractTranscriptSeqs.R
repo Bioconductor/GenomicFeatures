@@ -169,37 +169,35 @@ if (FALSE) {
     extractTranscriptSeqs(x, transcripts, strand=strand)
 }
 
-setMethod("extractTranscriptSeqs", "ANY",
-    function(x, transcripts, ...)
-    {
-        if (is(transcripts, "GRangesList")) {
-            if (length(list(...)) != 0L)
-                stop(wmsg("additional arguments are allowed only when ",
-                          "'transcripts' is not a GRangesList object"))
-        } else {
-            transcripts <- try(exonsBy(transcripts, by="tx", ...),
-                               silent=TRUE)
-            if (is(transcripts, "try-error"))
-                stop(wmsg("failed to extract the exon ranges ",
-                          "from 'transcripts' ",
-                          "with exonsBy(transcripts, by=\"tx\", ...)"))
-        }
-        idx1 <- which(elementNROWS(transcripts) != 0L)
-        tx1 <- transcripts[idx1]
-        .check_exon_chrom(tx1)
-        .check_exon_rank(tx1)
-
-        seqlevels(tx1) <- seqlevelsInUse(tx1)
-        ## 'seqnames1' is just an ordinary factor (not Rle) parallel to 'tx1'.
-        seqnames1 <- unlist(runValue(seqnames(tx1)), use.names=FALSE)
-        dnaset_list <- lapply(levels(seqnames1),
-                              .extractTranscriptSeqsFromOneSeq, x, tx1)
-        ans <- rep.int(DNAStringSet(""), length(transcripts))
-        names(ans) <- names(transcripts)
-        ans[idx1] <- unsplit_list_of_XVectorList("DNAStringSet",
-                                                 dnaset_list,
-                                                 seqnames1)
-        ans 
+.extractTranscriptSeqs_default <- function(x, transcripts, ...)
+{
+    if (is(transcripts, "GRangesList")) {
+        if (length(list(...)) != 0L)
+            stop(wmsg("additional arguments are allowed only when ",
+                      "'transcripts' is not a GRangesList object"))
+    } else {
+        transcripts <- try(exonsBy(transcripts, by="tx", ...),
+                           silent=TRUE)
+        if (is(transcripts, "try-error"))
+            stop(wmsg("failed to extract the exon ranges from 'transcripts' ",
+                      "with exonsBy(transcripts, by=\"tx\", ...)"))
     }
-)
+    idx1 <- which(elementNROWS(transcripts) != 0L)
+    tx1 <- transcripts[idx1]
+    .check_exon_chrom(tx1)
+    .check_exon_rank(tx1)
+
+    seqlevels(tx1) <- seqlevelsInUse(tx1)
+    ## 'seqnames1' is just an ordinary factor (not Rle) parallel to 'tx1'.
+    seqnames1 <- unlist(runValue(seqnames(tx1)), use.names=FALSE)
+    dnaset_list <- lapply(levels(seqnames1),
+                          .extractTranscriptSeqsFromOneSeq, x, tx1)
+    ans <- rep.int(DNAStringSet(""), length(transcripts))
+    names(ans) <- names(transcripts)
+    ans[idx1] <- unsplit_list_of_XVectorList("DNAStringSet",
+                                             dnaset_list,
+                                             seqnames1)
+    ans 
+}
+setMethod("extractTranscriptSeqs", "ANY", .extractTranscriptSeqs_default)
 
