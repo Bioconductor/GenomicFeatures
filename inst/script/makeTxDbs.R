@@ -33,14 +33,13 @@ TxDbPackagesForRelease <-
                             genome="ce11",
                             tablename="refGene")    
 
-## 502 SERVER ERROR
-#    cat("building canFam3\n")
-#    makeTxDbPackageFromUCSC(version=version,
-#                            maintainer=maintainer,
-#                            author=author,
-#                            destDir=destDir,
-#                            genome="canFam3",
-#                            tablename="refGene")    
+    cat("building canFam3\n")
+    makeTxDbPackageFromUCSC(version=version,
+                            maintainer=maintainer,
+                            author=author,
+                            destDir=destDir,
+                            genome="canFam3",
+                            tablename="refGene")    
 
     cat("building danRer10\n")
     makeTxDbPackageFromUCSC(version=version,
