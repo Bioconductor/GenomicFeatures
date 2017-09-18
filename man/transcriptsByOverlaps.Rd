@@ -17,40 +17,42 @@
 }
 \usage{
 transcriptsByOverlaps(x, ranges,
-                      maxgap = 0L, minoverlap = 1L,
+                      maxgap = -1L, minoverlap = 0L,
                       type = c("any", "start", "end"), ...)
 \S4method{transcriptsByOverlaps}{TxDb}(x, ranges,
-                      maxgap = 0L, minoverlap = 1L,
+                      maxgap = -1L, minoverlap = 0L,
                       type = c("any", "start", "end"),
                       columns = c("tx_id", "tx_name"))
 
 exonsByOverlaps(x, ranges,
-                maxgap = 0L, minoverlap = 1L,
+                maxgap = -1L, minoverlap = 0L,
                 type = c("any", "start", "end"), ...)
 \S4method{exonsByOverlaps}{TxDb}(x, ranges,
-                maxgap = 0L, minoverlap = 1L,
+                maxgap = -1L, minoverlap = 0L,
                 type = c("any", "start", "end"),
                 columns = "exon_id")
 
 cdsByOverlaps(x, ranges,
-              maxgap = 0L, minoverlap = 1L,
+              maxgap = -1L, minoverlap = 0L,
               type = c("any", "start", "end"), ...)
 \S4method{cdsByOverlaps}{TxDb}(x, ranges,
-              maxgap = 0L, minoverlap = 1L,
+              maxgap = -1L, minoverlap = 0L,
               type = c("any", "start", "end"),
               columns = "cds_id")
 }
 \arguments{  
   \item{x}{A \link{TxDb} object.}
-  \item{...}{Arguments to be passed to or from methods.}
   \item{ranges}{A \link[GenomicRanges]{GRanges} object to restrict the output.}
+  \item{maxgap,minoverlap}{
+    Used in the internal call to \code{findOverlaps()} to detect overlaps.
+    See \code{?\link[IRanges]{findOverlaps}} in the \pkg{IRanges} package
+    for a description of these arguments.
+  }
   \item{type}{How to perform the interval overlap operations of the
     \code{ranges}. See the
     \code{\link[GenomicRanges:findOverlaps-methods]{findOverlaps}} manual page
     in the GRanges package for more information.}
-  \item{maxgap}{A non-negative integer representing the maximum distance
-    between a query interval and a subject interval.}
-  \item{minoverlap}{Ignored.}
+  \item{...}{Arguments to be passed to or from methods.}
   \item{columns}{Columns to include in the output.
     See \code{?\link{transcripts}} for the possible values.}
 }
