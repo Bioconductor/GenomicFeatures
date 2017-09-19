@@ -20,6 +20,10 @@
 ###   ftp://ftp.ensembl.org/pub/ensembl/sql/table.sql
 ###
 
+.ENSEMBL.PUB_FTP_URL <- "ftp://ftp.ensembl.org/pub/"
+.ENSEMBLGRCh37.PUB_FTP_URL <- "ftp://ftp.ensembl.org/pub/grch37/"
+.ENSEMBLGENOMES.PUB_FTP_URL <- "ftp://ftp.ensemblgenomes.org/pub/"
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Very low-level internal utils used here and in other files
@@ -39,23 +43,33 @@ ls_ftp_url <- function(url, subdirs.only=FALSE)
     sub("[[:space:]].*$", "", listing)
 }
 
-.ENSEMBL.PUB_FTP_URL <- "ftp://ftp.ensembl.org/pub/"
-.ENSEMBLGRCh37.PUB_FTP_URL <- "ftp://ftp.ensembl.org/pub/grch37/"
-
-ftp_url_to_Ensembl_mysql <- function(release=NA, use.grch37=FALSE)
+### 'kingdom' must be NA or one of the EnsemblGenomes marts i.e. "bacteria",
+### "fungi", "metazoa", "plants", or "protists".
+ftp_url_to_Ensembl_mysql <- function(release=NA, use.grch37=FALSE, kingdom=NA)
 {
-    if (is.na(release)) {
+    if (is.na(kingdom)) {
+        if (is.na(release)) {
+            if (use.grch37) {
+                pub_subdir <- "current/mysql"
+            } else {
+                pub_subdir <- "current_mysql"
+            }
+        } else {
+            pub_subdir <- paste0("release-", release, "/mysql")
+        }
         if (use.grch37)
-            pub_subdir <- "current/mysql"
-        else 
-            pub_subdir <- "current_mysql"
+            pub_ftp_url <- .ENSEMBLGRCh37.PUB_FTP_URL
+        else
+            pub_ftp_url <- .ENSEMBL.PUB_FTP_URL
     } else {
-        pub_subdir <- paste0("release-", release, "/mysql")
+        pub_ftp_url <- paste0(.ENSEMBLGENOMES.PUB_FTP_URL, kingdom, "/")
+        if (is.na(release)) {
+            pub_subdir <- "current"
+        } else {
+            pub_subdir <- paste0("release-", release)
+        }
+        pub_subdir <- paste0(pub_subdir, "/mysql")
     }
-    if (use.grch37)
-        pub_ftp_url <- .ENSEMBLGRCh37.PUB_FTP_URL
-    else
-        pub_ftp_url <- .ENSEMBL.PUB_FTP_URL
     paste0(pub_ftp_url, pub_subdir, "/")
 }
 
@@ -73,10 +87,13 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 ### .Ensembl_getMySQLCoreUrl()
 ###
 
-.Ensembl_listMySQLCoreDirs <- function(release=NA, url=NA, use.grch37=FALSE)
+### 'kingdom' must be NA or one of the EnsemblGenomes marts i.e. "bacteria",
+### "fungi", "metazoa", "plants", or "protists".
+.Ensembl_listMySQLCoreDirs <- function(release=NA,
+                                       use.grch37=FALSE, kingdom=NA, url=NA)
 {
     if (is.na(url))
-        url <- ftp_url_to_Ensembl_mysql(release, use.grch37=use.grch37)
+        url <- ftp_url_to_Ensembl_mysql(release, use.grch37, kingdom)
     core_dirs <- ls_ftp_url(url, subdirs.only=TRUE)
     pattern <- "_core_"
     if (!is.na(release))
@@ -84,13 +101,15 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
     core_dirs[grep(pattern, core_dirs, fixed=TRUE)]
 }
 
-.Ensembl_getMySQLCoreDir <- function(dataset, release=NA, url=NA,
-                                     use.grch37=FALSE)
+.Ensembl_getMySQLCoreDir <- function(dataset, release=NA,
+                                     use.grch37=FALSE, kingdom=NA, url=NA)
 {
     if (is.na(url))
-        url <- ftp_url_to_Ensembl_mysql(release, use.grch37=use.grch37)
-    core_dirs <- .Ensembl_listMySQLCoreDirs(release=release, url=url,
-                                            use.grch37=use.grch37)
+        url <- ftp_url_to_Ensembl_mysql(release, use.grch37, kingdom)
+    core_dirs <- .Ensembl_listMySQLCoreDirs(release=release,
+                                            use.grch37=use.grch37,
+                                            kingdom=kingdom,
+                                            url=url)
     trimmed_core_dirs <- sub("_core_.*$", "", core_dirs)
     shortnames <- sub("^(.)[^_]*_", "\\1", trimmed_core_dirs)
     if (dataset == "mfuro_gene_ensembl") {
@@ -106,13 +125,15 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 }
 
 ### Return URL of Ensemble Core DB (FTP access).
-.Ensembl_getMySQLCoreUrl <- function(dataset, release=NA, url=NA,
-                                     use.grch37=FALSE)
+.Ensembl_getMySQLCoreUrl <- function(dataset, release=NA,
+                                     use.grch37=FALSE, kingdom=NA, url=NA)
 {
     if (is.na(url))
-        url <- ftp_url_to_Ensembl_mysql(release, use.grch37=use.grch37)
-    core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release, url=url,
-                                         use.grch37=use.grch37)
+        url <- ftp_url_to_Ensembl_mysql(release, use.grch37, kingdom)
+    core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release,
+                                         use.grch37=use.grch37,
+                                         kingdom=kingdom,
+                                         url=url)
     paste0(url, core_dir, "/")
 }
 
@@ -239,11 +260,14 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 ### get_organism_from_Ensembl_Mart_dataset()
 ###
 
-get_organism_from_Ensembl_Mart_dataset <- function(dataset, release=NA, url=NA,
-                                                   use.grch37=FALSE)
+get_organism_from_Ensembl_Mart_dataset <- function(dataset, release=NA,
+                                                   use.grch37=FALSE,
+                                                   kingdom=NA, url=NA)
 {
-    core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release, url=url,
-                                         use.grch37=use.grch37)
+    core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release,
+                                         use.grch37=use.grch37,
+                                         kingdom=kingdom,
+                                         url=url)
     organism <- sub("_core.*", "", core_dir)
     organism <- sub("_", " ", organism)
     substr(organism, 1L, 1L) <- toupper(substr(organism, 1L, 1L))
@@ -252,25 +276,18 @@ get_organism_from_Ensembl_Mart_dataset <- function(dataset, release=NA, url=NA,
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### fetchChromLengthsFromEnsembl() and fetchChromLengthsFromEnsemblPlants()
+### fetchChromLengthsFromEnsembl()
 ###
 
-fetchChromLengthsFromEnsembl <- function(dataset, release=NA, use.grch37=FALSE,
+### 'kingdom' must be NA or one of the EnsemblGenomes marts i.e. "bacteria",
+### "fungi", "metazoa", "plants", or "protists".
+fetchChromLengthsFromEnsembl <- function(dataset, release=NA,
+                                         use.grch37=FALSE, kingdom=NA,
                                          extra_seqnames=NULL)
 {
     core_url <- .Ensembl_getMySQLCoreUrl(dataset, release=release,
-                                         use.grch37=use.grch37)
-    .Ensembl_fetchChromLengthsFromCoreUrl(core_url,
-                                          extra_seqnames=extra_seqnames)
-}
-
-.ENSEMBL_PLANTS.CURRENT_MYSQL_URL <- "ftp://ftp.ensemblgenomes.org/pub/plants/current/mysql/"
-
-fetchChromLengthsFromEnsemblPlants <- function(dataset,
-                                               extra_seqnames=NULL)
-{
-    core_url <- .Ensembl_getMySQLCoreUrl(dataset,
-                                         url=.ENSEMBL_PLANTS.CURRENT_MYSQL_URL)
+                                         use.grch37=use.grch37,
+                                         kingdom=kingdom)
     .Ensembl_fetchChromLengthsFromCoreUrl(core_url,
                                           extra_seqnames=extra_seqnames)
 }

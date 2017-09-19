@@ -126,10 +126,26 @@
     as.character(marts$version)[mart_rowidx]
 }
 
-.extractEnsemblReleaseFromDbVersion <- function(db_version)
+.get_Ensembl_release_from_db_version <- function(db_version)
 {
     db_version <- tolower(db_version)
-    sub("^ensembl( genes)? ([0-9]+).*$", "\\2", db_version)
+    sub("^ensembl( ((bacteria|fungi|metazoa|plants|protists) )?genes)? ([0-9]+).*$", "\\4", db_version)
+}
+
+.get_EnsemblGenomes_kingdom_from_biomart <- function(biomart)
+{
+    biomart <- tolower(biomart)
+    if (substr(biomart, 1, 14) == "bacterial_mart")
+        return("bacteria")
+    if (substr(biomart, 1, 11) == "fungal_mart")
+        return("fungi")
+    if (substr(biomart, 1, 12) == "metazoa_mart")
+        return("metazoa")
+    if (substr(biomart, 1, 11) == "plants_mart")
+        return("plants")
+    if (substr(biomart, 1, 12) == "protist_mart")
+        return("protists")
+    NA
 }
 
 
@@ -206,8 +222,8 @@
     biomart <- biomaRt:::martBM(mart)
     dataset <- biomaRt:::martDataset(mart)
     is_ensembl_mart <- tolower(substr(biomart, 1, 7)) == "ensembl"
-    is_plants_mart <- tolower(substr(biomart, 1, 11)) == "plants_mart"
-    if (is_ensembl_mart || is_plants_mart) {
+    kingdom <- .get_EnsemblGenomes_kingdom_from_biomart(biomart)
+    if (is_ensembl_mart || !is.na(kingdom)) {
         message("Download and preprocess the 'chrominfo' data frame ... ",
                 appendLF=FALSE)
         if (is_ensembl_mart) {
@@ -221,15 +237,19 @@
                 ## Ensembl mart
                 db_version <- .getBiomartDbVersion(mart, host, port, biomart)
                 ensembl_release <-
-                              .extractEnsemblReleaseFromDbVersion(db_version)
+                              .get_Ensembl_release_from_db_version(db_version)
                 chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
                                         release=ensembl_release,
                                         extra_seqnames=extra_seqnames),
                                     silent=TRUE)
             }
         } else {
-            ## Plants mart
-            chromlengths <- try(fetchChromLengthsFromEnsemblPlants(dataset,
+            ## One of the EnsemblGenomes marts
+            db_version <- .getBiomartDbVersion(mart, host, port, biomart)
+            ensembl_release <- .get_Ensembl_release_from_db_version(db_version)
+            chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
+                                    release=ensembl_release,
+                                    kingdom=kingdom,
                                     extra_seqnames=extra_seqnames),
                                 silent=TRUE)
         }
@@ -695,11 +715,13 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
     if (length(dataset_rowidx) != 1L)
         stop(wmsg("the BioMart database \"", biomaRt:::martBM(mart),
                   "\" has no (or more than one) \"", dataset, "\" datasets"))
-    description <- as.character(datasets$dataset)[dataset_rowidx]
+    description <- as.character(datasets$description)[dataset_rowidx]
     dataset_version <- as.character(datasets$version)[dataset_rowidx]
-    ensembl_release <- .extractEnsemblReleaseFromDbVersion(db_version)
-    organism <- get_organism_from_Ensembl_Mart_dataset(description,
-                                                       release=ensembl_release)
+    ensembl_release <- .get_Ensembl_release_from_db_version(db_version)
+    kingdom <- .get_EnsemblGenomes_kingdom_from_biomart(biomart)
+    organism <- get_organism_from_Ensembl_Mart_dataset(dataset,
+                                                       release=ensembl_release,
+                                                       kingdom=kingdom)
     if(is.na(taxonomyId)){
         taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
     }else{
