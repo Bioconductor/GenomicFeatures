@@ -43,15 +43,11 @@ cdsByOverlaps(x, ranges,
 \arguments{  
   \item{x}{A \link{TxDb} object.}
   \item{ranges}{A \link[GenomicRanges]{GRanges} object to restrict the output.}
-  \item{maxgap,minoverlap}{
+  \item{maxgap,minoverlap,type}{
     Used in the internal call to \code{findOverlaps()} to detect overlaps.
     See \code{?\link[IRanges]{findOverlaps}} in the \pkg{IRanges} package
     for a description of these arguments.
   }
-  \item{type}{How to perform the interval overlap operations of the
-    \code{ranges}. See the
-    \code{\link[GenomicRanges:findOverlaps-methods]{findOverlaps}} manual page
-    in the GRanges package for more information.}
   \item{...}{Arguments to be passed to or from methods.}
   \item{columns}{Columns to include in the output.
     See \code{?\link{transcripts}} for the possible values.}
