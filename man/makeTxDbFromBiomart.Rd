@@ -200,9 +200,9 @@ library(biomaRt)
 
 ## Note that BioMart is not currently available for Ensembl Bacteria.
 
-## -------------
-## Ensembl Fungi
-## -------------
+## ---------------------
+## --- Ensembl Fungi ---
+
 mart <- useMart(biomart="fungal_mart", host="fungi.ensembl.org")
 datasets <- listDatasets(mart)
 datasets$dataset
@@ -217,9 +217,9 @@ yeast_txdb0 <- makeTxDbFromBiomart(dataset="scerevisiae_gene_ensembl")
 all(transcripts(yeast_txdb0) \%in\% transcripts(yeast_txdb))
 all(transcripts(yeast_txdb) \%in\% transcripts(yeast_txdb0))
 
-## ---------------
-## Ensembl Metazoa
-## ---------------
+## -----------------------
+## --- Ensembl Metazoa ---
+
 mart <- useMart(biomart="metazoa_mart", host="metazoa.ensembl.org")
 datasets <- listDatasets(mart)
 datasets$dataset
@@ -236,9 +236,9 @@ filter <- list(tx_name="Y71G12B.44")
 transcripts(worm_txdb, filter=filter, columns=c("tx_name", "tx_type"))
 transcripts(txdb1, filter=filter, columns=c("tx_name", "tx_type"))
 
-## --------------
-## Ensembl Plants
-## --------------
+## ----------------------
+## --- Ensembl Plants ---
+
 mart <- useMart(biomart="plants_mart", host="plants.ensembl.org")
 datasets <- listDatasets(mart)
 datasets[ , 1:2]
@@ -247,9 +247,9 @@ athaliana_txdb <- makeTxDbFromBiomart(biomart="plants_mart",
                                       host="plants.ensembl.org")
 athaliana_txdb
 
-## ----------------
-## Ensembl Protists
-## ----------------
+## ------------------------
+## --- Ensembl Protists ---
+
 mart <- useMart(biomart="protist_mart", host="protists.ensembl.org")
 datasets <- listDatasets(mart)
 datasets$dataset
