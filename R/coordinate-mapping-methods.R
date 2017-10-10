@@ -172,7 +172,8 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"),
 
         ## findOverlaps determines pairs
         hits <- findOverlaps(x, unlist(transcripts, use.names=FALSE), 
-                             type="within", ignore.strand=ignore.strand)
+                             minoverlap=1L, type="within",
+                             ignore.strand=ignore.strand)
         .mapToTranscripts(x, transcripts, hits, ignore.strand, intronJunctions)
     }
 )
@@ -249,7 +250,8 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
 
         ## map i-th elements
         hits <- findOverlaps(x, unlist(transcripts, use.names=FALSE), 
-                             type="within", ignore.strand=ignore.strand)
+                             minoverlap=1L, type="within",
+                             ignore.strand=ignore.strand)
         ith <- queryHits(hits) ==
                togroup(PartitioningByWidth(transcripts))[subjectHits(hits)]
         map <- .mapToTranscripts(x, transcripts, hits[ith], ignore.strand)
