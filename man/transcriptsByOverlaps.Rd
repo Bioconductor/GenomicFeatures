@@ -8,7 +8,8 @@
 \alias{cdsByOverlaps,TxDb-method}
 
 \title{
-  Extract genomic features from an object based on their by genomic location
+  Extract genomic features from a TxDb-like object based on their
+  genomic location
 }
 \description{
   Generic functions to extract genomic features for specified genomic
@@ -66,22 +67,38 @@ cdsByOverlaps(x, ranges,
   \itemize{
     \item \code{\link{transcripts}} and \code{\link{transcriptsBy}}
           for more ways to extract genomic features
-          from a \link{TxDb} object.
+          from a \link{TxDb}-like object.
+
+    \item \code{\link{transcriptLengths}} for extracting the transcript
+          lengths (and other metrics) from a \link{TxDb} object.
+
+    \item \code{\link{exonicParts}} and \code{\link{intronicParts}} for
+          extracting non-overlapping exonic or intronic parts from a
+          TxDb-like object.
+
+    \item \code{\link{extractTranscriptSeqs}} for extracting transcript
+          (or CDS) sequences from chromosome sequences.
+
+    \item \code{\link{coverageByTranscript}} for computing coverage by
+          transcript (or CDS) of a set of ranges.
+
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
           \link{TxDb} object.
+
     \item \code{\link{id2name}} for mapping \link{TxDb} internal ids
           to external names for a given feature type.
+
     \item The \link{TxDb} class.
   }
 }
 \examples{
-  txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite",
-                                   package="GenomicFeatures"))
-  gr <- GRanges(seqnames = rep("chr1",2),
-                ranges = IRanges(start=c(500,10500), end=c(10000,30000)),
-                strand = strand(rep("-",2)))
-  transcriptsByOverlaps(txdb, gr)
+txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite",
+                           package="GenomicFeatures"))
+gr <- GRanges(Rle("chr1", 2),
+              IRanges(c(500,10500), c(10000,30000)),
+              strand = Rle("-", 2))
+transcriptsByOverlaps(txdb, gr)
 }
 
 \keyword{methods}

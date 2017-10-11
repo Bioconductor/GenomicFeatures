@@ -9,10 +9,10 @@
 
 ### Return a GRanges object with 1 range per transcript and metadata columns
 ### tx_id, tx_name, and gene_id.
-### If 'drop.geneless' is FALSE (the default) then the transcripts are returned
-### in the same order as with transcripts(), which is expected to be by
-### transcript id (tx_id). Otherwise they are ordered first by gene id
-### (gene_id), then by transcript id.
+### If 'drop.geneless' is FALSE (the default) then the transcripts are
+### returned in the same order as with transcripts(), which is expected
+### to be by transcript id (tx_id). Otherwise they are ordered first by
+### gene id (gene_id), then by transcript id.
 .tidy_transcripts <- function(txdb, drop.geneless=FALSE)
 {
     tx <- transcripts(txdb, columns=c("tx_id", "tx_name", "gene_id"))
@@ -85,7 +85,11 @@
     ans <- disjoin(x, with.revmap=TRUE)
     revmap <- mcols(ans)$revmap
     ans_mcols <- lapply(mcols(x),
-                        function(col) unique(extractList(col, revmap)))
+                        function(col) {
+                            col <- unique(extractList(col, revmap))
+                            col[!is.na(col)]
+                        }
+                 )
     mcols(ans) <- DataFrame(ans_mcols)
     if (linked.to.single.gene.only) {
         keep_idx <- which(elementNROWS(mcols(ans)$gene_id) == 1L)
@@ -96,7 +100,7 @@
 }
 
 ### Return a disjoint and strictly sorted GRanges object with 1 range per
-### exonic part and metadata columns tx_id, tx_name, gene_id, exon_id,
+### exonic part and with metadata columns tx_id, tx_name, gene_id, exon_id,
 ### exon_name, and exon_rank.
 exonicParts <- function(txdb, linked.to.single.gene.only=FALSE)
 {
@@ -107,7 +111,7 @@ exonicParts <- function(txdb, linked.to.single.gene.only=FALSE)
 }
 
 ### Return a disjoint and strictly sorted GRanges object with 1 range per
-### intronic part and metadata columns tx_id, tx_name, and gene_id.
+### intronic part and with metadata columns tx_id, tx_name, and gene_id.
 intronicParts <- function(txdb, linked.to.single.gene.only=FALSE)
 {
     if (!isTRUEorFALSE(linked.to.single.gene.only))

@@ -3,7 +3,7 @@
 \alias{transcriptLengths}
 
 
-\title{Extract the transcript lengths from a TxDb object}
+\title{Extract the transcript lengths (and other metrics) from a TxDb object}
 
 \description{
   The \code{transcriptLengths} function extracts the transcript lengths from
@@ -86,9 +86,12 @@ transcriptLengths(txdb, with.cds_len=FALSE,
 \seealso{
   \itemize{
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
-          and \code{\link{transcriptsByOverlaps}},
-          for how to extract the genomic locations of features from a
-          \link{TxDb} object.
+          and \code{\link{transcriptsByOverlaps}}, for extracting
+          genomic feature locations from a \link{TxDb}-like object.
+
+    \item \code{\link{exonicParts}} and \code{\link{intronicParts}} for
+          extracting non-overlapping exonic or intronic parts from a
+          TxDb-like object.
 
     \item \code{\link{extractTranscriptSeqs}} for extracting transcript
           (or CDS) sequences from chromosome sequences.

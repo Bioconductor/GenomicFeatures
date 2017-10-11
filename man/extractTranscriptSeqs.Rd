@@ -44,9 +44,9 @@ extractTranscriptSeqs(x, transcripts, ...)
             representing a collection of chromosomes, then \code{transcripts}
             must be a \link[GenomicRanges]{GRangesList} object or any object
             for which \code{\link{exonsBy}} is implemented (e.g. a \link{TxDb}
-            object). If the latter, then it's first turned into a
-            \link[GenomicRanges]{GRangesList} object with
-            \code{\link{exonsBy}(transcripts, by="tx", ...)}.
+            or \link[ensembldb]{EnsDb} object). If the latter, then it's
+            first turned into a \link[GenomicRanges]{GRangesList} object
+            with \code{\link{exonsBy}(transcripts, by="tx", ...)}.
     }
 
     Note that, for each transcript, the exons must be ordered by ascending
@@ -112,7 +112,7 @@ extractTranscriptSeqs(x, transcripts, ...)
           transcript (or CDS) of a set of ranges.
 
     \item \code{\link{transcriptLengths}} for extracting the transcript
-          lengths from a \link{TxDb} object.
+          lengths (and other metrics) from a \link{TxDb} object.
 
     \item The \code{\link{transcriptLocs2refLocs}} function for converting
           transcript-based locations into reference-based locations.

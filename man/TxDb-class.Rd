@@ -107,11 +107,11 @@
           package for saving and loading a TxDb object as an SQLite file.
 
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
-          and \code{\link{transcriptsByOverlaps}},
-          for how to extract genomic features from a TxDb object.
+          and \code{\link{transcriptsByOverlaps}}, for extracting
+          genomic feature locations from a \link{TxDb}-like object.
 
     \item \code{\link{transcriptLengths}} for extracting the transcript
-          lengths from a \link{TxDb} object.
+          lengths (and other metrics) from a \link{TxDb} object.
 
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a

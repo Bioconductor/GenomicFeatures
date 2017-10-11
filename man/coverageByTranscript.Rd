@@ -49,10 +49,11 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
     \code{\link{exonsBy}}, then the exons are guaranteed to be ordered by
     ascending rank. See \code{?\link{exonsBy}} for more information.
 
-    Alternatively \code{transcripts} can be any object for which
-    \code{\link{exonsBy}} is implemented (e.g. a \link{TxDb} object), in
-    which case it is replaced with the \link[GenomicRanges]{GRangesList} object
-    returned by \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
+    Alternatively, \code{transcripts} can be a \link{TxDb} object, or any
+    \link{TxDb}-like object that supports the \code{\link{exonsBy}()}
+    extractor (e.g. an \link[ensembldb]{EnsDb} object). In this case it
+    is replaced with the \link[GenomicRanges]{GRangesList} object returned
+    by \code{\link{exonsBy}(transcripts, by="tx", use.names=TRUE)}.
 
     For \code{pcoverageByTranscript}, \code{transcripts} should have the
     length of \code{x} or length 1. If the latter, it is recycled to the
@@ -88,11 +89,15 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
 
 \seealso{
   \itemize{
-    \item \code{\link{extractTranscriptSeqs}} for extracting transcript
-          (or CDS) sequences from chromosome sequences.
+    \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
+          and \code{\link{transcriptsByOverlaps}}, for extracting
+          genomic feature locations from a \link{TxDb}-like object.
 
     \item \code{\link{transcriptLengths}} for extracting the transcript
-          lengths from a \link{TxDb} object.
+          lengths (and other metrics) from a \link{TxDb} object.
+
+    \item \code{\link{extractTranscriptSeqs}} for extracting transcript
+          (or CDS) sequences from chromosome sequences.
 
     \item The \link[IRanges]{RleList} class defined and documented in the
           \pkg{IRanges} package.

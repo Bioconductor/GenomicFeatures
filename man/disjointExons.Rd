@@ -10,6 +10,10 @@
 \description{
   \code{disjointExons} extracts the non-overlapping exon parts from a
   \link{TxDb} object or any other supported object.
+
+  WARNING: \code{disjointExons} is superseded by \code{\link{exonicParts}}
+  and will be deprecated soon. Please use improved \code{\link{exonicParts}}
+  instead.
 }
 
 \usage{
@@ -61,12 +65,7 @@ disjointExons(x, ...)
 }
 
 \seealso{
-  \itemize{
-    \item \code{\link{transcripts}}, \code{\link{transcriptsBy}}, and
-          \code{\link{transcriptsByOverlaps}} for the core genomic features
-          extractors.
-    \item The \link{TxDb} class.
-  }
+  \code{\link{exonicParts}} for an improved version of \code{disjointExons}.
 }
 
 \examples{

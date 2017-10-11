@@ -109,7 +109,8 @@
       \item{cds}
       \item{genes}
       \item{promoters}
-      \item{disjointExons}
+      \item{exonicParts}
+      \item{intronicParts}
       \item{transcriptsBy}
       \item{exonsBy}
       \item{cdsBy}

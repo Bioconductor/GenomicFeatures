@@ -12,11 +12,11 @@
 \alias{promoters,TxDb-method}
 
 \title{
-  Extract genomic features from an object
+  Extract genomic features from a TxDb-like object
 }
 
 \description{
-  Generic functions to extract genomic features from an object.
+  Generic functions to extract genomic features from a TxDb-like object.
   This page documents the methods for \link{TxDb} objects only.
 }
 
@@ -36,7 +36,7 @@ genes(x, ...)
 \S4method{promoters}{TxDb}(x, upstream=2000, downstream=200, ...)
 }
 
-\arguments{ 
+\arguments{
   \item{x}{
     A \link{TxDb} object.
   }
@@ -60,7 +60,7 @@ genes(x, ...)
       for \code{cds}.
     }
     If the vector is named, those names are used for the corresponding
-    column in the element metadata of the returned object. 
+    column in the element metadata of the returned object.
   }
   \item{filter}{
     Either \code{NULL} or a named list of vectors to be used to
@@ -90,26 +90,26 @@ genes(x, ...)
     additional details see \code{?`promoters,GRanges-method`}.
   }
   \item{downstream}{
-    For \code{promoters} : An \code{integer(1)} value indicating the 
-    number of bases downstream from the transcription start site. For 
+    For \code{promoters} : An \code{integer(1)} value indicating the
+    number of bases downstream from the transcription start site. For
     additional details see \code{?`promoters,GRanges-method`}.
   }
 }
 
 \details{
   These are the main functions for extracting transcript information
-  from a \link{TxDb} object. These methods can restrict the output based
-  on categorical information. To restrict the output based on interval
+  from a \link{TxDb}-like object. These methods can restrict the output
+  based on categorical information. To restrict the output based on interval
   information, use the \code{\link{transcriptsByOverlaps}},
   \code{\link{exonsByOverlaps}}, and \code{\link{cdsByOverlaps}}
   functions.
 
   The \code{promoters} function computes user-defined promoter regions
-  for the transcripts in a \link{TxDb} object. The return object is a 
-  \code{GRanges} of promoter regions around the transcription start 
+  for the transcripts in a \link{TxDb}-like object. The return object is
+  a \code{GRanges} of promoter regions around the transcription start
   site the span of which is defined by \code{upstream} and \code{downstream}.
   For additional details on how the promoter range is computed and the
-  handling of \code{+} and \code{-} strands see 
+  handling of \code{+} and \code{-} strands see
   \code{?`promoters,GRanges-method`}.
 }
 
@@ -127,19 +127,20 @@ genes(x, ...)
   \itemize{
     \item \code{\link{transcriptsBy}} and \code{\link{transcriptsByOverlaps}}
           for more ways to extract genomic features
-          from a \link{TxDb} object.
+          from a \link{TxDb}-like object.
 
     \item \code{\link{transcriptLengths}} for extracting the transcript
-          lengths from a \link{TxDb} object.
+          lengths (and other metrics) from a \link{TxDb} object.
+
+    \item \code{\link{exonicParts}} and \code{\link{intronicParts}} for
+          extracting non-overlapping exonic or intronic parts from a
+          TxDb-like object.
 
     \item \code{\link{extractTranscriptSeqs}} for extracting transcript
           (or CDS) sequences from chromosome sequences.
 
     \item \code{\link{coverageByTranscript}} for computing coverage by
           transcript (or CDS) of a set of ranges.
-
-    \item \code{\link{disjointExons}} for extracting the non-overlapping
-          exon parts from a \link{TxDb} object.
 
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a

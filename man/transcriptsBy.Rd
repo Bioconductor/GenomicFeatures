@@ -14,7 +14,7 @@
 \alias{threeUTRsByTranscript,TxDb-method}
 
 \title{
-  Extract and group genomic features of a given type
+  Extract and group genomic features of a given type from a TxDb-like object
 }
 \description{
   Generic functions to extract genomic features of a given type
@@ -94,10 +94,14 @@ threeUTRsByTranscript(x, ...)
   \itemize{
     \item \code{\link{transcripts}} and \code{\link{transcriptsByOverlaps}}
           for more ways to extract genomic features
-          from a \link{TxDb} object.
+          from a \link{TxDb}-like object.
 
     \item \code{\link{transcriptLengths}} for extracting the transcript
-          lengths from a \link{TxDb} object.
+          lengths (and other metrics) from a \link{TxDb} object.
+
+    \item \code{\link{exonicParts}} and \code{\link{intronicParts}} for
+          extracting non-overlapping exonic or intronic parts from a
+          TxDb-like object.
 
     \item \code{\link{extractTranscriptSeqs}} for extracting transcript
           (or CDS) sequences from chromosome sequences.
