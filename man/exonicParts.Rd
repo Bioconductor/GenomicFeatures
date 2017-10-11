@@ -27,13 +27,13 @@ intronicParts(txdb, linked.to.single.gene.only=FALSE)
     \code{TRUE} or \code{FALSE}.
 
     If \code{FALSE} (the default), then the disjoint parts are obtained
-    by calling \code{\link{disjoin()}} on all the exons (or introns) in
-    \code{txdb}, including on exons (or introns) not linked to a gene or
+    by calling \code{\link[IRanges]{disjoin}()} on all the exons (or introns)
+    in \code{txdb}, including on exons (or introns) not linked to a gene or
     linked to more than one gene.
 
     If \code{TRUE}, then the disjoint parts are obtained in 2 steps:
     \enumerate{
-      \item call \code{\link{disjoin()}} on the exons (or introns)
+      \item call \code{\link[IRanges]{disjoin}()} on the exons (or introns)
             linked to \emph{at least one gene},
 
       \item then drop the parts linked to more than one gene from
@@ -82,6 +82,8 @@ intronicParts(txdb, linked.to.single.gene.only=FALSE)
 
 \seealso{
   \itemize{
+    \item \code{\link[IRanges]{disjoin}} in the \pkg{IRanges} package.
+
     \item \code{\link{transcripts}}, \code{\link{transcriptsBy}},
           and \code{\link{transcriptsByOverlaps}}, for extracting
           genomic feature locations from a \link{TxDb}-like object.
