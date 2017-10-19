@@ -141,17 +141,6 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### TxDb_schema_version()
-###
-
-TxDb_schema_version <- function(txdb)
-{
-    version <- AnnotationDbi:::.getMetaValue(dbconn(txdb), "DBSCHEMAVERSION")
-    numeric_version(version)
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### The 2 flexible helpers for SELECT'ing stuff from a TxDb object:
 ###   - TxDb_SELECT_from_INNER_JOIN()
 ###   - TxDb_SELECT_from_splicing_bundle()
@@ -245,10 +234,12 @@ TxDb_SELECT_from_splicings <- function(txdb, filter=list(),
                                        cds_join_type="LEFT")
 {
     schema_version <- TxDb_schema_version(txdb)
+    splicing_columns <- TXDB_table_columns("splicing",
+                                           schema_version=schema_version)
     exon_columns <- TXDB_table_columns("exon", schema_version=schema_version)
     cds_columns <- TXDB_table_columns("cds", schema_version=schema_version)
     cds_columns <- cds_columns[c("id", "name", "start", "end")]
-    columns <- unique(c("_tx_id", "exon_rank", exon_columns, cds_columns))
+    columns <- unique(c(splicing_columns, exon_columns, cds_columns))
     TxDb_SELECT_from_splicing_bundle(txdb, columns,
                                      filter=filter, orderby=orderby,
                                      cds_join_type=cds_join_type)

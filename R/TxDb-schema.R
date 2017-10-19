@@ -14,6 +14,21 @@
 ###   - metadata (not described here)
 
 
+### Not exported.
+DB_TYPE_NAME <- "Db type"
+DB_TYPE_VALUE <- "TxDb"  # same as the name of the class below
+DB_SCHEMA_VERSION <- "1.2"  # DON'T FORGET TO BUMP THIS WHEN YOU CHANGE THE
+                            # SCHEMA
+
+### Return the *effective* schema version.
+TxDb_schema_version <- function(txdb)
+{
+    conn <- if (is(txdb, "TxDb")) dbconn(txdb) else txdb
+    version <- AnnotationDbi:::.getMetaValue(conn, "DBSCHEMAVERSION")
+    numeric_version(version)
+}
+
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Table columns
 ###
@@ -66,7 +81,8 @@ TXDB_SPLICING_COLDEFS <- c(
     `_tx_id`="INTEGER NOT NULL",
     exon_rank="INTEGER NOT NULL",
     `_exon_id`="INTEGER NOT NULL",
-    `_cds_id`="INTEGER NULL"
+    `_cds_id`="INTEGER NULL",
+    cds_phase="INTEGER NULL"
 )
 
 TXDB_SPLICING_COLUMNS <- names(TXDB_SPLICING_COLDEFS)
@@ -166,6 +182,8 @@ TXDB_table_columns <- function(table, schema_version=NA)
         return(columns)
     if (table == "transcript" && schema_version < numeric_version("1.1"))
         columns <- columns[columns != "tx_type"]
+    if (table == "splicing" && schema_version < numeric_version("1.2"))
+        columns <- columns[columns != "cds_phase"]
     columns
 }
 

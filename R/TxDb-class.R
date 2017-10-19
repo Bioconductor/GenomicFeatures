@@ -4,34 +4,6 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### TxDb schema
-###
-
-### Not exported.
-DB_TYPE_NAME <- "Db type"
-DB_TYPE_VALUE <- "TxDb"  # same as the name of the class below
-DB_SCHEMA_VERSION <- "1.1"  # DON'T FORGET TO BUMP THIS WHEN YOU CHANGE THE
-                            # SCHEMA
-
-.schema_version <- function(conn)
-    numeric_version(AnnotationDbi:::.getMetaValue(conn, "DBSCHEMAVERSION"))
-
-makeFeatureColnames <- function(feature_shortname=c("tx", "exon", "cds"),
-                                no.tx_type=FALSE)
-{
-    feature_shortname <- match.arg(feature_shortname)
-    suffixes <- "name"
-    if (feature_shortname == "tx" && !no.tx_type)
-        suffixes <- c(suffixes, "type")
-    suffixes <- c(suffixes, "chrom", "strand", "start", "end")
-    ans <- c(paste0("_", feature_shortname, "_id"),
-             paste0(feature_shortname, "_", suffixes))
-    names(ans) <- c("id", suffixes)
-    ans
-}
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### TxDb class definition
 ###
 
@@ -140,6 +112,7 @@ load_transcripts <- function(txdb, drop.tx_name=FALSE,
 
 .format_splicings <- function(splicings, drop.exon_name=FALSE,
                                          drop.cds_name=FALSE,
+                                         drop.cds_phase=FALSE,
                                          set.col.class=FALSE)
 {
     COL2CLASS <- c(
@@ -154,7 +127,8 @@ load_transcripts <- function(txdb, drop.tx_name=FALSE,
         cds_id="integer",
         cds_name="character",
         cds_start="integer",
-        cds_end="integer"
+        cds_end="integer",
+        cds_phase="integer"
     )
     if (is.null(splicings)) {
         splicings <- makeZeroRowDataFrame(COL2CLASS)
@@ -171,6 +145,8 @@ load_transcripts <- function(txdb, drop.tx_name=FALSE,
             COL2CLASS <- COL2CLASS[names(COL2CLASS) != "exon_name"]
         if (!has_col(splicings, "cds_name"))
             COL2CLASS <- COL2CLASS[names(COL2CLASS) != "cds_name"]
+        if (!has_col(splicings, "cds_phase"))
+            COL2CLASS <- COL2CLASS[names(COL2CLASS) != "cds_phase"]
         if (!identical(names(splicings), names(COL2CLASS)))
             splicings <- splicings[names(COL2CLASS)]
         if (set.col.class)
@@ -182,17 +158,22 @@ load_transcripts <- function(txdb, drop.tx_name=FALSE,
     if (drop.cds_name && has_col(splicings, "cds_name") &&
                          all(is.na(splicings$cds_name)))
         splicings$cds_name <- NULL
+    if (drop.cds_phase && has_col(splicings, "cds_phase") &&
+                         all(is.na(splicings$cds_phase)))
+        splicings$cds_phase <- NULL
     splicings
 }
 
 load_splicings <- function(txdb, drop.exon_name=FALSE,
                                  drop.cds_name=FALSE,
+                                 drop.cds_phase=FALSE,
                                  set.col.class=FALSE)
 {
     splicings <- TxDb_SELECT_from_splicings(txdb)
     colnames(splicings) <- sub("^_", "", colnames(splicings))
     .format_splicings(splicings, drop.exon_name=drop.exon_name,
                                  drop.cds_name=drop.cds_name,
+                                 drop.cds_phase=drop.cds_phase,
                                  set.col.class=set.col.class)
 }
 
@@ -234,8 +215,8 @@ load_genes <- function(txdb, set.col.class=FALSE)
 ### TODO: Add more checks!
 .valid.transcript.table <- function(conn)
 {
-    no_tx_type <- .schema_version(conn) < "1.1"
-    colnames <- makeFeatureColnames("tx", no_tx_type)
+    schema_version <- TxDb_schema_version(conn)
+    colnames <- TXDB_table_columns("transcript", schema_version=schema_version)
     msg <- AnnotationDbi:::.valid.table.colnames(conn, "transcript", colnames)
     if (!is.null(msg))
         return(msg)
@@ -245,7 +226,8 @@ load_genes <- function(txdb, set.col.class=FALSE)
 ### TODO: Add more checks!
 .valid.exon.table <- function(conn)
 {
-    colnames <- makeFeatureColnames("exon")
+    schema_version <- TxDb_schema_version(conn)
+    colnames <- TXDB_table_columns("exon", schema_version=schema_version)
     msg <- AnnotationDbi:::.valid.table.colnames(conn, "exon", colnames)
     if (!is.null(msg))
         return(msg)
@@ -255,7 +237,8 @@ load_genes <- function(txdb, set.col.class=FALSE)
 ### TODO: Add more checks!
 .valid.cds.table <- function(conn)
 {
-    colnames <- makeFeatureColnames("cds")
+    schema_version <- TxDb_schema_version(conn)
+    colnames <- TXDB_table_columns("cds", schema_version=schema_version)
     msg <- AnnotationDbi:::.valid.table.colnames(conn, "cds", colnames)
     if (!is.null(msg))
         return(msg)
@@ -265,7 +248,8 @@ load_genes <- function(txdb, set.col.class=FALSE)
 ### TODO: Add more checks!
 .valid.splicing.table <- function(conn)
 {
-    colnames <- c("_tx_id", "exon_rank", "_exon_id", "_cds_id")
+    schema_version <- TxDb_schema_version(conn)
+    colnames <- TXDB_table_columns("splicing", schema_version=schema_version)
     msg <- AnnotationDbi:::.valid.table.colnames(conn, "splicing", colnames)
     if (!is.null(msg))
         return(msg)
@@ -296,8 +280,7 @@ load_genes <- function(txdb, set.col.class=FALSE)
 {
     conn <- dbconn(x)
 
-    c(AnnotationDbi:::.valid.metadata.table(conn, DB_TYPE_NAME,
-                                            DB_TYPE_VALUE),
+    c(AnnotationDbi:::.valid.metadata.table(conn, DB_TYPE_NAME, DB_TYPE_VALUE),
       .valid.transcript.table(conn),
       .valid.exon.table(conn),
       .valid.cds.table(conn),
@@ -535,6 +518,7 @@ keep_user_seqlevels_from_TxDb <- function(x, txdb)
                                                     set.col.class=TRUE)
     splicings <- .format_splicings(splicings, drop.exon_name=TRUE,
                                               drop.cds_name=TRUE,
+                                              drop.cds_phase=TRUE,
                                               set.col.class=TRUE)
     genes <- .format_genes(genes, set.col.class=TRUE)
     chrominfo <- .format_chrominfo(chrominfo, set.col.class=TRUE)

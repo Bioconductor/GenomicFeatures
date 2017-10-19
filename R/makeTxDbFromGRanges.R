@@ -41,13 +41,13 @@
 ###   - required: type, ID
 ###   - optional: Parent, Name, Dbxref, geneID
 ### Used in R/makeTxDbFromGFF.R
-GFF3_COLNAMES <- c("type", "ID", "Parent", "Name", "Dbxref", "geneID")
+GFF3_COLNAMES <- c("type", "phase", "ID", "Parent", "Name", "Dbxref", "geneID")
 
 ### Expected metadata columns for GRanges in GTF format:
 ###   - required: type, gene_id, transcript_id
 ###   - optional: exon_id
 ### Used in R/makeTxDbFromGFF.R
-GTF_COLNAMES <- c("type", "gene_id", "transcript_id", "exon_id")
+GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
 
 .GENE_TYPES <- c("gene", "pseudogene", "transposable_element_gene")
 .TX_TYPES <- c("transcript", "pseudogenic_transcript", "primary_transcript",
@@ -80,6 +80,17 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         levels_in_use <- unique(type)
     }
     factor(type, levels=levels_in_use)
+}
+
+.get_phase <- function(gr_mcols)
+{
+    phase <- gr_mcols$phase
+    if (is.null(phase)) {
+        phase <- rep.int(NA_integer_, nrow(gr_mcols))
+    } else if (!is.integer(phase)) {
+        stop(wmsg("the \"phase\" metadata column must be an integer vector"))
+    }
+    phase
 }
 
 ### Return a character vector or NULL.
@@ -239,9 +250,14 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     which(type %in% .GENE_TYPES)
 }
 
-.get_cds_IDX <- function(type)
+.get_cds_IDX <- function(type, phase)
 {
-    which(type %in% .CDS_TYPES)
+    cds_IDX <- which(type %in% .CDS_TYPES)
+    if (S4Vectors:::anyMissingOrOutside(phase[cds_IDX], 0L, 2L))
+        stop(wmsg("when 'gr' contains CDS features, it must have a \"phase\" ",
+                  "metadata column and the phase must be 0, 1, or 2, for all ",
+                  "the CDS features"))
+    cds_IDX
 }
 
 ### Returns the index of CDS whose Parent is a gene (this happens with some
@@ -411,7 +427,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 ### Can be used to extract exons, cds, or stop codons.
 .extract_exons_from_GRanges <- function(exon_IDX, gr, ID, Name, Parent,
                                         feature=c("exon", "cds", "stop_codon"),
-                                        gtf.format=FALSE)
+                                        gtf.format=FALSE, phase=NULL)
 {
     feature <- match.arg(feature)
     what <- switch(feature, exon="exon", cds="CDS", stop_codon="stop codon")
@@ -427,6 +443,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     exon_strand <- rep.int(strand(gr)[exon_IDX], nparent_per_ex)
     exon_start <- rep.int(start(gr)[exon_IDX], nparent_per_ex)
     exon_end <- rep.int(end(gr)[exon_IDX], nparent_per_ex)
+    if (feature == "cds")
+        cds_phase <- rep.int(phase[exon_IDX], nparent_per_ex)
 
     if (!gtf.format) {
         ## Drop orphan exons (or orphan cds or stop codons).
@@ -450,6 +468,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
             exon_strand <- exon_strand[keep_idx]
             exon_start <- exon_start[keep_idx]
             exon_end <- exon_end[keep_idx]
+            if (feature == "cds")
+                cds_phase <- cds_phase[keep_idx]
         }
     }
 
@@ -472,6 +492,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         exons$exon_rank <- exon_rank
     } else {
         colnames(exons) <- sub("^exon_", "", colnames(exons))
+        if (feature == "cds")
+            exons$phase <- cds_phase
     }
     exons
 }
@@ -696,8 +718,10 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 
     exon2cds <- .find_exon_cds(exons, cds)
     cds_name <- cds$name[exon2cds]
+    cds_strand <- cds$strand[exon2cds]
     cds_start <- cds$start[exon2cds]
     cds_end <- cds$end[exon2cds]
+    cds_phase <- cds$phase[exon2cds]
 
     if (!is.null(stop_codons)) {
         stop_codons_tx_id <- factor(stop_codons$tx_id,
@@ -709,17 +733,20 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         exon2stop_codon <- .find_exon_cds(exons, stop_codons,
                                           what="stop codon")
         stop_codon_name <- stop_codons$name[exon2stop_codon]
+        stop_codon_strand <- stop_codons$strand[exon2stop_codon]
         stop_codon_start <- stop_codons$start[exon2stop_codon]
         stop_codon_end <- stop_codons$end[exon2stop_codon]
 
-        ## Exons with no CDS get the stop codon as CDS.
+        ## Exons with no CDS get the stop codon as CDS (with phase set to 0).
         replace_idx <- which(is.na(exon2cds) & !is.na(exon2stop_codon))
         cds_name[replace_idx] <- stop_codon_name[replace_idx]
+        cds_strand[replace_idx] <- stop_codon_strand[replace_idx]
         cds_start[replace_idx] <- stop_codon_start[replace_idx]
         cds_end[replace_idx] <- stop_codon_end[replace_idx]
+        cds_phase[replace_idx] <- 0L
 
         ## Exons with a CDS and a stop codon have the latter merged into the
-        ## former.
+        ## former (with phase adjusted).
         merge_idx <- which(!is.na(exon2cds) & !is.na(exon2stop_codon))
         start1 <- cds_start[merge_idx]
         end1 <- cds_end[merge_idx]
@@ -733,8 +760,15 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         }
         cds_start[merge_idx] <- pmin.int(start1, start2)
         cds_end[merge_idx] <- pmax.int(end1, end2)
+        ## Set phase to 0 if stop codon is upstream of CDS (i.e.
+        ## if start2 < start1 on + strand and end2 > end1 if on - strand).
+        strand1 <- cds_strand[merge_idx]
+        cds_phase[merge_idx] <- ifelse((strand1 == "+" & start2 < start1) |
+                                       (strand1 == "-" & end2 > end1),
+                                       0L, cds_phase[merge_idx])
     }
-    cbind(exons, cds_name, cds_start, cds_end, stringsAsFactors=FALSE)
+    cbind(exons, cds_name, cds_start, cds_end, cds_phase,
+          stringsAsFactors=FALSE)
 }
 
 
@@ -887,6 +921,7 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
 
     ## Get the metadata columns of interest.
     type <- .get_type(gr_mcols)
+    phase <- .get_phase(gr_mcols)
     gene_id <- .get_gene_id(gr_mcols)
     transcript_id <- .get_transcript_id(gr_mcols, gene_id, type)
     gtf.format <- .is_gtf_format(gr_mcols$ID, gene_id, transcript_id)
@@ -898,7 +933,7 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
 
     ## Get the gene, cds, stop_codon, exon, and transcript indices.
     gene_IDX <- .get_gene_IDX(type)
-    cds_IDX <- .get_cds_IDX(type)
+    cds_IDX <- .get_cds_IDX(type, phase)
     cds_with_gene_parent_IDX <- .get_cds_with_gene_parent_IDX(cds_IDX,
                                           Parent, gene_IDX, ID,
                                           gtf.format=gtf.format)
@@ -932,7 +967,8 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     exons <- .extract_exons_from_GRanges(exon_IDX, gr, ID, Name, Parent,
                                    feature="exon", gtf.format=gtf.format)
     cds <- .extract_exons_from_GRanges(cds_IDX, gr, ID, Name, Parent,
-                                   feature="cds", gtf.format=gtf.format)
+                                   feature="cds", gtf.format=gtf.format,
+                                   phase=phase)
     if (!drop.stop.codons) {
         stop_codons <- .extract_exons_from_GRanges(stop_codon_IDX,
                                    gr, ID, Name, Parent,

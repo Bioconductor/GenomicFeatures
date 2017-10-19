@@ -22,7 +22,7 @@ makeTxDb(transcripts, splicings,
 \arguments{
   \item{transcripts}{data frame containing the genomic locations of
     a set of transcripts}
-  \item{splicings}{data frame containing the exon and cds locations
+  \item{splicings}{data frame containing the exon and CDS locations
     of a set of transcripts}
   \item{genes}{data frame containing the genes associated to a set
     of transcripts}
@@ -33,7 +33,7 @@ makeTxDb(transcripts, splicings,
     The names of the columns must be \code{"name"} and \code{"value"}
     and their type must be character.}
   \item{reassign.ids}{controls how internal ids should be assigned for each
-    type of feature i.e. for transcripts, exons, and cds. For each type, if
+    type of feature i.e. for transcripts, exons, and CDS. For each type, if
     \code{reassign.ids} is \code{FALSE} and if the ids are supplied, then
     they are used as the internal ids, otherwise the internal ids are assigned
     in a way that is compatible with the order defined by ordering the
@@ -44,7 +44,7 @@ makeTxDb(transcripts, splicings,
   The \code{transcripts} (required), \code{splicings} (required)
   and \code{genes} (optional) arguments must be data frames that
   describe a set of transcripts and the genomic features related
-  to them (exons, cds and genes at the moment).
+  to them (exons, CDS and genes at the moment).
   The \code{chrominfo} (optional) argument must be a data frame
   containing chromosome information like the length of each chromosome.
 
@@ -67,7 +67,7 @@ makeTxDb(transcripts, splicings,
 
   \code{splicings} must have N rows per transcript, where N is the nb
   of exons in the transcript. Each row describes an exon plus, optionally,
-  the cds contained in this exon. Its columns must be:
+  the CDS contained in this exon. Its columns must be:
   \itemize{
   \item \code{tx_id}: Foreign key that links each row in the \code{splicings}
         data frame to a unique row in the \code{transcripts} data frame.
@@ -93,21 +93,26 @@ makeTxDb(transcripts, splicings,
         and \code{exon_chrom} must also be missing.
   \item \code{exon_start}, \code{exon_end}: Exon start and end.
         Integer vectors with no NAs.
-  \item \code{cds_id}: [optional] cds ID. Integer vector.
+  \item \code{cds_id}: [optional] CDS ID. Integer vector.
         If present then \code{cds_start} and \code{cds_end} must also
         be present.
-        NAs are allowed and must match NAs in \code{cds_start}
-        and \code{cds_end}.
-  \item \code{cds_name}: [optional] cds name. Character vector (or factor).
+        NAs are allowed and must match those in \code{cds_start} and
+        \code{cds_end}.
+  \item \code{cds_name}: [optional] CDS name. Character vector (or factor).
         If present then \code{cds_start} and \code{cds_end} must also be
-        present. NAs and/or duplicates are ok. Must be NA if corresponding
-        \code{cds_start} and \code{cds_end} are NAs.
-  \item \code{cds_start}, \code{cds_end}: [optional] cds start and end.
+        present. NAs and/or duplicates are ok. Must contain NAs at least
+        where \code{cds_start} and \code{cds_end} contain them.
+  \item \code{cds_start}, \code{cds_end}: [optional] CDS start and end.
         Integer vectors.
         If one of the 2 columns is missing then all \code{cds_*} columns
         must be missing.
         NAs are allowed and must occur at the same positions in
         \code{cds_start} and \code{cds_end}.
+  \item \code{cds_phase}: [optional] CDS phase. Integer vector.
+        If present then \code{cds_start} and \code{cds_end} must also
+        be present.
+        NAs are allowed and must match those in \code{cds_start} and
+        \code{cds_end}.
   }
   Other columns, if any, are ignored (with a warning).
 
@@ -174,7 +179,8 @@ splicings <-  data.frame(
                    exon_start=c(1, 2001, 2101, 2131, 2001, 2131),
                    exon_end=c(999, 2085, 2144, 2199, 2085, 2199),
                    cds_start=c(1, 2022, 2101, 2131, NA, NA),
-                   cds_end=c(999, 2085, 2144, 2193, NA, NA))
+                   cds_end=c(999, 2085, 2144, 2193, NA, NA),
+                   cds_phase=c(0, 0, 2, 0, NA, NA))
 
 txdb <- makeTxDb(transcripts, splicings)
 }
