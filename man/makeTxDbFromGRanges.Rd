@@ -86,8 +86,10 @@ txdb
 ## Reverse operation:
 gr2 <- asGFF(txdb)
 
-## Sanity check:
-stopifnot(identical(as.list(txdb), as.list(makeTxDbFromGRanges(gr2))))
+## Sanity check (asGFF() does not propagate the CDS phase at the moment):
+target <- as.list(txdb)
+target$splicings$cds_phase <- NULL
+stopifnot(identical(target, as.list(makeTxDbFromGRanges(gr2))))
 
 ## ---------------------------------------------------------------------
 ## WITH A GRanges OBJECT STRUCTURED AS GTF

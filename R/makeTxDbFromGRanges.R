@@ -85,11 +85,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 .get_phase <- function(gr_mcols)
 {
     phase <- gr_mcols$phase
-    if (is.null(phase)) {
-        phase <- rep.int(NA_integer_, nrow(gr_mcols))
-    } else if (!is.integer(phase)) {
+    if (!is.null(phase) && !is.integer(phase))
         stop(wmsg("the \"phase\" metadata column must be an integer vector"))
-    }
     phase
 }
 
@@ -252,12 +249,22 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 
 .get_cds_IDX <- function(type, phase)
 {
-    cds_IDX <- which(type %in% .CDS_TYPES)
-    if (S4Vectors:::anyMissingOrOutside(phase[cds_IDX], 0L, 2L))
-        stop(wmsg("when 'gr' contains CDS features, it must have a \"phase\" ",
-                  "metadata column and the phase must be 0, 1, or 2, for all ",
-                  "the CDS features"))
-    cds_IDX
+    is_cds <- type %in% .CDS_TYPES
+    if (!is.null(phase)) {
+        if (S4Vectors:::anyMissingOrOutside(phase[is_cds], 0L, 2L))
+            stop(wmsg("the \"phase\" metadata column must contain 0, 1, or 2, ",
+                      "for all the CDS features"))
+        types_with_phase <- type[!is.na(phase) & type %in% GFF_FEATURE_TYPES]
+        types_with_phase <- setdiff(as.character(unique(types_with_phase)),
+                                    .CDS_TYPES)
+        if (length(types_with_phase) != 0L) {
+            in1string <- paste0(as.character(types_with_phase), collapse=", ")
+            warning(wmsg("The \"phase\" metadata column contains non-NA ",
+                         "values for features of type ", in1string,
+                         ". This information was ignored."))
+        }
+    }
+    which(is_cds)
 }
 
 ### Returns the index of CDS whose Parent is a gene (this happens with some
@@ -443,7 +450,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     exon_strand <- rep.int(strand(gr)[exon_IDX], nparent_per_ex)
     exon_start <- rep.int(start(gr)[exon_IDX], nparent_per_ex)
     exon_end <- rep.int(end(gr)[exon_IDX], nparent_per_ex)
-    if (feature == "cds")
+    if (feature == "cds" && !is.null(phase))
         cds_phase <- rep.int(phase[exon_IDX], nparent_per_ex)
 
     if (!gtf.format) {
@@ -468,7 +475,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
             exon_strand <- exon_strand[keep_idx]
             exon_start <- exon_start[keep_idx]
             exon_end <- exon_end[keep_idx]
-            if (feature == "cds")
+            if (feature == "cds" && !is.null(phase))
                 cds_phase <- cds_phase[keep_idx]
         }
     }
@@ -492,7 +499,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         exons$exon_rank <- exon_rank
     } else {
         colnames(exons) <- sub("^exon_", "", colnames(exons))
-        if (feature == "cds")
+        if (feature == "cds" && !is.null(phase))
             exons$phase <- cds_phase
     }
     exons
@@ -721,7 +728,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     cds_strand <- cds$strand[exon2cds]
     cds_start <- cds$start[exon2cds]
     cds_end <- cds$end[exon2cds]
-    cds_phase <- cds$phase[exon2cds]
+    if (!is.null(cds$phase))
+        cds_phase <- cds$phase[exon2cds]
 
     if (!is.null(stop_codons)) {
         stop_codons_tx_id <- factor(stop_codons$tx_id,
@@ -743,7 +751,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         cds_strand[replace_idx] <- stop_codon_strand[replace_idx]
         cds_start[replace_idx] <- stop_codon_start[replace_idx]
         cds_end[replace_idx] <- stop_codon_end[replace_idx]
-        cds_phase[replace_idx] <- 0L
+        if (!is.null(cds$phase))
+            cds_phase[replace_idx] <- 0L
 
         ## Exons with a CDS and a stop codon have the latter merged into the
         ## former (with phase adjusted).
@@ -762,13 +771,18 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         cds_end[merge_idx] <- pmax.int(end1, end2)
         ## Set phase to 0 if stop codon is upstream of CDS (i.e.
         ## if start2 < start1 on + strand and end2 > end1 if on - strand).
-        strand1 <- cds_strand[merge_idx]
-        cds_phase[merge_idx] <- ifelse((strand1 == "+" & start2 < start1) |
-                                       (strand1 == "-" & end2 > end1),
-                                       0L, cds_phase[merge_idx])
+        if (!is.null(cds$phase)) {
+            strand1 <- cds_strand[merge_idx]
+            cds_phase[merge_idx] <- ifelse((strand1 == "+" & start2 < start1) |
+                                           (strand1 == "-" & end2 > end1),
+                                           0L, cds_phase[merge_idx])
+        }
     }
-    cbind(exons, cds_name, cds_start, cds_end, cds_phase,
-          stringsAsFactors=FALSE)
+    splicings <- cbind(exons, cds_name, cds_start, cds_end,
+                       stringsAsFactors=FALSE)
+    if (!is.null(cds$phase))
+        splicings$cds_phase <- cds_phase
+    splicings
 }
 
 
