@@ -343,16 +343,18 @@
 {
     if (!reassign.ids && has_col(splicings, "cds_id"))
         return(splicings$cds_id)
-    chrom_ids <- match(splicings$exon_chrom, chrominfo_chrom)
-    not_NA <- !is.na(splicings$cds_start)
-    ids <- makeFeatureIds(chrom_ids[not_NA], splicings$exon_strand[not_NA],
-                          splicings$cds_start[not_NA],
-                          splicings$cds_end[not_NA],
-                          name=splicings$cds_name[not_NA],
-                          same.id.for.dups=TRUE)
-    ans <- integer(nrow(splicings))
-    ans[not_NA] <- ids
-    ans[!not_NA] <- NA_integer_
+    ans <- rep.int(NA_integer_, nrow(splicings))
+    if (has_col(splicings, "cds_start")) {
+        not_NA <- !is.na(splicings$cds_start)
+        chrom_ids <- match(splicings$exon_chrom, chrominfo_chrom)
+        ids <- makeFeatureIds(chrom_ids[not_NA],
+                              splicings$exon_strand[not_NA],
+                              splicings$cds_start[not_NA],
+                              splicings$cds_end[not_NA],
+                              name=splicings$cds_name[not_NA],
+                              same.id.for.dups=TRUE)
+        ans[not_NA] <- ids
+    }
     ans
 }
 
@@ -515,11 +517,16 @@
 {
     not_NA <- !is.na(internal_cds_id)
     internal_cds_id <- internal_cds_id[not_NA]
-    cds_name <- splicings$cds_name[not_NA]
-    cds_chrom <- splicings$exon_chrom[not_NA]
-    cds_strand <- splicings$exon_strand[not_NA]
-    cds_start <- splicings$cds_start[not_NA]
-    cds_end <- splicings$cds_end[not_NA]
+    if (!has_col(splicings, "cds_start")) {
+        cds_name <- cds_chrom <- cds_strand <- character(0)
+        cds_start <- cds_end <- integer(0)
+    } else {
+        cds_name <- splicings$cds_name[not_NA]
+        cds_chrom <- splicings$exon_chrom[not_NA]
+        cds_strand <- splicings$exon_strand[not_NA]
+        cds_start <- splicings$cds_start[not_NA]
+        cds_end <- splicings$cds_end[not_NA]
+    }
     .write_feature_table(conn, "cds",
         internal_cds_id, cds_name, NULL,
         cds_chrom, cds_strand,
