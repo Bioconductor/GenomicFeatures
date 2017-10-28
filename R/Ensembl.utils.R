@@ -205,35 +205,37 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
     seq_region_attrib$seq_region_id[seq_region_attrib$attrib_type_id == id0]
 }
 
-### Fetch sequence names and lengths from the 'seq_region' table.
-### Typical use:
-###   core_url <- .Ensembl_getMySQLCoreUrl("hsapiens_gene_ensembl")
-###   extra_seqnames <- c("GL000217.1", "NC_012920", "HG79_PATCH")
-###   .Ensembl_fetchChromLengthsFromCoreUrl(core_url,
-###                                         extra_seqnames=extra_seqnames)
-.Ensembl_fetchChromLengthsFromCoreUrl <- function(core_url, extra_seqnames=NULL)
+extract_chromlengths_from_seq_region <- function(seq_region,
+                                                 top_level_ids,
+                                                 extra_seqnames=NULL,
+                                                 seq_region_ids=NULL)
 {
-    seq_region <- .Ensembl_getTable_seq_region(core_url, with.coord_system=TRUE)
-
     ## 1st filtering: Keep only "default_version" sequences.
-    i1 <- grep("default_version", seq_region$coord_system_attrib, fixed=TRUE)
+    keep_me <- grepl("default_version", seq_region$coord_system_attrib,
+                    fixed=TRUE)
+    if (!is.null(seq_region_ids))
+        keep_me <- keep_me | (seq_region$seq_region_id %in% seq_region_ids)
+    i1 <- which(keep_me)
     j1 <- c("seq_region_id", "name", "length",
             "coord_system_name", "coord_system_rank")
     ans <- seq_region[i1, j1, drop=FALSE]
 
     ## 2nd filtering: Keep only "toplevel" sequences that are not LRGs +
     ## extra sequences.
-    ids <- .Ensembl_fetchTopLevelSequenceIds(core_url)
-    i2 <- ans$seq_region_id %in% ids & ans$coord_system_name != "lrg"
+    keep_me <- ans$seq_region_id %in% top_level_ids &
+               ans$coord_system_name != "lrg"
     if (!is.null(extra_seqnames)) {
         extra_seqnames <- unique(extra_seqnames)
         if (!all(extra_seqnames %in% ans$name))
             stop("failed to fetch all chromosome lengths")
-        extra_seqnames <- setdiff(extra_seqnames, ans$name[i2])
+        extra_seqnames <- setdiff(extra_seqnames, ans$name[keep_me])
         ## Add extra sequences to the index.
-        i2 <- i2 | (ans$name %in% extra_seqnames)
+        keep_me <- keep_me | (ans$name %in% extra_seqnames)
     }
-    j2 <- c("name", "length", "coord_system_rank")
+    if (!is.null(seq_region_ids))
+        keep_me <- keep_me | (ans$seq_region_id %in% seq_region_ids)
+    i2 <- which(keep_me)
+    j2 <- c("seq_region_id", "name", "length", "coord_system_rank")
     ans <- ans[i2, j2, drop=FALSE]
 
     ## Ordering: First by rank, then by name.
@@ -246,13 +248,33 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
     ## by keeping rows with the lowest coord_system_rank. This is
     ## straightforward because the rows are already ordered from lowest to
     ## highest ranks.
-    i3 <- !duplicated(ans$name)
-    j3 <- c("name", "length")
+    keep_me <- !duplicated(ans$name)
+    if (!is.null(seq_region_ids))
+        keep_me <- keep_me | (ans$seq_region_id %in% seq_region_ids)
+    i3 <- which(keep_me)
+    j3 <- c("seq_region_id", "name", "length")
     ans <- ans[i3, j3, drop=FALSE]
 
     ## Final tidying.
     rownames(ans) <- NULL
     ans
+}
+
+### Fetch sequence names and lengths from the 'seq_region' table.
+### Typical use:
+###   core_url <- .Ensembl_getMySQLCoreUrl("hsapiens_gene_ensembl")
+###   extra_seqnames <- c("GL000217.1", "NC_012920", "HG79_PATCH")
+###   .Ensembl_fetchChromLengthsFromCoreUrl(core_url,
+###                                         extra_seqnames=extra_seqnames)
+.Ensembl_fetchChromLengthsFromCoreUrl <- function(core_url, extra_seqnames=NULL)
+{
+    seq_region <- .Ensembl_getTable_seq_region(core_url, with.coord_system=TRUE)
+
+    top_level_ids <- .Ensembl_fetchTopLevelSequenceIds(core_url)
+    ans <- extract_chromlengths_from_seq_region(seq_region,
+                                                top_level_ids,
+                                                extra_seqnames=extra_seqnames)
+    ans[-1L]  # drop "seq_region_id" col
 }
 
 
