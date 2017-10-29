@@ -88,10 +88,13 @@ getChromInfoFromUCSC(
 
 \seealso{
   \itemize{
-    \item \code{\link{makeTxDbFromBiomart}}, \code{\link{makeTxDbFromGRanges}},
-          and \code{\link{makeTxDbFromGFF}}, for convenient ways to make a
-          \link{TxDb} object from BioMart online resources, or from a
-          \link[GenomicRanges]{GRanges} object, or from a GFF or GTF file.
+    \item \code{\link{makeTxDbFromBiomart}} and
+          \code{\link{makeTxDbFromEnsembl}} for making a \link{TxDb} object
+          from other online resources.
+
+    \item \code{\link{makeTxDbFromGRanges}} and \code{\link{makeTxDbFromGFF}}
+          for making a \link{TxDb} object from a \link[GenomicRanges]{GRanges}
+          object, or from a GFF or GTF file.
 
     \item \code{\link[rtracklayer]{ucscGenomes}} in the \pkg{rtracklayer}
           package.

@@ -25,13 +25,6 @@
 
   See \code{?\link{FeatureDb}} for a more generic container for storing
   genomic locations of an arbitrary type of genomic features.
-
-  See \code{?\link{makeTxDbFromUCSC}} and
-  \code{?\link{makeTxDbFromBiomart}} for convenient ways to
-  make TxDb objects from UCSC or BioMart online resources.
-
-  See \code{?\link{makeTxDbFromGFF}} for making a TxDb
-  object from annotations available as a GFF3 or GTF file.
 }
 
 \section{Methods}{
@@ -97,10 +90,12 @@
 \seealso{
   \itemize{
     \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromBiomart}},
-          \code{\link{makeTxDbFromGRanges}}, and \code{\link{makeTxDbFromGFF}},
-          for convenient ways to make a \link{TxDb} object from UCSC or BioMart
-          online resources, or from a \link[GenomicRanges]{GRanges} object,
-          or from a GFF or GTF file.
+          and \code{\link{makeTxDbFromEnsembl}}, for making a \link{TxDb}
+          object from online resources.
+
+    \item \code{\link{makeTxDbFromGRanges}} and \code{\link{makeTxDbFromGFF}}
+          for making a \link{TxDb} object from a \link[GenomicRanges]{GRanges}
+          object, or from a GFF or GTF file.
 
     \item \code{\link[AnnotationDbi]{saveDb}} and
           \code{\link[AnnotationDbi]{loadDb}} in the \pkg{AnnotationDbi}

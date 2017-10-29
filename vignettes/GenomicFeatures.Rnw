@@ -474,6 +474,13 @@ Instead, we suggest that you save your annotation objects and label
 them with an appropriate time stamp so as to facilitate reproducible
 research.
 
+\subsection{Using \Rfunction{makeTxDbFromEnsembl}}
+
+The \Rfunction{makeTxDbFromEnsembl} function creates a \link{TxDb} object
+for a given organism by importing the genomic locations of its transcripts,
+exons, CDS, and genes from an Ensembl database.
+
+See \Rcode{?makeTxDbFromEnsembl} for more information.
 
 \subsection{Using \Rfunction{makeTxDbFromGFF}}
 

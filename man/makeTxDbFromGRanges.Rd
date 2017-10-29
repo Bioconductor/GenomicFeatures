@@ -48,9 +48,11 @@ makeTxDbFromGRanges(gr, drop.stop.codons=FALSE, metadata=NULL, taxonomyId=NA)
 \seealso{
   \itemize{
     \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromBiomart}},
-          and \code{\link{makeTxDbFromGFF}}, for convenient ways to make a
-          \link{TxDb} object from UCSC or BioMart online resources, or
-          directly from a GFF or GTF file.
+          and \code{\link{makeTxDbFromEnsembl}}, for making a \link{TxDb}
+          object from online resources.
+
+    \item \code{\link{makeTxDbFromGFF}} for making a \link{TxDb} object
+          from a GFF or GTF file.
 
     \item The \code{\link[rtracklayer]{import}} function in the
           \pkg{rtracklayer} package.

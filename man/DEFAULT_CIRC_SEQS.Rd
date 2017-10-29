@@ -12,7 +12,8 @@ append to it as needed.
 }
 \seealso{
   \code{\link{makeTxDbFromUCSC}},
-  \code{\link{makeTxDbFromBiomart}}
+  \code{\link{makeTxDbFromBiomart}},
+  \code{\link{makeTxDbFromEnsembl}}
 }
 
 \examples{

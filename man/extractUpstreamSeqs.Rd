@@ -93,24 +93,25 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
   for the list of TxDb packages available in the current release of
   Bioconductor.
   Note that you can make your own custom \link{TxDb} object from
-  various annotation resources. See the \code{\link{makeTxDbFromUCSC}},
-  \code{\link{makeTxDbFromBiomart}}, and
-  \code{\link{makeTxDbFromGFF}} functions for more information about
-  this.
+  various annotation resources by using one of the \code{makeTxDbFrom*()}
+  functions listed in the "See also" section below.
 }
 
 \author{Hervé Pagès}
 
 \seealso{
   \itemize{
+    \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromBiomart}},
+          and \code{\link{makeTxDbFromEnsembl}}, for making a \link{TxDb}
+          object from online resources.
+
+    \item \code{\link{makeTxDbFromGRanges}} and \code{\link{makeTxDbFromGFF}}
+          for making a \link{TxDb} object from a \link[GenomicRanges]{GRanges}
+          object, or from a GFF or GTF file.
+
     \item The \code{\link[BSgenome]{available.genomes}} function in the
           \pkg{BSgenome} package for checking avaibility of BSgenome
           data packages (and installing the desired one).
-          
-    \item The \code{\link{makeTxDbFromUCSC}},
-          \code{\link{makeTxDbFromBiomart}}, and
-          \code{\link{makeTxDbFromGFF}} functions for making your own
-          custom \link{TxDb} object from various annotation resources.
 
     \item The \link[BSgenome]{BSgenome}, \link[rtracklayer]{TwoBitFile}, and
           \link[Rsamtools]{FaFile} classes, defined and documented

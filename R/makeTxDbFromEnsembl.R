@@ -2,20 +2,28 @@
 ### makeTxDbFromEnsembl()
 ### -------------------------------------------------------------------------
 ###
-### List of Ensembl MySQL servers / ports
+### List of Ensembl public MySQL servers / ports
 ###   https://www.ensembl.org/info/data/mysql.html
 ### Ensembl Core schema
 ###   https://www.ensembl.org/info/docs/api/core/core_schema.html
 ###
 
 
+.normarg_organism <- function(organism)
+{
+    if (!isSingleString(organism))
+        stop("'organism' must be a single string")
+    ## Remove extra spaces.
+    tmp <- strsplit(organism, " ")[[1L]]
+    paste(tmp[nzchar(tmp)], collapse=" ")
+}
+
 .dbname2release <- function(dbname)
     as.integer(gsub("^.*_core_([0-9]+)_.*$", "\\1", dbname))
 
 .lookup_dbname <- function(organism, release=NA)
 {
-    if (!isSingleString(organism))
-        stop("'organism' must be a single string")
+    organism <- .normarg_organism(organism)
     if (!isSingleNumberOrNA(release))
         stop("'release' must be a valid Ensembl release number or NA")
     available_dbs <- Ensembl_listMySQLCoreDirs(release=release)
@@ -181,7 +189,8 @@
     seq_region_attrib$seq_region_id[seq_region_attrib$attrib_type_id == id0]
 }
 
-.fetch_Ensembl_chromlengths <- function(dbconn, seq_region_ids=NULL)
+.fetch_Ensembl_chrominfo <- function(dbconn, seq_region_ids=NULL,
+                                     circ_seqs=DEFAULT_CIRC_SEQS)
 {
     message("Fetch chromosome names and lengths from Ensembl ...",
             appendLF=FALSE)
@@ -209,16 +218,22 @@
     colnames(seq_region)[6:9] <- paste0("coord_system_",
                                         colnames(seq_region)[6:9])
     top_level_ids <- .get_toplevel_seq_region_ids(dbconn)
-    chromlengths <- GenomicFeatures:::extract_chromlengths_from_seq_region(
-                                              seq_region,
-                                              top_level_ids,
-                                              seq_region_ids=seq_region_ids)
-    colnames(chromlengths)[2L] <- "chrom"
+    chromlengths <- extract_chromlengths_from_seq_region(
+                                         seq_region,
+                                         top_level_ids,
+                                         seq_region_ids=seq_region_ids)
+    chrominfo <- data.frame(
+        seq_region_id=chromlengths$seq_region_id,
+        chrom=chromlengths$name,
+        length=chromlengths$length,
+        is_circular=make_circ_flags_from_circ_seqs(chromlengths$name,
+                                                   circ_seqs)
+    )
     message("OK")
-    chromlengths
+    chrominfo
 }
 
-.gather_Ensembl_metadata <- function(organism, dbname, host)
+.gather_Ensembl_metadata <- function(organism, dbname, server)
 {
     message("Gather the metadata ... ", appendLF=FALSE)
     release <- .dbname2release(dbname)
@@ -226,28 +241,28 @@
                                   "Organism",
                                   "Ensembl release",
                                   "Ensembl database",
-                                  "Ensembl host"),
+                                  "MySQL server"),
                            value=c("Ensembl",
                                    organism,
                                    release,
                                    dbname,
-                                   host),
+                                   server),
                            stringsAsFactors=FALSE)
     message("OK")
     metadata
 }
 
-### 'organism' can be specified "Homo sapiens" or "homo_sapiens".
-### NA for 'release' means latest release.
-### Make sure to set 'host' to the nearest server, it makes a big difference
-### (always use 'host="useastdb.ensembl.org"' in the examples so that they
-### run fast on the build machines which are located on the East Coast).
+### Always set 'server' to "useastdb.ensembl.org" in the examples so that
+### they run fast on the build machines (which are located on the East Coast).
 makeTxDbFromEnsembl <- function(organism="Homo sapiens",
                                 release=NA,
-                                host="ensembldb.ensembl.org")
+                                circ_seqs=DEFAULT_CIRC_SEQS,
+                                server="ensembldb.ensembl.org")
 {
     dbname <- .lookup_dbname(organism, release=release)
-    dbconn <- dbConnect(MySQL(), dbname=dbname, username="anonymous", host=host)
+    dbconn <- dbConnect(MySQL(), dbname=dbname,
+                                 username="anonymous",
+                                 host=server)
     on.exit(dbDisconnect(dbconn))
 
     transcripts <- .fetch_Ensembl_transcripts(dbconn)
@@ -260,24 +275,25 @@ makeTxDbFromEnsembl <- function(organism="Homo sapiens",
     seq_region_ids <- unique(c(transcripts$seq_region_id,
                                splicings$seq_region_id))
 
-    chromlengths <- .fetch_Ensembl_chromlengths(dbconn,
-                                                seq_region_ids=seq_region_ids)
+    chrominfo <- .fetch_Ensembl_chrominfo(dbconn,
+                                          seq_region_ids=seq_region_ids,
+                                          circ_seqs=circ_seqs)
 
-    m <- match(transcripts$seq_region_id, chromlengths$seq_region_id)
-    transcripts$tx_chrom <- chromlengths$chrom[m]
+    m <- match(transcripts$seq_region_id, chrominfo$seq_region_id)
+    transcripts$tx_chrom <- chrominfo$chrom[m]
     transcripts$seq_region_id <- NULL
 
-    m <- match(splicings$seq_region_id, chromlengths$seq_region_id)
-    splicings$exon_chrom <- chromlengths$chrom[m]
+    m <- match(splicings$seq_region_id, chrominfo$seq_region_id)
+    splicings$exon_chrom <- chrominfo$chrom[m]
     splicings$seq_region_id <- NULL
 
-    chromlengths$seq_region_id <- NULL
+    chrominfo$seq_region_id <- NULL
 
-    metadata <- .gather_Ensembl_metadata(organism, dbname, host)
+    metadata <- .gather_Ensembl_metadata(organism, dbname, server)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTxDb(transcripts, splicings,
-                     genes=genes, chrominfo=chromlengths,
+                     genes=genes, chrominfo=chrominfo,
                      metadata=metadata, reassign.ids=TRUE)
     message("OK")
     txdb

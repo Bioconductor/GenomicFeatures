@@ -102,9 +102,9 @@ makeTxDbFromGFF(file,
           \pkg{rtracklayer} package (also used by \code{makeTxDbFromGFF}
           internally).
 
-    \item \code{\link{makeTxDbFromUCSC}} and \code{\link{makeTxDbFromBiomart}}
-          for convenient ways to make a \link{TxDb} object from UCSC or BioMart
-          online resources.
+    \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromBiomart}},
+          and \code{\link{makeTxDbFromEnsembl}}, for making a \link{TxDb}
+          object from online resources.
 
     \item \code{\link{DEFAULT_CIRC_SEQS}}.
 

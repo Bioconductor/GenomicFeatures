@@ -134,10 +134,12 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
 
 \seealso{
   \itemize{
-    \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromGRanges}},
-          and \code{\link{makeTxDbFromGFF}}, for convenient ways to make a
-          \link{TxDb} object from UCSC online resources, or from a
-          \link[GenomicRanges]{GRanges} object, or from a GFF or GTF file.
+    \item \code{\link{makeTxDbFromUCSC}} and \code{\link{makeTxDbFromEnsembl}}
+          for making a \link{TxDb} object from other online resources.
+
+    \item \code{\link{makeTxDbFromGRanges}} and \code{\link{makeTxDbFromGFF}}
+          for making a \link{TxDb} object from a \link[GenomicRanges]{GRanges}
+          object, or from a GFF or GTF file.
 
     \item The \code{\link[biomaRt]{listMarts}}, \code{\link[biomaRt]{useMart}},
           \code{\link[biomaRt]{listDatasets}}, and
