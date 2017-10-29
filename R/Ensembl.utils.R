@@ -16,7 +16,7 @@
 ###
 ### Ensembl Core Schema Documentation:
 ###   http://www.ensembl.org/info/docs/api/core/core_schema.html
-### The full schema:
+### Full schema:
 ###   ftp://ftp.ensembl.org/pub/ensembl/sql/table.sql
 ###
 
@@ -89,8 +89,8 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 
 ### 'kingdom' must be NA or one of the EnsemblGenomes marts i.e. "bacteria",
 ### "fungi", "metazoa", "plants", or "protists".
-.Ensembl_listMySQLCoreDirs <- function(release=NA,
-                                       use.grch37=FALSE, kingdom=NA, url=NA)
+Ensembl_listMySQLCoreDirs <- function(release=NA,
+                                      use.grch37=FALSE, kingdom=NA, url=NA)
 {
     if (is.na(url))
         url <- ftp_url_to_Ensembl_mysql(release, use.grch37, kingdom)
@@ -106,10 +106,10 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 {
     if (is.na(url))
         url <- ftp_url_to_Ensembl_mysql(release, use.grch37, kingdom)
-    core_dirs <- .Ensembl_listMySQLCoreDirs(release=release,
-                                            use.grch37=use.grch37,
-                                            kingdom=kingdom,
-                                            url=url)
+    core_dirs <- Ensembl_listMySQLCoreDirs(release=release,
+                                           use.grch37=use.grch37,
+                                           kingdom=kingdom,
+                                           url=url)
     trimmed_core_dirs <- sub("_core_.*$", "", core_dirs)
     shortnames <- sub("^(.)[^_]*_", "\\1", trimmed_core_dirs)
     if (dataset == "mfuro_gene_ensembl") {

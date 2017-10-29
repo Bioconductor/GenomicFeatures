@@ -5,11 +5,13 @@ importFrom(utils, download.file, packageDescription, read.table, browseURL,
 importFrom(tools, file_ext, file_path_sans_ext)
 
 importFrom(RCurl, getURL)
-importMethodsFrom(DBI, dbConnect, dbExecute, dbGetQuery,
+importMethodsFrom(DBI, dbConnect, dbDisconnect,
+                       dbExecute, dbGetQuery,
                        dbReadTable, dbWriteTable, dbListTables,
                        dbListFields)
 
 importFrom(RSQLite, SQLite, SQLITE_RO)
+importFrom(RMySQL, MySQL)
 
 import(AnnotationDbi)
 import(BiocGenerics)
@@ -50,6 +52,9 @@ export(
   ## makeTxDbFromBiomart.R:
   getChromInfoFromBiomart,
   makeTxDbFromBiomart,
+
+  ## makeTxDbFromEnsembl.R:
+  makeTxDbFromEnsembl,
 
   ## makeTxDbFromGRanges.R:
   makeTxDbFromGRanges,

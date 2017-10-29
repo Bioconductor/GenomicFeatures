@@ -1,10 +1,31 @@
+### =========================================================================
+### makeTxDbFromEnsembl()
+### -------------------------------------------------------------------------
+###
 ### List of Ensembl MySQL servers / ports
 ###   https://www.ensembl.org/info/data/mysql.html
 ### Ensembl Core schema
 ###   https://www.ensembl.org/info/docs/api/core/core_schema.html
+###
 
-library(GenomicFeatures)
-library(RMySQL)
+
+.dbname2release <- function(dbname)
+    as.integer(gsub("^.*_core_([0-9]+)_.*$", "\\1", dbname))
+
+.lookup_dbname <- function(organism, release=NA)
+{
+    if (!isSingleString(organism))
+        stop("'organism' must be a single string")
+    if (!isSingleNumberOrNA(release))
+        stop("'release' must be a valid Ensembl release number or NA")
+    available_dbs <- Ensembl_listMySQLCoreDirs(release=release)
+    prefix <- paste0(gsub(" ", "_", tolower(organism), fixed=TRUE), "_core_")
+    i <- match(prefix, substr(available_dbs, 1L, nchar(prefix)))
+    dbname <- available_dbs[[i]]
+    if (!is.na(release))  # sanity check
+        stopifnot(.dbname2release(dbname) == release)
+    dbname
+}
 
 .fix_numeric_cols <- function(df)
 {
@@ -197,13 +218,18 @@ library(RMySQL)
     chromlengths
 }
 
-.gather_Ensembl_metadata <- function(dbname, host)
+.gather_Ensembl_metadata <- function(organism, dbname, host)
 {
     message("Gather the metadata ... ", appendLF=FALSE)
+    release <- .dbname2release(dbname)
     metadata <- data.frame(name=c("Data source",
+                                  "Organism",
+                                  "Ensembl release",
                                   "Ensembl database",
                                   "Ensembl host"),
                            value=c("Ensembl",
+                                   organism,
+                                   release,
                                    dbname,
                                    host),
                            stringsAsFactors=FALSE)
@@ -211,9 +237,16 @@ library(RMySQL)
     metadata
 }
 
-makeTxDbFromEnsembl <- function(dbname="homo_sapiens_core_90_38",
-                                host="useastdb.ensembl.org")
+### 'organism' can be specified "Homo sapiens" or "homo_sapiens".
+### NA for 'release' means latest release.
+### Make sure to set 'host' to the nearest server, it makes a big difference
+### (always use 'host="useastdb.ensembl.org"' in the examples so that they
+### run fast on the build machines which are located on the East Coast).
+makeTxDbFromEnsembl <- function(organism="Homo sapiens",
+                                release=NA,
+                                host="ensembldb.ensembl.org")
 {
+    dbname <- .lookup_dbname(organism, release=release)
     dbconn <- dbConnect(MySQL(), dbname=dbname, username="anonymous", host=host)
     on.exit(dbDisconnect(dbconn))
 
@@ -240,7 +273,7 @@ makeTxDbFromEnsembl <- function(dbname="homo_sapiens_core_90_38",
 
     chromlengths$seq_region_id <- NULL
 
-    metadata <- .gather_Ensembl_metadata(dbname, host)
+    metadata <- .gather_Ensembl_metadata(organism, dbname, host)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTxDb(transcripts, splicings,
