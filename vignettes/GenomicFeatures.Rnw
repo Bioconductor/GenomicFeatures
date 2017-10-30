@@ -476,7 +476,7 @@ research.
 
 \subsection{Using \Rfunction{makeTxDbFromEnsembl}}
 
-The \Rfunction{makeTxDbFromEnsembl} function creates a \link{TxDb} object
+The \Rfunction{makeTxDbFromEnsembl} function creates a \Rclass{TxDb} object
 for a given organism by importing the genomic locations of its transcripts,
 exons, CDS, and genes from an Ensembl database.
 
