@@ -5,6 +5,7 @@
 \title{
   Make a TxDb object from an Ensembl database
 }
+
 \description{
   The \code{makeTxDbFromEnsembl} function creates a \link{TxDb} object for
   a given organism by importing the genomic locations of its transcripts,
@@ -43,6 +44,11 @@ makeTxDbFromEnsembl(organism="Homo sapiens",
 
 \value{
   A \link{TxDb} object.
+}
+
+\note{
+  \code{makeTxDbFromEnsembl} tends to be faster and more reliable than
+  \code{\link{makeTxDbFromBiomart}}.
 }
 
 \author{H. Pagès}

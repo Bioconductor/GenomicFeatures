@@ -1,3 +1,47 @@
+CHANGES IN VERSION 1.30
+-----------------------
+
+NEW FEATURES
+
+    o Add makeTxDbFromEnsembl() for creating a TxDb object by querying
+      directly an Ensembl MySQL server. This seems to be faster and more
+      reliable than makeTxDbFromBiomart().
+
+    o Improve makeTxDbFromBiomart() support for EnsemblGenomes marts
+      fungal_mart, metazoa_mart, plants_mart, and protist_mart.
+
+    o makeTxDbFromGFF() and makeTxDbFromGRanges() now import the CDS phase.
+      This required a change in the schema of the underlying SQLite db of
+      TxDb objects. This is still a work-in-progress e.g. cdsBy(txdb, by="tx")
+      still needs to be modified to return the phase info.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The *ByOverlaps() functions now use the same 'maxgap' and 'minoverlap'
+      defaults as subsetByOverlaps().
+
+DEPRECATED AND DEFUNCT
+
+    o Remove 'force' argument from seqinfo() and seqlevels() setters (the
+      argument got deprecated in BioC 3.5 in favor of new and more flexible
+      'pruning.mode' argument).
+
+BUG FIXES
+
+    o exonicParts() and intronicParts() are now documented.
+
+    o Address a couple of issues pointed out by Matt Chambers in
+      internal helpers get_organism_from_Ensembl_Mart_dataset() and
+      .extractEnsemblReleaseFromDbVersion() used by makeTxDbFromBiomart().
+
+    o Fix internal utility .Ensembl_getMySQLCoreDir(). Was failing for some
+      of the 69 datasets from the Ensembl mart, causing makeTxDbFromBiomart()
+      to fail loopking up the organism scientific name and the chromosome
+      lengths. Thanks to Matt Chambers for reporting this.
+
+    o Some tweaks and fixes needed to support RSQLite 2.0.
+
+
 CHANGES IN VERSION 1.28
 -----------------------
 
