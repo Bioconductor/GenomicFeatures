@@ -41,7 +41,7 @@ export(
   DEFAULT_CIRC_SEQS,
 
   ## makeTxDb.R:
-  makeTxDb, makePackageName,
+  makeTxDb,
 
   ## makeTxDbFromUCSC.R:
   supportedUCSCtables,
@@ -113,6 +113,7 @@ export(
   getPromoterSeq,
 
   ## makeTxDbPackage.R:
+  makePackageName,
   makeTxDbPackage,
   makeTxDbPackageFromUCSC,
   makeTxDbPackageFromBiomart,
