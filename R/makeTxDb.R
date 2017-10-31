@@ -56,21 +56,13 @@
 .makeTxDb_normarg_transcripts <- function(transcripts)
 {
     .REQUIRED_COLS <- c("tx_id", "tx_chrom", "tx_strand", "tx_start", "tx_end")
-    .OPTIONAL_COLS <- c("tx_name", "tx_type")
+    .OPTIONAL_COLS <- c("tx_name", "tx_type", "gene_id")
     check_colnames(transcripts, .REQUIRED_COLS, .OPTIONAL_COLS, "transcripts")
     ## Check 'tx_id'.
     if (!is.integer(transcripts$tx_id) || any(is.na(transcripts$tx_id)))
         stop("'transcripts$tx_id' must be an integer vector, with no NAs")
     if (any(duplicated(transcripts$tx_id)))
         stop("'transcripts$tx_id' contains duplicated values")
-    ## Check 'tx_name'.
-    if (has_col(transcripts, "tx_name")
-     && !.is_character_or_factor(transcripts$tx_name))
-        stop("'transcripts$tx_name' must be a character vector (or factor)")
-    ## Check 'tx_type'.
-    if (has_col(transcripts, "tx_type")
-     && !.is_character_or_factor(transcripts$tx_type))
-        stop("'transcripts$tx_type' must be a character vector (or factor)")
     ## Check 'tx_chrom'.
     if (!.is_character_or_factor(transcripts$tx_chrom)
      || any(is.na(transcripts$tx_chrom)))
@@ -98,6 +90,18 @@
     ## Check 'tx_start <= tx_end'.
     if (any(transcripts$tx_start > transcripts$tx_end))
         stop("transcript starts must be <= transcript ends")
+    ## Check 'tx_name'.
+    if (has_col(transcripts, "tx_name")
+     && !.is_character_or_factor(transcripts$tx_name))
+        stop("'transcripts$tx_name' must be a character vector (or factor)")
+    ## Check 'tx_type'.
+    if (has_col(transcripts, "tx_type")
+     && !.is_character_or_factor(transcripts$tx_type))
+        stop("'transcripts$tx_type' must be a character vector (or factor)")
+    ## Check 'gene_id'.
+    if (has_col(transcripts, "gene_id")
+     && !.is_character_or_factor(transcripts$gene_id))
+        stop("'transcripts$gene_id' must be a character vector (or factor)")
     transcripts
 }
 
@@ -548,7 +552,15 @@ makeTxDb <- function(transcripts, splicings,
     transcripts_tx_id <- transcripts$tx_id  # guaranteed to be unique
     names(transcripts_tx_id) <- transcripts$tx_name
     splicings <- .makeTxDb_normarg_splicings(splicings, transcripts_tx_id)
-    genes <- .makeTxDb_normarg_genes(genes, transcripts_tx_id)
+    if (has_col(transcripts, "gene_id")) {
+        if (!is.null(genes))
+            stop("'genes' must be NULL when 'transcripts' ",
+                 "has a \"gene_id\" col")
+        genes <- transcripts[!is.na(transcripts$gene_id),
+                             c("tx_id", "gene_id")]
+    } else {
+        genes <- .makeTxDb_normarg_genes(genes, transcripts_tx_id)
+    }
     chrominfo <- .makeTxDb_normarg_chrominfo(chrominfo, transcripts$tx_chrom,
                                              splicings$exon_chrom)
     transcripts_internal_tx_id <- .make_transcripts_internal_tx_id(

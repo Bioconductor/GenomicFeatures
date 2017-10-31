@@ -267,9 +267,6 @@ makeTxDbFromEnsembl <- function(organism="Homo sapiens",
 
     transcripts <- .fetch_Ensembl_transcripts(dbconn)
 
-    genes <- transcripts[ , c("tx_name", "gene_id")]
-    transcripts$gene_id <- NULL
-
     splicings <- .fetch_Ensembl_splicings(dbconn)
 
     seq_region_ids <- unique(c(transcripts$seq_region_id,
@@ -293,8 +290,7 @@ makeTxDbFromEnsembl <- function(organism="Homo sapiens",
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTxDb(transcripts, splicings,
-                     genes=genes, chrominfo=chrominfo,
-                     metadata=metadata, reassign.ids=TRUE)
+                     chrominfo=chrominfo, metadata=metadata, reassign.ids=TRUE)
     message("OK")
     txdb
 }
