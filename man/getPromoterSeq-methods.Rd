@@ -50,8 +50,8 @@
 \author{Paul Shannon}
 
 \seealso{
-  \link[IRanges]{intra-range-methods}        ## promoters methods for Ranges objects
-  \link[GenomicRanges]{intra-range-methods}  ## promoters methods for GRanges objects
+  \link[IRanges]{intra-range-methods}        ## promoters method for IntegerRanges objects
+  \link[GenomicRanges]{intra-range-methods}  ## promoters method for GenomicRanges objects
   \link[Biostrings]{getSeq}
 }
 
