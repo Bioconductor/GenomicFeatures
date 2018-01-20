@@ -14,8 +14,8 @@
 \alias{mapFromTranscripts,GenomicRanges,GenomicRanges-method}
 \alias{mapFromTranscripts,GenomicRanges,GRangesList-method}
 \alias{pmapFromTranscripts}
-\alias{pmapFromTranscripts,Ranges,GenomicRanges-method}
-\alias{pmapFromTranscripts,Ranges,GRangesList-method}
+\alias{pmapFromTranscripts,IntegerRanges,GenomicRanges-method}
+\alias{pmapFromTranscripts,IntegerRanges,GRangesList-method}
 \alias{pmapFromTranscripts,GenomicRanges,GenomicRanges-method}
 \alias{pmapFromTranscripts,GenomicRanges,GRangesList-method}
 
@@ -25,63 +25,65 @@
   Map range coordinates between features in the transcriptome and
   genome (reference) space.
 
-  See \code{?\link[GenomicAlignments]{mapToAlignments}} in the 
-  \pkg{GenomicAlignments} package for mapping coordinates between 
+  See \code{?\link[GenomicAlignments]{mapToAlignments}} in the
+  \pkg{GenomicAlignments} package for mapping coordinates between
   reads (local) and genome (reference) space using a CIGAR alignment.
 }
 
 \usage{
 ## mapping to transcripts
-\S4method{mapToTranscripts}{GenomicRanges,GenomicRanges}(x, transcripts, 
-          ignore.strand = FALSE) 
-\S4method{mapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = FALSE, intronJunctions=FALSE) 
-\S4method{mapToTranscripts}{ANY,TxDb}(x, transcripts, ignore.strand = FALSE, 
-          extractor.fun = GenomicFeatures::transcripts, ...) 
-\S4method{pmapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = FALSE) 
+\S4method{mapToTranscripts}{GenomicRanges,GenomicRanges}(x, transcripts,
+          ignore.strand = FALSE)
+\S4method{mapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts,
+          ignore.strand = FALSE, intronJunctions=FALSE)
+\S4method{mapToTranscripts}{ANY,TxDb}(x, transcripts, ignore.strand = FALSE,
+          extractor.fun = GenomicFeatures::transcripts, ...)
+\S4method{pmapToTranscripts}{GenomicRanges,GRangesList}(x, transcripts,
+          ignore.strand = FALSE)
 
 ## mapping from transcripts
-\S4method{mapFromTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
-          ignore.strand = FALSE) 
-\S4method{pmapFromTranscripts}{GenomicRanges,GRangesList}(x, transcripts, 
+\S4method{mapFromTranscripts}{GenomicRanges,GRangesList}(x, transcripts,
           ignore.strand = FALSE)
-\S4method{pmapFromTranscripts}{Ranges,GRangesList}(x, transcripts)
+\S4method{pmapFromTranscripts}{GenomicRanges,GRangesList}(x, transcripts,
+          ignore.strand = FALSE)
+\S4method{pmapFromTranscripts}{IntegerRanges,GRangesList}(x, transcripts)
 }
 
 \arguments{
   \item{x}{
-    \code{\linkS4class{GenomicRanges}} object of positions to be mapped.
+    \link[GenomicRanges]{GenomicRanges} object of positions to be mapped.
     The seqnames of \code{x} are used in \code{mapFromTranscripts}, i.e.,
     when mapping from transcripts to the genome. In the case of
-    \code{pmapFromTranscripts}, \code{x} can be a \code{Ranges} object.
+    \code{pmapFromTranscripts}, \code{x} can be an
+    \link[IRanges]{IntegerRanges} object.
   }
   \item{transcripts}{
-    A named \code{\linkS4class{GenomicRanges}} or
-    \code{\linkS4class{GRangesList}} object used to map between \code{x} and the
-    result. The ranges can be any feature in the transcriptome extracted from a
-    \code{TxDb} (e.g., introns, exons, cds regions). See ?\code{transcripts} and
-    ?\code{transcriptsBy} for a list of extractor functions. 
- 
+    A named \link[GenomicRanges]{GenomicRanges} or
+    \link[GenomicRanges]{GRangesList} object used to map between \code{x}
+    and the result. The ranges can be any feature in the transcriptome
+    extracted from a \code{TxDb} (e.g., introns, exons, cds regions).
+    See ?\code{transcripts} and ?\code{transcriptsBy} for a list of
+    extractor functions.
+
     The \code{transcripts} object must have names. When mapping from
     transcripts to the genome, they are used to determine mapping pairs; in
     the reverse direction they become the seqlevels of the output object.
   }
   \item{ignore.strand}{
-    When \code{ignore.strand} is TRUE, strand is ignored in overlaps operations 
+    When \code{ignore.strand} is TRUE, strand is ignored in overlaps operations
     (i.e., all strands are considered "+") and the strand in the output is '*'.
 
-    When \code{ignore.strand} is FALSE strand in the output is taken from the 
+    When \code{ignore.strand} is FALSE strand in the output is taken from the
     \code{transcripts} argument. When \code{transcripts} is a
-    \code{GRangesList}, all inner list elements of a common list element must 
+    \code{GRangesList}, all inner list elements of a common list element must
     have the same strand or an error is thrown.
 
-    Mapped position is computed by counting from the transcription start site 
+    Mapped position is computed by counting from the transcription start site
     (TSS) and is not affected by the value of \code{ignore.strand}.
   }
   \item{intronJunctions}{
     Logical to indicate whether intronic ranges in \code{x} should be reported.
- 
+
     Ranges in \code{x} that do not fall \sQuote{within} a range in
     \code{transcripts} are considered a non-hit and have no mapping.  When
     \code{intronJunctions=TRUE} the non-hits that fall between 2 ranges in
@@ -91,15 +93,15 @@
     that 'fall off' either end or overlap the intron gap and a range in
     \code{transcripts} will not be mapped.
 
-    This argument is only supported in \code{mapToTranscripts} when 
+    This argument is only supported in \code{mapToTranscripts} when
     \code{transcripts} is a GRangesList.
   }
   \item{extractor.fun}{
     Function to extract genomic features from a \code{TxDb} object.
 
-    This argument is only applicable to \code{mapToTranscripts} when 
+    This argument is only applicable to \code{mapToTranscripts} when
     \code{transcripts} is a \code{TxDb} object. The \code{extractor} should
-    be the name of a function (not a character()) described on the 
+    be the name of a function (not a character()) described on the
     \code{?transcripts}, \code{?transcriptsBy}, or \code{?microRNAs} man page.
 
     Valid \code{extractor} functions:
@@ -119,26 +121,26 @@
       \item{threeUTRsByTranscript}
       \item{microRNAs}
       \item{tRNAs}
-    } 
+    }
   }
   \item{\dots}{
-    Additional arguments passed to \code{extractor.fun} functions. 
+    Additional arguments passed to \code{extractor.fun} functions.
   }
 }
 
 \details{
-
   In GenomicFeatures >= 1.21.10, the default for \code{ignore.strand} was
-  changed to \code{FALSE} for consistency with other methods in GenomicRanges
-  and GenomicAlignments. Additionally, the mapped position is computed
-  from the TSS and does not depend on the \code{ignore.strand} argument.
+  changed to \code{FALSE} for consistency with other methods in the
+  \pkg{GenomicRanges} and \pkg{GenomicAlignments} packages. Additionally,
+  the mapped position is computed from the TSS and does not depend on the
+  \code{ignore.strand} argument.
   See the section on \code{ignore.strand} for details.
- 
+
   \itemize{
     \item{\code{mapToTranscripts}, \code{pmapToTranscripts}}{
       The genomic range in \code{x} is mapped to the local position in the
       \code{transcripts} ranges. A successful mapping occurs when \code{x}
-      is completely within the \code{transcripts} range, equivalent to: 
+      is completely within the \code{transcripts} range, equivalent to:
       \preformatted{
       findOverlaps(..., type="within")
       }
@@ -150,15 +152,15 @@
       all elements of \code{transcripts}.
 
       \code{mapToTranscripts} uses \code{findOverlaps} to map ranges in
-      \code{x} to ranges in \code{transcripts}. This method does not return 
+      \code{x} to ranges in \code{transcripts}. This method does not return
       unmapped ranges.
 
       \code{pmapToTranscripts} maps the i-th range in \code{x} to the
       i-th range in \code{transcripts}. Recycling is supported for both
       \code{x} and \code{transcripts} when either is length == 1L; otherwise
-      the lengths must match. Ranges in \code{x} that do not map (out of bounds 
-      or strand mismatch) are returned as zero-width ranges starting at 0. 
-      These ranges are given the seqname of "UNMAPPED". 
+      the lengths must match. Ranges in \code{x} that do not map (out of bounds
+      or strand mismatch) are returned as zero-width ranges starting at 0.
+      These ranges are given the seqname of "UNMAPPED".
     }
     \item{\code{mapFromTranscripts}, \code{pmapFromTranscripts}}{
       The transcript-based position in \code{x} is mapped to genomic coordinates
@@ -171,20 +173,20 @@
       positions in from the beginning of the \code{transcripts} range.  The
       seqlevels of the return object are chromosome names.
 
-      \code{mapFromTranscripts} uses the seqname of \code{x} and the names 
-      of \code{transcripts} to determine mapping pairs (vs attempting to match 
-      all possible pairs). Name matching is motivated by use cases such as 
-      differentially expressed regions where the expressed regions in \code{x} 
-      would only be related to a subset of regions in \code{transcripts}. 
+      \code{mapFromTranscripts} uses the seqname of \code{x} and the names
+      of \code{transcripts} to determine mapping pairs (vs attempting to match
+      all possible pairs). Name matching is motivated by use cases such as
+      differentially expressed regions where the expressed regions in \code{x}
+      would only be related to a subset of regions in \code{transcripts}.
       This method does not return unmapped ranges.
- 
+
       \code{pmapFromTranscripts} maps the i-th range in \code{x} to the i-th
       range in \code{transcripts} and therefore does not use name matching.
       Recycling is supported in \code{pmapFromTranscripts} when either
-      \code{x} or \code{transcripts} is length == 1L; otherwise the lengths 
-      must match. Ranges in \code{x} that do not map (out of bounds or strand 
-      mismatch) are returned as zero-width ranges starting at 0. These ranges 
-      are given the seqname of "UNMAPPED". 
+      \code{x} or \code{transcripts} is length == 1L; otherwise the lengths
+      must match. Ranges in \code{x} that do not map (out of bounds or strand
+      mismatch) are returned as zero-width ranges starting at 0. These ranges
+      are given the seqname of "UNMAPPED".
     }
   }
 }
@@ -193,36 +195,36 @@
 
   \code{pmapToTranscripts} returns a \code{GRanges} the same length as
   \code{x}.
- 
+
   \code{pmapFromTranscripts} returns a \code{GRanges} when \code{transcripts}
   is a \code{GRanges} and a \code{GRangesList} when \code{transcripts}
   is a \code{GRangesList}. In both cases the return object is the same
-  length as \code{x}. The rational for returning the \code{GRangesList} is 
-  to preserve exon structure; ranges in a list element that are not overlapped 
+  length as \code{x}. The rational for returning the \code{GRangesList} is
+  to preserve exon structure; ranges in a list element that are not overlapped
   by \code{x} are returned as a zero-width range. The \code{GRangesList}
   return object will have no seqlevels called "UNMAPPED"; those will only
   occur when a \code{GRanges} is returned.
 
   \code{mapToTranscripts} and \code{mapFromTranscripts} return \code{GRanges}
-  objects that vary in length similar to a \code{Hits} object. The result 
-  contains mapped records only; strand mismatch and out of bound ranges are 
-  not returned. \code{xHits} and \code{transcriptsHits} metadata columns 
+  objects that vary in length similar to a \code{Hits} object. The result
+  contains mapped records only; strand mismatch and out of bound ranges are
+  not returned. \code{xHits} and \code{transcriptsHits} metadata columns
   (similar to the \code{queryHits} and \code{subjectHits} of a \code{Hits}
-  object) indicate elements of \code{x} and \code{transcripts} used in 
+  object) indicate elements of \code{x} and \code{transcripts} used in
   the mapping.
 
   When \code{intronJunctions} is TRUE, \code{mapToTranscripts} returns an
   extra metdata column named \code{intronic} to identify the intron ranges.
 
-  When mapping to transcript coordinates, seqlevels of the output are the names 
+  When mapping to transcript coordinates, seqlevels of the output are the names
   on the \code{transcripts} object and most often these will be transcript
-  names. When mapping to the genome, seqlevels of the output are the seqlevels 
+  names. When mapping to the genome, seqlevels of the output are the seqlevels
   of \code{transcripts} which are usually chromosome names.
 }
 
 \seealso{
   \itemize{
-    \item \code{?\link[GenomicAlignments]{mapToAlignments}} in the 
+    \item \code{?\link[GenomicAlignments]{mapToAlignments}} in the
     \pkg{GenomicAlignments} package for methods mapping between
     reads and genome space using a CIGAR alignment.
   }
@@ -240,7 +242,7 @@
 ## (i) Map from genome to transcript:
 
 ## The seqnames of the output are the transcript names, not chromosomes. For
-## this reason 'transcripts' must be named. 
+## this reason 'transcripts' must be named.
 x <- GRanges("A", IRanges(16, 18))
 gr1 <- GRanges("A", IRanges(1, 10, names="tx_a"))
 gr2 <- GRanges("A", IRanges(15, 20, names="tx_b"))
@@ -258,9 +260,9 @@ mapFromTranscripts(tx_coord, gr2)
 ## ------------------------------------
 ## (ii) Map from transcript to genome:
 
-## A prerequisite for mapping from transcript -> genome is that the seqname 
-## of the range in 'x' match the name of the range in 'transcripts'. Here 
-## the seqname of 'x' is "TX_1" and mapping is only attempted with the second 
+## A prerequisite for mapping from transcript -> genome is that the seqname
+## of the range in 'x' match the name of the range in 'transcripts'. Here
+## the seqname of 'x' is "TX_1" and mapping is only attempted with the second
 ## range in 'gr':
 x <- GRanges("TX_1", IRanges(5, 10))
 gr <- GRanges("chr3", IRanges(c(1, 1), width=50, names=c("TX_2", "TX_1")))
@@ -280,26 +282,26 @@ pmapToTranscripts(x, transcripts)
 ## B. Map local sequence locations to the genome
 ## ---------------------------------------------------------------------
 
-## NAGNAG alternative splicing plays an essential role in biological processes 
-## and represents a highly adaptable system for posttranslational regulation 
-## of gene function. The majority of NAGNAG studies largely focus on messenger 
-## RNA. A study by Sun, Lin, and Yan 
+## NAGNAG alternative splicing plays an essential role in biological processes
+## and represents a highly adaptable system for posttranslational regulation
+## of gene function. The majority of NAGNAG studies largely focus on messenger
+## RNA. A study by Sun, Lin, and Yan
 ## (http://www.hindawi.com/journals/bmri/2014/736798/) demonstrated that
 ## NAGNAG splicing is also operative in large intergenic noncoding RNA
-## (lincRNA). 
+## (lincRNA).
 
-## One finding of interest was that linc-POLR3G-10 exhibited two NAGNAG 
-## acceptors located in two distinct transcripts: TCONS_00010012 and 
-## TCONS_00010010. 
+## One finding of interest was that linc-POLR3G-10 exhibited two NAGNAG
+## acceptors located in two distinct transcripts: TCONS_00010012 and
+## TCONS_00010010.
 
-## Extract the exon coordinates of TCONS_00010012 and TCONS_00010010: 
+## Extract the exon coordinates of TCONS_00010012 and TCONS_00010010:
 lincrna <- c("TCONS_00010012", "TCONS_00010010")
 library(TxDb.Hsapiens.UCSC.hg19.lincRNAsTranscripts)
 txdb <- TxDb.Hsapiens.UCSC.hg19.lincRNAsTranscripts
 exons <- exonsBy(txdb, by="tx", use.names=TRUE)[lincrna]
 exons
 
-## The two NAGNAG acceptors were identified in the upstream region of 
+## The two NAGNAG acceptors were identified in the upstream region of
 ## the fourth and fifth exons located in TCONS_00010012.
 ## Extract the sequences for transcript TCONS_00010012:
 library(BSgenome.Hsapiens.UCSC.hg19)
@@ -323,15 +325,15 @@ pmapFromTranscripts(first_loc, exons[[1]])
 ## -----------------------------------------------------------------------
 
 ## A study by Skeeles et. al (PLoS ONE 8(3): e58609. doi:
-## 10.1371/journal.pone.0058609) investigated the impact of 3'UTR variants 
+## 10.1371/journal.pone.0058609) investigated the impact of 3'UTR variants
 ## on the expression of cancer susceptibility genes.
 
-## 8 candidate miRNA genes on chromosome 12 were used to test for 
+## 8 candidate miRNA genes on chromosome 12 were used to test for
 ## differential luciferase expression in mice. In Table 2 of the manuscript
 ## variant locations are given as nucleotide position within the gene.
-geneNames <- c("Bcap29", "Dgkb", "Etv1", "Hbp1", "Hbp1", "Ifrd1", 
+geneNames <- c("Bcap29", "Dgkb", "Etv1", "Hbp1", "Hbp1", "Ifrd1",
                "Ifrd1", "Pik3cg", "Pik3cg", "Tspan13", "Twistnb")
-starts <- c(1409, 3170, 3132, 2437, 2626, 3239, 3261, 4947, 4979, 958, 1489) 
+starts <- c(1409, 3170, 3132, 2437, 2626, 3239, 3261, 4947, 4979, 958, 1489)
 snps <- GRanges(geneNames, IRanges(starts, width=1))
 
 ## To map these transcript-space coordinates to the genome we need gene ranges
@@ -348,7 +350,7 @@ genes <- genes(txdb)[geneid$ENTREZID]
 ## A prerequesite of the mapping from transcript space to genome space
 ## is that seqnames in 'x' match names in 'transcripts'. Rename
 ## 'genes' with the appropriate gene symbol.
-names(genes) <- geneid$SYMBOL 
+names(genes) <- geneid$SYMBOL
 
 ## The xHits and transcriptsHits metadta columns indicate which ranges in
 ## 'snps' and 'genes' were involved in the mapping.
@@ -359,12 +361,12 @@ mapFromTranscripts(snps, genes)
 ## D. Map dbSNP variants to cds or cDNA coordinates
 ## -----------------------------------------------------------------------
 
-## The GIPR gene encodes a G-protein coupled receptor for gastric inhibitory 
-## polypeptide (GIP). Originally GIP was identified to inhibited gastric acid 
-## secretion and gastrin release but was later demonstrated to stimulate 
+## The GIPR gene encodes a G-protein coupled receptor for gastric inhibitory
+## polypeptide (GIP). Originally GIP was identified to inhibited gastric acid
+## secretion and gastrin release but was later demonstrated to stimulate
 ## insulin release in the presence of elevated glucose.
 
-## In this example 5 SNPs located in the GIPR gene are mapped to cDNA 
+## In this example 5 SNPs located in the GIPR gene are mapped to cDNA
 ## coordinates. A list of SNPs in GIPR can be downloaded from dbSNP or NCBI.
 rsids <- c("rs4803846", "rs139322374", "rs7250736", "rs7250754", "rs9749185")
 
@@ -373,8 +375,8 @@ library(SNPlocs.Hsapiens.dbSNP141.GRCh38)
 snps <- snpid2grange(SNPlocs.Hsapiens.dbSNP141.GRCh38, rsids)
 
 ## Gene regions of GIPR can be extracted from a TxDb package of compatible
-## build. The TxDb package uses Entrez gene identifiers and GIPR is a gene 
-## symbol. Conversion between gene symbols and Entrez gene IDs is done by 
+## build. The TxDb package uses Entrez gene identifiers and GIPR is a gene
+## symbol. Conversion between gene symbols and Entrez gene IDs is done by
 ## calling select() on an organism db package.
 library(org.Hs.eg.db)
 geneid <- select(org.Hs.eg.db, "GIPR", "ENTREZID", "SYMBOL")
@@ -387,7 +389,7 @@ txbygene <- transcriptsBy(txdb, "gene")
 cDNA <- txbygene[geneid$ENTREZID]
 cDNA
 
-## Before mapping, the chromosome names (seqlevels) in the two objects must 
+## Before mapping, the chromosome names (seqlevels) in the two objects must
 ## be harmonized. The style for 'snps' is dbSNP and 'cDNA' is UCSC.
 seqlevelsStyle(snps)
 seqlevelsStyle(cDNA)

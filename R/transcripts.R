@@ -197,7 +197,7 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
 
 .relist_col <- function(x, skeleton)
 {
-   if (is.list(x) || (is(x, "List") && !is(x, "Ranges")))
+   if (is.list(x) || (is(x, "List") && !is(x, "IntegerRanges")))
        return(IRanges:::regroupBySupergroup(x, skeleton))
    relist(x, skeleton)
 }
