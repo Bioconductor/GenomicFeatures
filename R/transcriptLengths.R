@@ -15,7 +15,7 @@
     m
 }
 
-### 'rglist' must be a named RangesList or GRangesList.
+### 'rglist' must be a named IntegerRangesList or GRangesList.
 ### 'tx_id' must be a character vector.
 .eltNROWS <- function(rglist, tx_id)
 {

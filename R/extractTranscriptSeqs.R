@@ -31,9 +31,9 @@ setGeneric("extractTranscriptSeqs", signature="x",
 setMethod("extractTranscriptSeqs", "DNAString",
     function(x, transcripts, strand="+")
     {
-        if (!is(transcripts, "RangesList"))
+        if (!is(transcripts, "IntegerRangesList"))
             stop(wmsg("when 'x' is a DNAString object, ",
-                      "'transcripts' must be an RangesList object"))
+                      "'transcripts' must be an IntegerRangesList object"))
         unlisted_strand <- .unlist_strand(strand, transcripts)
         if (!all(unlisted_strand %in% c("+", "-")))
             stop(wmsg("'strand' can only contain \"+\" and/or \"-\" values. ",

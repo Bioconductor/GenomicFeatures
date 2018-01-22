@@ -32,10 +32,10 @@ transcriptLocs2refLocs <- function(tlocs, exonStarts=list(), exonEnds=list(),
                  "or an IntegerList object")
         tlocs <- as.list(tlocs)
     }
-    if (is(exonStarts, "RangesList")) {
+    if (is(exonStarts, "IntegerRangesList")) {
         if (!identical(exonEnds, list()))
             stop("'exonEnds' cannot be specified ",
-                 "when 'exonStarts' is a RangesList object")
+                 "when 'exonStarts' is a IntegerRangesList object")
         exonEnds <- end(exonStarts)
         exonStarts <- start(exonStarts)
     }
@@ -65,10 +65,10 @@ transcriptLocs2refLocs <- function(tlocs, exonStarts=list(), exonEnds=list(),
 
 transcriptWidths <- function(exonStarts=list(), exonEnds=list())
 {
-    if (is(exonStarts, "RangesList")) {
+    if (is(exonStarts, "IntegerRangesList")) {
         if (!identical(exonEnds, list()))
             stop("'exonEnds' cannot be specified ",
-                 "when 'exonStarts' is a RangesList object")
+                 "when 'exonStarts' is a IntegerRangesList object")
         exonEnds <- end(exonStarts)
         exonStarts <- start(exonStarts)
     }
