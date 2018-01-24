@@ -137,7 +137,7 @@
     biomart <- tolower(biomart)
     if (substr(biomart, 1, 14) == "bacterial_mart")
         return("bacteria")
-    if (substr(biomart, 1, 11) == "fungal_mart")
+    if (substr(biomart, 1, 10) == "fungi_mart")
         return("fungi")
     if (substr(biomart, 1, 12) == "metazoa_mart")
         return("metazoa")
