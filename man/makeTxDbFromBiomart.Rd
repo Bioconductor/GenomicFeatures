@@ -87,7 +87,7 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
 
     \item All the datasets in the Ensembl Fungi database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useMart(biomart="fungal_mart",
+\preformatted{    mart <- biomaRt::useMart(biomart="fungi_mart",
                              host="fungi.ensembl.org")
     biomaRt::listDatasets(mart)}
 
@@ -205,10 +205,10 @@ library(biomaRt)
 ## ---------------------
 ## --- Ensembl Fungi ---
 
-mart <- useMart(biomart="fungal_mart", host="fungi.ensembl.org")
+mart <- useMart(biomart="fungi_mart", host="fungi.ensembl.org")
 datasets <- listDatasets(mart)
 datasets$dataset
-yeast_txdb <- makeTxDbFromBiomart(biomart="fungal_mart",
+yeast_txdb <- makeTxDbFromBiomart(biomart="fungi_mart",
                                   dataset="scerevisiae_eg_gene",
                                   host="fungi.ensembl.org")
 yeast_txdb
