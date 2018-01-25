@@ -246,16 +246,7 @@ m <- match(names(cds_cvg), names(tx_cvg))
 tx_lens <- tx_lens[m, ]
 utr5_width <- tx_lens$utr5_len
 utr3_width <- tx_lens$utr3_len
-
-trimListElements <- function(x, ltrim=0, rtrim=0)
-{
-    x_lens <- lengths(x)
-    n1 <- pmax(x_lens - rtrim, 0)
-    n2 <- pmax(n1 - ltrim, 0)
-    ptail(phead(x, n=n1), n=n2)
-}
-
-cds_cvg2 <- trimListElements(tx_cvg[m], utr5_width, utr3_width)
+cds_cvg2 <- windows(tx_cvg[m], start=1L+utr5_width, end=-1L-utr3_width)
 
 ## A sanity check:
 stopifnot(identical(cds_cvg2, cds_cvg))
