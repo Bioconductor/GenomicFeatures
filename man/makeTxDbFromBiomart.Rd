@@ -105,7 +105,7 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
 
     \item All the datasets in the Ensembl Protists database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useMart(biomart="protist_mart",
+\preformatted{    mart <- biomaRt::useMart(biomart="protists_mart",
                              host="protists.ensembl.org")
     biomaRt::listDatasets(mart)}
 
@@ -252,10 +252,10 @@ athaliana_txdb
 ## ------------------------
 ## --- Ensembl Protists ---
 
-mart <- useMart(biomart="protist_mart", host="protists.ensembl.org")
+mart <- useMart(biomart="protists_mart", host="protists.ensembl.org")
 datasets <- listDatasets(mart)
 datasets$dataset
-tgondii_txdb <- makeTxDbFromBiomart(biomart="protist_mart",
+tgondii_txdb <- makeTxDbFromBiomart(biomart="protists_mart",
                                     dataset="tgondii_eg_gene",
                                     host="protists.ensembl.org")
 tgondii_txdb
