@@ -143,7 +143,7 @@
         return("metazoa")
     if (substr(biomart, 1, 11) == "plants_mart")
         return("plants")
-    if (substr(biomart, 1, 12) == "protist_mart")
+    if (substr(biomart, 1, 13) == "protists_mart")
         return("protists")
     NA
 }
