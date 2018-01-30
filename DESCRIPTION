@@ -17,7 +17,7 @@ Description: A set of tools and methods for making and manipulating
 	format.
 Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
 Depends: BiocGenerics (>= 0.1.0), S4Vectors (>= 0.17.28), IRanges (>= 2.13.15),
-	GenomeInfoDb (>= 1.15.2), GenomicRanges (>= 1.31.10),
+	GenomeInfoDb (>= 1.15.4), GenomicRanges (>= 1.31.10),
 	AnnotationDbi (>= 1.41.4)
 Imports: methods, utils, stats, tools, DBI, RSQLite (>= 2.0), RMySQL, RCurl,
 	XVector (>= 0.19.7), Biostrings (>= 2.47.6), rtracklayer (>= 1.39.7),

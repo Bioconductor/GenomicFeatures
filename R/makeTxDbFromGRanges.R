@@ -893,8 +893,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         metadata <- rbind(metadata, df1)
     }
     if (!is.na(taxonomyId)) {
-        GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
-        org <- GenomeInfoDb:::.lookupSpeciesFromTaxId(taxonomyId)
+        org <- GenomeInfoDb:::lookup_organism_by_tax_id(taxonomyId)
         organism <- paste(org[1,2], org[1,3])
         idx <- match("Organism", metadata$name)
         if (!is.na(idx))

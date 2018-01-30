@@ -60,9 +60,9 @@
             appendLF=FALSE)
     organism <- lookup_organism_by_UCSC_genome(genome)
     if (is.na(taxonomyId)) {
-        taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
+        taxonomyId <- GenomeInfoDb:::lookup_tax_id_by_organism(organism)
     } else {
-        GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
+        GenomeInfoDb:::check_tax_id(taxonomyId)
     }
     
     metadata <- data.frame(

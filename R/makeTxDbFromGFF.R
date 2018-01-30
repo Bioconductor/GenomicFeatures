@@ -75,10 +75,10 @@
                                                     "description"]
         }
     }
-    if(is.na(taxonomyId)){
-        taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
-    }else{
-        GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
+    if (is.na(taxonomyId)) {
+        taxonomyId <- GenomeInfoDb:::lookup_tax_id_by_organism(organism)
+    } else {
+        GenomeInfoDb:::check_tax_id(taxonomyId)
     }
     df <- data.frame(
         name=c("Data source", "Organism", "Taxonomy ID", "miRBase build ID"),
