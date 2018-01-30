@@ -2,113 +2,6 @@
 ### makeTxDbFromUCSC()
 ### -------------------------------------------------------------------------
 
-## take any of the supported genomes at UCSC, remove the version number, 
-## and then lookup the supported organism name.
-UCSCGenomeToOrganism <- function(genome){
-  genome <- gsub("\\d+$","",genome)
-  genome2org <- c("hg"="Homo sapiens",
-                 "felCat"="Felis catus",
-                    "galGal"="Gallus gallus",
-                    "panTro"="Pan troglodytes",
-                    "bosTau"="Bos taurus",
-                    "canFam"="Canis familiaris",
-                    "loxAfr"="Loxodonta africana",
-                    "fr"="Fugu rubripes",
-                    "cavPor"="Cavia porcellus",
-                    "equCab"="Equus caballus",
-                    "petMar"="Petromyzon marinus",
-                    "anoCar"="Anolis carolinensis",
-                    "calJac"="Callithrix jacchus",
-                    "oryLat"="Oryzias latipes",
-                    "mm"="Mus musculus",
-                    "monDom"="Monodelphis domestica",
-                    "ponAbe"="Pongo abelii",
-                    "ailMel"="Ailuropoda melanoleuca",
-                    "susScr"="Sus scrofa",
-                    "ornAna"="Ornithorhynchus anatinus",
-                    "oryCun"="Oryctolagus cuniculus",
-                    "rn"="Rattus norvegicus",
-                    "rheMac"="Macaca mulatta",
-                    "oviAri"="Ovis aries",
-                    "gasAcu"="Gasterosteus aculeatus",
-                    "tetNig"="Tetraodon nigroviridis",
-                    "xenTro"="Xenopus tropicalis",
-                    "taeGut"="Taeniopygia guttata",
-                    "danRer"="Danio rerio",
-                    "ci"="Ciona intestinalis",
-                    "braFlo"="Branchiostoma floridae",
-                    "strPur"="Strongylocentrotus purpuratus",
-                    "apiMel"="Apis mellifera",
-                    "anoGam"="Anopheles gambiae",
-                    "droAna"="Drosophila ananassae",
-                    "droEre"="Drosophila erecta",
-                    "droGri"="Drosophila grimshawi",
-                    "dm"="Drosophila melanogaster",
-                    "droMoj"="Drosophila mojavensis",
-                    "droPer"="Drosophila persimilis",
-                    "dp"="Drosophila pseudoobscura",
-                    "droSec"="Drosophila sechellia",
-                    "droSim"="Drosophila simulans",
-                    "droVir"="Drosophila virilis",
-                    "droYak"="Drosophila yakuba",
-                    "caePb"="Caenorhabditis brenneri",
-                    "cb"="Caenorhabditis briggsae",
-                    "ce"="Caenorhabditis elegans",
-                    "caeJap"="Caenorhabditis japonica",
-                    "caeRem"="Caenorhabditis remanei",
-                    "priPac"="Pristionchus pacificus",
-                    "aplCal"="Aplysia californica",
-                    "sacCer"="Saccharomyces cerevisiae",
-                    "papAnu"="Papio anubis",
-                    "vicPac"= "Vicugna pacos",
-                    "dasNov"= "Dasypus novemcinctus",
-                    "otoGar"= "Otolemur garnettii",
-                    "papHam"= "Papio hamadryas",
-                    "papAnu"= "Papio anubis",
-                    "turTru"= "Tursiops truncatus",
-                    "nomLeu"= "Nomascus leucogenys",
-                    "gorGor"= "Gorilla gorilla",
-                    "eriEur"= "Erinaceus europaeus",
-                    "dipOrd"= "Dipodomys ordii",
-                    "triMan"= "Trichechus manatus",
-                    "pteVam"= "Pteropus vampyrus",
-                    "myoLuc"= "Myotis lucifugus",
-                    "micMur"= "Microcebus murinus",
-                    "hetGla"= "Heterocephalus glaber",
-                    "ochPri"= "Ochotona princeps",
-                    "proCap"= "Procavia capensis",
-                    "sorAra"= "Sorex  araneus",
-                    "choHof"= "Choloepus hoffmanni",
-                    "speTri"= "Spermophilus tridecemlineatus",
-                    "saiBol"= "Saimiri sciureus",
-                    "sorAra"= "Sorex araneus",
-                    "sarHar"= "Sarcophilus harrisii",
-                    "echTel"= "Echinops telfairi",
-                    "tupBel"= "Tupaia belangeri",
-                    "macEug"= "Macropus eugenii",
-                    "cerSim"= "Ceratotherium simum",
-                    "gadMor"= "Gadus morhua",
-                    "melUnd"= "Melopsittacus undulatus",
-                    "latCha"= "Latimeria chalumnae",
-                    "geoFor"= "Geospiza fortis",
-                    "oreNil"= "Oreochromis niloticus",
-                    "chrPic"= "Chrysemys picta",
-                    "melGal"= "Meleagris gallopavo",
-                    "panPan"= "Pan paniscus",
-                    "aptMan"= "Apteryx australis",
-                    "criGri"= "Cricetulus griseus",
-                    "macFas"= "Macaca fascicularis",
-                    "musFur"= "Mustela putorius",
-                    "chlSab"= "Chlorocebus sabaeus",
-                    "galVar"= "Galeopterus variegatus",
-                    "balAcu"= "Balaenoptera acutorostrata",
-                    "tarSyr"= "Tarsius syrichta",
-                    "allMis"= "Alligator mississippiensis",
-                    "calMil"= "Callorhinchus milii",
-                    "eboVir"= "Filoviridae ebolavirus"
-                  )
-  genome2org[genome]
-}
 
 ### makeTxDbFromUCSC() expects a UCSC transcript table to have at least
 ### the following columns:
@@ -866,9 +759,10 @@ getChromInfoFromUCSC <- function(genome,
             appendLF=FALSE)
     if (!isSingleStringOrNA(miRBaseBuild))
         stop("'miRBaseBuild' must be a a single string or NA")
-    if(is.na(taxonomyId)){
-        taxonomyId <- GenomeInfoDb:::.taxonomyId(UCSCGenomeToOrganism(genome))
-    }else{
+    organism <- lookup_organism_by_UCSC_genome(genome)
+    if (is.na(taxonomyId)) {
+        taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
+    } else {
         GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
     }
         
@@ -878,7 +772,7 @@ getChromInfoFromUCSC <- function(genome,
                "Resource URL", "Type of Gene ID",
                "Full dataset",
                "miRBase build ID"),
-        value=c("UCSC", genome, UCSCGenomeToOrganism(genome), taxonomyId,
+        value=c("UCSC", genome, organism, taxonomyId,
                 tablename, track,
                 "http://genome.ucsc.edu/", gene_id_type,
                 ifelse(full_dataset, "yes", "no"),

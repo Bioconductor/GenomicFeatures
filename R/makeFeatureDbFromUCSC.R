@@ -58,16 +58,17 @@
 {
     message("Prepare the 'metadata' data frame ... ",
             appendLF=FALSE)
-    if(is.na(taxonomyId)){
-        taxonomyId <- GenomeInfoDb:::.taxonomyId(UCSCGenomeToOrganism(genome))
-    }else{
+    organism <- lookup_organism_by_UCSC_genome(genome)
+    if (is.na(taxonomyId)) {
+        taxonomyId <- GenomeInfoDb:::.taxonomyId(organism)
+    } else {
         GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
     }
     
     metadata <- data.frame(
         name=c("Data source", "Genome", "UCSC Table", "Organism",
                "Taxonomy ID", "Resource URL"),
-        value=c("UCSC", genome, tablename, UCSCGenomeToOrganism(genome),
+        value=c("UCSC", genome, tablename, organism,
                 taxonomyId, "http://genome.ucsc.edu/")
     )
     message("OK")

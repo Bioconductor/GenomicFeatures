@@ -39,7 +39,8 @@ Suggests: org.Mm.eg.db, org.Hs.eg.db,
 Collate: utils.R
 	TxDb-schema.R
 	TxDb-SELECT-helpers.R
-	Ensembl.utils.R findCompatibleMarts.R
+	UCSC-utils.R
+	Ensembl-utils.R findCompatibleMarts.R
 	TxDb-class.R FeatureDb-class.R
 	makeTxDb.R
 	makeTxDbFromUCSC.R
