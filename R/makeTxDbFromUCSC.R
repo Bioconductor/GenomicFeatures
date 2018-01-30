@@ -840,6 +840,10 @@ makeTxDbFromUCSC <- function(genome="hg19",
         taxonomyId=NA,
         miRBaseBuild=NA)
 {
+    if (!requireNamespace("RMySQL", quietly=TRUE))
+        stop(wmsg("Couldn't load the RMySQL package. You need to install ",
+                  "the RMySQL package in order to use makeTxDbFromUCSC()."))
+
     if (!is.null(transcript_ids)) {
         if (!is.character(transcript_ids) || any(is.na(transcript_ids)))
             stop("'transcript_ids' must be a character vector with no NAs")

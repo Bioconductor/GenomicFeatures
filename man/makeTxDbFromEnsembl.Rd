@@ -10,6 +10,9 @@
   The \code{makeTxDbFromEnsembl} function creates a \link{TxDb} object for
   a given organism by importing the genomic locations of its transcripts,
   exons, CDS, and genes from an Ensembl database.
+
+  Note that it uses the \pkg{RMySQL} package internally so make sure that
+  this package is installed.
 }
 
 \usage{

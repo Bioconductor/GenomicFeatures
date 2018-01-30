@@ -11,7 +11,6 @@ importMethodsFrom(DBI, dbConnect, dbDisconnect,
                        dbListFields)
 
 importFrom(RSQLite, SQLite, SQLITE_RO)
-importFrom(RMySQL, MySQL)
 
 import(AnnotationDbi)
 import(BiocGenerics)

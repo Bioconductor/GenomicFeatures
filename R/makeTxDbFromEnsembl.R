@@ -259,10 +259,14 @@ makeTxDbFromEnsembl <- function(organism="Homo sapiens",
                                 circ_seqs=DEFAULT_CIRC_SEQS,
                                 server="ensembldb.ensembl.org")
 {
+    if (!requireNamespace("RMySQL", quietly=TRUE))
+        stop(wmsg("Couldn't load the RMySQL package. You need to install ",
+                  "the RMySQL package in order to use makeTxDbFromEnsembl()."))
+
     dbname <- .lookup_dbname(organism, release=release)
-    dbconn <- dbConnect(MySQL(), dbname=dbname,
-                                 username="anonymous",
-                                 host=server)
+    dbconn <- dbConnect(RMySQL::MySQL(), dbname=dbname,
+                                         username="anonymous",
+                                         host=server)
     on.exit(dbDisconnect(dbconn))
 
     transcripts <- .fetch_Ensembl_transcripts(dbconn)

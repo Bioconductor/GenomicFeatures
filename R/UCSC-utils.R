@@ -153,10 +153,10 @@ UCSC_dbselect <- function(dbname, from, columns=NULL, where=NULL,
         stopifnot(isSingleString(where))
         SQL <- paste(SQL, "WHERE", where)
     }
-    dbconn <- dbConnect(MySQL(), dbname=dbname,
-                                 username="genome",
-                                 host=server,
-                                 port=3306)
+    dbconn <- dbConnect(RMySQL::MySQL(), dbname=dbname,
+                                         username="genome",
+                                         host=server,
+                                         port=3306)
     suppressWarnings(dbGetQuery(dbconn, SQL))
 }
 
