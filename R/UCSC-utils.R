@@ -141,3 +141,22 @@ lookup_organism_by_UCSC_genome <- function(genome)
     genome2org[genome]
 }
 
+### See https://genome.ucsc.edu/goldenpath/help/mysql.html for how to connect
+### to a MySQL server at UCSC. By default UCSC_dbselect() uses the server
+### located on the US west coast.
+UCSC_dbselect <- function(dbname, from, columns=NULL, where=NULL,
+                          server="genome-mysql.soe.ucsc.edu")
+{
+    columns <- if (is.null(columns)) "*" else paste0(columns, collapse=",")
+    SQL <- sprintf("SELECT %s FROM %s", columns, from)
+    if (!is.null(where)) {
+        stopifnot(isSingleString(where))
+        SQL <- paste(SQL, "WHERE", where)
+    }
+    dbconn <- dbConnect(MySQL(), dbname=dbname,
+                                 username="genome",
+                                 host=server,
+                                 port=3306)
+    suppressWarnings(dbGetQuery(dbconn, SQL))
+}
+

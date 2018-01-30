@@ -442,11 +442,32 @@ browseUCSCtrack <- function(genome="hg19",
 .howToGetTxName2GeneIdMapping <- function(tablename)
     .UCSC_TXNAME2GENEID_MAPDEFS[[tablename]]
 
+.fetch_UCSC_transcripts <- function(genome, tablename, transcript_ids=NULL)
+{
+    if (is.null(transcript_ids)) {
+        where <- NULL
+    } else {
+        where <- sprintf("name IN (%s)",
+                         paste(paste0("'", transcript_ids, "'"), collapse=","))
+    }
+    message("Download the ", tablename, " table ... ", appendLF=FALSE)
+    on.exit(message("OK"))
+    UCSC_dbselect(genome, tablename, where=where)
+}
+
+.fetch_UCSC_table <- function(session, tablename, columns=NULL)
+{
+    message("Download the ", tablename, " table ... ", appendLF=FALSE)
+    on.exit(message("OK"))
+    if (tablename == "hgFixed.refLink")
+        return(UCSC_dbselect("hgFixed", "refLink", columns=columns))
+    UCSC_dbselect(genome(session), tablename, columns=columns)
+}
+
 ### The 2 functions below must return a named list with 2 elements:
 ###   $genes: data.frame with tx_name and gene_id cols;
 ###   $gene_id_type: single string.
-.fetchTxName2GeneIdMappingFromUCSC <- function(session, track,
-                                               Ltablename, mapdef)
+.fetchTxName2GeneIdMappingFromUCSC <- function(session, Ltablename, mapdef)
 {
     nlink <- length(mapdef$L2Rchain)
     for (i in seq_len(nlink)) {
@@ -454,31 +475,13 @@ browseUCSCtrack <- function(genome="hg19",
         tablename <- L2Rlink[["tablename"]]
         Lcolname <- L2Rlink[["Lcolname"]]
         Rcolname <- L2Rlink[["Rcolname"]]
-        message("Download the ", tablename, " table ... ", appendLF=FALSE)
-        if (tablename == "hgFixed.refLink") {
-            ## For some unexplained reason, doing
-            ## ucscTableQuery(session, track, table=tablename) doesn't work
-            ## when genome(session) is set to "hg38". However, we know that it
-            ## works when it's set to "hg19" and 'track' is set to "RefSeq
-            ## Genes". Since the hgFixed.refLink table is not genome-specific
-            ## (it's shared across all genomes) then setting the genome or
-            ## track to arbitrary values doesn't change the result.
-            old_genome <- genome(session)
-            if (old_genome != "hg19")
-                genome(session) <- "hg19"
-            query <- ucscTableQuery(session, "RefSeq Genes", table=tablename)
-            if (old_genome != "hg19")
-                genome(session) <- old_genome
-        } else {
-            ## The tables involved in the "left join" don't necessarily belong
-            ## to the track of the leftmost table (e.g.
-            ## "wgEncodeGencodeAttrsV17" table does NOT belong to the "GENCODE
-            ## Genes V17" track).
-            #query <- ucscTableQuery(session, track, table=tablename)
-            query <- ucscTableQuery(session, table=tablename)
-        }
-        ucsc_table <- getTable(query)
-        message("OK")
+        ## The tables involved in the "left join" don't necessarily belong
+        ## to the track of the leftmost table (e.g.
+        ## "wgEncodeGencodeAttrsV17" table does NOT belong to the "GENCODE
+        ## Genes V17" track) so we don't need the track information to fetch
+        ## these tables.
+        ucsc_table <- .fetch_UCSC_table(session, tablename,
+                                        columns=c(Lcolname, Rcolname))
         if (!all(has_col(ucsc_table, c(Lcolname, Rcolname))))
             stop("expected cols \"", Lcolname, "\" or/and \"",
                  Rcolname, "\" not found in table ", tablename)
@@ -489,7 +492,7 @@ browseUCSCtrack <- function(genome="hg19",
         if (!is.character(Rcol))
             Rcol <- as.character(Rcol)
         if (i == 1L) {
-            tmp <- data.frame(Lcol=Lcol, Rcol=Rcol)
+            tmp <- data.frame(Lcol=Lcol, Rcol=Rcol, stringsAsFactors=FALSE)
         } else {
             name2val <- Rcol
             names(name2val) <- Lcol
@@ -516,15 +519,15 @@ browseUCSCtrack <- function(genome="hg19",
 
 .extractTranscriptsFromUCSCTxTable <- function(ucsc_txtable)
 {
-    message("Extract the 'transcripts' data frame ... ",
-            appendLF=FALSE)
+    message("Extract the 'transcripts' data frame ... ", appendLF=FALSE)
+    on.exit(message("OK"))
     tx_id <- seq_len(nrow(ucsc_txtable))
     tx_name <- ucsc_txtable$name
     tx_chrom <- ucsc_txtable$chrom
     tx_strand <- ucsc_txtable$strand
     tx_start <- ucsc_txtable$txStart + 1L
     tx_end <- ucsc_txtable$txEnd
-    transcripts <- data.frame(
+    data.frame(
         tx_id=tx_id,
         tx_name=tx_name,
         tx_chrom=tx_chrom,
@@ -532,8 +535,6 @@ browseUCSCtrack <- function(genome="hg19",
         tx_start=tx_start,
         tx_end=tx_end
     )
-    message("OK")
-    transcripts
 }
 
 
@@ -662,8 +663,8 @@ browseUCSCtrack <- function(genome="hg19",
 
 .extractSplicingsFromUCSCTxTable <- function(ucsc_txtable, transcripts_tx_id)
 {
-    message("Extract the 'splicings' data frame ... ",
-            appendLF=FALSE)
+    message("Extract the 'splicings' data frame ... ", appendLF=FALSE)
+    on.exit(message("OK"))
     exon_count <- ucsc_txtable$exonCount
     splicings_tx_id <- rep.int(transcripts_tx_id, exon_count)
     if (length(exon_count) == 0L) {
@@ -682,7 +683,7 @@ browseUCSCtrack <- function(genome="hg19",
         cds_start <- unlist(cds_locs$start) + 1L
         cds_end <- unlist(cds_locs$end)
     }
-    splicings <- data.frame(
+    data.frame(
         tx_id=splicings_tx_id,
         exon_rank=exon_rank,
         exon_start=exon_start,
@@ -690,8 +691,6 @@ browseUCSCtrack <- function(genome="hg19",
         cds_start=cds_start,
         cds_end=cds_end
     )
-    message("OK")
-    splicings
 }
 
 
@@ -716,6 +715,7 @@ browseUCSCtrack <- function(genome="hg19",
 {
     message("Download and preprocess the 'chrominfo' data frame ... ",
             appendLF=FALSE)
+    on.exit(message("OK"))
     ucsc_chrominfotable <- GenomeInfoDb:::fetch_ChromInfo_from_UCSC(genome,
                                                 goldenPath_url)
     COL2CLASS <- c(
@@ -731,9 +731,7 @@ browseUCSCtrack <- function(genome="hg19",
                                                    circ_seqs)
     )
     oo <- order(rankSeqlevels(chrominfo[ , "chrom"]))
-    chrominfo <- S4Vectors:::extract_data_frame_rows(chrominfo, oo)
-    message("OK")
-    chrominfo
+    S4Vectors:::extract_data_frame_rows(chrominfo, oo)
 }
 
 ## User-friendly wrapper to .makeUCSCChrominfo().
@@ -755,8 +753,8 @@ getChromInfoFromUCSC <- function(genome,
                                  full_dataset,
                                  taxonomyId=NA, miRBaseBuild=NA)
 {
-    message("Prepare the 'metadata' data frame ... ",
-            appendLF=FALSE)
+    message("Prepare the 'metadata' data frame ... ", appendLF=FALSE)
+    on.exit(message("OK"))
     if (!isSingleStringOrNA(miRBaseBuild))
         stop("'miRBaseBuild' must be a a single string or NA")
     organism <- lookup_organism_by_UCSC_genome(genome)
@@ -766,7 +764,7 @@ getChromInfoFromUCSC <- function(genome,
         GenomeInfoDb:::.checkForAValidTaxonomyId(taxonomyId)
     }
         
-    metadata <- data.frame(
+    data.frame(
         name=c("Data source", "Genome", "Organism", "Taxonomy ID",
                "UCSC Table", "UCSC Track",
                "Resource URL", "Type of Gene ID",
@@ -778,8 +776,6 @@ getChromInfoFromUCSC <- function(genome,
                 ifelse(full_dataset, "yes", "no"),
                 miRBaseBuild)
     )
-    message("OK")
-    metadata
 }
 
 
@@ -818,21 +814,23 @@ getChromInfoFromUCSC <- function(genome,
                                      taxonomyId,  miRBaseBuild)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
-    txdb <- makeTxDb(transcripts, splicings, genes=genes,
-                     chrominfo=chrominfo, metadata=metadata,
-                     reassign.ids=TRUE)
-    message("OK")
-    txdb
+    on.exit(message("OK"))
+    makeTxDb(transcripts, splicings, genes=genes,
+             chrominfo=chrominfo, metadata=metadata,
+             reassign.ids=TRUE)
 }
 
-### The 2 main tasks that makeTxDbFromUCSC() performs are:
-###   (1) download the data from UCSC into a data.frame (the getTable() call);
-###   (2) store that data.frame in an SQLite db (the
-###       .makeTxDbFromUCSCTxTable() call).
-### Speed:
-###   - for genome="hg18" and tablename="knownGene":
-###       (1) download takes about 40-50 sec.
-###       (2) db creation takes about 30-35 sec.
+### Some timings (as of Jan 29, 2018):
+###     genome |   tablename | nb transcripts | time (s)
+###       hg18 |   knownGene |          66803 |     67.2
+###       hg18 |     refGene |          68178 |     82.3
+###       hg19 |   knownGene |          82960 |     81.8
+###       hg19 |     refGene |          69998 |     82.7
+###       hg19 |    ccdsGene |          28856 |     54.5
+###       hg19 | xenoRefGene |         177746 |    151.5
+###       hg38 |   knownGene |         197782 |     98.3
+###       hg38 |     refGene |          74673 |     78.7
+###    sacCer3 |     ensGene |           7126 |     49.8
 makeTxDbFromUCSC <- function(genome="hg19",
         tablename="knownGene",
         transcript_ids=NULL,
@@ -857,25 +855,15 @@ makeTxDbFromUCSC <- function(genome="hg19",
     track <- .tablename2track(tablename, session)
 
     ## Download the transcript table.
-    message("Download the ", tablename, " table ... ", appendLF=FALSE)
-    query <- ucscTableQuery(session, track, table=tablename,
-                            names=transcript_ids)
-    ucsc_txtable <- getTable(query)
-    if (ncol(ucsc_txtable) < length(.UCSC_TXCOL2CLASS))
-        stop("GenomicFeatures internal error: ", tablename, " table doesn't ",
-             "exist, was corrupted during download, or doesn't contain ",
-             "transcript information. ",
-             "Thank you for reporting this to the GenomicFeatures maintainer ",
-             "or to the Bioconductor mailing list, and sorry for the ",
-             "inconvenience.")
-    message("OK")
+    ucsc_txtable <- .fetch_UCSC_transcripts(genome(session), tablename,
+                                            transcript_ids=transcript_ids)
 
     ## Get the tx_name-to-gene_id mapping.
     mapdef <- .howToGetTxName2GeneIdMapping(tablename)
     if (is.null(mapdef)) {
         txname2geneid <- list(genes=NULL, gene_id_type="no gene ids")
     } else if (is.list(mapdef)) {
-        txname2geneid <- .fetchTxName2GeneIdMappingFromUCSC(session, track,
+        txname2geneid <- .fetchTxName2GeneIdMappingFromUCSC(session,
                                  tablename, mapdef)
     } else if (is.character(mapdef)) {
         txname2geneid <- .extractTxName2GeneIdMappingFromUCSCTxTable(
