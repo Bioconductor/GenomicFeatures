@@ -9,8 +9,8 @@ lookup_organism_by_UCSC_genome <- function(genome)
     genome <- gsub("\\d+$", "", genome)
 
     ## Fetch all UCSC genomes with:
-    ##   library(RMySQL)
-    ##   dbconn <- dbConnect(MySQL(), username="genome",
+    ##   library(RMariaDB)
+    ##   dbconn <- dbConnect(MariaDB(), username="genome",
     ##                       host="genome-mysql.soe.ucsc.edu", port=3306)
     ##   genomes <- sort(dbGetQuery(dbconn, "SHOW DATABASES")[[1L]])
     ##   unique(gsub("\\d+$", "", genomes))
@@ -153,10 +153,11 @@ UCSC_dbselect <- function(dbname, from, columns=NULL, where=NULL,
         stopifnot(isSingleString(where))
         SQL <- paste(SQL, "WHERE", where)
     }
-    dbconn <- dbConnect(RMySQL::MySQL(), dbname=dbname,
-                                         username="genome",
-                                         host=server,
-                                         port=3306)
-    suppressWarnings(dbGetQuery(dbconn, SQL))
+    dbconn <- dbConnect(RMariaDB::MariaDB(), dbname=dbname,
+                                             username="genome",
+                                             host=server,
+                                             port=3306)
+    on.exit(dbDisconnect(dbconn))
+    dbGetQuery(dbconn, SQL)
 }
 

@@ -14,8 +14,8 @@
   \link{TxDb} object from transcript annotations available at the
   UCSC Genome Browser.
 
-  Note that it uses the \pkg{RMySQL} package internally so make sure that
-  this package is installed.
+  Note that it uses the \pkg{RMariaDB} package internally so make sure
+  that this package is installed.
 }
 \usage{
 makeTxDbFromUCSC(

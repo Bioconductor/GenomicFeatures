@@ -7,19 +7,16 @@
 ### the following columns:
 .UCSC_TXCOL2CLASS <- c(
     name="character",
-    chrom="factor",
-    strand="factor",
+    chrom="character",
+    strand="character",
     txStart="integer",
     txEnd="integer",
     cdsStart="integer",
     cdsEnd="integer",
     exonCount="integer",
-    exonStarts="character",
-    exonEnds="character"
+    exonStarts="list",    # list of raw vectors
+    exonEnds="list"       # list of raw vectors
 )
-### Note that, from a strictly technical point of view, the 'name' and
-### 'exonCount' cols are not required and .makeTxDbFromUCSCTxTable()
-### could easily be modified to accept tables where they are missing.
 
 ### Lookup between UCSC transcript tables and their associated track.
 .SUPPORTED_UCSC_TABLES <- c(
@@ -442,7 +439,7 @@ browseUCSCtrack <- function(genome="hg19",
 .howToGetTxName2GeneIdMapping <- function(tablename)
     .UCSC_TXNAME2GENEID_MAPDEFS[[tablename]]
 
-.fetch_UCSC_transcripts <- function(genome, tablename, transcript_ids=NULL)
+.fetch_UCSC_txtable <- function(genome, tablename, transcript_ids=NULL)
 {
     if (is.null(transcript_ids)) {
         where <- NULL
@@ -450,9 +447,28 @@ browseUCSCtrack <- function(genome="hg19",
         where <- sprintf("name IN (%s)",
                          paste(paste0("'", transcript_ids, "'"), collapse=","))
     }
+    columns <- names(.UCSC_TXCOL2CLASS)
+    mapdef <- .howToGetTxName2GeneIdMapping(tablename)
+    if (is.character(mapdef))
+        columns <- c(columns, mapdef[["colname"]])
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
     on.exit(message("OK"))
-    UCSC_dbselect(genome, tablename, where=where)
+    ucsc_txtable <- UCSC_dbselect(genome, tablename,
+                                  columns=columns, where=where)
+    current_classes <- head(sapply(ucsc_txtable, class),
+                            n=length(.UCSC_TXCOL2CLASS))
+    stopifnot(identical(current_classes, .UCSC_TXCOL2CLASS))
+    ucsc_txtable$exonStarts <- toListOfIntegerVectors(ucsc_txtable$exonStarts)
+    ucsc_txtable$exonEnds <- toListOfIntegerVectors(ucsc_txtable$exonEnds)
+    if (!identical(lengths(ucsc_txtable$exonStarts),
+                   ucsc_txtable$exonCount))
+        stop(wmsg("UCSC data anomaly in table ", genome, ".", tablename, ": ",
+                  "columns exonStarts and exonCount are inconsistent"))
+    if (!identical(lengths(ucsc_txtable$exonEnds),
+                   ucsc_txtable$exonCount))
+        stop(wmsg("UCSC data anomaly in table ", genome, ".", tablename, ": ",
+                  "columns exonEnds and exonCount are inconsistent"))
+    ucsc_txtable
 }
 
 .fetch_UCSC_table <- function(session, tablename, columns=NULL)
@@ -499,7 +515,9 @@ browseUCSCtrack <- function(genome="hg19",
             tmp <- joinDataFrameWithName2Val(tmp, "Rcol", name2val, "Rcol")
         }
     }
-    genes <- data.frame(tx_name=tmp$Lcol, gene_id=tmp$Rcol)
+    genes <- data.frame(tx_name=tmp$Lcol,
+                        gene_id=tmp$Rcol,
+                        stringsAsFactors=FALSE)
     gene_id_type <- mapdef$gene_id_type
     list(genes=genes, gene_id_type=gene_id_type)
 }
@@ -507,8 +525,9 @@ browseUCSCtrack <- function(genome="hg19",
 .extractTxName2GeneIdMappingFromUCSCTxTable <- function(ucsc_txtable, mapdef)
 {
     genes <- data.frame(tx_name=ucsc_txtable[["name"]],
-                        gene_id=ucsc_txtable[[mapdef["colname"]]])
-    gene_id_type <- mapdef["gene_id_type"]
+                        gene_id=ucsc_txtable[[mapdef[["colname"]]]],
+                        stringsAsFactors=FALSE)
+    gene_id_type <- mapdef[["gene_id_type"]]
     list(genes=genes, gene_id_type=gene_id_type)
 }
 
@@ -533,7 +552,8 @@ browseUCSCtrack <- function(genome="hg19",
         tx_chrom=tx_chrom,
         tx_strand=tx_strand,
         tx_start=tx_start,
-        tx_end=tx_end
+        tx_end=tx_end,
+        stringsAsFactors=FALSE
     )
 }
 
@@ -541,31 +561,6 @@ browseUCSCtrack <- function(genome="hg19",
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Extract the 'splicings' data frame from UCSC table.
 ###
-
-### Returns a named list with 2 elements. Each element is itself a list of
-### integer vectors with no NAs. The 2 elements have the same "shape".
-.extractExonLocsFromUCSCTxTable <- function(ucsc_txtable, check.exonCount=FALSE)
-{ 
-    exon_count <- ucsc_txtable$exonCount
-    if (is.null(exon_count) && check.exonCount)
-        stop("UCSC data anomaly: 'ucsc_txtable' has no \"exonCount\" column")
-    exon_start <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonStarts)
-    exon_end <- strsplitAsListOfIntegerVectors(ucsc_txtable$exonEnds)
-    if (is.null(exon_count)) {
-        if (!identical(elementNROWS(exon_start),
-                       elementNROWS(exon_end)))
-            stop("UCSC data anomaly: shape of 'ucsc_txtable$exonStarts' ",
-                 "and 'ucsc_txtable$exonEnds' differ")
-    } else {
-        if (!identical(elementNROWS(exon_start), exon_count))
-            stop("UCSC data anomaly: 'ucsc_txtable$exonStarts' ",
-                 "inconsistent with 'ucsc_txtable$exonCount'")
-        if (!identical(elementNROWS(exon_end), exon_count))
-            stop("UCSC data anomaly: 'ucsc_txtable$exonEnds' ",
-                 "inconsistent with 'ucsc_txtable$exonCount'")
-    }
-    list(start=exon_start, end=exon_end)
-}
 
 ### 'cdsStart0', 'cdsEnd1': single integers (resp. 0-based and 1-based).
 ### 'exon_start0', 'exon_end1': integer vectors of equal lengths (resp.
@@ -578,7 +573,7 @@ browseUCSCtrack <- function(genome="hg19",
 ###                 name chrom strand txStart   txEnd cdsStart  cdsEnd
 ###         NM_001146685  chr1      + 1351370 1353029  1351370 1353029
 ###         exonCount       exonStarts         exonEnds id   name2
-###                 2 1351370,1352796, 1351628,1353029,  0 TMEM88B     
+###                 2 1351370,1352796, 1351628,1353029,  0 TMEM88B
 ###         cdsStartStat cdsEndStat exonFrames
 ###                 cmpl     incmpl       0,0,
 ###       --> cds lengths: 1351628 - 1351370 -> 258
@@ -628,37 +623,31 @@ browseUCSCtrack <- function(genome="hg19",
     ## NAs are OK in here since they indicate the absence of any CDS
     ## (which is common and nothing to write home about)
     ## changed from 50K to 19.3K ...   but the 'bad' ones are not present?
-    bad <- sum(cds_end1 - cds_start0, na.rm=TRUE) %% 3L != 0L 
-    list(cds_start0, cds_end1, bad) 
+    bad <- sum(cds_end1 - cds_start0, na.rm=TRUE) %% 3L != 0L
+    list(cds_start0, cds_end1, bad)
 }
 
-### 'exon_locs' must be the list of 2 lists returned by
-### .extractExonLocsFromUCSCTxTable().
-### Returns a named list with 2 elements. Each element is itself a list of
-### integer vectors with eventually NAs. The 2 elements have the same
-### "shape" as the elements in 'exon_locs' and the NAs occur at the same
-### places in the 2 elements.
-.extractCdsLocsFromUCSCTxTable <- function(ucsc_txtable, exon_locs)
+### Return a named list with 2 list elements, each of which is itself a list
+### of integer vectors with eventually NAs. The 2 elements have the same
+### "shape" as ucsc_txtable$exonStarts and ucsc_txtable$exonEnds and the NAs
+### in them occur at the same places in the 2 elements.
+.extractCdsLocsFromUCSCTxTable <- function(ucsc_txtable)
 {
-    cdsStart <- ucsc_txtable$cdsStart
-    cdsEnd <- ucsc_txtable$cdsEnd
-    cds_start <- cds_end <- vector(mode="list", length=nrow(ucsc_txtable))
-
-    startend <- Map(.extractUCSCCdsStartEnd, cdsStart, cdsEnd,
-                    exon_locs$start, exon_locs$end, ucsc_txtable$name)
-
-    bad <- sapply(startend, "[[", 3)  
+    startend <- Map(.extractUCSCCdsStartEnd,
+                    ucsc_txtable$cdsStart, ucsc_txtable$cdsEnd,
+                    ucsc_txtable$exonStarts, ucsc_txtable$exonEnds,
+                    ucsc_txtable$name)
+    bad <- sapply(startend, "[[", 3L)
     if (any(bad)) {
         bad_cds <- ucsc_txtable$name[bad]
         msg <- sprintf("UCSC data anomaly in %d transcript(s):
             the cds cumulative length is not a multiple of 3
             for transcripts %s", length(bad_cds),
             paste(sQuote(bad_cds), collapse=" "))
-        warning(paste(strwrap(msg, exdent=2), collapse="\n"))
+        warning(paste(strwrap(msg, exdent=2L), collapse="\n"))
     }
-
-    list(start=sapply(startend, "[[", 1),
-         end=sapply(startend, "[[", 2))
+    list(start=sapply(startend, "[[", 1L),
+         end=sapply(startend, "[[", 2L))
 }
 
 .extractSplicingsFromUCSCTxTable <- function(ucsc_txtable, transcripts_tx_id)
@@ -675,11 +664,9 @@ browseUCSCtrack <- function(genome="hg19",
             stop("UCSC data anomaly: 'ucsc_txtable$exonCount' contains ",
                  "non-positive values")
         exon_rank <- makeExonRankCol(exon_count, ucsc_txtable$strand)
-        exon_locs <- .extractExonLocsFromUCSCTxTable(ucsc_txtable,
-                                                     check.exonCount=TRUE)
-        cds_locs <- .extractCdsLocsFromUCSCTxTable(ucsc_txtable, exon_locs)
-        exon_start <- unlist(exon_locs$start) + 1L
-        exon_end <- unlist(exon_locs$end)
+        cds_locs <- .extractCdsLocsFromUCSCTxTable(ucsc_txtable)
+        exon_start <- unlist(ucsc_txtable$exonStarts) + 1L
+        exon_end <- unlist(ucsc_txtable$exonEnds)
         cds_start <- unlist(cds_locs$start) + 1L
         cds_end <- unlist(cds_locs$end)
     }
@@ -689,7 +676,8 @@ browseUCSCtrack <- function(genome="hg19",
         exon_start=exon_start,
         exon_end=exon_end,
         cds_start=cds_start,
-        cds_end=cds_end
+        cds_end=cds_end,
+        stringsAsFactors=FALSE
     )
 }
 
@@ -728,7 +716,8 @@ browseUCSCtrack <- function(genome="hg19",
         chrom=ucsc_chrominfotable$chrom,
         length=ucsc_chrominfotable$size,
         is_circular=make_circ_flags_from_circ_seqs(ucsc_chrominfotable$chrom,
-                                                   circ_seqs)
+                                                   circ_seqs),
+        stringsAsFactors=FALSE
     )
     oo <- order(rankSeqlevels(chrominfo[ , "chrom"]))
     S4Vectors:::extract_data_frame_rows(chrominfo, oo)
@@ -763,7 +752,7 @@ getChromInfoFromUCSC <- function(genome,
     } else {
         GenomeInfoDb:::check_tax_id(taxonomyId)
     }
-        
+
     data.frame(
         name=c("Data source", "Genome", "Organism", "Taxonomy ID",
                "UCSC Table", "UCSC Track",
@@ -774,7 +763,8 @@ getChromInfoFromUCSC <- function(genome,
                 tablename, track,
                 "http://genome.ucsc.edu/", gene_id_type,
                 ifelse(full_dataset, "yes", "no"),
-                miRBaseBuild)
+                miRBaseBuild),
+        stringsAsFactors=FALSE
     )
 }
 
@@ -791,14 +781,11 @@ getChromInfoFromUCSC <- function(genome,
         taxonomyId=NA,
         miRBaseBuild=NA)
 {
-    ucsc_txtable <- setDataFrameColClass(ucsc_txtable, .UCSC_TXCOL2CLASS,
-                                         drop.extra.cols=TRUE)
-
     strand_is_dot <- ucsc_txtable$strand == "."
     if (any(strand_is_dot)) {
         msg <- sprintf("dropped %d transcript(s) for which strand
             was not set (i.e. was set to '.')", sum(strand_is_dot))
-        warning(paste(strwrap(msg, exdent=2), collapse="\n"))
+        warning(wmsg(msg))
         keep_idx <- which(!strand_is_dot)
         ucsc_txtable <- S4Vectors:::extract_data_frame_rows(ucsc_txtable,
                                                             keep_idx)
@@ -820,17 +807,22 @@ getChromInfoFromUCSC <- function(genome,
              reassign.ids=TRUE)
 }
 
-### Some timings (as of Jan 29, 2018):
-###     genome |   tablename | nb transcripts | time (s)
-###       hg18 |   knownGene |          66803 |     67.2
-###       hg18 |     refGene |          68178 |     82.3
-###       hg19 |   knownGene |          82960 |     81.8
-###       hg19 |     refGene |          69998 |     82.7
-###       hg19 |    ccdsGene |          28856 |     54.5
-###       hg19 | xenoRefGene |         177746 |    151.5
-###       hg38 |   knownGene |         197782 |     98.3
-###       hg38 |     refGene |          74673 |     78.7
-###    sacCer3 |     ensGene |           7126 |     49.8
+### Some timings (as of Jan 31, 2018, GenomicFeatures 1.31.7):
+###          |             |    nb of    |
+###   genome |   tablename | transcripts | time (s)
+###   ---------------------------------------------
+###     hg18 |   knownGene |       66803 |     37.2
+###     hg18 |     refGene |       68178 |     42.6
+###     hg19 |   knownGene |       82960 |     44.9
+###     hg19 |     refGene |       69998 |     45.5
+###     hg38 |     ensGene |      204940 |     63.7
+###     hg19 |    ccdsGene |       28856 |     29.2
+###     hg19 | xenoRefGene |      177746 |    114.1
+###     hg38 |   knownGene |      197782 |     53.9
+###     hg38 |     refGene |       74673 |     38.4
+###      dm3 | flyBaseGene |       21236 |     28.9
+###  sacCer2 |     sgdGene |        6717 |     22.6
+###  sacCer3 |     ensGene |        7126 |     18.1
 makeTxDbFromUCSC <- function(genome="hg19",
         tablename="knownGene",
         transcript_ids=NULL,
@@ -840,9 +832,10 @@ makeTxDbFromUCSC <- function(genome="hg19",
         taxonomyId=NA,
         miRBaseBuild=NA)
 {
-    if (!requireNamespace("RMySQL", quietly=TRUE))
-        stop(wmsg("Couldn't load the RMySQL package. You need to install ",
-                  "the RMySQL package in order to use makeTxDbFromUCSC()."))
+    if (!requireNamespace("RMariaDB", quietly=TRUE))
+        stop(wmsg("Couldn't load the RMariaDB package. ",
+                  "You need to install the RMariaDB package ",
+                  "in order to use makeTxDbFromUCSC()."))
 
     if (!is.null(transcript_ids)) {
         if (!is.character(transcript_ids) || any(is.na(transcript_ids)))
@@ -859,8 +852,8 @@ makeTxDbFromUCSC <- function(genome="hg19",
     track <- .tablename2track(tablename, session)
 
     ## Download the transcript table.
-    ucsc_txtable <- .fetch_UCSC_transcripts(genome(session), tablename,
-                                            transcript_ids=transcript_ids)
+    ucsc_txtable <- .fetch_UCSC_txtable(genome(session), tablename,
+                                        transcript_ids=transcript_ids)
 
     ## Get the tx_name-to-gene_id mapping.
     mapdef <- .howToGetTxName2GeneIdMapping(tablename)

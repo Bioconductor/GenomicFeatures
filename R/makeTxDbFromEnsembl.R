@@ -35,19 +35,10 @@
     dbname
 }
 
-.fix_numeric_cols <- function(df)
-{
-    col_idx <- which(sapply(df, is.numeric))
-    df[col_idx] <- lapply(df[col_idx], as.integer)
-    df
-}
-
-.RMySQL_select <- function(dbconn, columns, from)
+.dbselect <- function(dbconn, columns, from)
 {
     SQL <- sprintf("SELECT %s FROM %s", paste0(columns, collapse=","), from)
-    ## Not sure systematic conversion of numeric to int is actually a
-    ## good idea (risk of overflow?)
-    .fix_numeric_cols(suppressWarnings(dbGetQuery(dbconn, SQL)))
+    dbGetQuery(dbconn, SQL)
 }
 
 .seq_region_columns <- c(
@@ -69,7 +60,7 @@
     )
     columns <- c(paste0("transcript.", transcript_columns), "gene.stable_id")
     from <- "transcript LEFT JOIN gene USING(gene_id)"
-    transcripts <- .RMySQL_select(dbconn, columns, from)
+    transcripts <- .dbselect(dbconn, columns, from)
     colnames(transcripts) <- c("tx_id",
                                "tx_name",
                                "seq_region_id",
@@ -93,7 +84,7 @@
         "seq_end",         # relative to last exon
         "transcript_id"
     )
-    .RMySQL_select(dbconn, columns, "translation")
+    .dbselect(dbconn, columns, "translation")
 }
 
 ### 'has_cds' must be a logical vector.
@@ -161,7 +152,7 @@
     )
     columns <- c("transcript_id", "rank", exon_columns)
     from <- "exon_transcript INNER JOIN exon USING(exon_id)"
-    splicings <- .RMySQL_select(dbconn, columns, from)
+    splicings <- .dbselect(dbconn, columns, from)
     colnames(splicings) <- c("tx_id",
                              "exon_rank",
                              "exon_id",
@@ -185,7 +176,7 @@
     ## extract this value from Ensembl
     id0 <- 6L
     columns <- c("seq_region_id", "attrib_type_id", "value")
-    seq_region_attrib <- .RMySQL_select(dbconn, columns, "seq_region_attrib")
+    seq_region_attrib <- .dbselect(dbconn, columns, "seq_region_attrib")
     seq_region_attrib$seq_region_id[seq_region_attrib$attrib_type_id == id0]
 }
 
@@ -213,7 +204,7 @@
                         setdiff(seq_region_columns, using_column),
                         setdiff(coord_system_columns, using_column))
     from <- "seq_region INNER JOIN coord_system USING(coord_system_id)"
-    seq_region <- .RMySQL_select(dbconn, "*", from)
+    seq_region <- .dbselect(dbconn, "*", from)
     stopifnot(identical(colnames(seq_region), joined_columns))
     colnames(seq_region)[6:9] <- paste0("coord_system_",
                                         colnames(seq_region)[6:9])
@@ -259,14 +250,15 @@ makeTxDbFromEnsembl <- function(organism="Homo sapiens",
                                 circ_seqs=DEFAULT_CIRC_SEQS,
                                 server="ensembldb.ensembl.org")
 {
-    if (!requireNamespace("RMySQL", quietly=TRUE))
-        stop(wmsg("Couldn't load the RMySQL package. You need to install ",
-                  "the RMySQL package in order to use makeTxDbFromEnsembl()."))
+    if (!requireNamespace("RMariaDB", quietly=TRUE))
+        stop(wmsg("Couldn't load the RMariaDB package. ",
+                  "You need to install the RMariaDB package ",
+                  "in order to use makeTxDbFromEnsembl()."))
 
     dbname <- .lookup_dbname(organism, release=release)
-    dbconn <- dbConnect(RMySQL::MySQL(), dbname=dbname,
-                                         username="anonymous",
-                                         host=server)
+    dbconn <- dbConnect(RMariaDB::MariaDB(), dbname=dbname,
+                                             username="anonymous",
+                                             host=server)
     on.exit(dbDisconnect(dbconn))
 
     transcripts <- .fetch_Ensembl_transcripts(dbconn)

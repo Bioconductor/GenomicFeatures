@@ -8,11 +8,8 @@
 ### sequences in the reference genome associated with a particular dataset
 ### and Ensembl release (e.g. for dataset "hsapiens_gene_ensembl" and Ensembl
 ### release "64").
-### Note that querying the Ensembl MySQL server (via RMySQL) would probably
-### be a better way to access this stuff but that would mean one more
-### dependency for the GenomicFeatures package. With some potential
-### complications like: (a) no RMySQL Windows binary on CRAN, and (b) depending
-### on RMySQL *and* RSQLite has its own pitfalls.
+### Note that querying the Ensembl MySQL server (via RMariaDB) would probably
+### be a better way to access this stuff.
 ###
 ### Ensembl Core Schema Documentation:
 ###   http://www.ensembl.org/info/docs/api/core/core_schema.html

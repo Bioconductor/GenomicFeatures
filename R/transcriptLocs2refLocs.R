@@ -10,7 +10,7 @@
     if (is(exonStarts, "IntegerList"))
         return(as.list(exonStarts))
     if (is.character(exonStarts))
-        return(strsplitAsListOfIntegerVectors(exonStarts))
+        return(toListOfIntegerVectors(exonStarts))
     stop("'", argname, "' must be a list of integer vectors, ",
          "an IntegerList object,\n  or a character vector where ",
          "each element is a comma-separated list of\n  integers")
