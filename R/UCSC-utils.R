@@ -157,6 +157,7 @@ UCSC_dbselect <- function(dbname, from, columns=NULL, where=NULL,
                                  username="genome",
                                  host=server,
                                  port=3306)
+    on.exit(dbDisconnect(dbconn))
     suppressWarnings(dbGetQuery(dbconn, SQL))
 }
 
