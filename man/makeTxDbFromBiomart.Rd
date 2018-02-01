@@ -222,22 +222,28 @@ all(transcripts(yeast_txdb) \%in\% transcripts(yeast_txdb0))
 ## -----------------------
 ## --- Ensembl Metazoa ---
 
-mart <- useMart(biomart="metazoa_mart", host="metazoa.ensembl.org")
-datasets <- listDatasets(mart)
-datasets$dataset
-worm_txdb <- makeTxDbFromBiomart(biomart="metazoa_mart",
-                                 dataset="celegans_eg_gene",
-                                 host="metazoa.ensembl.org")
-worm_txdb
+## The metazoa mart is slow and, at the same time, it doesn't seem to
+## support requests that take more than 1 min at the moment. So a call to
+## biomaRt::getBM() will fail with a "Timeout was reached" error if the
+## requested data takes more than 1 min to download. This actually happens
+## with the following example so we don't try to run it for now.
+\dontrun{
+  mart <- useMart(biomart="metazoa_mart", host="metazoa.ensembl.org")
+  datasets <- listDatasets(mart)
+  datasets$dataset
+  worm_txdb <- makeTxDbFromBiomart(biomart="metazoa_mart",
+                                   dataset="celegans_eg_gene",
+                                   host="metazoa.ensembl.org")
+  worm_txdb
 
-## Note that even if the dataset for Worm on Ensembl Metazoa contains
-## the same transcript as on the main Ensembl database, the transcript
-## type might be annotated with slightly different terms (e.g. antisense
-## vs antisense_RNA):
-filter <- list(tx_name="Y71G12B.44")
-transcripts(worm_txdb, filter=filter, columns=c("tx_name", "tx_type"))
-transcripts(txdb1, filter=filter, columns=c("tx_name", "tx_type"))
-
+  ## Note that even if the dataset for Worm on Ensembl Metazoa contains
+  ## the same transcript as on the main Ensembl database, the transcript
+  ## type might be annotated with slightly different terms (e.g. antisense
+  ## vs antisense_RNA):
+  filter <- list(tx_name="Y71G12B.44")
+  transcripts(worm_txdb, filter=filter, columns=c("tx_name", "tx_type"))
+  transcripts(txdb1, filter=filter, columns=c("tx_name", "tx_type"))
+}
 ## ----------------------
 ## --- Ensembl Plants ---
 
