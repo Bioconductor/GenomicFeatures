@@ -225,8 +225,9 @@ all(transcripts(yeast_txdb) \%in\% transcripts(yeast_txdb0))
 ## The metazoa mart is slow and, at the same time, it doesn't seem to
 ## support requests that take more than 1 min at the moment. So a call to
 ## biomaRt::getBM() will fail with a "Timeout was reached" error if the
-## requested data takes more than 1 min to download. This actually happens
-## with the following example so we don't try to run it for now.
+## requested data takes more than 1 min to download. This unfortunately
+## happens with the example below so we don't try to run it for now.
+
 \dontrun{
   mart <- useMart(biomart="metazoa_mart", host="metazoa.ensembl.org")
   datasets <- listDatasets(mart)
@@ -247,6 +248,11 @@ all(transcripts(yeast_txdb) \%in\% transcripts(yeast_txdb0))
 ## ----------------------
 ## --- Ensembl Plants ---
 
+## Like the metazoa mart (see above), the plants mart is also slow and
+## doesn't seem to support requests that take more than 1 min either.
+## So we don't try to run the example below for now.
+
+\dontrun{
 mart <- useMart(biomart="plants_mart", host="plants.ensembl.org")
 datasets <- listDatasets(mart)
 datasets[ , 1:2]
@@ -254,7 +260,7 @@ athaliana_txdb <- makeTxDbFromBiomart(biomart="plants_mart",
                                       dataset="athaliana_eg_gene",
                                       host="plants.ensembl.org")
 athaliana_txdb
-
+}
 ## ------------------------
 ## --- Ensembl Protists ---
 
