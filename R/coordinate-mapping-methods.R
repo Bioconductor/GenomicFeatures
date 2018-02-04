@@ -84,6 +84,7 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
                               ignore.strand, intronJunctions=FALSE)
 {
     flat <- unlist(transcripts, use.names=FALSE)
+    seqlengths <- sum(width(transcripts))[unique(names(transcripts))]
     if (intronJunctions) {
         ## introns must fall between ranges; not off the ends
         nonHits <- !seq_along(x) %in% queryHits(hits)
@@ -132,9 +133,10 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
         if (intronJunctions)
             df$intronic <- mcols(hits)$intronic
         GRanges(names(transcripts)[transcriptsHits],
-                xrange, strand(flat)[txHits], df)
+                xrange, strand(flat)[txHits], df,
+                seqlengths=seqlengths)
     } else {
-        ans <- GRanges()
+        ans <- GRanges(seqlengths=seqlengths)
         df <- DataFrame(xHits=integer(), transcriptsHits=integer())
         if (intronJunctions)
             df$intronic <- logical()
@@ -258,14 +260,14 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
         if (length(x) != length(map)) {
             s <- rep(0L, length(x))
             e <- rep(-1L, length(x))
-            seqname <- Rle("UNMAPPED", length(x))
+            seqname <- names(transcripts)
             strands <- Rle("*", length(x))
             xHits <- mcols(map)$xHits
             e[xHits] <- end(map)
             s[xHits] <- start(map)
-            seqname[xHits] <- seqnames(map)
             strands[xHits] <- strand(map)
-            GRanges(seqname, IRanges(s, e, names=names(x)), strands)
+            GRanges(seqname, IRanges(s, e, names=names(x)), strands,
+                    seqinfo=seqinfo(map))
         } else {
             mcols(map) <- NULL
             map

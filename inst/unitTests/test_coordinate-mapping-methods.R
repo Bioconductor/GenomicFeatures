@@ -239,7 +239,7 @@ test_mapToTranscripts <- function()
     checkIdentical(mcols(ans)$xHits, c(2L, 2L))
     checkIdentical(mcols(ans)$transcriptsHits, c(1L, 3L))
     checkIdentical(names(ans), c("B", "B"))
-    checkIdentical(seqlevels(ans), c("FBtr0300689", "FBtr0330654"))
+    checkIdentical(seqlengths(ans), sum(width(align)))
 
     x <- GRanges("chr3", IRanges(9, 9), strand="+")
     transcripts <- GRangesList(tx1=GRanges("chr3", IRanges(3, 10), strand="-"))
@@ -268,7 +268,7 @@ test_mapToTranscripts <- function()
     checkIdentical(as.character(seqnames(ans)), as.character(c(1, 3, 1, 2, 3))) 
     ans <- mapToTranscripts(x, txdb, extractor.fun=exonsBy, by="gene")
     checkIdentical(mcols(ans)$transcriptsHits, rep(4179L, 5))
-    checkIdentical(seqlevels(ans), "FBgn0031208")
+    checkIdentical(seqlengths(ans), sum(width(exonsBy(txdb, by="gene"))))
 }
 
 test_mapToTranscripts_range_order <- function()
@@ -350,14 +350,14 @@ test_pmapToTranscripts <- function()
     checkIdentical(width(ans), c(1L, 1L, 0L))
     checkIdentical(start(ans), c(5L, 5L, 0L))
     checkIdentical(names(ans), names(x))
-    checkIdentical(seqlevels(ans), c("a", "b", "UNMAPPED"))
+    checkIdentical(seqlevels(ans), c("a", "b", "c"))
     checkIdentical(as.character(strand(ans)), c("-", "-", "*"))
 
     ## out of bounds
     x <- GRanges("chr1", IRanges(rep(40, 4), width=11))
     align <- GRanges("chr1", IRanges(c(1, 35, 45, 55), width=11))
     ans <- pmapToTranscripts(x, align) 
-    checkIdentical(seqnames(ans), Rle(as.factor("UNMAPPED"), 4)) 
+    checkIdentical(seqnames(ans), Rle(as.factor(1:4)))
 }
 
 test_mapToTranscripts_intronJunctions <- function()
