@@ -371,8 +371,8 @@ mapFromTranscripts(snps, genes)
 rsids <- c("rs4803846", "rs139322374", "rs7250736", "rs7250754", "rs9749185")
 
 ## Extract genomic coordinates with a SNPlocs package.
-library(SNPlocs.Hsapiens.dbSNP141.GRCh38)
-snps <- snpid2grange(SNPlocs.Hsapiens.dbSNP141.GRCh38, rsids)
+library(SNPlocs.Hsapiens.dbSNP144.GRCh38)
+snps <- snpsById(SNPlocs.Hsapiens.dbSNP144.GRCh38, rsids)
 
 ## Gene regions of GIPR can be extracted from a TxDb package of compatible
 ## build. The TxDb package uses Entrez gene identifiers and GIPR is a gene
@@ -390,7 +390,7 @@ cDNA <- txbygene[geneid$ENTREZID]
 cDNA
 
 ## Before mapping, the chromosome names (seqlevels) in the two objects must
-## be harmonized. The style for 'snps' is dbSNP and 'cDNA' is UCSC.
+## be harmonized. The style is NCBI for 'snps' and UCSC for 'cDNA'.
 seqlevelsStyle(snps)
 seqlevelsStyle(cDNA)
 

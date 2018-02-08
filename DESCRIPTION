@@ -32,7 +32,7 @@ Suggests: RMariaDB, org.Mm.eg.db, org.Hs.eg.db,
 	TxDb.Mmusculus.UCSC.mm10.knownGene,
 	TxDb.Hsapiens.UCSC.hg19.lincRNAsTranscripts,
 	TxDb.Hsapiens.UCSC.hg38.knownGene,
-	SNPlocs.Hsapiens.dbSNP141.GRCh38,
+	SNPlocs.Hsapiens.dbSNP144.GRCh38,
 	Rsamtools, pasillaBamSubset (>= 0.0.5), GenomicAlignments (>= 1.15.7),
 	ensembldb,
 	RUnit, BiocStyle, knitr
