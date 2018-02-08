@@ -174,7 +174,8 @@ coverageByTranscript(my_reads, my_transcript)
 stopifnot(all(
   coverageByTranscript(my_reads, my_transcript)
   ==
-  Reduce("+", lapply(my_reads, coverageByTranscript, my_transcript), 0L)
+  Reduce("+", lapply(seq_along(my_reads),
+      function(i) coverageByTranscript(my_reads[i], my_transcript)), 0L)
 ))
 
 ## ---------------------------------------------------------------------
