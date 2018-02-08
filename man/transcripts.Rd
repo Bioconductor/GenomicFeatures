@@ -22,18 +22,18 @@
 
 \usage{
 transcripts(x, ...)
-\S4method{transcripts}{TxDb}(x, columns=c("tx_id", "tx_name"), filter=NULL)
+\S4method{transcripts}{TxDb}(x, columns=c("tx_id", "tx_name"), filter=NULL, use.names=FALSE)
 
 exons(x, ...)
-\S4method{exons}{TxDb}(x, columns="exon_id", filter=NULL)
+\S4method{exons}{TxDb}(x, columns="exon_id", filter=NULL, use.names=FALSE)
 
 cds(x, ...)
-\S4method{cds}{TxDb}(x, columns="cds_id", filter=NULL)
+\S4method{cds}{TxDb}(x, columns="cds_id", filter=NULL, use.names=FALSE)
 
 genes(x, ...)
 \S4method{genes}{TxDb}(x, columns="gene_id", filter=NULL, single.strand.genes.only=TRUE)
 
-\S4method{promoters}{TxDb}(x, upstream=2000, downstream=200, ...)
+\S4method{promoters}{TxDb}(x, upstream=2000, downstream=200, use.names=TRUE, ...)
 }
 
 \arguments{
@@ -72,6 +72,11 @@ genes(x, ...)
     \code{"exon_chrom"}, \code{"exon_strand"},
     \code{"cds_id"}, \code{"cds_name"},
     \code{"cds_chrom"}, \code{"cds_strand"} and \code{"exon_rank"}.
+  }
+  \item{use.names}{
+    \code{TRUE} or \code{FALSE}. If \code{TRUE}, the feature names are
+    set as the names of the returned object, with NAs being replaced with
+    empty strings.
   }
   \item{single.strand.genes.only}{
     \code{TRUE} or \code{FALSE}. If \code{TRUE} (the default), then genes
@@ -165,14 +170,21 @@ txdb <- loadDb(txdb_file)
 ## transcripts()
 ## ---------------------------------------------------------------------
 
-tx <- transcripts(txdb)
-tx
+tx1 <- transcripts(txdb)
+tx1
 
-## A sanity check:
-stopifnot(identical(mcols(tx)$tx_id, seq_along(tx)))
+transcripts(txdb, use.names=TRUE)
+transcripts(txdb, columns=NULL, use.names=TRUE)
 
 filter <- list(tx_chrom = c("chr3", "chr5"), tx_strand = "+")
-transcripts(txdb, filter=filter)
+tx2 <- transcripts(txdb, filter=filter)
+tx2
+
+## Sanity checks:
+stopifnot(
+  identical(mcols(tx1)$tx_id, seq_along(tx1)),
+  identical(tx2, tx1[seqnames(tx1) == "chr3" & strand(tx1) == "+"])
+)
 
 ## ---------------------------------------------------------------------
 ## exons()
@@ -219,13 +231,13 @@ mcols(multiple_strand_genes)
 ## This:
 promoters(txdb, upstream=100, downstream=50)
 ## is equivalent to:
-promoters(transcripts(txdb), upstream=100, downstream=50)
+promoters(transcripts(txdb, use.names=TRUE), upstream=100, downstream=50)
 
 ## Extra arguments are passed to transcripts(). So this:
-promoters(txdb, upstream=100, downstream=50,
-          columns=c("tx_name", "gene_id"))
+columns <- c("tx_name", "gene_id")
+promoters(txdb, upstream=100, downstream=50, columns=columns)
 ## is equivalent to:
-promoters(transcripts(txdb, columns=c("tx_name", "gene_id")),
+promoters(transcripts(txdb, columns=columns, use.names=TRUE),
           upstream=100, downstream=50)
 }
 

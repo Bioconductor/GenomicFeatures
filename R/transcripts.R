@@ -85,11 +85,26 @@
     sub("^(tx_id|exon_id|cds_id)$", "_\\1", columns)
 
 .extract_features_as_GRanges <- function(txdb, proxy_table,
-                                         mcolumns=character(0), filter=list())
+                                         mcolumns=character(0), filter=list(),
+                                         use.names=FALSE)
 {
-    db_mcolumns <- .as_db_columns(mcolumns)
+    if (!isTRUEorFALSE(use.names))
+        stop("'use.names' must be TRUE or FALSE")
+    db_mcolumns <- db_mcolumns0 <- .as_db_columns(mcolumns)
+    proxy_columns <- TXDB_table_columns(proxy_table)
+    if (use.names) {
+        if ("name" %in% names(proxy_columns)) {
+            proxy_name_column <- proxy_columns[["name"]]
+            if (!(proxy_name_column %in% db_mcolumns0))
+                db_mcolumns <- c(db_mcolumns0, proxy_name_column)
+        } else {
+            warning(wmsg("no column in '", proxy_table, "' table ",
+                         "to retrieve the feature names from"))
+            use.names <- FALSE
+        }
+    }
     names(filter) <- .as_db_columns(names(filter))
-    core_columns <- TXDB_table_columns(proxy_table)[TXDB_CORE_COLTAGS]
+    core_columns <- proxy_columns[TXDB_CORE_COLTAGS]
     df_list <- .extract_features(txdb, proxy_table, db_mcolumns,
                                  filter, core_columns)
     DF <- .make_DataFrame_from_df_list(df_list)
@@ -98,7 +113,12 @@
                                     start.field=core_columns[["start"]],
                                     end.field=core_columns[["end"]],
                                     strand.field=core_columns[["strand"]])
-    mcols(ans) <- setNames(DF[db_mcolumns], mcolumns)
+    if (use.names) {
+        ans_names <- DF[ , proxy_name_column]
+        ans_names[is.na(ans_names)] <- ""  # replace NAs with empty strings
+        names(ans) <- ans_names
+    }
+    mcols(ans) <- setNames(DF[db_mcolumns0], mcolumns)
     keep_user_seqlevels_from_TxDb(ans, txdb)
 }
 
@@ -119,7 +139,7 @@ translateCols <- function(columns, txdb){
     oriColNames <- names(columns)
     ## and save the original column strings
     oriCols <- columns
-    
+
     oriLen <- length(columns) ## not always the same as length(oriCols)
     ## get the available abbreviations as a translation vector (exp)
     names <- .makeColAbbreviations(txdb)
@@ -133,14 +153,14 @@ translateCols <- function(columns, txdb){
     m <- match(oriCols, names(exp))
     idx = which(!is.na(m))
     columns[idx] <- exp[m[idx]]
-    
+
     if(length(columns) == oriLen && is.null(oriColNames)){
-        names(columns) <- oriCols 
+        names(columns) <- oriCols
     }else if(length(columns) == oriLen && !is.null(oriColNames)){
-        names(columns) <- oriColNames         
+        names(columns) <- oriColNames
     }else if(length(columns) != oriLen){
         stop("names were lost in translateCols() helper")
-    }    
+    }
     columns
 }
 
@@ -159,14 +179,16 @@ translateCols <- function(columns, txdb){
 }
 
 .extractFromTxDb <- function(txdb, proxy_table,
-                             mcolumns=character(0), filter=NULL)
+                             mcolumns=character(0), filter=NULL,
+                             use.names=FALSE)
 {
     user_mcolumns <- mcolumns
     mcolumns <- translateCols(mcolumns, txdb)
     if (is.null(filter))
         filter <- list()
     names(filter) <- translateCols(names(filter), txdb)
-    ans <- .extract_features_as_GRanges(txdb, proxy_table, mcolumns, filter)
+    ans <- .extract_features_as_GRanges(txdb, proxy_table, mcolumns, filter,
+                                        use.names)
     names(mcols(ans)) <- if (is.null(names(user_mcolumns))) user_mcolumns
                          else names(user_mcolumns)
     .assignMetadataList(ans, txdb)
@@ -175,22 +197,25 @@ translateCols <- function(columns, txdb){
 setGeneric("transcripts", function(x, ...) standardGeneric("transcripts"))
 
 setMethod("transcripts", "TxDb",
-    function(x, columns=c("tx_id", "tx_name"), filter=NULL)
-        .extractFromTxDb(x, "transcript", mcolumns=columns, filter=filter)
+    function(x, columns=c("tx_id", "tx_name"), filter=NULL, use.names=FALSE)
+        .extractFromTxDb(x, "transcript", mcolumns=columns, filter=filter,
+                                          use.names=use.names)
 )
 
 setGeneric("exons", function(x, ...) standardGeneric("exons"))
 
 setMethod("exons", "TxDb",
-    function(x, columns="exon_id", filter=NULL)
-        .extractFromTxDb(x, "exon", mcolumns=columns, filter=filter)
+    function(x, columns="exon_id", filter=NULL, use.names=FALSE)
+        .extractFromTxDb(x, "exon", mcolumns=columns, filter=filter,
+                                    use.names=use.names)
 )
 
 setGeneric("cds", function(x, ...) standardGeneric("cds"))
 
 setMethod("cds", "TxDb",
-    function(x, columns="cds_id", filter=NULL)
-        .extractFromTxDb(x, "cds", mcolumns=columns, filter=filter)
+    function(x, columns="cds_id", filter=NULL, use.names=FALSE)
+        .extractFromTxDb(x, "cds", mcolumns=columns, filter=filter,
+                                   use.names=use.names)
 )
 
 setGeneric("genes", function(x, ...) standardGeneric("genes"))
@@ -281,10 +306,10 @@ setMethod("genes", "TxDb", .TxDb.genes)
 ###
 
 setMethod("promoters", "TxDb",
-    function(x, upstream=2000, downstream=200, ...)
+    function(x, upstream=2000, downstream=200, use.names=TRUE, ...)
     {
-        gr <- transcripts(x, ...)
+        gr <- transcripts(x, ..., use.names=use.names)
         promoters(gr, upstream=upstream, downstream=downstream)
     }
-) 
+)
 
