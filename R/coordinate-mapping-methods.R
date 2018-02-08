@@ -211,7 +211,7 @@ setMethod("mapToTranscripts", c("ANY", "TxDb"),
 setMethod("pmapToTranscripts", c("GenomicRanges", "GenomicRanges"),
     function(x, transcripts, ignore.strand=FALSE)
     {
-        grl <- as(transcripts, "List")
+        grl <- as(transcripts, "CompressedGRangesList")
         pmapToTranscripts(x, grl, ignore.strand)
     }
 )
