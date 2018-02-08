@@ -3,7 +3,7 @@ Title: Tools for making and manipulating transcript centric annotations
 Version: 1.31.8
 Encoding: UTF-8
 Author: M. Carlson, H. Pagès, P. Aboyoun, S. Falcon, M. Morgan,
-	D. Sarkar, M. Lawrence
+	D. Sarkar, M. Lawrence, V. Obenchain
 License: Artistic-2.0
 Description: A set of tools and methods for making and manipulating
 	transcript centric annotations. With these tools the user can
