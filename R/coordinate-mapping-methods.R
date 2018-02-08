@@ -83,6 +83,8 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 .mapToTranscripts <- function(x, transcripts, hits,
                               ignore.strand, intronJunctions=FALSE)
 {
+    if (is(x, "GPos"))
+        x <- as(x, "GRanges")
     flat <- unlist(transcripts, use.names=FALSE)
     seqlengths <- sum(width(transcripts))[unique(names(transcripts))]
     if (intronJunctions) {
@@ -148,8 +150,7 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 setMethod("mapToTranscripts", c("GenomicRanges", "GenomicRanges"),
     function(x, transcripts, ignore.strand=FALSE)
     {
-        grl <- relist(transcripts, PartitioningByEnd(seq_along(transcripts),
-                      names=names(transcripts)))
+        grl <- as(transcripts, "CompressedGRangesList")
         mapToTranscripts(x, grl, ignore.strand)
     }
 )
@@ -175,7 +176,11 @@ setMethod("mapToTranscripts", c("GenomicRanges", "GRangesList"),
         hits <- findOverlaps(x, unlist(transcripts, use.names=FALSE),
                              minoverlap=1L, type="within",
                              ignore.strand=ignore.strand)
-        .mapToTranscripts(x, transcripts, hits, ignore.strand, intronJunctions)
+        map <- .mapToTranscripts(x, transcripts, hits,
+                                 ignore.strand, intronJunctions)
+        if (is(x, "GPos"))
+            map <- as(map, "GPos")  # would loose the names if 'map' had any
+        map
     }
 )
 
@@ -266,12 +271,14 @@ setMethod("pmapToTranscripts", c("GenomicRanges", "GRangesList"),
             e[xHits] <- end(map)
             s[xHits] <- start(map)
             strands[xHits] <- strand(map)
-            GRanges(seqname, IRanges(s, e, names=names(x)), strands,
-                    seqinfo=seqinfo(map))
+            map <- GRanges(seqname, IRanges(s, e, names=names(x)), strands,
+                           seqinfo=seqinfo(map))
         } else {
             mcols(map) <- NULL
-            map
         }
+        if (is(x, "GPos"))
+            map <- as(map, "GPos")  # would loose the names if 'map' had any
+        map
     }
 )
 
