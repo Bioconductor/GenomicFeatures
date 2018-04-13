@@ -150,7 +150,7 @@ supportedUCSCtables <- function(genome="hg19",
     if (genome %in% c("hg17", "hg16", "mm8", "mm7", "rn3")) {
         ans_track[ans$tablename == "knownGene"] <- "Known Genes"
         ans$track <- ans_track
-    } else if (genome %in% "hg38") {
+    } else if (genome %in% c("hg38","hg19")) {
         ans_track[ans$tablename == "knownGene"] <- "GENCODE v24"
         ans_track[ans$tablename == "refGene"] <- "NCBI RefSeq"
         ans_subtrack[ans$tablename == "refGene"] <- "UCSC RefSeq"
