@@ -19,7 +19,8 @@
 makeTxDbFromEnsembl(organism="Homo sapiens",
                     release=NA,
                     circ_seqs=DEFAULT_CIRC_SEQS,
-                    server="ensembldb.ensembl.org")
+                    server="ensembldb.ensembl.org",
+                    username="anonymous", password=NULL, port=0L, code=NULL)
 }
 
 \arguments{
@@ -43,6 +44,11 @@ makeTxDbFromEnsembl(organism="Homo sapiens",
     Ensembl public MySQL servers.
     Make sure to use the server nearest to you. It can make a big difference!
   }
+  \item{username}{Login username for the MySQL server.}
+  \item{password}{Login password for the MySQL server.}
+  \item{port}{Port of the MySQL server.}
+  \item{code}{If not \code{NULL}, only select transcripts with an
+    attribute of a type with that code, a string, like \code{"gencode_basic"}.}
 }
 
 \value{

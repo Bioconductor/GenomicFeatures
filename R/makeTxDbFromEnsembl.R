@@ -35,9 +35,21 @@
     dbname
 }
 
-.dbselect <- function(dbconn, columns, from)
+.restrict_to_code <- function(SQL, code) {
+    paste0(SQL,
+           " JOIN transcript_attrib AS ta",
+           " USING(transcript_id)",
+           " WHERE ta.attrib_type_id=",
+             "(select attrib_type_id FROM attrib_type WHERE code='", code, "')")
+}
+
+.dbselect <- function(dbconn, columns, from, code = NULL)
 {
-    SQL <- sprintf("SELECT %s FROM %s", paste0(columns, collapse=","), from)
+    SQL <- sprintf("SELECT %s FROM %s", paste0(columns, collapse=","),
+                   from)
+    if (!is.null(code)) {
+        SQL <- .restrict_to_code(SQL, code)
+    }
     dbGetQuery(dbconn, SQL)
 }
 
@@ -48,7 +60,7 @@
     "seq_region_strand"
 )
 
-.fetch_Ensembl_transcripts <- function(dbconn)
+.fetch_Ensembl_transcripts <- function(dbconn, code)
 {
     message("Fetch transcripts and genes from Ensembl ... ",
             appendLF=FALSE)
@@ -60,7 +72,7 @@
     )
     columns <- c(paste0("transcript.", transcript_columns), "gene.stable_id")
     from <- "transcript LEFT JOIN gene USING(gene_id)"
-    transcripts <- .dbselect(dbconn, columns, from)
+    transcripts <- .dbselect(dbconn, columns, from, code)
     colnames(transcripts) <- c("tx_id",
                                "tx_name",
                                "seq_region_id",
@@ -74,7 +86,7 @@
     transcripts
 }
 
-.fetch_Ensembl_translations <- function(dbconn)
+.fetch_Ensembl_translations <- function(dbconn, code)
 {
     columns <- c(
         "stable_id",
@@ -84,7 +96,7 @@
         "seq_end",         # relative to last exon
         "transcript_id"
     )
-    .dbselect(dbconn, columns, "translation")
+    .dbselect(dbconn, columns, "translation", code)
 }
 
 ### 'has_cds' must be a logical vector.
@@ -106,9 +118,9 @@
 }
 
 ### Add "cds_name", "cds_start", and "cds_end" cols to 'splicings'.
-.add_cds_cols <- function(dbconn, splicings)
+.add_cds_cols <- function(dbconn, splicings, code)
 {
-    translations <- .fetch_Ensembl_translations(dbconn)
+    translations <- .fetch_Ensembl_translations(dbconn, code)
 
     m <- match(splicings$tx_id, translations$transcript_id)
     cds_name <- translations$stable_id[m]
@@ -141,7 +153,7 @@
     cbind(splicings, cds_name, cds_start, cds_end, stringsAsFactors=FALSE)
 }
 
-.fetch_Ensembl_splicings <- function(dbconn)
+.fetch_Ensembl_splicings <- function(dbconn, code)
 {
     message("Fetch exons and CDS from Ensembl ... ",
             appendLF=FALSE)
@@ -152,7 +164,7 @@
     )
     columns <- c("transcript_id", "rank", exon_columns)
     from <- "exon_transcript INNER JOIN exon USING(exon_id)"
-    splicings <- .dbselect(dbconn, columns, from)
+    splicings <- .dbselect(dbconn, columns, from, code)
     colnames(splicings) <- c("tx_id",
                              "exon_rank",
                              "exon_id",
@@ -164,7 +176,7 @@
     splicings$exon_strand <- strand(splicings$exon_strand)
     oo <- S4Vectors:::orderIntegerPairs(splicings$tx_id, splicings$exon_rank)
     splicings <- S4Vectors:::extract_data_frame_rows(splicings, oo)
-    splicings <- .add_cds_cols(dbconn, splicings)
+    splicings <- .add_cds_cols(dbconn, splicings, code)
     message("OK")
     splicings
 }
@@ -248,7 +260,9 @@
 makeTxDbFromEnsembl <- function(organism="Homo sapiens",
                                 release=NA,
                                 circ_seqs=DEFAULT_CIRC_SEQS,
-                                server="ensembldb.ensembl.org")
+                                server="ensembldb.ensembl.org",
+                                username="anonymous", password=NULL,
+                                port=0L, code = NULL)
 {
     if (!requireNamespace("RMariaDB", quietly=TRUE))
         stop(wmsg("Couldn't load the RMariaDB package. ",
@@ -257,13 +271,13 @@ makeTxDbFromEnsembl <- function(organism="Homo sapiens",
 
     dbname <- .lookup_dbname(organism, release=release)
     dbconn <- dbConnect(RMariaDB::MariaDB(), dbname=dbname,
-                                             username="anonymous",
-                                             host=server)
+                        host=server, username=username, password=password,
+                        port=port)
     on.exit(dbDisconnect(dbconn))
 
-    transcripts <- .fetch_Ensembl_transcripts(dbconn)
+    transcripts <- .fetch_Ensembl_transcripts(dbconn, code)
 
-    splicings <- .fetch_Ensembl_splicings(dbconn)
+    splicings <- .fetch_Ensembl_splicings(dbconn, code)
 
     seq_region_ids <- unique(c(transcripts$seq_region_id,
                                splicings$seq_region_id))
