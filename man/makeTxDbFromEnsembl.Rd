@@ -20,7 +20,8 @@ makeTxDbFromEnsembl(organism="Homo sapiens",
                     release=NA,
                     circ_seqs=DEFAULT_CIRC_SEQS,
                     server="ensembldb.ensembl.org",
-                    username="anonymous", password=NULL, port=0L, code=NULL)
+                    username="anonymous", password=NULL, port=0L,
+                    tx_attrib=NULL)
 }
 
 \arguments{
@@ -47,8 +48,8 @@ makeTxDbFromEnsembl(organism="Homo sapiens",
   \item{username}{Login username for the MySQL server.}
   \item{password}{Login password for the MySQL server.}
   \item{port}{Port of the MySQL server.}
-  \item{code}{If not \code{NULL}, only select transcripts with an
-    attribute of a type with that code, a string, like \code{"gencode_basic"}.}
+  \item{tx_attrib}{If not \code{NULL}, only select transcripts with an
+    attribute of the given code, a string, like \code{"gencode_basic"}.}
 }
 
 \value{
