@@ -5,7 +5,7 @@ test_makeTxDbFromBiomart <- function()
     ## We test makeTxDbFromBiomart() on the following transcripts:
     TARGET_TX_NAME <- c(
         ## Coding transcripts.
-        "ENST00000013894",  #  6 exons on + strand, CDS'es on exons 1:3
+        "ENST00000013894",  #  7 exons on + strand, CDS'es on exons 1:3
         "ENST00000268655",  #  3 exons on + strand, CDS'es on all exons
         "ENST00000313243",  # 14 exons on - strand, CDS'es on exons 2:14
         "ENST00000435657",  # 30 exons on - strand, CDS'es on exons 2:30
@@ -13,7 +13,7 @@ test_makeTxDbFromBiomart <- function()
         "ENST00000384428",  #  1 exon  on - strand, no CDS
         "ENST00000478783"   #  2 exons on + strand, no CDS
     )
-    TARGET_NEXONS_PER_TX <- c(6L, 3L, 14L, 30L, 1L, 2L)
+    TARGET_NEXONS_PER_TX <- c(7L, 3L, 14L, 30L, 1L, 2L)
     TARGET_TX_STRAND <- c("+", "+", "-", "-", "-", "+")
     TARGET_CDS2EXON <- list(1:3, 1:3, 2:14, 2:30)
     TARGET_GENE <- c("ENSG00000011198", "ENSG00000103343",
