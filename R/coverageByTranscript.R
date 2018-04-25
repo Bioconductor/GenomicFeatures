@@ -3,6 +3,38 @@
 ### -------------------------------------------------------------------------
 
 
+### Infers the seqlengths based on the ranges located on each sequence.
+### 'x' can be a GRanges, GRangesList, GAlignments, GAlignmentPairs, or
+### GAlignmentsList object. Maybe .infer_seqlengths() should be a generic
+### function?
+### Return an integer vector parallel to 'seqlevels(x)' with NAs where the
+### sequence length could not be inferred because the sequence has no range
+### on it.
+.infer_seqlengths <- function(x)
+{
+    if (is(x, "CompressedList") || is(x, "GAlignmentPairs"))
+        x <- unlist(x, use.names=FALSE)
+    ## Now 'x' should only be a GRanges or GAlignments object.
+    pmax(as.integer(end(range(split(ranges(x), seqnames(x))))), 0L)
+}
+
+### Infer seqlengths that are missing from 'x' and 'transcripts'.
+.merge_seqinfo_and_infer_missing_seqlengths <- function(x, transcripts)
+{
+    ans <- merge(seqinfo(x), seqinfo(transcripts))
+    seqlevels(x) <- seqlevels(transcripts) <- seqlevels(ans)
+    x_inferred_seqlengths <- .infer_seqlengths(x)
+    transcripts_inferred_seqlengths <- .infer_seqlengths(transcripts)
+    ## 'x_inferred_seqlengths' and 'transcripts_inferred_seqlengths' are
+    ## guaranteed to be parallel.
+    inferred_seqlengths <- pmax(x_inferred_seqlengths,
+                                transcripts_inferred_seqlengths,
+                                na.rm=TRUE)
+    missing_idx <- which(is.na(seqlengths(ans)))
+    seqlengths(ans)[missing_idx] <- inferred_seqlengths[missing_idx]
+    ans
+}
+
 ### Computing coverage by transcript (or CDS) of a set of ranges is an
 ### operation that feels a lot like extracting transcript sequences from a
 ### genome. Defined as an ordinary function for now.
@@ -16,11 +48,18 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
                       "from 'transcripts' with ",
                       "exonsBy(transcripts, by=\"tx\", use.names=TRUE)"))
     }
-    seqinfo(x) <- merge(seqinfo(x), seqinfo(transcripts))
     if (!isTRUEorFALSE(ignore.strand))
         stop(wmsg("'ignore.strand' must be TRUE or FALSE"))
 
-  ## 1) Compute unique exons ('uex').
+  ## STEP 1 - Infer seqlengths that are missing from 'x' and 'transcripts'.
+
+    ## This will guarantee that subsetting the named RleList object
+    ## representing the read coverage by the GRanges object representing
+    ## the set of unique exons won't fail due to out-of-bounds ranges in
+    ## the subscript. See STEP 3 below.
+    seqinfo(x) <- .merge_seqinfo_and_infer_missing_seqlengths(x, transcripts)
+
+  ## STEP 2 - Compute unique exons ('uex').
 
     ex <- unlist(transcripts, use.names=FALSE)
     ## We could simply do 'uex <- unique(ex)' here but we're going to need
@@ -32,12 +71,17 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     uex2ex <- which(is_unique)  # index of unique exons
     uex <- ex[uex2ex]  # unique exons
 
-  ## 2) Compute coverage for each unique exon ('uex_cvg').
+  ## STEP 3 - Compute coverage for each unique exon ('uex_cvg').
 
     #There doesn't seem to be much benefit in doing this.
     #x <- subsetByOverlaps(x, transcripts, ignore.strand=TRUE)
     if (ignore.strand) {
         cvg <- coverage(x)
+        ## Because we've inferred the seqlengths that are missing from 'x'
+        ## and 'transcripts' (see STEP 1 above), 'uex' should never contain
+        ## out-of-bounds ranges i.e. the list elements in 'cvg' should always
+        ## be Rle objects that are long enough with respect to the ranges
+        ## in 'uex'.
         uex_cvg <- cvg[uex]  # parallel to 'uex'
     } else {
         x1 <- x[strand(x) %in% c("+", "*")]
@@ -49,17 +93,22 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
         if (!identical(is_plus_ex, !is_minus_ex))
             stop(wmsg("'transcripts' has exons on the * strand. ",
                       "This is not supported at the moment."))
+        ## Because we've inferred the seqlengths that are missing from 'x'
+        ## and 'transcripts' (see STEP 1 above), 'uex' should never contain
+        ## out-of-bounds ranges i.e. the list elements in 'cvg1' and 'cvg2'
+        ## should always be Rle objects that are long enough with respect to
+        ## the ranges in 'uex'.
         uex_cvg <- cvg1[uex]
         uex_cvg[is_minus_ex] <- cvg2[uex[is_minus_ex]]
     }
 
-  ## 3) Flip coverage for exons on minus strand.
+  ## STEP 4 - Flip coverage for exons on minus strand.
 
     ## It feels like this is not as fast as it could be (the bottleneck being
     ## subsetting an Rle object which needs to be revisited at some point).
     uex_cvg <- revElements(uex_cvg, strand(uex) == "-")
 
-  ## 4) Compute coverage by original exon ('ex_cvg').
+  ## STEP 5 - Compute coverage by original exon ('ex_cvg').
 
     ex2uex <- (seq_along(sm) - cumsum(!is_unique))[sm]  # reverse index
     #stopifnot(identical(ex2uex[uex2ex], seq_along(uex2ex)))  # sanity
@@ -68,12 +117,12 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
 
     ex_cvg <- uex_cvg[ex2uex]  # parallel go 'ex'
 
-  ## 5) Compute coverage of each transcript by concatenating coverage of its
-  ##    exons.
+  ## STEP 6 - Compute coverage of each transcript by concatenating coverage of
+  ##          its exons.
 
     ans <- IRanges:::regroupBySupergroup(ex_cvg, transcripts)
 
-  ## 6) Propagate 'mcols(transcripts)'.
+  ## STEP 7 - Propagate 'mcols(transcripts)'.
 
     mcols(ans) <- mcols(transcripts)
     ans
