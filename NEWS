@@ -1,5 +1,39 @@
-CHANGES IN VERSION 1.30
------------------------
+CHANGES IN VERSION 1.32.0
+-------------------------
+
+NEW FEATURES
+
+    o The first argument of mapToTranscripts() and pmapToTranscripts() now can
+      be a GPos object and a GPos object is returned in that case.
+
+    o Add 'use.names' argument to "transcripts", "exons", "cds, and "promoters"
+      methods for TxDb objects.
+
+    o makeTxDbFromUCSC() now uses direct SQL queries (to the UCSC MySQL server
+      at genome-mysql.soe.ucsc.edu) instead of rtracklayer::getTable() to fetch
+      data from the Genome Browser. This avoids the issue reported here
+      https://github.com/lawremi/rtracklayer/issues/5 . Another benefit is
+      that direct SQL queries are much faster than rtracklayer::getTable().
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The GRanges object returned by mapToTranscripts() or pmapToTranscripts()
+      takes the transcript lengths as seqlengths.
+
+    o pmapToTranscripts() always takes the transcript name as the seqname,
+      even when there is no overlap. Before, it used "UNMAPPED" as the seqname
+      when there was no overlap.
+
+BUG FIXES
+
+    o Fix bug where 'coverageByTranscript(x, transcripts)' was erroring in
+      situations where 'transcripts' contains transcripts with an exon that
+      receives no coverage and is located on a sequence for which the seqlength
+      is not available in 'seqinfo(x)' nor in 'seqinfo(transcripts)'.
+
+
+CHANGES IN VERSION 1.30.0
+-------------------------
 
 NEW FEATURES
 
@@ -42,8 +76,8 @@ BUG FIXES
     o Some tweaks and fixes needed to support RSQLite 2.0.
 
 
-CHANGES IN VERSION 1.28
------------------------
+CHANGES IN VERSION 1.28.0
+-------------------------
 
 NEW FEATURES
 
@@ -85,8 +119,8 @@ BUG FIXES
         https://support.bioconductor.org/p/90226/
 
 
-CHANGES IN VERSION 1.26
------------------------
+CHANGES IN VERSION 1.26.0
+-------------------------
 
 NEW FEATURES
 
@@ -94,8 +128,6 @@ NEW FEATURES
      antisense_lncRNA, transcript_region, and pseudogenic_tRNA, as transcripts.
 
     o Add 'intronJunctions' argument to mapToTranscripts().
-
-SIGNIFICANT USER-VISIBLE CHANGES
 
 DEPRECATED AND DEFUNCT
 
@@ -105,11 +137,9 @@ DEPRECATED AND DEFUNCT
     o The "species" method for TxDb object is now defunct (was deprecated in
       BioC 3.3).
 
-BUG FIXES
 
-
-CHANGES IN VERSION 1.24
------------------------
+CHANGES IN VERSION 1.24.0
+-------------------------
 
 NEW FEATURES
 
@@ -175,8 +205,8 @@ BUG FIXES
       format (GFF3 or GTF) of input GRanges object 'x'.
 
 
-CHANGES IN VERSION 1.22
------------------------
+CHANGES IN VERSION 1.22.0
+-------------------------
 
 NEW FEATURES
 
@@ -238,7 +268,7 @@ SIGNIFICANT USER-VISIBLE CHANGES
       - The pmapFromTranscripts,*,GRangesList methods now return a GRangesList
         object. Also they no longer use 'UNMAPPED' seqname for unmapped ranges.
       - Remove uneeded ellipisis from the argument list of various coordinate
-        mapping methods. 
+        mapping methods.
 
     o Change behavior of seqlevels0() getter so it does what it was always
       intended to do.
@@ -282,8 +312,8 @@ BUG FIXES
       in plants_mart_26).
 
 
-CHANGES IN VERSION 1.20
------------------------
+CHANGES IN VERSION 1.20.0
+-------------------------
 
 NEW FEATURES
 
@@ -323,7 +353,7 @@ SIGNIFICANT USER-VISIBLE CHANGES
         dmel-1000-r5.11.filtered.gff included in this package).
       - Arguments 'exonRankAttributeName', 'gffGeneIdAttributeName',
         'useGenesAsTranscripts', and 'gffTxName', are not needed anymore so
-        they are now ignored and deprecated.  
+        they are now ignored and deprecated.
       - Deprecated 'species' arg in favor of new 'organism' arg.
 
     o Some tweaks to makeTxDbFromBiomart():
@@ -371,8 +401,8 @@ BUG FIXES
       exonsBy() fails on 'transcripts'.
 
 
-CHANGES IN VERSION 1.18
------------------------
+CHANGES IN VERSION 1.18.0
+-------------------------
 
 NEW FEATURES
 
@@ -413,22 +443,22 @@ BUG FIXES
           non-coding transcript.
       (b) Fix an issue that was preventing the function from extracting the
           CDS information added recently to the datasets in the Ensembl Fungi,
-          Ensembl Metazoa, Ensembl Plants, and Ensembl Protists databases. 
+          Ensembl Metazoa, Ensembl Plants, and Ensembl Protists databases.
       (c) Make the code in charge of extracting the CDSs more robust by taking
           advantage of new attributes (genomic_coding_start and
           genomic_coding_end) added by Ensembl in release 74 (Dec 2013),
           and by adding more sanity checks.
 
 
-CHANGES IN VERSION 1.14
------------------------
+CHANGES IN VERSION 1.14.0
+-------------------------
 
 NEW FEATURES
 
     o keys method now has new arguments to allow for more
       sophisticated filtering.
-    
-    o adds genes() extractor 
+
+    o adds genes() extractor
 
     o makeTranscriptDbFromGFF() now handles even more different kinds
       of GFF files.
@@ -441,8 +471,8 @@ BUG FIXES
     o cols arguments and methods will now be columns arguments and methods
 
 
-CHANGES IN VERSION 1.12
------------------------
+CHANGES IN VERSION 1.12.0
+-------------------------
 
 NEW FEATURES
 
@@ -462,8 +492,8 @@ BUG FIXES
     o Over 10X performance gains for processing of GTF and GFF files
 
 
-CHANGES IN VERSION 1.10
------------------------
+CHANGES IN VERSION 1.10.0
+-------------------------
 
 NEW FEATURES
 
@@ -501,8 +531,8 @@ BUG FIXES
     o Better handling of BioMart data anomalies.
 
 
-CHANGES IN VERSION 1.8
------------------------
+CHANGES IN VERSION 1.8.0
+------------------------
 
 NEW FEATURES
 
@@ -512,8 +542,8 @@ NEW FEATURES
       object to rtracklayer::export directly, when targeting GFF/BED.
 
 
-CHANGES IN VERSION 1.6
------------------------
+CHANGES IN VERSION 1.6.0
+------------------------
 
 NEW FEATURES
 
