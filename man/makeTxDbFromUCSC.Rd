@@ -117,6 +117,7 @@ getChromInfoFromUCSC(
 }
 
 \examples{
+\dontrun{
 ## ---------------------------------------------------------------------
 ## A. BASIC USAGE
 ## ---------------------------------------------------------------------
@@ -168,4 +169,5 @@ browseUCSCtrack(genome="hg38", tablename="augustusHints")  # no such table
 
 chrominfo <- getChromInfoFromUCSC(genome="hg38")
 chrominfo
+}
 }
