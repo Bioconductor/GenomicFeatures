@@ -565,6 +565,10 @@ setMethod("asBED", "TxDb", function(x) {
   bed
 })
 
+### This conversion to GFF doesn't handle the CDS phase information.
+### This will cause rtracklayer::export() to produce a GFF or GTF file where
+### the CDS phase information is missing. Even though rtracklayer::export()
+### can handle this (with a warning), this is invalid GFF!
 setMethod("asGFF", "TxDb", function(x) {
   addPrefix <- function(ids, prefix) {
     if (is(ids, "List"))

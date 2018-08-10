@@ -252,8 +252,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     is_cds <- type %in% .CDS_TYPES
     if (!is.null(phase)) {
         if (S4Vectors:::anyMissingOrOutside(phase[is_cds], 0L, 2L))
-            stop(wmsg("the \"phase\" metadata column must contain 0, 1, or 2, ",
-                      "for all the CDS features"))
+            warning(wmsg("some CDS phases are missing or not between 0 and 2"))
         types_with_phase <- type[!is.na(phase) & type %in% GFF_FEATURE_TYPES]
         types_with_phase <- setdiff(as.character(unique(types_with_phase)),
                                     .CDS_TYPES)
