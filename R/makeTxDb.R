@@ -218,7 +218,7 @@
                  "but no \"cds_start\"/\"cds_end\" cols")
         splicings$cds_phase <- .graceful_as_integer(splicings$cds_phase,
                                                     "splicings$cds_phase")
-        if (!all(is.na(splicings$cds_phase) == is.na(splicings$cds_start)))
+        if (!all(is.na(splicings$cds_phase) >= is.na(splicings$cds_start)))
             stop("NAs in 'splicings$cds_phase' don't match ",
                  "those in 'splicings$cds_start' and 'splicings$cds_end'")
     }
