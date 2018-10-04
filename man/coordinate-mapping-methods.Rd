@@ -238,48 +238,47 @@
 ## A. Basic Use
 ## ---------------------------------------------------------------------
 
-## ------------------------------------
-## (i) Map from genome to transcript:
+## Gene "Dgkb" has ENTREZID "217480":
+library(org.Mm.eg.db)
+library(TxDb.Mmusculus.UCSC.mm10.knownGene)
+geneid <- select(org.Mm.eg.db, "Dgkb", "ENTREZID", "SYMBOL")
+geneid
 
-## The seqnames of the output are the transcript names, not chromosomes. For
-## this reason 'transcripts' must be named.
-x <- GRanges("A", IRanges(16, 18))
-gr1 <- GRanges("A", IRanges(1, 10, names="tx_a"))
-gr2 <- GRanges("A", IRanges(15, 20, names="tx_b"))
+## The gene is on the positive strand, chromosome 12:
+txdb <- TxDb.Mmusculus.UCSC.mm10.knownGene
+genes(txdb)[geneid[,"ENTREZID"]]
 
-## 'transcripts' as GRanges:
-mapToTranscripts(x, gr2)
+## Transcripts in the gene:
+tx_names <- transcriptsBy(txdb, "gene")[[geneid[,"ENTREZID"]]]$tx_name
+tx_names
 
-## 'transcripts' as GRangesList:
-mapToTranscripts(x, GRangesList("tx_c" = c(gr1, gr2)))
+## Map CDS location '4' to the genome:
+coord <- GRanges("chr12", IRanges(4, width=1))
+cdsbytx <- cdsBy(txdb, "tx", use.name=TRUE)[tx_names]
+## A prerequesite of the mapping from transcript space to genome space
+## is that seqnames in 'x' match names in 'transcripts'.
+names(cdsbytx) <- rep(seqnames(coord), length(cdsbytx))
+## There are 6 results, one for each transcript.
+mapFromTranscripts(coord, cdsbytx)
 
-## Round trip from genomic -> transcript -> genomic coordinates:
-tx_coord <- mapToTranscripts(x, gr2)
-mapFromTranscripts(tx_coord, gr2)
+## Map exon location '100' to genome:
+coord <- GRanges("chr12", IRanges(100, width=1))
+exonsbytx <- exonsBy(txdb, "tx", use.name=TRUE)[tx_names]
+names(exonsbytx) <- rep(seqnames(coord), length(exonsbytx))
+## Again the output has 6 results, one for each transcript.
+mapFromTranscripts(coord, exonsbytx)
 
-## ------------------------------------
-## (ii) Map from transcript to genome:
+## Going in the reverse direction, genomic position 37981944 maps
+## to CDS position 4:
+coord <- GRanges("chr12", IRanges(37981944, width=1))
+mapToTranscripts(coord, cdsbytx)
 
-## A prerequisite for mapping from transcript -> genome is that the seqname
-## of the range in 'x' match the name of the range in 'transcripts'. Here
-## the seqname of 'x' is "TX_1" and mapping is only attempted with the second
-## range in 'gr':
-x <- GRanges("TX_1", IRanges(5, 10))
-gr <- GRanges("chr3", IRanges(c(1, 1), width=50, names=c("TX_2", "TX_1")))
-mapFromTranscripts(x, gr)
-
-## ------------------------------------
-## (iii) Element-wise versions:
-
-## Recycling is supported when length(transcripts) == 1; otherwise the
-## lengths of 'x' and 'transcripts' must be the same.
-x <- GRanges("A", IRanges(c(1, 5, 10), width=1))
-transcripts <- GRanges("A", IRanges(4, 7))
-pmapToTranscripts(x, transcripts)
-
+## Genomic position 37880273 maps back to position 100 in the exon region:
+coord <- GRanges("chr12", IRanges(37880273, width=1))
+mapToTranscripts(coord, exonsbytx)
 
 ## ---------------------------------------------------------------------
-## B. Map local sequence locations to the genome
+## B. Map sequence locations in exons to the genome
 ## ---------------------------------------------------------------------
 
 ## NAGNAG alternative splicing plays an essential role in biological processes
@@ -319,46 +318,8 @@ cag_loc <- vmatchPattern("CAG", exons_seq)
 first_loc <- do.call(c, sapply(cag_loc, "[", 1, simplify=TRUE))
 pmapFromTranscripts(first_loc, exons[[1]])
 
-
 ## -----------------------------------------------------------------------
-## C. Map 3'UTR variants to genome coordinates
-## -----------------------------------------------------------------------
-
-## A study by Skeeles et. al (PLoS ONE 8(3): e58609. doi:
-## 10.1371/journal.pone.0058609) investigated the impact of 3'UTR variants
-## on the expression of cancer susceptibility genes.
-
-## 8 candidate miRNA genes on chromosome 12 were used to test for
-## differential luciferase expression in mice. In Table 2 of the manuscript
-## variant locations are given as nucleotide position within the gene.
-geneNames <- c("Bcap29", "Dgkb", "Etv1", "Hbp1", "Hbp1", "Ifrd1",
-               "Ifrd1", "Pik3cg", "Pik3cg", "Tspan13", "Twistnb")
-starts <- c(1409, 3170, 3132, 2437, 2626, 3239, 3261, 4947, 4979, 958, 1489)
-snps <- GRanges(geneNames, IRanges(starts, width=1))
-
-## To map these transcript-space coordinates to the genome we need gene ranges
-## in genome space.
-library(org.Mm.eg.db)
-geneid <- select(org.Mm.eg.db, unique(geneNames), "ENTREZID", "SYMBOL")
-geneid
-
-## Extract the gene regions:
-library(TxDb.Mmusculus.UCSC.mm10.knownGene)
-txdb <- TxDb.Mmusculus.UCSC.mm10.knownGene
-genes <- genes(txdb)[geneid$ENTREZID]
-
-## A prerequesite of the mapping from transcript space to genome space
-## is that seqnames in 'x' match names in 'transcripts'. Rename
-## 'genes' with the appropriate gene symbol.
-names(genes) <- geneid$SYMBOL
-
-## The xHits and transcriptsHits metadta columns indicate which ranges in
-## 'snps' and 'genes' were involved in the mapping.
-mapFromTranscripts(snps, genes)
-
-
-## -----------------------------------------------------------------------
-## D. Map dbSNP variants to cds or cDNA coordinates
+## C. Map dbSNP variants to CDS or cDNA coordinates
 ## -----------------------------------------------------------------------
 
 ## The GIPR gene encodes a G-protein coupled receptor for gastric inhibitory
@@ -413,7 +374,7 @@ pmapToTranscripts(snps[1:2], unlist(cDNA)[1:2])
 cds <- cdsBy(txdb, "tx", use.names=TRUE)["uc002pct.2"]
 cds
 
-## The 'cds' object is a GRangesList of length 1 containing all cds ranges
+## The 'cds' object is a GRangesList of length 1 containing all CDS ranges
 ## for the single transcript uc002pct.2.
 
 ## To map to the concatenated group of ranges leave 'cds' as a GRangesList.
@@ -423,7 +384,7 @@ mapToTranscripts(snps, cds)
 ## SNPs to the individual cds ranges (vs the concatenated range).
 mapToTranscripts(snps[2], unlist(cds))
 
-## The location is the same because the SNP hit the first cds range. If the
+## The location is the same because the SNP hit the first CDS range. If the
 ## transcript were on the "-" strand the difference in concatenated vs
 ## non-concatenated position would be more obvious.
 
