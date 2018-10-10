@@ -481,6 +481,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 
     exons <- data.frame(
         tx_id=tx_id,
+        exon_id=exon_id,
         exon_name=exon_name,
         exon_chrom=exon_chrom,
         exon_strand=exon_strand,
@@ -974,13 +975,29 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
         ## them later with .add_missing_exons().
     }
 
-    ## Extract the 'exons', 'cds', 'stop_codons', 'transcripts',
-    ## and 'genes' data frames.
+    ## Extract the 'exons' and 'cds' data frames.
     exons <- .extract_exons_from_GRanges(exon_IDX, gr, ID, Name, Parent,
                                    feature="exon", gtf.format=gtf.format)
     cds <- .extract_exons_from_GRanges(cds_IDX, gr, ID, Name, Parent,
                                    feature="cds", gtf.format=gtf.format,
                                    phase=phase)
+    ## 'cds$tx_id' should contain the ID of the CDS Parent and this ID is
+    ## expected to be a transcript ID. However, for some rare GFF3 files (e.g.
+    ## Pabies01b-gene.gff3.gz at
+    ## ftp://plantgenie.org/Data/ConGenIE/Picea_abies/v1.0/GFF3/Gene_Prediction_Transcript_assemblies/)
+    ## this ID is an **exon** ID instead of a transcript ID so we need to
+    ## fix 'cds$tx_id'.
+    cds_tx_id <- cds$tx_id
+    cds2exon <- match(cds_tx_id, exons$exon_id)
+    exons$exon_id <- NULL
+    fixme_idx <- which(!is.na(cds2exon))
+    if (length(fixme_idx) != 0L) {
+        cds_tx_id <- as.character(cds_tx_id)
+        cds_tx_id[fixme_idx] <- as.character(exons$tx_id[cds2exon[fixme_idx]])
+        cds$tx_id <- factor(cds_tx_id)
+    }
+
+    ## Extract the 'stop_codons', 'transcripts', and 'genes' data frames.
     if (!drop.stop.codons) {
         stop_codons <- .extract_exons_from_GRanges(stop_codon_IDX,
                                    gr, ID, Name, Parent,
