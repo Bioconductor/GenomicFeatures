@@ -189,6 +189,8 @@ makeFDbPackageFromUCSC(
     \code{\link{makeTxDbPackage}} functions.
   \code{supportedMiRBaseBuildValues} is a convenience function that will
   list all the possible values for the miRBaseBuild argument.
+  \code{makePackageName} creates a package name from a TxDb object.
+  This function is also used by OrganismDbi.
 }
 
 \value{A \link{TxDb} object.}
