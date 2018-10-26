@@ -5,6 +5,7 @@
 \alias{makeFDbPackageFromUCSC}
 \alias{makeTxDbPackageFromBiomart}
 \alias{supportedMiRBaseBuildValues}
+\alias{makePackageName}
 
 \title{
   Making a TxDb package from annotations available at the
@@ -87,6 +88,8 @@ makeFDbPackageFromUCSC(
                   providerVersion=NULL)
 
   supportedMiRBaseBuildValues()
+
+  makePackageName(txdb)
 }
 \arguments{
   \item{version}{What is the version number for this package?}
