@@ -161,6 +161,7 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
 }
 
 \examples{
+if (interactive()) {
 ## ---------------------------------------------------------------------
 ## A. BASIC USAGE
 ## ---------------------------------------------------------------------
@@ -188,11 +189,9 @@ transcript_ids <- c(
     "ENST00000478783"
 )
 
-if (interactive()) {
-  txdb2 <- makeTxDbFromBiomart(dataset="hsapiens_gene_ensembl",
-                               transcript_ids=transcript_ids)
-  txdb2  # note that these annotations match the GRCh38 genome assembly
-}
+txdb2 <- makeTxDbFromBiomart(dataset="hsapiens_gene_ensembl",
+                             transcript_ids=transcript_ids)
+txdb2  # note that these annotations match the GRCh38 genome assembly
 
 ## ---------------------------------------------------------------------
 ## B. ACCESSING THE EnsemblGenomes MARTS
@@ -253,13 +252,13 @@ all(transcripts(yeast_txdb) \%in\% transcripts(yeast_txdb0))
 ## So we don't try to run the example below for now.
 
 \dontrun{
-mart <- useMart(biomart="plants_mart", host="plants.ensembl.org")
-datasets <- listDatasets(mart)
-datasets[ , 1:2]
-athaliana_txdb <- makeTxDbFromBiomart(biomart="plants_mart",
-                                      dataset="athaliana_eg_gene",
-                                      host="plants.ensembl.org")
-athaliana_txdb
+  mart <- useMart(biomart="plants_mart", host="plants.ensembl.org")
+  datasets <- listDatasets(mart)
+  datasets[ , 1:2]
+  athaliana_txdb <- makeTxDbFromBiomart(biomart="plants_mart",
+                                        dataset="athaliana_eg_gene",
+                                        host="plants.ensembl.org")
+  athaliana_txdb
 }
 ## ------------------------
 ## --- Ensembl Protists ---
@@ -285,13 +284,11 @@ listMarts(host="useast.ensembl.org")
 
 ## Therefore in addition to setting 'host' to "uswest.ensembl.org" we
 ## might also need to specify the 'biomart' argument:
-if (interactive()) {
-  txdb3 <- makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
-                               dataset="hsapiens_gene_ensembl",
-                               transcript_ids=transcript_ids,
-                               host="useast.ensembl.org")
-  txdb3
-}
+txdb3 <- makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
+                             dataset="hsapiens_gene_ensembl",
+                             transcript_ids=transcript_ids,
+                             host="useast.ensembl.org")
+txdb3
 
 ## ---------------------------------------------------------------------
 ## D. USING FILTERS
@@ -307,13 +304,11 @@ head(listFilters(mart))
 ## Retrieve transcript dataset for Ensembl gene ENSG00000011198:
 my_filter <- list(ensembl_gene_id="ENSG00000011198")
 
-if (interactive()) {
-  txdb4 <- makeTxDbFromBiomart(dataset="hsapiens_gene_ensembl",
-                               filter=my_filter)
-  txdb4
-  transcripts(txdb4, columns=c("tx_id", "tx_name", "gene_id"))
-  transcriptLengths(txdb4)
-}
+txdb4 <- makeTxDbFromBiomart(dataset="hsapiens_gene_ensembl",
+                             filter=my_filter)
+txdb4
+transcripts(txdb4, columns=c("tx_id", "tx_name", "gene_id"))
+transcriptLengths(txdb4)
 
 ## ---------------------------------------------------------------------
 ## E. RETRIEVING CHROMOSOME INFORMATION ONLY
@@ -321,4 +316,5 @@ if (interactive()) {
 
 chrominfo <- getChromInfoFromBiomart(dataset="celegans_gene_ensembl")
 chrominfo
+}
 }
