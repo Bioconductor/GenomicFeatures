@@ -277,6 +277,7 @@ mapToTranscripts(coord, cdsbytx)
 coord <- GRanges("chr12", IRanges(37880273, width=1))
 mapToTranscripts(coord, exonsbytx)
 
+if (interactive()) {
 ## ---------------------------------------------------------------------
 ## B. Map sequence locations in exons to the genome
 ## ---------------------------------------------------------------------
@@ -391,6 +392,7 @@ mapToTranscripts(snps[2], unlist(cds))
 ## Change strand:
 strand(cds) <- strand(snps) <- "-"
 mapToTranscripts(snps[2], unlist(cds))
+}
 }
 
 \keyword{methods}
