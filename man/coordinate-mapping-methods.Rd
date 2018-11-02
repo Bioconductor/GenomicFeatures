@@ -276,7 +276,9 @@ mapToTranscripts(coord, cdsbytx)
 ## Genomic position 37880273 maps back to position 100 in the exon region:
 coord <- GRanges("chr12", IRanges(37880273, width=1))
 mapToTranscripts(coord, exonsbytx)
+rm(cdsbytx, exonsbytx) 
 
+if (interactive()) {
 ## ---------------------------------------------------------------------
 ## B. Map sequence locations in exons to the genome
 ## ---------------------------------------------------------------------
@@ -317,6 +319,7 @@ cag_loc <- vmatchPattern("CAG", exons_seq)
 ## Convert the first occurance of CAG in each exon back to genome coordinates.
 first_loc <- do.call(c, sapply(cag_loc, "[", 1, simplify=TRUE))
 pmapFromTranscripts(first_loc, exons[[1]])
+rm(cag_loc, exons, exons_seq, lincrna)
 
 ## -----------------------------------------------------------------------
 ## C. Map dbSNP variants to CDS or cDNA coordinates
@@ -391,6 +394,7 @@ mapToTranscripts(snps[2], unlist(cds))
 ## Change strand:
 strand(cds) <- strand(snps) <- "-"
 mapToTranscripts(snps[2], unlist(cds))
+}
 }
 
 \keyword{methods}
