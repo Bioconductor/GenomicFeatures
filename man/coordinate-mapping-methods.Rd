@@ -248,12 +248,17 @@ geneid
 txdb <- TxDb.Mmusculus.UCSC.mm10.knownGene
 genes(txdb)[geneid[,"ENTREZID"]]
 
-## Transcripts in the gene:
+
+## To map coordinates from local CDS or exon space to genome 
+## space we use mapFromTranscripts().
+
+## When mapping CDS coordinates to genome space the 'transcripts'
+## argument is the collection of CDS regions by transcript.
+coord <- GRanges("chr12", IRanges(4, width=1))
+## Get the names of the transcripts in the gene:
 tx_names <- transcriptsBy(txdb, "gene")[[geneid[,"ENTREZID"]]]$tx_name
 tx_names
-
-## Map CDS location '4' to the genome:
-coord <- GRanges("chr12", IRanges(4, width=1))
+## Use these names to isolate the region of interest:
 cdsbytx <- cdsBy(txdb, "tx", use.name=TRUE)[tx_names]
 ## A prerequesite of the mapping from transcript space to genome space
 ## is that seqnames in 'x' match names in 'transcripts'.
@@ -261,19 +266,22 @@ names(cdsbytx) <- rep(seqnames(coord), length(cdsbytx))
 ## There are 6 results, one for each transcript.
 mapFromTranscripts(coord, cdsbytx)
 
-## Map exon location '100' to genome:
+## To map exon coordinates to genome space the 'transcripts'
+## argument is the collection of exon regions by transcript.
 coord <- GRanges("chr12", IRanges(100, width=1))
 exonsbytx <- exonsBy(txdb, "tx", use.name=TRUE)[tx_names]
 names(exonsbytx) <- rep(seqnames(coord), length(exonsbytx))
 ## Again the output has 6 results, one for each transcript.
 mapFromTranscripts(coord, exonsbytx)
 
-## Going in the reverse direction, genomic position 37981944 maps
-## to CDS position 4:
+## To go the reverse direction and map from genome space to
+## local CDS or exon space, use mapToTranscripts().
+
+## Genomic position 37981944 maps to CDS position 4:
 coord <- GRanges("chr12", IRanges(37981944, width=1))
 mapToTranscripts(coord, cdsbytx)
 
-## Genomic position 37880273 maps back to position 100 in the exon region:
+## Genomic position 37880273 maps to exon position 100:
 coord <- GRanges("chr12", IRanges(37880273, width=1))
 mapToTranscripts(coord, exonsbytx)
 rm(cdsbytx, exonsbytx) 
