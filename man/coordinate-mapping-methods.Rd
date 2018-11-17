@@ -234,9 +234,9 @@
 
 \examples{
 
-## ---------------------------------------------------------------------
-## A. Basic Use
-## ---------------------------------------------------------------------
+## -------------------------------------------------------------------------
+## A. Basic Use: Conversion between CDS and Exon coordinates and the genome
+## -------------------------------------------------------------------------
 
 ## Gene "Dgkb" has ENTREZID "217480":
 library(org.Mm.eg.db)
@@ -248,9 +248,8 @@ geneid
 txdb <- TxDb.Mmusculus.UCSC.mm10.knownGene
 genes(txdb)[geneid[,"ENTREZID"]]
 
-
 ## To map coordinates from local CDS or exon space to genome 
-## space we use mapFromTranscripts().
+## space use mapFromTranscripts().
 
 ## When mapping CDS coordinates to genome space the 'transcripts'
 ## argument is the collection of CDS regions by transcript.
@@ -260,8 +259,8 @@ tx_names <- transcriptsBy(txdb, "gene")[[geneid[,"ENTREZID"]]]$tx_name
 tx_names
 ## Use these names to isolate the region of interest:
 cdsbytx <- cdsBy(txdb, "tx", use.name=TRUE)[tx_names]
-## A prerequesite of the mapping from transcript space to genome space
-## is that seqnames in 'x' match names in 'transcripts'.
+## A requirement for mapping from transcript space to genome space
+## is that seqnames in 'x' match the names in 'transcripts'.
 names(cdsbytx) <- rep(seqnames(coord), length(cdsbytx))
 ## There are 6 results, one for each transcript.
 mapFromTranscripts(coord, cdsbytx)
@@ -286,7 +285,12 @@ coord <- GRanges("chr12", IRanges(37880273, width=1))
 mapToTranscripts(coord, exonsbytx)
 rm(cdsbytx, exonsbytx) 
 
-if (interactive()) {
+
+## The following examples use more than 2GB of memory, which is more
+## than what 32-bit Windows can handle:
+is_32bit_windows <- .Platform$OS.type == "windows" &&
+                    .Platform$r_arch == "i386"
+if (!is_32bit_windows) {
 ## ---------------------------------------------------------------------
 ## B. Map sequence locations in exons to the genome
 ## ---------------------------------------------------------------------
