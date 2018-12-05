@@ -7,13 +7,17 @@
 ###
 
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### 3 helper functions used internally by exonicParts() and intronicParts()
+###
+
 ### Return a GRanges object with 1 range per transcript and metadata columns
 ### tx_id, tx_name, and gene_id.
 ### If 'drop.geneless' is FALSE (the default) then the transcripts are
 ### returned in the same order as with transcripts(), which is expected
 ### to be by transcript id (tx_id). Otherwise they are ordered first by
 ### gene id (gene_id), then by transcript id.
-.tidy_transcripts <- function(txdb, drop.geneless=FALSE)
+tidyTranscripts <- function(txdb, drop.geneless=FALSE)
 {
     tx <- transcripts(txdb, columns=c("tx_id", "tx_name", "gene_id"))
     mcols(tx)$gene_id <- as.character(mcols(tx)$gene_id)
@@ -51,9 +55,9 @@
 ### by transcript id (tx_id), then by exon rank (exon_rank). Otherwise they
 ### are ordered first by gene id (gene_id), then by transcript id, and then
 ### by exon rank.
-.tidy_exons <- function(txdb, drop.geneless=FALSE)
+tidyExons <- function(txdb, drop.geneless=FALSE)
 {
-    tx <- .tidy_transcripts(txdb, drop.geneless=drop.geneless)
+    tx <- tidyTranscripts(txdb, drop.geneless=drop.geneless)
     ex_by_tx <- .exons_by_txids(txdb, mcols(tx)$tx_id)
 
     ans <- unlist(ex_by_tx, use.names=FALSE)
@@ -67,9 +71,9 @@
 ### If 'drop.geneless' is FALSE (the default) then the introns are ordered
 ### by transcript id (tx_id). Otherwise they are ordered first by gene id
 ### (gene_id), then by transcript id.
-.tidy_introns <- function(txdb, drop.geneless=FALSE)
+tidyIntrons <- function(txdb, drop.geneless=FALSE)
 {
-    tx <- .tidy_transcripts(txdb, drop.geneless=drop.geneless)
+    tx <- tidyTranscripts(txdb, drop.geneless=drop.geneless)
     ex_by_tx <- .exons_by_txids(txdb, mcols(tx)$tx_id)
 
     introns_by_tx <- psetdiff(tx, ex_by_tx)
@@ -99,6 +103,11 @@
     ans
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### exonicParts() and intronicParts()
+###
+
 ### Return a disjoint and strictly sorted GRanges object with 1 range per
 ### exonic part and with metadata columns tx_id, tx_name, gene_id, exon_id,
 ### exon_name, and exon_rank.
@@ -106,7 +115,7 @@ exonicParts <- function(txdb, linked.to.single.gene.only=FALSE)
 {
     if (!isTRUEorFALSE(linked.to.single.gene.only))
         stop("'linked.to.single.gene.only' must be TRUE or FALSE")
-    ex <- .tidy_exons(txdb, drop.geneless=linked.to.single.gene.only)
+    ex <- tidyExons(txdb, drop.geneless=linked.to.single.gene.only)
     .break_in_parts(ex, linked.to.single.gene.only)
 }
 
@@ -116,7 +125,7 @@ intronicParts <- function(txdb, linked.to.single.gene.only=FALSE)
 {
     if (!isTRUEorFALSE(linked.to.single.gene.only))
         stop("'linked.to.single.gene.only' must be TRUE or FALSE")
-    introns <- .tidy_introns(txdb, drop.geneless=linked.to.single.gene.only)
+    introns <- tidyIntrons(txdb, drop.geneless=linked.to.single.gene.only)
     .break_in_parts(introns, linked.to.single.gene.only)
 }
 

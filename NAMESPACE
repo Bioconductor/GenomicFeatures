@@ -90,6 +90,7 @@ export(
   transcriptLengths,
 
   ## exonicParts.R:
+  tidyTranscripts, tidyExons, tidyIntrons,
   exonicParts, intronicParts,
 
   ## disjointExons.R:
