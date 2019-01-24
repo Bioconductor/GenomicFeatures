@@ -71,8 +71,10 @@
         if (is.character(file)) {
             dataSource <- file
         } else {
-            dataSource <- showConnections(all=TRUE)[as.character(file),
-                                                    "description"]
+            dataSource <- as.character(file)
+            if (inherits(file, "connection"))
+                dataSource <- showConnections(all=TRUE)[dataSource,
+                                                        "description"]
         }
     }
     if (!is.na(taxonomyId)) {
