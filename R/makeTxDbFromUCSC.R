@@ -86,12 +86,17 @@
   "wgEncodeGencode2wayConsPseudoV7",  "GENCODE Genes V7",  NA,
   "wgEncodeGencodePolyaV7",           "GENCODE Genes V7",  NA,
 
-  ## Tables/tracks specific to hg38.
+  ## Tables/tracks specific to hg38/hg19/mm10/rn6/danRer10/danRer11/ce11/dm6/sacCer3.
   "ncbiRefSeq",                       "NCBI RefSeq",       "RefSeq All",
   "ncbiRefSeqCurated",                "NCBI RefSeq",       "RefSeq Curated",
-  "ncbiRefSeqPredicted",              "NCBI RefSeq",       "RefSeq Predicted",
   "ncbiRefSeqOther",                  "NCBI RefSeq",       "RefSeq Other",
   "ncbiRefSeqPsl",                    "NCBI RefSeq",       "RefSeq Alignments",
+
+  ## Tables/tracks specific to hg38/mm10/rn6/danRer10/danRer11.
+  "ncbiRefSeqPredicted",              "NCBI RefSeq",       "RefSeq Predicted",
+
+  ## Tables/tracks specific to hg38.
+  "ncbiRefSeqGenomicDiff",            "NCBI RefSeq",       "RefSeq Diffs",
 
   ## Tables/tracks specific to D. melanogaster.
   "flyBaseGene",                      "FlyBase Genes",     NA,
@@ -150,9 +155,12 @@ supportedUCSCtables <- function(genome="hg19",
     if (genome %in% c("hg17", "hg16", "mm8", "mm7", "rn3")) {
         ans_track[ans$tablename == "knownGene"] <- "Known Genes"
         ans$track <- ans_track
-    } else if (genome %in% c("ce11","danRer10","dm6","hg38","hg19","rn6")) {
+    } else if (genome %in% c("hg38", "hg19", "mm10", "rn6",
+                             "danRer10", "danRer11",
+                             "ce11", "dm6", "sacCer3"))
+    {
         if(genome %in% "hg38")
-            ans_track[ans$tablename == "knownGene"] <- "GENCODE v24"
+            ans_track[ans$tablename == "knownGene"] <- "GENCODE v29"
         ans_track[ans$tablename == "refGene"] <- "NCBI RefSeq"
         ans_subtrack[ans$tablename == "refGene"] <- "UCSC RefSeq"
         ans$track <- ans_track
@@ -800,12 +808,28 @@ getChromInfoFromUCSC <- function(genome,
     metadata <- .prepareUCSCMetadata(genome, tablename, track, gene_id_type,
                                      full_dataset,
                                      taxonomyId,  miRBaseBuild)
+    ## Jan 2019 -- The refGene tables in the hg19 and hg38 UCSC databases were
+    ## last updated in Nov 2018 and now contain transcripts located on
+    ## sequences that don't belong to the underlying genomes (GRCh37 and GRCh38
+    ## respectively). More precisely some transcripts in these tables now
+    ## belong to patched versions of these genomes: GRCh37.p13 for hg19 and
+    ## GRCh38.p11 for hg38. This causes the makeTxDbFromUCSC() errors reported
+    ## here:
+    ##   https://github.com/Bioconductor/GenomicFeatures/issues/14
+    ##   https://support.bioconductor.org/p/117265/
+    ##   https://support.bioconductor.org/p/114901/
+    ## The current fix is to drop these foreign transcripts with a warning.
+    if (genome %in% c("hg19", "hg38") && tablename == "refGene")
+        on.foreign.transcripts <- "drop"
+    else
+        on.foreign.transcripts <- "error"
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     on.exit(message("OK"))
     makeTxDb(transcripts, splicings, genes=genes,
              chrominfo=chrominfo, metadata=metadata,
-             reassign.ids=TRUE)
+             reassign.ids=TRUE,
+             on.foreign.transcripts=on.foreign.transcripts)
 }
 
 ### Some timings (as of Jan 31, 2018, GenomicFeatures 1.31.7):
