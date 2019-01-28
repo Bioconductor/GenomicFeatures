@@ -18,7 +18,8 @@
 
 \usage{
 makeTxDb(transcripts, splicings, genes=NULL,
-         chrominfo=NULL, metadata=NULL, reassign.ids=FALSE)
+         chrominfo=NULL, metadata=NULL,
+         reassign.ids=FALSE, on.foreign.transcripts=c("error", "drop"))
 }
 
 \arguments{
@@ -42,12 +43,20 @@ makeTxDb(transcripts, splicings, genes=NULL,
     and their type must be character.
   }
   \item{reassign.ids}{
+    \code{TRUE} or \code{FALSE}.
     Controls how internal ids should be assigned for each type of feature
     i.e. for transcripts, exons, and CDS. For each type, if \code{reassign.ids}
-    is \code{FALSE} and if the ids are supplied, then they are used as the
-    internal ids, otherwise the internal ids are assigned in a way that is
-    compatible with the order defined by ordering the features first by
-    chromosome, then by strand, then by start, and finally by end.}
+    is \code{FALSE} (the default) and if the ids are supplied, then they
+    are used as the internal ids, otherwise the internal ids are assigned
+    in a way that is compatible with the order defined by ordering the
+    features first by chromosome, then by strand, then by start, and
+    finally by end.
+  }
+  \item{on.foreign.transcripts}{
+    Controls what to do when the input contains \emph{foreign transcripts}
+    i.e. transcripts that are on sequences not in \code{chrominfo}.
+    If set to \code{"error"} (the default)
+  }
 }
 
 \details{

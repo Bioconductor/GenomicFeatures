@@ -11,6 +11,8 @@
 ###   o .makeTxDb_normarg_splicings()
 ###   o .makeTxDb_normarg_genes()
 ###   o .makeTxDb_normarg_chrominfo()
+### 1 function to infer the chrominfo table:
+###   o .infer_chrominfo_from_transcripts_and_splicings
 
 .all_logical_NAs <- function(x)
 {
@@ -43,14 +45,16 @@
                                referred_colname)
 {
     if (!is.na(referring_type) && !is(referring_vals, referring_type))
-        stop("'", referring_colname, "' must be of type ", referring_type)
+        stop(wmsg("'", referring_colname, "' must be ",
+                  "of type ", referring_type))
     if (!is.na(referred_type) && !is(referred_vals, referred_type))
-        stop("'", referred_colname, "' must be of type ", referred_type)
+        stop(wmsg("'", referred_colname, "' must be ",
+                  "of type ", referred_type))
     if (any(is.na(referring_vals)))
-        stop("'", referring_colname, "' cannot contain NAs")
+        stop(wmsg("'", referring_colname, "' cannot contain NAs"))
     if (!all(referring_vals %in% referred_vals))
-        stop("all the values in '", referring_colname, "' must ",
-             "be present in '", referred_colname, "'")
+        stop(wmsg("all the values in '", referring_colname, "' must ",
+                  "be present in '", referred_colname, "'"))
 }
 
 .makeTxDb_normarg_transcripts <- function(transcripts)
@@ -60,48 +64,54 @@
     check_colnames(transcripts, .REQUIRED_COLS, .OPTIONAL_COLS, "transcripts")
     ## Check 'tx_id'.
     if (!is.integer(transcripts$tx_id) || any(is.na(transcripts$tx_id)))
-        stop("'transcripts$tx_id' must be an integer vector, with no NAs")
+        stop(wmsg("'transcripts$tx_id' must be an integer vector ",
+                  "with no NAs"))
     if (any(duplicated(transcripts$tx_id)))
-        stop("'transcripts$tx_id' contains duplicated values")
+        stop(wmsg("'transcripts$tx_id' contains duplicated values"))
     ## Check 'tx_chrom'.
     if (!.is_character_or_factor(transcripts$tx_chrom)
      || any(is.na(transcripts$tx_chrom)))
-        stop("'transcripts$tx_chrom' must be a character vector (or factor) ",
-             "with no NAs")
+        stop(wmsg("'transcripts$tx_chrom' must be a character vector ",
+                  "(or factor) with no NAs"))
     ## Check 'tx_strand'.
     if (!.is_character_or_factor(transcripts$tx_strand)
      || any(is.na(transcripts$tx_strand)))
-        stop("'transcripts$tx_strand' must be a character vector (or factor) ",
-             "with no NAs")
+        stop(wmsg("'transcripts$tx_strand' must be a character vector ",
+                  "(or factor) with no NAs"))
     if (!all(transcripts$tx_strand %in% c("+", "-")))
-        stop("values in 'transcripts$tx_strand' must be \"+\" or \"-\"")
+        stop(wmsg("values in 'transcripts$tx_strand' must be \"+\" or \"-\""))
     ## Check 'tx_start'.
     if (!is.numeric(transcripts$tx_start)
      || any(is.na(transcripts$tx_start)))
-        stop("'transcripts$tx_start' must be an integer vector with no NAs")
+        stop(wmsg("'transcripts$tx_start' must be an integer vector ",
+                  "with no NAs"))
     if (!is.integer(transcripts$tx_start))
         transcripts$tx_start <- as.integer(transcripts$tx_start)
     ## Check 'tx_end'.
     if (!is.numeric(transcripts$tx_end)
      || any(is.na(transcripts$tx_end)))
-        stop("'transcripts$tx_end' must be an integer vector with no NAs")
+        stop(wmsg("'transcripts$tx_end' must be an integer vector ",
+                  "with no NAs"))
     if (!is.integer(transcripts$tx_end))
         transcripts$tx_end <- as.integer(transcripts$tx_end)
     ## Check 'tx_start <= tx_end'.
     if (any(transcripts$tx_start > transcripts$tx_end))
-        stop("transcript starts must be <= transcript ends")
+        stop(wmsg("transcript starts must be <= transcript ends"))
     ## Check 'tx_name'.
     if (has_col(transcripts, "tx_name")
      && !.is_character_or_factor(transcripts$tx_name))
-        stop("'transcripts$tx_name' must be a character vector (or factor)")
+        stop(wmsg("'transcripts$tx_name' must be a character vector ",
+                  "(or factor)"))
     ## Check 'tx_type'.
     if (has_col(transcripts, "tx_type")
      && !.is_character_or_factor(transcripts$tx_type))
-        stop("'transcripts$tx_type' must be a character vector (or factor)")
+        stop(wmsg("'transcripts$tx_type' must be a character vector ",
+                  "(or factor)"))
     ## Check 'gene_id'.
     if (has_col(transcripts, "gene_id")
      && !.is_character_or_factor(transcripts$gene_id))
-        stop("'transcripts$gene_id' must be a character vector (or factor)")
+        stop(wmsg("'transcripts$gene_id' must be a character vector ",
+                  "(or factor)"))
     transcripts
 }
 
@@ -118,59 +128,64 @@
     ## Check 'exon_rank'.
     if (!is.numeric(splicings$exon_rank)
      || any(is.na(splicings$exon_rank)))
-        stop("'splicings$exon_rank' must be an integer vector with no NAs")
+        stop(wmsg("'splicings$exon_rank' must be an integer vector ",
+                  "with no NAs"))
     if (!is.integer(splicings$exon_rank))
         splicings$exon_rank <- as.integer(splicings$exon_rank)
     if (any(splicings$exon_rank <= 0L))
-        stop("'splicings$exon_rank' contains non-positive values")
+        stop(wmsg("'splicings$exon_rank' contains non-positive values"))
     ## Check uniqueness of (tx_id, exon_rank) pairs.
     if (any(S4Vectors:::duplicatedIntegerPairs(splicings$tx_id,
                                                splicings$exon_rank)))
-        stop("'splicings' must contain unique (tx_id, exon_rank) pairs")
+        stop(wmsg("'splicings' must contain unique (tx_id, exon_rank) pairs"))
     ## Check 'exon_id'.
     if (has_col(splicings, "exon_id")
      && (!is.integer(splicings$exon_id) || any(is.na(splicings$exon_id))))
-        stop("'splicings$exon_id' must be an integer vector, with no NAs")
+        stop(wmsg("'splicings$exon_id' must be an integer vector ",
+                  "with no NAs"))
     ## Check 'exon_name'.
     if (has_col(splicings, "exon_name")
      && !.is_character_or_factor(splicings$exon_name))
-        stop("'splicings$exon_name' must be a character vector (or factor)")
+        stop(wmsg("'splicings$exon_name' must be a character vector ",
+                  "(or factor)"))
     ## Check 'exon_chrom'.
     if (has_col(splicings, "exon_chrom")
      && (!.is_character_or_factor(splicings$exon_chrom)
          || any(is.na(splicings$exon_chrom))))
-        stop("'splicings$exon_chrom' must be a character vector (or factor) ",
-             "with no NAs")
+        stop(wmsg("'splicings$exon_chrom' must be a character vector ",
+                  "(or factor) with no NAs"))
     ## Check 'exon_strand'.
     if (has_col(splicings, "exon_strand")
      && (!.is_character_or_factor(splicings$exon_strand)
          || any(is.na(splicings$exon_strand))))
-        stop("'splicings$exon_strand' must be a character vector (or factor) ",
-             "with no NAs")
+        stop(wmsg("'splicings$exon_strand' must be a character vector ",
+                  "(or factor) with no NAs"))
     if (has_col(splicings, "exon_chrom") && !has_col(splicings, "exon_strand"))
-        stop("if 'splicings' has an \"exon_chrom\" col then ",
-             "it must have an \"exon_strand\" col too")
+        stop(wmsg("if 'splicings' has an \"exon_chrom\" col then ",
+                  "it must have an \"exon_strand\" col too"))
     ## Check 'exon_start'.
     if (!is.numeric(splicings$exon_start)
      || any(is.na(splicings$exon_start)))
-        stop("'splicings$exon_start' must be an integer vector with no NAs")
+        stop(wmsg("'splicings$exon_start' must be an integer vector ",
+                  "with no NAs"))
     if (!is.integer(splicings$exon_start))
         splicings$exon_start <- as.integer(splicings$exon_start)
     ## Check 'exon_end'.
     if (!is.numeric(splicings$exon_end)
      || any(is.na(splicings$exon_end)))
-        stop("'splicings$exon_end' must be an integer vector with no NAs")
+        stop(wmsg("'splicings$exon_end' must be an integer vector ",
+                  "with no NAs"))
     if (!is.integer(splicings$exon_end))
         splicings$exon_end <- as.integer(splicings$exon_end)
     ## Check 'exon_start <= exon_end'.
     if (any(splicings$exon_start > splicings$exon_end))
-        stop("exon starts must be <= exon ends")
+        stop(wmsg("exon starts must be <= exon ends"))
     ## Check presence of 'cds_start' and 'cds_end'.
     if (has_col(splicings, "cds_start") != has_col(splicings, "cds_end"))
-        stop("'splicings' has a \"cds_start\" col ",
-             "but no \"cds_end\" col, or vice versa")
+        stop(wmsg("'splicings' has a \"cds_start\" col ",
+                  "but no \"cds_end\" col, or vice versa"))
     if (!has_col(splicings, "cds_start")) {
-        warning("making a TxDb object without CDS information")
+        warning(wmsg("making a TxDb object without CDS information"))
     } else {
         ## Check 'cds_start'.
         splicings$cds_start <- .graceful_as_integer(splicings$cds_start,
@@ -180,52 +195,56 @@
                                                   "splicings$cds_end")
         ## Check 'cds_start' and 'cds_end' compatibility.
         if (!all(is.na(splicings$cds_start) == is.na(splicings$cds_end)))
-            stop("NAs in 'splicings$cds_start' and 'splicings$cds_end' ",
-                 "must occur at the same positions")
+            stop(wmsg("NAs in 'splicings$cds_start' and 'splicings$cds_end' ",
+                      "must occur at the same positions"))
         if (any(splicings$cds_start > splicings$cds_end, na.rm=TRUE))
-            stop("cds starts must be <= cds ends")
+            stop(wmsg("cds starts must be <= cds ends"))
         ## Check CDS and exon compatibility.
         if (any(splicings$cds_start < splicings$exon_start, na.rm=TRUE)
          || any(splicings$cds_end > splicings$exon_end, na.rm=TRUE))
-            stop("cds starts/ends are incompatible with exon starts/ends")
+            stop(wmsg("cds starts/ends are incompatible ",
+                      "with exon starts/ends"))
     }
     ## Check 'cds_id'.
     if (has_col(splicings, "cds_id")) {
         if (!has_col(splicings, "cds_start"))
-            stop("'splicings' has a \"cds_id\" col ",
-                 "but no \"cds_start\"/\"cds_end\" cols")
+            stop(wmsg("'splicings' has a \"cds_id\" col ",
+                      "but no \"cds_start\"/\"cds_end\" cols"))
         if (!is.integer(splicings$cds_id))
-            stop("'splicings$cds_id' must be an integer vector")
+            stop(wmsg("'splicings$cds_id' must be an integer vector"))
         if (!all(is.na(splicings$cds_id) == is.na(splicings$cds_start)))
-            stop("NAs in 'splicings$cds_id' don't match ",
-                 "those in 'splicings$cds_start' and 'splicings$cds_end'")
+            stop(wmsg("NAs in 'splicings$cds_id' don't match those ",
+                      "in 'splicings$cds_start' and 'splicings$cds_end'"))
     }
     ## Check 'cds_name'.
     if (has_col(splicings, "cds_name")) {
         if (!has_col(splicings, "cds_start"))
-            stop("'splicings' has a \"cds_name\" col ",
-                 "but no \"cds_start\"/\"cds_end\" cols")
+            stop(wmsg("'splicings' has a \"cds_name\" col ",
+                      "but no \"cds_start\"/\"cds_end\" cols"))
         if (!.is_character_or_factor(splicings$cds_name))
-            stop("'splicings$cds_name' must be a character vector (or factor)")
+            stop(wmsg("'splicings$cds_name' must be a character vector ",
+                      "(or factor)"))
         if (any(is.na(splicings$cds_name) < is.na(splicings$cds_start)))
-            stop("'splicings$cds_name' must contain NAs at least where ",
-                 "'splicings$cds_start' and 'splicings$cds_end' contain them")
+            stop(wmsg("'splicings$cds_name' must contain NAs at least ",
+                      "where 'splicings$cds_start' and 'splicings$cds_end' ",
+                      "contain them"))
     }
     ## Check 'cds_phase'.
     if (has_col(splicings, "cds_phase")) {
         if (!has_col(splicings, "cds_start"))
-            stop("'splicings' has a \"cds_phase\" col ",
-                 "but no \"cds_start\"/\"cds_end\" cols")
+            stop(wmsg("'splicings' has a \"cds_phase\" col ",
+                      "but no \"cds_start\"/\"cds_end\" cols"))
         splicings$cds_phase <- .graceful_as_integer(splicings$cds_phase,
                                                     "splicings$cds_phase")
         if (!all(is.na(splicings$cds_phase) >= is.na(splicings$cds_start)))
-            stop("NAs in 'splicings$cds_phase' don't match ",
-                 "those in 'splicings$cds_start' and 'splicings$cds_end'")
+            stop(wmsg("NAs in 'splicings$cds_phase' don't match those ",
+                      "in 'splicings$cds_start' and 'splicings$cds_end'"))
     }
     splicings
 }
 
-.makeTxDb_normarg_genes <- function(genes, transcripts_tx_id)
+.makeTxDb_normarg_genes <- function(genes, transcripts_tx_id,
+                                    transcripts_tx_name=NULL)
 {
     if (is.null(genes)) {
         genes <- data.frame(tx_id=transcripts_tx_id[FALSE],
@@ -239,16 +258,18 @@
     ## Check 'gene_id'.
     if (!.is_character_or_factor(genes$gene_id)
      || any(is.na(genes$gene_id)))
-        stop("'genes$gene_id' must be a character vector (or factor) ",
-             "with no NAs")
+        stop(wmsg("'genes$gene_id' must be a character vector (or factor) ",
+                  "with no NAs"))
     ## 'genes' must have one of the 2 optional cols but not both.
     if (length(intersect(colnames(genes), .OPTIONAL_COLS)) != 1L)
-        stop("'genes' must have either a \"tx_id\" ",
-             "or a \"tx_name\" col but not both")
+        stop(wmsg("'genes' must have either a \"tx_id\" ",
+                  "or a \"tx_name\" col but not both"))
     if (!has_col(genes, "tx_id")) {
         ## Remap 'gene_id' to 'tx_id'.
-        if (is.null(names(transcripts_tx_id)))
-            stop("cannot map genes to transcripts, need 'transcripts$tx_name'")
+        if (is.null(transcripts_tx_name))
+            stop(wmsg("cannot map genes to transcripts, ",
+                      "need 'transcripts$tx_name'"))
+        names(transcripts_tx_id) <- transcripts_tx_name
         genes <- joinDataFrameWithName2Val(genes, "tx_name",
                                            transcripts_tx_id, "tx_id")
     } else {
@@ -259,54 +280,50 @@
     genes
 }
 
-.makeTxDb_normarg_chrominfo <- function(chrominfo, transcripts_tx_chrom,
-                                        splicings_exon_chrom)
+.makeTxDb_normarg_chrominfo <- function(chrominfo)
 {
-    if (is.null(chrominfo)) {
-        warning("chromosome lengths and circularity flags ",
-                "are not available for this TxDb object")
-        chrom <- unique(c(as.character(transcripts_tx_chrom),
-                          as.character(splicings_exon_chrom)))
-        chrom_ids <- rankSeqlevels(chrom)
-        chrom[chrom_ids] <- chrom
-        chrominfo <- data.frame(
-            chrom=chrom,
-            length=rep.int(NA_integer_, length(chrom)),
-            is_circular=rep.int(NA, length(chrom)),
-            check.names=FALSE, stringsAsFactors=FALSE
-        )
-        return(chrominfo)
-    }
     .REQUIRED_COLS <- c("chrom", "length")
     .OPTIONAL_COLS <- "is_circular"
     check_colnames(chrominfo, .REQUIRED_COLS, .OPTIONAL_COLS, "chrominfo")
     ## Check 'chrom'.
     if (!.is_character_or_factor(chrominfo$chrom)
      || any(is.na(chrominfo$chrom)))
-        stop("'chrominfo$chrom' must be a character vector (or factor) ",
-             "with no NAs")
+        stop(wmsg("'chrominfo$chrom' must be a character vector ",
+                  "(or factor) with no NAs"))
     if (any(duplicated(chrominfo$chrom)))
-        stop("'chrominfo$chrom' contains duplicated values")
-    .check_foreign_key(transcripts_tx_chrom, NA, "transcripts$tx_chrom",
-                       chrominfo$chrom, NA, "chrominfo$chrom")
-    if (!is.null(splicings_exon_chrom))
-        .check_foreign_key(splicings_exon_chrom, NA, "splicings$exon_chrom",
-                           chrominfo$chrom, NA, "chrominfo$chrom")
+        stop(wmsg("'chrominfo$chrom' contains duplicated values"))
     ## Check 'length'.
     chrominfo$length <- .graceful_as_integer(chrominfo$length,
                                              "chrominfo$length")
     na_idx <- is.na(chrominfo$length)
     if (any(na_idx) && !all(na_idx))
-        stop("'chrominfo$length' cannot mix NAs and non-NAs")
+        stop(wmsg("'chrominfo$length' cannot mix NAs and non-NAs"))
     ## Check 'is_circular'.
     if (!has_col(chrominfo, "is_circular")) {
-        warning("chromosome circularity flags ",
-                "are not available for this TxDb object")
+        warning(wmsg("chromosome circularity flags ",
+                     "are not available for this TxDb object"))
         chrominfo$is_circular <- rep.int(NA, nrow(chrominfo))
     } else if (!is.logical(chrominfo$is_circular)) {
-        stop("'chrominfo$is_circular' must be a logical vector")
+        stop(wmsg("'chrominfo$is_circular' must be a logical vector"))
     }
     chrominfo
+}
+
+.infer_chrominfo_from_transcripts_and_splicings <-
+    function(transcripts_tx_chrom, splicings_exon_chrom)
+{
+    warning(wmsg("chromosome lengths and circularity flags ",
+                 "are not available for this TxDb object"))
+    chrom <- unique(c(as.character(transcripts_tx_chrom),
+                      as.character(splicings_exon_chrom)))
+    chrom_ids <- rankSeqlevels(chrom)
+    chrom[chrom_ids] <- chrom
+    data.frame(
+        chrom=chrom,
+        length=rep.int(NA_integer_, length(chrom)),
+        is_circular=rep.int(NA, length(chrom)),
+        check.names=FALSE, stringsAsFactors=FALSE
+    )
 }
 
 
@@ -542,35 +559,115 @@
 ### makeTxDb().
 ###
 
+.a_sample_of_foreign_transcripts_as_one_string <-
+    function(transcripts_tx_name, foreign_idx)
+{
+    if (is.null(transcripts_tx_name))
+        return("")
+    foreign_tx_names <- transcripts_tx_name[foreign_idx]
+    foreign_tx_names <- foreign_tx_names[!is.na(foreign_tx_names)]
+    if (length(foreign_tx_names) == 0L)
+        return("")
+    foreign_tx_names <- head(foreign_tx_names, n=4L)
+    fmt <- "transcript"
+    if (length(foreign_tx_names) >= 2L)
+        fmt <- paste0(fmt, "s")
+    fmt <- paste0(fmt, " %s")
+    if (length(foreign_tx_names) < length(foreign_idx))
+        fmt <- paste0("e.g. ", fmt, ", ...")
+    fmt <- paste0(" (", fmt, ")")
+    sprintf(fmt, paste0(foreign_tx_names, collapse=", "))
+}
+
+.foreign_transcripts_stop_msg <- function(transcripts_tx_name, foreign_idx)
+{
+    msg1 <- if (length(foreign_idx) >= 2L)
+                "transcripts are on unknown sequences"
+            else
+                "transcript is on an unknown sequence"
+    msg2 <- .a_sample_of_foreign_transcripts_as_one_string(transcripts_tx_name,
+                                                           foreign_idx)
+    c(length(foreign_idx), " ", msg1, msg2)
+}
+
+.foreign_transcripts_warning_msg <- function(transcripts_tx_name, foreign_idx)
+{
+    msg1 <- if (length(foreign_idx) >= 2L)
+                "transcripts were dropped because they are on unknown sequences"
+            else
+                "transcript was drop because it is on an unknown sequence"
+    msg2 <- .a_sample_of_foreign_transcripts_as_one_string(transcripts_tx_name,
+                                                           foreign_idx)
+    c(length(foreign_idx), " ", msg1, msg2)
+}
+
 makeTxDb <- function(transcripts, splicings,
                      genes=NULL, chrominfo=NULL, metadata=NULL,
-                     reassign.ids=FALSE)
+                     reassign.ids=FALSE,
+                     on.foreign.transcripts=c("error", "drop"))
 {
     if (!isTRUEorFALSE(reassign.ids))
-        stop("'reassign.ids' must be TRUE or FALSE")
+        stop(wmsg("'reassign.ids' must be TRUE or FALSE"))
+    on.foreign.transcripts <- match.arg(on.foreign.transcripts)
+
     transcripts <- .makeTxDb_normarg_transcripts(transcripts)
-    transcripts_tx_id <- transcripts$tx_id  # guaranteed to be unique
-    names(transcripts_tx_id) <- transcripts$tx_name
-    splicings <- .makeTxDb_normarg_splicings(splicings, transcripts_tx_id)
+    splicings <- .makeTxDb_normarg_splicings(splicings, transcripts$tx_id)
     if (has_col(transcripts, "gene_id")) {
         if (!is.null(genes))
-            stop("'genes' must be NULL when 'transcripts' ",
-                 "has a \"gene_id\" col")
+            stop(wmsg("'genes' must be NULL when 'transcripts' ",
+                      "has a \"gene_id\" col"))
         genes <- transcripts[!is.na(transcripts$gene_id),
                              c("tx_id", "gene_id")]
     } else {
-        genes <- .makeTxDb_normarg_genes(genes, transcripts_tx_id)
+        genes <- .makeTxDb_normarg_genes(genes, transcripts$tx_id,
+                                   transcripts_tx_name=transcripts$tx_name)
     }
-    chrominfo <- .makeTxDb_normarg_chrominfo(chrominfo, transcripts$tx_chrom,
-                                             splicings$exon_chrom)
+    if (is.null(chrominfo)) {
+        chrominfo <- .infer_chrominfo_from_transcripts_and_splicings(
+                         transcripts$tx_chrom,
+                         splicings$exon_chrom)
+    } else {
+        chrominfo <- .makeTxDb_normarg_chrominfo(chrominfo)
+        ## Look for "foreign transcripts" i.e. for transcripts that are on
+        ## sequences not in 'chrominfo'.
+        ok <- transcripts$tx_chrom %in% chrominfo$chrom
+        foreign_tx <- transcripts[!ok, "tx_id"]
+        if (!is.null(splicings$exon_chrom)) {
+            ok <- splicings$exon_chrom %in% chrominfo$chrom
+            foreign_tx <- union(foreign_tx, splicings[!ok, "tx_id"])
+        }
+        nb_foreign_tx <- length(foreign_tx)
+        if (nb_foreign_tx != 0L) {
+            dropped1 <- transcripts$tx_id %in% foreign_tx
+            if (on.foreign.transcripts == "error") {
+                ## Error if foreign transcripts.
+                msg <- .foreign_transcripts_stop_msg(transcripts$tx_name,
+                                                     which(dropped1))
+                stop(wmsg(msg))
+            } else {
+                ## Drop foreign transcripts with a warning.
+                transcripts <- S4Vectors:::extract_data_frame_rows(
+                                   transcripts, !dropped1)
+                dropped2 <- splicings$tx_id %in% foreign_tx
+                splicings <- S4Vectors:::extract_data_frame_rows(
+                                   splicings, !dropped2)
+                dropped3 <- genes$tx_id %in% foreign_tx
+                genes <- S4Vectors:::extract_data_frame_rows(
+                                   genes, !dropped3)
+                msg <- .foreign_transcripts_warning_msg(transcripts$tx_name,
+                                                        which(dropped1))
+                warning(wmsg(msg))
+            }
+        }
+    }
     transcripts_internal_tx_id <- .make_transcripts_internal_tx_id(
                                              transcripts,
                                              reassign.ids,
                                              chrominfo$chrom)
-    splicings_internal_tx_id <- translateIds(transcripts_tx_id,
+    splicings_internal_tx_id <- translateIds(transcripts$tx_id,
                                              transcripts_internal_tx_id,
                                              splicings$tx_id)
-    genes_internal_tx_id <- translateIds(transcripts_tx_id,
+    genes_internal_tx_id <- translateIds(transcripts$tx_id,
                                          transcripts_internal_tx_id,
                                          genes$tx_id)
     ## Infer 'splicings$exon_chrom' and 'splicings$exon_strand' when missing
@@ -631,7 +728,7 @@ makeTxDb <- function(transcripts, splicings,
 makeToyTxDb <- function(splicings, genes=NULL)
 {
     if (!is.data.frame(splicings))
-        stop("'splicings' must be a data frame")
+        stop(wmsg("'splicings' must be a data frame"))
     stop("not ready yet, sorry!")
 }
 
