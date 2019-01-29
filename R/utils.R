@@ -239,9 +239,10 @@ makeIdsForUniqueDataFrameRows <- function(x)
     ## when called in the context of the unit tests run by 'R CMD check'
     ## ('R CMD check' also sets the LC_COLLATE to C when running the tests)
     ## vs when called in the context of an interactive session.
-    ## TODO: Maybe we should have a strrank() function in
+    ## TODO: Maybe we should define an strrank() function in
     ## S4Vectors/R/str-utils.R for portable/deterministic ranking of a
-    ## character vector.
+    ## character vector. See R/bubbles-methods.R in the SplicingGraphs package
+    ## for a similar discussion about using order() on a character vector.
     prev_locale <- Sys.getlocale("LC_COLLATE")
     Sys.setlocale("LC_COLLATE", "C")
     on.exit(Sys.setlocale("LC_COLLATE", prev_locale))
