@@ -82,19 +82,23 @@
     (TSS) and is not affected by the value of \code{ignore.strand}.
   }
   \item{intronJunctions}{
-    Logical to indicate whether intronic ranges in \code{x} should be reported.
-
-    Ranges in \code{x} that do not fall \sQuote{within} a range in
-    \code{transcripts} are considered a non-hit and have no mapping.  When
-    \code{intronJunctions=TRUE} the non-hits that fall between 2 ranges in
-    \code{transcripts} are reported as a zero-width range (start and end
-    taken from the ranges they fall between). To be considered 'intronic',
-    the \code{x} range must fall between ranges in \code{transcripts}. Those
-    that 'fall off' either end or overlap the intron gap and a range in
-    \code{transcripts} will not be mapped.
+    Logical to indicate if intronic ranges in \code{x} should be reported.
 
     This argument is only supported in \code{mapToTranscripts} when
-    \code{transcripts} is a GRangesList.
+    \code{transcripts} is a GRangesList.  When \code{transcripts} is a
+    GRangesList, individual ranges can be thought of as exons and the spaces
+    between the ranges as introns. 
+   
+    When \code{intronJunctions=TRUE}, ranges that fall completely "within" an
+    intron are reported as a zero-width range (start and end are taken
+    from the ranges they fall between). A metadata column called "intronic" is
+    returned with the GRanges and marked as \code{TRUE} for these ranges. By
+    default, \code{intronJunctions=FALSE} and these ranges are not mapped.
+    
+    Ranges that have either the start or end in an intron are considered "non
+    hits" and are never mapped.  Ranges that span introns are always mapped.
+    Neither of these range types are controlled by the \code{intronJunctions}
+    argument.
   }
   \item{extractor.fun}{
     Function to extract genomic features from a \code{TxDb} object.

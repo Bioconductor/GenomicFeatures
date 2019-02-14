@@ -302,6 +302,18 @@ test_mapToTranscripts_range_order <- function()
     checkTrue(start(ans) == 2036L)
 }
 
+test_mapToTranscripts_span_introns <- function()
+{
+    x <- GRanges("chr1", IRanges(start=c(11, 11, 21, 11, 40),
+                                 end=c(12, 23, 33, 33, 45)), strand="-")
+    align <- GRangesList(GRanges("chr1",
+        IRanges(start=c(10, 20, 30), width=5), strand = "-"))
+    names(align) <- LETTERS[seq_along(align)]
+    ans <- mapToTranscripts(x, align)
+    target <- IRanges(c(13, 7, 2, 2), c(14, 14, 9, 14))
+    checkIdentical(ranges(ans), target)
+}
+
 test_pmapToTranscripts <- function()
 {
     ## empty
