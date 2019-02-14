@@ -77,7 +77,7 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
 ### mapToTranscripts()
 ###
 
-### No need to have IntegerRanges methods when mapping to transcripts. Plain
+### No need for IntegerRanges methods when mapping to transcripts. Plain
 ### ranges only make sense in the transcript space.
 
 .mapToTranscripts <- function(x, transcripts, hits,
@@ -87,12 +87,39 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
         x <- as(x, "GRanges")
     flat <- unlist(transcripts, use.names=FALSE)
     seqlengths <- sum(width(transcripts))[unique(names(transcripts))]
+    nonHits <- !seq_along(x) %in% queryHits(hits)
+    xnonHits <- x[nonHits]
+
+    ## 'x' spans introns
+    if (any(nonHits) && any(lengths(transcripts) > 1L)) {
+        within <- countOverlaps(xnonHits, range(transcripts), type="within", 
+                                ignore.strand=ignore.strand) 
+        index <- nonHits
+        index[which(nonHits)[within == 0]] <- FALSE 
+        if (any(index)) {
+            span <- findOverlaps(x[index], flat, 
+                                 minoverlap=1L, select="all",
+                                 ignore.strand=ignore.strand)
+            tx <- togroup(PartitioningByWidth(transcripts))[subjectHits(span)]
+            txgroups1 <- split(tx, queryHits(span))
+            keep <- lengths(txgroups1) > 1
+            if (any(keep)) {
+                ii <- as.integer(names(txgroups1))[keep]
+                xmapback <- seq_along(index)[index][ii]
+                txgroups2 <- split(subjectHits(span), queryHits(span))
+                rangemin <- min(List(txgroups2[keep]))
+                query <- c(queryHits(hits), xmapback)
+                subject <- c(subjectHits(hits), unlist(rangemin))
+                hits <- Hits(query, subject, length(x), length(flat),
+                             sort.by.query=TRUE)
+            }
+        }
+    }
+    ## 'x' falls within an intron
     if (intronJunctions) {
-        ## introns must fall between ranges; not off the ends
-        nonHits <- !seq_along(x) %in% queryHits(hits)
         if (any(nonHits)) {
-            follows <- follow(x[nonHits], flat, ignore.strand=ignore.strand)
-            precedes <- precede(x[nonHits], flat, ignore.strand=ignore.strand)
+            follows <- follow(xnonHits, flat, ignore.strand=ignore.strand)
+            precedes <- precede(xnonHits, flat, ignore.strand=ignore.strand)
             introns <- logical(length(nonHits))
             introns[nonHits] <-  !is.na(follows & precedes)
             if (any(introns)) {
@@ -113,24 +140,29 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
             }
         } else mcols(hits)$intronic <- logical(length(hits))
     }
+    ## process all hits
     if (length(hits)) {
         xHits <- queryHits(hits)
         txHits <- subjectHits(hits)
         xrange <- ranges(x)[xHits]
         bounds <- ranges(flat)[txHits]
-        ## location wrt to start of individual list elements
+
+        ## Adjust location wrt to individual list elements
         neg <- as.vector(strand(flat)[txHits] == "-")
         negstart <- end(bounds)[neg] - end(xrange)[neg] + 1L
         xrange[neg] <- IRanges(negstart, width=width(xrange)[neg])
         xrange[!neg] <- shift(xrange[!neg], - start(bounds)[!neg] + 1L)
-        ## location wrt start of concatenated list elements
+        transcriptsHits=togroup(PartitioningByWidth(transcripts))[txHits]
+
+        ## Adjust location and width wrt concatenated list elements
         if (length(flat) > length(transcripts)) {
             shifted <- .listCumsumShifted(width(transcripts))
             xrange <- shift(xrange, shifted[txHits])
+            intronwidth <- psetdiff(x[xHits], transcripts[transcriptsHits])
+            width(xrange) <- width(xrange) - sum(width(intronwidth))
         }
 
         ## seqnames come from 'transcripts'
-        transcriptsHits=togroup(PartitioningByWidth(transcripts))[txHits]
         df <- DataFrame(xHits=xHits, transcriptsHits=transcriptsHits)
         if (intronJunctions)
             df$intronic <- mcols(hits)$intronic
