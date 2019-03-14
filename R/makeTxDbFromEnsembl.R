@@ -200,27 +200,25 @@
             appendLF=FALSE)
     seq_region_columns <- c(
         "seq_region_id",
-        "name",
+        "seq_region.name AS name",
         "coord_system_id",
         "length"
     )
     coord_system_columns <- c(
         "coord_system_id",
         "species_id",
-        "name",
-        "version",
-        "rank",
-        "attrib"
+        "coord_system.name AS coord_system_name",
+        "coord_system.version AS coord_system_version",
+        "coord_system.rank AS coord_system_rank",
+        "coord_system.attrib AS coord_system_attrib"
     )
     using_column <- "coord_system_id"
     joined_columns <- c(using_column,
                         setdiff(seq_region_columns, using_column),
                         setdiff(coord_system_columns, using_column))
+    select <- paste(joined_columns, collapse = ", ")
     from <- "seq_region INNER JOIN coord_system USING(coord_system_id)"
-    seq_region <- .dbselect(dbconn, "*", from)
-    stopifnot(identical(colnames(seq_region), joined_columns))
-    colnames(seq_region)[6:9] <- paste0("coord_system_",
-                                        colnames(seq_region)[6:9])
+    seq_region <- .dbselect(dbconn, select, from)
     top_level_ids <- .get_toplevel_seq_region_ids(dbconn)
     chromlengths <- extract_chromlengths_from_seq_region(
                                          seq_region,
