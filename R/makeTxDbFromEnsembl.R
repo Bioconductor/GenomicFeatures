@@ -216,9 +216,8 @@
     joined_columns <- c(using_column,
                         setdiff(seq_region_columns, using_column),
                         setdiff(coord_system_columns, using_column))
-    select <- paste(joined_columns, collapse = ", ")
     from <- "seq_region INNER JOIN coord_system USING(coord_system_id)"
-    seq_region <- .dbselect(dbconn, select, from)
+    seq_region <- .dbselect(dbconn, joined_columns, from)
     top_level_ids <- .get_toplevel_seq_region_ids(dbconn)
     chromlengths <- extract_chromlengths_from_seq_region(
                                          seq_region,
