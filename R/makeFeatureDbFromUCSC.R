@@ -20,9 +20,9 @@
 ## helper function to correct for UCSC data having off by one start info.
 .adjustchromStarts <- function(table){
   chromStart <- as.integer(table[["chromStart"]])
-  table <- table[,!(colnames(table) %in% "chromStart")]
   chromStart <- chromStart + 1L
-  return(cbind(table,chromStart))
+  table$chromStart <- chromStart
+  table
 }
 
 ## helper function to re-assign column names as required
@@ -315,7 +315,9 @@ makeFeatureDbFromUCSC <- function(genome,
     ## base table type 1st:
     .UCSC_GENERICCOL2CLASS = c(.UCSC_GENERICCOL2CLASS, columns)
     ucsc_table <- setDataFrameColClass(ucsc_table ,.UCSC_GENERICCOL2CLASS,
-                                       drop.extra.cols=TRUE)    
+                                       drop.extra.cols=TRUE)
+    ## ensure that the table columns conform to expectations
+    ucsc_table <- ucsc_table[,names(.UCSC_GENERICCOL2CLASS)]
     
     ## Compile some of the metadata
     metadata <- .prepareUCSCFeatureMetadata(genome, tablename, taxonomyId)
