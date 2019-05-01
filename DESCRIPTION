@@ -1,6 +1,6 @@
 Package: GenomicFeatures
 Title: Conveniently import and query gene models
-Version: 1.35.11
+Version: 1.35.12
 Encoding: UTF-8
 Author: M. Carlson, H. Pagès, P. Aboyoun, S. Falcon, M. Morgan,
 	D. Sarkar, M. Lawrence, V. Obenchain
@@ -29,9 +29,9 @@ Suggests: RMariaDB, org.Mm.eg.db, org.Hs.eg.db,
 	mirbase.db, FDb.UCSC.tRNAs,
 	TxDb.Hsapiens.UCSC.hg19.knownGene,
 	TxDb.Dmelanogaster.UCSC.dm3.ensGene (>= 2.7.1),
-	TxDb.Mmusculus.UCSC.mm10.knownGene,
+	TxDb.Mmusculus.UCSC.mm10.knownGene (>= 3.4.7),
 	TxDb.Hsapiens.UCSC.hg19.lincRNAsTranscripts,
-	TxDb.Hsapiens.UCSC.hg38.knownGene,
+	TxDb.Hsapiens.UCSC.hg38.knownGene (>= 3.4.6),
 	SNPlocs.Hsapiens.dbSNP144.GRCh38,
 	Rsamtools, pasillaBamSubset (>= 0.0.5), GenomicAlignments (>= 1.15.7),
 	ensembldb,

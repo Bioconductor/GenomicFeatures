@@ -244,13 +244,14 @@
 
 ## Gene "Dgkb" has ENTREZID "217480":
 library(org.Mm.eg.db)
-library(TxDb.Mmusculus.UCSC.mm10.knownGene)
-geneid <- select(org.Mm.eg.db, "Dgkb", "ENTREZID", "SYMBOL")
-geneid
+Dgkb_geneid <- get("Dgkb", org.Mm.egSYMBOL2EG)
 
 ## The gene is on the positive strand, chromosome 12:
+library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 txdb <- TxDb.Mmusculus.UCSC.mm10.knownGene
-genes(txdb)[geneid[,"ENTREZID"]]
+tx_by_gene <- transcriptsBy(txdb, by="gene")
+Dgkb_transcripts <- tx_by_gene[[Dgkb_geneid]]
+Dgkb_transcripts  # all 7 Dgkb transcripts are on chr12, positive strand
 
 ## To map coordinates from local CDS or exon space to genome 
 ## space use mapFromTranscripts().
@@ -259,35 +260,38 @@ genes(txdb)[geneid[,"ENTREZID"]]
 ## argument is the collection of CDS regions by transcript.
 coord <- GRanges("chr12", IRanges(4, width=1))
 ## Get the names of the transcripts in the gene:
-tx_names <- transcriptsBy(txdb, "gene")[[geneid[,"ENTREZID"]]]$tx_name
-tx_names
+Dgkb_tx_names <- mcols(Dgkb_transcripts)$tx_name
+Dgkb_tx_names
 ## Use these names to isolate the region of interest:
-cdsbytx <- cdsBy(txdb, "tx", use.name=TRUE)[tx_names]
+cds_by_tx <- cdsBy(txdb, "tx", use.names=TRUE)
+Dgkb_cds_by_tx <- cds_by_tx[intersect(Dgkb_tx_names, names(cds_by_tx))]
+Dgkb_cds_by_tx  # Dgkb CDS grouped by transcript (no-CDS transcripts omitted)
+lengths(Dgkb_cds_by_tx)  # nb of CDS per transcript
 ## A requirement for mapping from transcript space to genome space
 ## is that seqnames in 'x' match the names in 'transcripts'.
-names(cdsbytx) <- rep(seqnames(coord), length(cdsbytx))
+names(Dgkb_cds_by_tx) <- rep(seqnames(coord), length(Dgkb_cds_by_tx))
 ## There are 6 results, one for each transcript.
-mapFromTranscripts(coord, cdsbytx)
+mapFromTranscripts(coord, Dgkb_cds_by_tx)
 
 ## To map exon coordinates to genome space the 'transcripts'
 ## argument is the collection of exon regions by transcript.
 coord <- GRanges("chr12", IRanges(100, width=1))
-exonsbytx <- exonsBy(txdb, "tx", use.name=TRUE)[tx_names]
-names(exonsbytx) <- rep(seqnames(coord), length(exonsbytx))
+ex_by_tx <- exonsBy(txdb, "tx", use.names=TRUE)
+Dgkb_ex_by_tx <- ex_by_tx[Dgkb_tx_names]
+names(Dgkb_ex_by_tx) <- rep(seqnames(coord), length(Dgkb_ex_by_tx))
 ## Again the output has 6 results, one for each transcript.
-mapFromTranscripts(coord, exonsbytx)
+mapFromTranscripts(coord, Dgkb_ex_by_tx)
 
 ## To go the reverse direction and map from genome space to
 ## local CDS or exon space, use mapToTranscripts().
 
 ## Genomic position 37981944 maps to CDS position 4:
 coord <- GRanges("chr12", IRanges(37981944, width=1))
-mapToTranscripts(coord, cdsbytx)
+mapToTranscripts(coord, Dgkb_cds_by_tx)
 
 ## Genomic position 37880273 maps to exon position 100:
 coord <- GRanges("chr12", IRanges(37880273, width=1))
-mapToTranscripts(coord, exonsbytx)
-rm(cdsbytx, exonsbytx) 
+mapToTranscripts(coord, Dgkb_ex_by_tx)
 
 
 ## The following examples use more than 2GB of memory, which is more
@@ -335,7 +339,6 @@ cag_loc <- vmatchPattern("CAG", exons_seq)
 ## Convert the first occurance of CAG in each exon back to genome coordinates.
 first_loc <- do.call(c, sapply(cag_loc, "[", 1, simplify=TRUE))
 pmapFromTranscripts(first_loc, exons[[1]])
-rm(cag_loc, exons, exons_seq, lincrna)
 
 ## -----------------------------------------------------------------------
 ## C. Map dbSNP variants to CDS or cDNA coordinates
@@ -356,45 +359,47 @@ snps <- snpsById(SNPlocs.Hsapiens.dbSNP144.GRCh38, rsids)
 
 ## Gene regions of GIPR can be extracted from a TxDb package of compatible
 ## build. The TxDb package uses Entrez gene identifiers and GIPR is a gene
-## symbol. Conversion between gene symbols and Entrez gene IDs is done by
-## calling select() on an organism db package.
+## symbol. Let's first lookup its Entrez gene ID.
 library(org.Hs.eg.db)
-geneid <- select(org.Hs.eg.db, "GIPR", "ENTREZID", "SYMBOL")
+GIPR_geneid <- get("GIPR", org.Hs.egSYMBOL2EG)
 
 ## The transcriptsBy() extractor returns a range for each transcript that
 ## includes the UTR and exon regions (i.e., cDNA).
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
-txbygene <- transcriptsBy(txdb, "gene")
-cDNA <- txbygene[geneid$ENTREZID]
-cDNA
+tx_by_gene <- transcriptsBy(txdb, "gene")
+GIPR_transcripts <- tx_by_gene[GIPR_geneid]
+GIPR_transcripts  # all 8 GIPR transcripts are on chr19, positive strand
 
-## Before mapping, the chromosome names (seqlevels) in the two objects must
-## be harmonized. The style is NCBI for 'snps' and UCSC for 'cDNA'.
+## Before mapping, the chromosome names (seqlevels) in the two
+## objects must be harmonized. The style is NCBI for 'snps' and
+## UCSC for 'GIPR_transcripts'.
 seqlevelsStyle(snps)
-seqlevelsStyle(cDNA)
+seqlevelsStyle(GIPR_transcripts)
 
-## Modify the style and genome in 'snps' to match 'cDNA'.
-seqlevelsStyle(snps) <- seqlevelsStyle(cDNA)
-genome(snps) <- genome(cDNA)
+## Modify the style and genome in 'snps' to match 'GIPR_transcripts'.
+seqlevelsStyle(snps) <- seqlevelsStyle(GIPR_transcripts)
+genome(snps) <- genome(GIPR_transcripts)
 
-## The 'cDNA' object is a GRangesList of length 1. This single list element
-## contains the cDNA range for 4 different transcripts. To map to each
-## transcript individually 'cDNA' must be unlisted before mapping.
+## The 'GIPR_transcripts' object is a GRangesList of length 1. This single
+## list element contains the cDNA range for 8 different transcripts. To map
+## to each transcript individually 'GIPR_transcripts' must be unlisted
+## before mapping.
 
-## Map all 5 SNPS to all 4 transcripts:
-mapToTranscripts(snps, unlist(cDNA))
+## Map all 5 SNPS to all 8 transcripts:
+mapToTranscripts(snps, unlist(GIPR_transcripts))
 
-## Map the first SNP to transcript uc002pct.2 and the second to uc002pcu.2.
-pmapToTranscripts(snps[1:2], unlist(cDNA)[1:2])
+## Map the first SNP to transcript "ENST00000590918.5" and the second to
+## "ENST00000263281.7".
+pmapToTranscripts(snps[1:2], unlist(GIPR_transcripts)[1:2])
 
 ## The cdsBy() extractor returns coding regions by gene or by transcript.
-## Extract the coding regions for transcript uc002pct.2.
-cds <- cdsBy(txdb, "tx", use.names=TRUE)["uc002pct.2"]
+## Extract the coding regions for transcript "ENST00000263281.7".
+cds <- cdsBy(txdb, "tx", use.names=TRUE)["ENST00000263281.7"]
 cds
 
 ## The 'cds' object is a GRangesList of length 1 containing all CDS ranges
-## for the single transcript uc002pct.2.
+## for the single transcript "ENST00000263281.7".
 
 ## To map to the concatenated group of ranges leave 'cds' as a GRangesList.
 mapToTranscripts(snps, cds)
