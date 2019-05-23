@@ -82,10 +82,18 @@ tidyIntrons(txdb, drop.geneless=FALSE)
   \link[GenomicRanges]{GRanges} object with 1 range per exonic part
   and with metadata columns \code{tx_id}, \code{tx_name}, \code{gene_id},
   \code{exon_id}, \code{exon_name}, and \code{exon_rank}.
+  If \code{linked.to.single.gene.only} was set to \code{TRUE},
+  an additional \code{exonic_part} metadata column is added that
+  indicates the rank of each exonic part within all the exonic parts
+  linked to the same gene.
 
   \code{intronicParts} returns a disjoint and strictly sorted
   \link[GenomicRanges]{GRanges} object with 1 range per intronic part
   and with metadata columns \code{tx_id}, \code{tx_name}, and \code{gene_id}.
+  If \code{linked.to.single.gene.only} was set to \code{TRUE},
+  an additional \code{intronic_part} metadata column is added that
+  indicates the rank of each intronic part within all the intronic parts
+  linked to the same gene.
 
   \code{tidyTranscripts} returns a \link[GenomicRanges]{GRanges} object
   with 1 range per transcript and with metadata columns \code{tx_id},
@@ -161,22 +169,28 @@ exonic_parts1 <- exonicParts(txdb)
 exonic_parts1
 
 ## Mapping from exonic parts to genes is many-to-many:
-mcols(exonic_parts1)$gene_id
-table(lengths(mcols(exonic_parts1)$gene_id))
-## A Human exonic part can be linked to 0 to 22 known genes!
+gene_id1 <- mcols(exonic_parts1)$gene_id
+gene_id1  # CharacterList object
+table(lengths(gene_id1))
+## The number of known genes a Human exonic part can be linked to
+## varies from 0 to 22!
 
 exonic_parts2 <- exonicParts(txdb, linked.to.single.gene.only=TRUE)
 exonic_parts2
 
 ## Mapping from exonic parts to genes now is many-to-one:
-class(mcols(exonic_parts2)$gene_id)
+gene_id2 <- mcols(exonic_parts2)$gene_id
+gene_id2[1:20]  # character vector
+
+## Select exonic parts for a given gene:
+exonic_parts2[gene_id2 \%in\% "643837"]
 
 ## Sanity checks:
 stopifnot(isDisjoint(exonic_parts1), isStrictlySorted(exonic_parts1))
 stopifnot(isDisjoint(exonic_parts2), isStrictlySorted(exonic_parts2))
 stopifnot(all(exonic_parts2 \%within\% reduce(exonic_parts1)))
 stopifnot(identical(
-    lengths(mcols(exonic_parts1)$gene_id) == 1L,
+    lengths(gene_id1) == 1L,
     exonic_parts1 \%within\% exonic_parts2
 ))
 
@@ -196,7 +210,7 @@ intronic_parts2 <- intronicParts(txdb, linked.to.single.gene.only=TRUE)
 intronic_parts2
 
 ## Mapping from intronic parts to genes now is many-to-one:
-class(mcols(intronic_parts2)$gene_id)
+class(mcols(intronic_parts2)$gene_id)  # character vector
 
 ## Sanity checks:
 stopifnot(isDisjoint(intronic_parts1), isStrictlySorted(intronic_parts1))

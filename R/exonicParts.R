@@ -7,6 +7,20 @@
 ###
 
 
+### TODO: Optimize, rename, and move to a more appropriate place (IRanges?)
+.rank_within_group <- function(x)
+{
+    stopifnot(is.atomic(x), !is.null(x))
+    ux <- unique(x)
+    f <- match(x, ux)
+    t <- tabulate(f, nbins=length(ux))
+    ans <- S4Vectors:::fancy_mseq(t)
+    i <- unlist(splitAsList(seq_along(f), f), use.names=FALSE)
+    ans[i] <- ans
+    ans
+}
+
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### 3 helper functions used internally by exonicParts() and intronicParts()
 ###
@@ -84,7 +98,8 @@ tidyIntrons <- function(txdb, drop.geneless=FALSE)
     ans
 }
 
-.break_in_parts <- function(x, linked.to.single.gene.only=FALSE)
+.break_in_parts <- function(x, linked.to.single.gene.only=FALSE,
+                               extra_mcol="exonic_part")
 {
     ans <- disjoin(x, with.revmap=TRUE)
     revmap <- mcols(ans)$revmap
@@ -98,7 +113,11 @@ tidyIntrons <- function(txdb, drop.geneless=FALSE)
     if (linked.to.single.gene.only) {
         keep_idx <- which(elementNROWS(mcols(ans)$gene_id) == 1L)
         ans <- ans[keep_idx]
-        mcols(ans)$gene_id <- as.character(mcols(ans)$gene_id)
+        gene_id <- as.character(mcols(ans)$gene_id)
+        mcols(ans)$gene_id <- gene_id
+        ## Add "exonic_part" or "intronic_part" metadata column for
+        ## compatibility with old disjointExons().
+        mcols(ans)[[extra_mcol]] <- .rank_within_group(gene_id)
     }
     ans
 }
@@ -116,7 +135,8 @@ exonicParts <- function(txdb, linked.to.single.gene.only=FALSE)
     if (!isTRUEorFALSE(linked.to.single.gene.only))
         stop("'linked.to.single.gene.only' must be TRUE or FALSE")
     ex <- tidyExons(txdb, drop.geneless=linked.to.single.gene.only)
-    .break_in_parts(ex, linked.to.single.gene.only)
+    .break_in_parts(ex, linked.to.single.gene.only,
+                        extra_mcol="exonic_part")
 }
 
 ### Return a disjoint and strictly sorted GRanges object with 1 range per
@@ -126,6 +146,7 @@ intronicParts <- function(txdb, linked.to.single.gene.only=FALSE)
     if (!isTRUEorFALSE(linked.to.single.gene.only))
         stop("'linked.to.single.gene.only' must be TRUE or FALSE")
     introns <- tidyIntrons(txdb, drop.geneless=linked.to.single.gene.only)
-    .break_in_parts(introns, linked.to.single.gene.only)
+    .break_in_parts(introns, linked.to.single.gene.only,
+                             extra_mcol="intronic_part")
 }
 
