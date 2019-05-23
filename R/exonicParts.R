@@ -7,15 +7,13 @@
 ###
 
 
-### TODO: Optimize, rename, and move to a more appropriate place (IRanges?)
-.rank_within_group <- function(x)
+### Works on whatever 'x' can be used as a splitting factor in splitAsList().
+### TODO: Rename and move to a more appropriate place (IRanges?)
+.rank_in_group <- function(x)
 {
-    stopifnot(is.atomic(x), !is.null(x))
-    ux <- unique(x)
-    f <- match(x, ux)
-    t <- tabulate(f, nbins=length(ux))
-    ans <- S4Vectors:::fancy_mseq(t)
-    i <- unlist(splitAsList(seq_along(f), f), use.names=FALSE)
+    groups <- splitAsList(seq_along(x), x)
+    i <- unlist(groups, use.names=FALSE)
+    ans <- S4Vectors:::fancy_mseq(lengths(groups))
     ans[i] <- ans
     ans
 }
@@ -117,7 +115,7 @@ tidyIntrons <- function(txdb, drop.geneless=FALSE)
         mcols(ans)$gene_id <- gene_id
         ## Add "exonic_part" or "intronic_part" metadata column for
         ## compatibility with old disjointExons().
-        mcols(ans)[[extra_mcol]] <- .rank_within_group(gene_id)
+        mcols(ans)[[extra_mcol]] <- .rank_in_group(gene_id)
     }
     ans
 }
