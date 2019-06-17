@@ -10,7 +10,7 @@
   \code{makeTxDb} is a low-level constructor for making
   a \link{TxDb} object from user supplied transcript annotations.
 
-  Note that the end-user will rarely need to use \code{makeTxDb} directly
+  Note that the end user will rarely need to use \code{makeTxDb} directly
   but will typically use one of the high-level constructors
   \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromEnsembl}},
   or \code{\link{makeTxDbFromGFF}}.
