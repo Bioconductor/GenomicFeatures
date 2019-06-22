@@ -56,7 +56,7 @@ GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
                "RNase_P_RNA", "RNase_MRP_RNA", "SRP_RNA", "misc_RNA",
                "antisense_RNA", "antisense",
                "lnc_RNA", "antisense_lncRNA", "transcript_region",
-               "pseudogenic_tRNA")
+               "pseudogenic_tRNA", "guide_RNA")
 .EXON_TYPES <- c("exon", "pseudogenic_exon")
 .CDS_TYPES <- "CDS"
 .STOP_CODON_TYPES <- "stop_codon"
@@ -371,7 +371,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 
 .prepare_dropped_msg <- function(dropped, what)
 {
-    msg <- c("The following ", what, " were dropped")
+    msg <- c(nrow(dropped), " ", what, "s were dropped")
     if (nrow(dropped) > 6L)
         msg <- c(msg, " (showing only the 6 first)")
     c(msg, ":\n", paste(capture.output(print(head(dropped, n=6L))),
