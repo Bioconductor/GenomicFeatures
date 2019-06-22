@@ -34,7 +34,7 @@
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Get the metadata columns of interest
+### Extract the metadata columns of interest
 ###
 
 ### Expected metadata columns for GRanges in GFF3 format:
@@ -49,16 +49,43 @@ GFF3_COLNAMES <- c("type", "phase", "ID", "Parent", "Name", "Dbxref", "geneID")
 ### Used in R/makeTxDbFromGFF.R
 GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
 
+### Only valid Sequence Ontology terms that are "gene" offsprings
+### should be added to .GENE_TYPES. Note however that we've made an
+### exception for "pseudogene" which is NOT an offspring of "gene"!
+### Not clear though when exceptions like this are OK or not. For example
+### some GFF3 files (e.g. ref_GRCh38.p12_top_level.gff3.gz found at
+### ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/GFF/) link some of their
+### exons to parents of type "C_gene_segment", which is neither a "gene" or
+### "transcript" offspring. However, it's not clear that we should make an
+### exception for this term.
 .GENE_TYPES <- c("gene", "pseudogene", "transposable_element_gene")
+
+### Only valid Sequence Ontology terms that are "transcript" offsprings
+### should be added to .TX_TYPES. Note however that we've made an exception
+### for "pseudogenic_transcript" which is NOT an offspring of "transcript"!
 .TX_TYPES <- c("transcript", "pseudogenic_transcript", "primary_transcript",
                "mRNA", "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA",
                "miRNA", "miRNA_primary_transcript",
                "RNase_P_RNA", "RNase_MRP_RNA", "SRP_RNA", "misc_RNA",
                "antisense_RNA", "antisense",
                "lnc_RNA", "antisense_lncRNA", "transcript_region",
-               "pseudogenic_tRNA", "guide_RNA")
-.EXON_TYPES <- c("exon", "pseudogenic_exon")
-.CDS_TYPES <- "CDS"
+               "pseudogenic_tRNA", "scRNA", "guide_RNA", "telomerase_RNA",
+               "vault_RNA", "Y_RNA")
+
+### Only valid Sequence Ontology terms that are "exon" offsprings
+### should be added to .EXON_TYPES. Note however that we've made an
+### exception for "pseudogenic_exon" which is NOT an offspring of "exon"!
+.EXON_TYPES <- c("exon", "pseudogenic_exon", "coding_exon",
+                 "five_prime_coding_exon", "interior_coding_exon",
+                 "three_prime_coding_exon", "exon_of_single_exon_gene",
+                 "interior_exon", "noncoding_exon",
+                 "five_prime_noncoding_exon", "three_prime_noncoding_exon")
+
+### Only valid Sequence Ontology terms that are "CDS" offsprings
+### should be added to .CDS_TYPES.
+.CDS_TYPES <- c("CDS", "transposable_element_CDS",
+                "CDS_predicted", "edited_CDS")
+
 .STOP_CODON_TYPES <- "stop_codon"
 
 ### Used in R/makeTxDbFromGFF.R
@@ -209,6 +236,32 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     Name
 }
 
+.extract_mcols0 <- function(gr_mcols)
+{
+    type <- .get_type(gr_mcols)
+    phase <- .get_phase(gr_mcols)
+    gene_id <- .get_gene_id(gr_mcols)
+    transcript_id <- .get_transcript_id(gr_mcols, gene_id, type)
+    gtf.format <- .is_gtf_format(gr_mcols$ID, gene_id, transcript_id)
+    ID <- .get_ID(gr_mcols, type, gene_id, transcript_id,
+                  gtf.format=gtf.format)
+    Parent <- .get_Parent(gr_mcols, type, gene_id, transcript_id,
+                          gtf.format=gtf.format)
+    Name <- .get_Name(gr_mcols, type, ID, transcript_id)
+    mcols0 <- DataFrame(
+        type=type,
+        phase=phase,
+        ID=ID,
+        Name=Name,
+        Parent=Parent)
+    if (!is.null(gene_id))
+        mcols0$gene_id <- gene_id
+    if (!is.null(transcript_id))
+        mcols0$transcript_id <- transcript_id
+    metadata(mcols0)$gtf.format <- gtf.format
+    mcols0
+}
+
 .get_Dbxref <- function(gr_mcols)
 {
     Dbxref <- gr_mcols$Dbxref
@@ -285,6 +338,23 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 .get_exon_IDX <- function(type, cds_with_gene_parent_IDX)
 {
     sort(c(which(type %in% .EXON_TYPES), cds_with_gene_parent_IDX))
+}
+
+### 'IDX' will typically contain the index returned by .get_exon_IDX().
+### Not used at the moment. Maybe we should make something like this
+### available to the user, and it should work directly on a GFF file.
+### That way they could get a quick glance at the parent types of all
+### the exons in the file. A toggle could let them collect only the
+### types that don't belong to .TX_TYPES. This would provide a way to
+### know in advance which exons (and how many) are going to be dropped
+### by makeTxDbFromGRanges().
+### This could be combined with an 'extra_tx_types' argument to
+### makeTxDbFromGRanges() that would let the user supply some of the
+### exon parent types to be treated as transcripts.
+.collect_parent_types <- function(IDX, Parent, ID, type)
+{
+    types <- type[ID %in% unlist(Parent[IDX], use.names=FALSE)]
+    table(as.character(types))
 }
 
 ### Returns the index of exons whose Parent is a gene.
@@ -369,13 +439,14 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 ### Extract the 'exons', 'cds', and 'stop_codons' data frames
 ###
 
-.prepare_dropped_msg <- function(dropped, what)
+.decorate_drop_msg <- function(msg, features, mcols0)
 {
-    msg <- c(nrow(dropped), " ", what, "s were dropped")
-    if (nrow(dropped) > 6L)
+    Parent_type <- as.character(mcols0$type[match(features$Parent, mcols0$ID)])
+    features$Parent_type <- Parent_type
+    if (nrow(features) > 6L)
         msg <- c(msg, " (showing only the 6 first)")
-    c(msg, ":\n", paste(capture.output(print(head(dropped, n=6L))),
-                                       collapse="\n"))
+    c(wmsg(msg), ":\n", paste(capture.output(print(head(features, n=6L))),
+                              collapse="\n"))
 }
 
 .extract_rank_from_id <- function(id, parent_id)
@@ -431,20 +502,20 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 }
 
 ### Can be used to extract exons, cds, or stop codons.
-.extract_exons_from_GRanges <- function(exon_IDX, gr, ID, Name, Parent,
+.extract_exons_from_GRanges <- function(exon_IDX, gr, mcols0, tx_IDX,
                                         feature=c("exon", "cds", "stop_codon"),
                                         gtf.format=FALSE, phase=NULL)
 {
     feature <- match.arg(feature)
     what <- switch(feature, exon="exon", cds="CDS", stop_codon="stop codon")
-    exon_Parent <- Parent[exon_IDX]
+    exon_Parent <- mcols0$Parent[exon_IDX]
     if (any(any(duplicated(exon_Parent))))
         stop(wmsg("some ", what, "s are mapped twice to the same transcript"))
 
     tx_id <- factor(unlist(exon_Parent, use.names=FALSE))
     nparent_per_ex <- elementNROWS(exon_Parent)
-    exon_id <- rep.int(ID[exon_IDX], nparent_per_ex)
-    exon_name <- rep.int(Name[exon_IDX], nparent_per_ex)
+    exon_id <- rep.int(mcols0$ID[exon_IDX], nparent_per_ex)
+    exon_name <- rep.int(mcols0$Name[exon_IDX], nparent_per_ex)
     exon_chrom <- rep.int(seqnames(gr)[exon_IDX], nparent_per_ex)
     exon_strand <- rep.int(strand(gr)[exon_IDX], nparent_per_ex)
     exon_start <- rep.int(start(gr)[exon_IDX], nparent_per_ex)
@@ -453,20 +524,27 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         cds_phase <- rep.int(phase[exon_IDX], nparent_per_ex)
 
     if (!gtf.format) {
-        ## Drop orphan exons (or orphan cds or stop codons).
-        is_orphan <- !(tx_id %in% ID)
-        norphan <- sum(is_orphan)
-        if (norphan != 0L) {
-            dropped <- data.frame(seqid=exon_chrom[is_orphan],
-                                  start=exon_start[is_orphan],
-                                  end=exon_end[is_orphan],
-                                  strand=exon_strand[is_orphan],
-                                  ID=exon_id[is_orphan],
-                                  Parent=tx_id[is_orphan],
-                                  Name=exon_name[is_orphan],
+        ## Drop orphan exons (or orphan cds or orphan stop codons).
+        ## This happens typically when 'gr' is only a subset of the original
+        ## GFF file. Because of this subsetting, an exon can loose its parent.
+        ## We also drop exons (or cds or stop codons) that have a parent that
+        ## is not a transcript.
+        m <- match(tx_id, mcols0$ID)
+        drop_me <- is.na(m) | !(m %in% tx_IDX)
+        if (sum(drop_me) != 0L) {
+            dropped <- data.frame(seqid=exon_chrom[drop_me],
+                                  start=exon_start[drop_me],
+                                  end=exon_end[drop_me],
+                                  strand=exon_strand[drop_me],
+                                  ID=exon_id[drop_me],
+                                  Name=exon_name[drop_me],
+                                  Parent=tx_id[drop_me],
                                   stringsAsFactors=FALSE)
-            warning(.prepare_dropped_msg(dropped, paste("orphan", what)))
-            keep_idx <- which(!is_orphan)
+            msg <- paste0(nrow(dropped), " ", what,
+                          ifelse(what == "CDS", "", "s"), " ",
+                          "couldn't be linked to a transcript so were dropped")
+            warning(.decorate_drop_msg(msg, dropped, mcols0))
+            keep_idx <- which(!drop_me)
             tx_id <- tx_id[keep_idx]
             exon_id <- exon_id[keep_idx]
             exon_name <- exon_name[keep_idx]
@@ -933,42 +1011,35 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     gr_mcols <- mcols(gr)
 
     ## Get the metadata columns of interest.
-    type <- .get_type(gr_mcols)
-    phase <- .get_phase(gr_mcols)
-    gene_id <- .get_gene_id(gr_mcols)
-    transcript_id <- .get_transcript_id(gr_mcols, gene_id, type)
-    gtf.format <- .is_gtf_format(gr_mcols$ID, gene_id, transcript_id)
-    ID <- .get_ID(gr_mcols, type, gene_id, transcript_id,
-                  gtf.format=gtf.format)
-    Parent <- .get_Parent(gr_mcols, type, gene_id, transcript_id,
-                          gtf.format=gtf.format)
-    Name <- .get_Name(gr_mcols, type, ID, transcript_id)
+    mcols0 <- .extract_mcols0(gr_mcols)
+    gtf.format <- metadata(mcols0)$gtf.format
 
     ## Get the gene, cds, stop_codon, exon, and transcript indices.
-    gene_IDX <- .get_gene_IDX(type)
-    cds_IDX <- .get_cds_IDX(type, phase)
+    gene_IDX <- .get_gene_IDX(mcols0$type)
+    cds_IDX <- .get_cds_IDX(mcols0$type, mcols0$phase)
     cds_with_gene_parent_IDX <- .get_cds_with_gene_parent_IDX(cds_IDX,
-                                          Parent, gene_IDX, ID,
+                                          mcols0$Parent, gene_IDX, mcols0$ID,
                                           gtf.format=gtf.format)
     if (!drop.stop.codons)
-        stop_codon_IDX <- .get_stop_codon_IDX(type)
-    exon_IDX <- .get_exon_IDX(type, cds_with_gene_parent_IDX)
+        stop_codon_IDX <- .get_stop_codon_IDX(mcols0$type)
+    exon_IDX <- .get_exon_IDX(mcols0$type, cds_with_gene_parent_IDX)
     exon_with_gene_parent_IDX <- .get_exon_with_gene_parent_IDX(exon_IDX,
-                                          Parent, gene_IDX, ID,
+                                          mcols0$Parent, gene_IDX, mcols0$ID,
                                           gtf.format=gtf.format)
-    gene_as_tx_IDX <- .get_gene_as_tx_IDX(gene_IDX, ID,
-                                          exon_with_gene_parent_IDX, Parent)
-    tx_IDX <- .get_tx_IDX(type, gene_as_tx_IDX)
+    gene_as_tx_IDX <- .get_gene_as_tx_IDX(gene_IDX, mcols0$ID,
+                                          exon_with_gene_parent_IDX,
+                                          mcols0$Parent)
+    tx_IDX <- .get_tx_IDX(mcols0$type, gene_as_tx_IDX)
 
-    noextx_IDX <- .get_noextx_IDX(tx_IDX, ID, exon_IDX, Parent)
+    noextx_IDX <- .get_noextx_IDX(tx_IDX, mcols0$ID, exon_IDX, mcols0$Parent)
     if (length(noextx_IDX) != 0L) {
         ## Infer exons for transcripts with no exons (noextx).
 
         ## For a noextx with CDS (the GeneDB case): infer 1 exon per CDS that
         ## is the same as the CDS itself.
         cds_with_noextx_parent_IDX <- .get_cds_with_noextx_parent_IDX(
-                                              cds_IDX, Parent,
-                                              noextx_IDX, ID)
+                                              cds_IDX, mcols0$Parent,
+                                              noextx_IDX, mcols0$ID)
         exon_IDX <- sort(c(exon_IDX, cds_with_noextx_parent_IDX))
 
         ## For a noextx with no CDS (the miRBase case): we'll take care of
@@ -976,11 +1047,11 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     }
 
     ## Extract the 'exons' and 'cds' data frames.
-    exons <- .extract_exons_from_GRanges(exon_IDX, gr, ID, Name, Parent,
-                                   feature="exon", gtf.format=gtf.format)
-    cds <- .extract_exons_from_GRanges(cds_IDX, gr, ID, Name, Parent,
-                                   feature="cds", gtf.format=gtf.format,
-                                   phase=phase)
+    exons <- .extract_exons_from_GRanges(exon_IDX, gr, mcols0, tx_IDX,
+                                         feature="exon", gtf.format=gtf.format)
+    cds <- .extract_exons_from_GRanges(cds_IDX, gr, mcols0, tx_IDX,
+                                       feature="cds", gtf.format=gtf.format,
+                                       phase=mcols0$phase)
     ## 'cds$tx_id' should contain the ID of the CDS Parent and this ID is
     ## expected to be a transcript ID. However, for some rare GFF3 files (e.g.
     ## Pabies01b-gene.gff3.gz at
@@ -999,23 +1070,26 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
 
     ## Extract the 'stop_codons', 'transcripts', and 'genes' data frames.
     if (!drop.stop.codons) {
-        stop_codons <- .extract_exons_from_GRanges(stop_codon_IDX,
-                                   gr, ID, Name, Parent,
+        stop_codons <- .extract_exons_from_GRanges(
+                                   stop_codon_IDX, gr, mcols0, tx_IDX,
                                    feature="stop_codon", gtf.format=gtf.format)
     } else {
         stop_codons <- NULL
     }
     transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr,
-                                                     type, ID, Name)
+                                                     mcols0$type,
+                                                     mcols0$ID, mcols0$Name)
     if (gtf.format) {
         transcripts <- .add_missing_transcripts(transcripts, exons)
-        genes <- .extract_genes_from_gtf_GRanges(transcript_id, gene_id,
+        genes <- .extract_genes_from_gtf_GRanges(mcols0$transcript_id,
+                                                 mcols0$gene_id,
                                                  transcripts)
     } else {
         Dbxref <- .get_Dbxref(gr_mcols)
         geneID <- .get_geneID(gr_mcols)
         genes <- .extract_genes_from_gff3_GRanges(gene_IDX, tx_IDX,
-                                                  ID, Name, Parent,
+                                                  mcols0$ID, mcols0$Name,
+                                                  mcols0$Parent,
                                                   Dbxref, geneID)
     }
 
@@ -1085,14 +1159,27 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     ## an integer vector.
     ## TODO: Maybe makeTxDb() could take care of that.
     splicings_tx_id <- match(splicings$tx_id, transcripts$tx_id)
-    if (any(is.na(splicings_tx_id)))
-        stop(wmsg("some exons are linked to transcripts ",
-                  "not found in the file"))
+    orphan_idx <- which(is.na(splicings_tx_id))
+    if (length(orphan_idx) != 0L) {
+        ## Not really expected to happen.
+        stop(wmsg("The input GRanges object contains ",
+                  length(orphan_idx), " exons linked to ",
+                  "transcripts not found in the object. ",
+                  "Did you subset the object before ",
+                  "calling makeTxDbFromGRanges() on it?"))
+    }
     splicings$tx_id <- splicings_tx_id
+
     genes_tx_id <- match(genes$tx_id, transcripts$tx_id)
-    if (any(is.na(genes_tx_id)))
-        stop(wmsg("some genes are linked to transcripts ",
-                  "not found in the file"))
+    orphan_idx <- which(is.na(genes_tx_id))
+    if (length(orphan_idx) != 0L) {
+        ## Not really expected to happen.
+        stop(wmsg("The input GRanges object contains ",
+                  length(orphan_idx), " genes linked to ",
+                  "transcripts not found in the object. ",
+                  "Did you subset the object before ",
+                  "calling makeTxDbFromGRanges() on it?"))
+    }
     genes$tx_id <- genes_tx_id
     transcripts$tx_id <- seq_along(transcripts$tx_id)
 
