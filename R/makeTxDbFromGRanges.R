@@ -444,7 +444,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     Parent_type <- as.character(mcols0$type[match(features$Parent, mcols0$ID)])
     features$Parent_type <- Parent_type
     if (nrow(features) > 6L)
-        msg <- c(msg, " (showing only the 6 first)")
+        msg <- c(msg, " (showing only the first 6)")
     c(wmsg(msg), ":\n", paste(capture.output(print(head(features, n=6L))),
                               collapse="\n"))
 }
