@@ -109,10 +109,11 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     factor(type, levels=levels_in_use)
 }
 
+### Return an integer vector or NULL.
 .get_phase <- function(gr_mcols)
 {
     phase <- gr_mcols$phase
-    if (!is.null(phase) && !is.integer(phase))
+    if (!(is.null(phase) || is.integer(phase)))
         stop(wmsg("the \"phase\" metadata column must be an integer vector"))
     phase
 }
@@ -248,9 +249,9 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     Parent <- .get_Parent(gr_mcols, type, gene_id, transcript_id,
                           gtf.format=gtf.format)
     Name <- .get_Name(gr_mcols, type, ID, transcript_id)
+
     mcols0 <- DataFrame(
         type=type,
-        phase=phase,
         ID=ID,
         Name=Name,
         Parent=Parent)
@@ -258,7 +259,10 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         mcols0$gene_id <- gene_id
     if (!is.null(transcript_id))
         mcols0$transcript_id <- transcript_id
+    if (!is.null(phase))
+        mcols0$phase <- phase
     metadata(mcols0)$gtf.format <- gtf.format
+
     mcols0
 }
 
@@ -527,10 +531,12 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         ## Drop orphan exons (or orphan cds or orphan stop codons).
         ## This happens typically when 'gr' is only a subset of the original
         ## GFF file. Because of this subsetting, an exon can loose its parent.
-        ## We also drop exons (or cds or stop codons) that have a parent that
-        ## is not a transcript.
         m <- match(tx_id, mcols0$ID)
-        drop_me <- is.na(m) | !(m %in% tx_IDX)
+        drop_me <- is.na(m)
+        ## We also drop exons (or cds) that have a parent that is not
+        ## considered a transcript.
+        if (!is.null(tx_IDX))
+            drop_me <- drop_me | !(m %in% tx_IDX)
         if (sum(drop_me) != 0L) {
             dropped <- data.frame(seqid=exon_chrom[drop_me],
                                   start=exon_start[drop_me],
@@ -1071,7 +1077,7 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     ## Extract the 'stop_codons', 'transcripts', and 'genes' data frames.
     if (!drop.stop.codons) {
         stop_codons <- .extract_exons_from_GRanges(
-                                   stop_codon_IDX, gr, mcols0, tx_IDX,
+                                   stop_codon_IDX, gr, mcols0, NULL,
                                    feature="stop_codon", gtf.format=gtf.format)
     } else {
         stop_codons <- NULL
