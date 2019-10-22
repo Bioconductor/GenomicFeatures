@@ -187,7 +187,20 @@ if (FALSE) {
     .check_exon_chrom(tx1)
     .check_exon_rank(tx1)
 
-    seqlevels(tx1) <- seqlevelsInUse(tx1)
+    tx1_seqlevels_in_use <- seqlevelsInUse(tx1)
+    x_seqlevels <- seqlevels(x)
+    ok <- tx1_seqlevels_in_use %in% x_seqlevels
+    if (!all(ok)) {
+        if (all(!ok))
+            stop(wmsg("the transcripts in 'transcripts' are on chromosomes ",
+                      "that are not in 'x'"))
+        seqlevel_not_in_x <- tx1_seqlevels_in_use[!ok][[1L]]
+        stop(wmsg("some transcripts in 'transcripts' are on chromosomes ",
+                  "that are not in 'x' (e.g. some transcripts are on ",
+                  "chromosome \"", seqlevel_not_in_x, "\" but this ",
+                  "chromosome is not in 'x')"))
+    }
+    seqlevels(tx1) <- tx1_seqlevels_in_use
     ## 'seqnames1' is just an ordinary factor (not Rle) parallel to 'tx1'.
     seqnames1 <- unlist(runValue(seqnames(tx1)), use.names=FALSE)
     dnaset_list <- lapply(levels(seqnames1),
