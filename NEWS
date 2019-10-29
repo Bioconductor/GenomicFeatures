@@ -1,3 +1,26 @@
+CHANGES IN VERSION 1.38.0
+-------------------------
+
+NEW FEATURES
+
+    o Small improvement to exonicParts() and intronicParts():
+      - When 'linked.to.single.gene.only' is set to TRUE, exonicParts() now
+        returns an additional "exonic_part" metadata column that indicates the
+        rank of each exonic part within all the exonic parts linked to the same
+        gene. This is for compatibility with old disjointExons().
+      - intronicParts() does something similar except that the additional
+        metadata column is named "intronic_part".
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o makeTxDbFromGRanges() and makeTxDbFromGFF() now recognize more features
+      as transcripts, exons, or CDS (see commits 822665f8 and 6281f856)
+
+BUG FIXES
+
+    o Fix makeTxDbFromUCSC(..., "refGene") for bosTau9/galGal6/panTro6/rheMac10
+
+
 CHANGES IN VERSION 1.36.0
 -------------------------
 
