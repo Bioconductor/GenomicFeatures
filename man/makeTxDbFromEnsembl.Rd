@@ -45,11 +45,19 @@ makeTxDbFromEnsembl(organism="Homo sapiens",
     Ensembl public MySQL servers.
     Make sure to use the server nearest to you. It can make a big difference!
   }
-  \item{username}{Login username for the MySQL server.}
-  \item{password}{Login password for the MySQL server.}
-  \item{port}{Port of the MySQL server.}
-  \item{tx_attrib}{If not \code{NULL}, only select transcripts with an
-    attribute of the given code, a string, like \code{"gencode_basic"}.}
+  \item{username}{
+    Login username for the MySQL server.
+  }
+  \item{password}{
+    Login password for the MySQL server.
+  }
+  \item{port}{
+    Port of the MySQL server.
+  }
+  \item{tx_attrib}{
+    If not \code{NULL}, only select transcripts with an attribute of
+    the given code, a string, like \code{"gencode_basic"}.
+  }
 }
 
 \value{

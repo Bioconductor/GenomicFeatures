@@ -35,23 +35,26 @@
     dbname
 }
 
-.restrict_to_tx_attrib <- function(SQL, tx_attrib) {
-    paste0(SQL,
-           " JOIN transcript_attrib AS ta",
-           " USING(transcript_id)",
-           " WHERE ta.attrib_type_id=",
-           "(SELECT attrib_type_id FROM attrib_type WHERE code='", tx_attrib,
-           "')")
+.dbselect <- function(dbconn, columns, from)
+{
+    SQL <- sprintf("SELECT %s FROM %s", paste0(columns, collapse=","), from)
+    dbGetQuery(dbconn, SQL)
 }
 
-.dbselect <- function(dbconn, columns, from, tx_attrib = NULL)
+.fetch_attrib_type_id <- function(dbconn, tx_attrib)
 {
-    SQL <- sprintf("SELECT %s FROM %s", paste0(columns, collapse=","),
-                   from)
-    if (!is.null(tx_attrib)) {
-        SQL <- .restrict_to_tx_attrib(SQL, tx_attrib)
-    }
-    dbGetQuery(dbconn, SQL)
+    from <- sprintf("attrib_type WHERE code='%s'", tx_attrib)
+    attrib_type_id <- .dbselect(dbconn, "attrib_type_id", from)[[1L]]
+    if (length(attrib_type_id) == 0L)
+        stop(wmsg("invalid supplied transcript attribute code: ", tx_attrib))
+    attrib_type_id
+}
+
+.restrict_to_tx_attrib <- function(from, tx_attrib_type_id)
+{
+    paste0(from, " JOIN transcript_attrib AS ta",
+                 " USING(transcript_id)",
+                 " WHERE ta.attrib_type_id='", tx_attrib_type_id, "'")
 }
 
 .seq_region_columns <- c(
@@ -61,7 +64,7 @@
     "seq_region_strand"
 )
 
-.fetch_Ensembl_transcripts <- function(dbconn, tx_attrib)
+.fetch_Ensembl_transcripts <- function(dbconn, tx_attrib_type_id=NULL)
 {
     message("Fetch transcripts and genes from Ensembl ... ",
             appendLF=FALSE)
@@ -73,7 +76,9 @@
     )
     columns <- c(paste0("transcript.", transcript_columns), "gene.stable_id")
     from <- "transcript LEFT JOIN gene USING(gene_id)"
-    transcripts <- .dbselect(dbconn, columns, from, tx_attrib)
+    if (!is.null(tx_attrib_type_id))
+        from <- .restrict_to_tx_attrib(from, tx_attrib_type_id)
+    transcripts <- .dbselect(dbconn, columns, from)
     colnames(transcripts) <- c("tx_id",
                                "tx_name",
                                "seq_region_id",
@@ -83,11 +88,15 @@
                                "tx_type",
                                "gene_id")
     transcripts$tx_strand <- strand(transcripts$tx_strand)
+    nb_transcripts <- length(unique(transcripts$tx_id))
+    nb_genes <- length(unique(transcripts$gene_id))
     message("OK")
+    message("  (fetched ", nb_transcripts, " transcripts from ",
+            nb_genes, " genes)")
     transcripts
 }
 
-.fetch_Ensembl_translations <- function(dbconn, tx_attrib)
+.fetch_Ensembl_translations <- function(dbconn, tx_attrib_type_id=NULL)
 {
     columns <- c(
         "stable_id",
@@ -97,7 +106,10 @@
         "seq_end",         # relative to last exon
         "transcript_id"
     )
-    .dbselect(dbconn, columns, "translation", tx_attrib)
+    from <- "translation"
+    if (!is.null(tx_attrib_type_id))
+        from <- .restrict_to_tx_attrib(from, tx_attrib_type_id)
+    .dbselect(dbconn, columns, from)
 }
 
 ### 'has_cds' must be a logical vector.
@@ -119,9 +131,9 @@
 }
 
 ### Add "cds_name", "cds_start", and "cds_end" cols to 'splicings'.
-.add_cds_cols <- function(dbconn, splicings, tx_attrib)
+.add_cds_cols <- function(dbconn, splicings, tx_attrib_type_id=NULL)
 {
-    translations <- .fetch_Ensembl_translations(dbconn, tx_attrib)
+    translations <- .fetch_Ensembl_translations(dbconn, tx_attrib_type_id)
 
     m <- match(splicings$tx_id, translations$transcript_id)
     cds_name <- translations$stable_id[m]
@@ -151,10 +163,11 @@
     idx <- which(has_cds & is.na(cds_end))
     cds_end[idx] <- splicings$exon_end[idx]
 
-    cbind(splicings, cds_name, cds_start, cds_end, stringsAsFactors=FALSE)
+    cbind(splicings, cds_name=cds_name, cds_start=cds_start, cds_end=cds_end,
+                     stringsAsFactors=FALSE)
 }
 
-.fetch_Ensembl_splicings <- function(dbconn, tx_attrib)
+.fetch_Ensembl_splicings <- function(dbconn, tx_attrib_type_id=NULL)
 {
     message("Fetch exons and CDS from Ensembl ... ",
             appendLF=FALSE)
@@ -165,7 +178,9 @@
     )
     columns <- c("transcript_id", "rank", exon_columns)
     from <- "exon_transcript INNER JOIN exon USING(exon_id)"
-    splicings <- .dbselect(dbconn, columns, from, tx_attrib)
+    if (!is.null(tx_attrib_type_id))
+        from <- .restrict_to_tx_attrib(from, tx_attrib_type_id)
+    splicings <- .dbselect(dbconn, columns, from)
     colnames(splicings) <- c("tx_id",
                              "exon_rank",
                              "exon_id",
@@ -177,7 +192,7 @@
     splicings$exon_strand <- strand(splicings$exon_strand)
     oo <- S4Vectors:::orderIntegerPairs(splicings$tx_id, splicings$exon_rank)
     splicings <- S4Vectors:::extract_data_frame_rows(splicings, oo)
-    splicings <- .add_cds_cols(dbconn, splicings, tx_attrib)
+    splicings <- .add_cds_cols(dbconn, splicings, tx_attrib_type_id)
     message("OK")
     splicings
 }
@@ -185,8 +200,8 @@
 .get_toplevel_seq_region_ids <- function(dbconn)
 {
     ## FIXME: id0 is hard-coded to 6 for now.
-    ## See .Ensembl_fetchAttribTypeIdForTopLevelSequence() for how to
-    ## extract this value from Ensembl
+    ## See .Ensembl_fetchAttribTypeIdForTopLevelSequence() for how
+    ## to extract this value from Ensembl.
     id0 <- 6L
     columns <- c("seq_region_id", "attrib_type_id", "value")
     seq_region_attrib <- .dbselect(dbconn, columns, "seq_region_attrib")
@@ -234,21 +249,31 @@
     chrominfo
 }
 
-.gather_Ensembl_metadata <- function(organism, dbname, server)
+.gather_Ensembl_metadata <- function(organism, dbname, server,
+                                     tx_attrib=NULL)
 {
     message("Gather the metadata ... ", appendLF=FALSE)
     release <- .dbname2release(dbname)
+    full_dataset <- is.null(tx_attrib)
     metadata <- data.frame(name=c("Data source",
                                   "Organism",
                                   "Ensembl release",
                                   "Ensembl database",
-                                  "MySQL server"),
+                                  "MySQL server",
+                                  "Full dataset"),
                            value=c("Ensembl",
                                    organism,
                                    release,
                                    dbname,
-                                   server),
+                                   server,
+                                   ifelse(full_dataset, "yes", "no")),
                            stringsAsFactors=FALSE)
+    if (!full_dataset) {
+        val <- sprintf("transcripts with attribute \"%s\"", tx_attrib)
+        more_metadata <- data.frame(name="Imported only", value=val,
+                                    stringsAsFactors=FALSE)
+        metadata <- rbind(metadata, more_metadata)
+    }
     message("OK")
     metadata
 }
@@ -273,9 +298,17 @@ makeTxDbFromEnsembl <- function(organism="Homo sapiens",
                         port=port)
     on.exit(dbDisconnect(dbconn))
 
-    transcripts <- .fetch_Ensembl_transcripts(dbconn, tx_attrib)
+    if (is.null(tx_attrib)) {
+        tx_attrib_type_id <- NULL
+    } else {
+        if (!isSingleString(tx_attrib))
+            stop(wmsg("'tx_attrib' must be a single string or NULL"))
+        tx_attrib_type_id <- .fetch_attrib_type_id(dbconn, tx_attrib)
+    }
 
-    splicings <- .fetch_Ensembl_splicings(dbconn, tx_attrib)
+    transcripts <- .fetch_Ensembl_transcripts(dbconn, tx_attrib_type_id)
+
+    splicings <- .fetch_Ensembl_splicings(dbconn, tx_attrib_type_id)
 
     seq_region_ids <- unique(c(transcripts$seq_region_id,
                                splicings$seq_region_id))
@@ -294,7 +327,7 @@ makeTxDbFromEnsembl <- function(organism="Homo sapiens",
 
     chrominfo$seq_region_id <- NULL
 
-    metadata <- .gather_Ensembl_metadata(organism, dbname, server)
+    metadata <- .gather_Ensembl_metadata(organism, dbname, server, tx_attrib)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTxDb(transcripts, splicings,

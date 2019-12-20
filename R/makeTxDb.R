@@ -487,10 +487,8 @@
 
 .write_metadata_table <- function(conn, metadata)
 {
-    transcript_nrow <- dbEasyQuery(conn,
-                                   "SELECT COUNT(*) FROM transcript")[[1L]]
-    exon_nrow <- dbEasyQuery(conn, "SELECT COUNT(*) FROM exon")[[1L]]
-    cds_nrow <- dbEasyQuery(conn, "SELECT COUNT(*) FROM cds")[[1L]]
+    nb_transcripts <- dbEasyQuery(conn,
+                                  "SELECT COUNT(*) FROM transcript")[[1L]]
     thispkg_version <- packageDescription("GenomicFeatures")$Version
     rsqlite_version <- packageDescription("RSQLite")$Version
     mat1 <- matrix(c(
@@ -499,14 +497,12 @@
         ncol=2, byrow=TRUE
     )
     mat2 <- matrix(c(
-        "transcript_nrow", transcript_nrow,
-        "exon_nrow",       exon_nrow,
-        "cds_nrow",        cds_nrow,
-        "Db created by",   "GenomicFeatures package from Bioconductor",
-        "Creation time",   svn.time(),
+        "Nb of transcripts", nb_transcripts,
+        "Db created by",     "GenomicFeatures package from Bioconductor",
+        "Creation time",     svn.time(),
         "GenomicFeatures version at creation time", thispkg_version,
         "RSQLite version at creation time", rsqlite_version,
-        "DBSCHEMAVERSION", DB_SCHEMA_VERSION),
+        "DBSCHEMAVERSION",   DB_SCHEMA_VERSION),
         ncol=2, byrow=TRUE
     )
     colnames(mat1) <- colnames(mat2) <- c("name", "value")
