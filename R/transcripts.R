@@ -288,6 +288,13 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     if (!single.strand.genes.only)
         return(genes)
 
+    multi_hit <- which(elementNROWS(genes) > 1)
+    if (length(multi_hit) > 0){
+        message("Genes with exons on multiple chromosome or on both strands of chromosome: ",
+                length(multi_hit),
+                "\n  These genes are excluded from results.",
+                "\n  Use `single.strand.genes.only=FALSE` to show all hits.")
+    }
     keep_idx <- which(elementNROWS(genes) == 1L)
     genes <- genes[keep_idx]
     ans <- unlist(genes, use.names=FALSE)
