@@ -209,7 +209,7 @@
 }
 
 .fetch_Ensembl_chrominfo <- function(dbconn, seq_region_ids=NULL,
-                                     circ_seqs=DEFAULT_CIRC_SEQS)
+                                     circ_seqs=NULL)
 {
     message("Fetch chromosome names and lengths from Ensembl ...",
             appendLF=FALSE)
@@ -242,7 +242,8 @@
         seq_region_id=chromlengths$seq_region_id,
         chrom=chromlengths$name,
         length=chromlengths$length,
-        is_circular=make_circ_flags_from_circ_seqs(chromlengths$name,
+        is_circular=GenomeInfoDb:::make_circ_flags_from_circ_seqs(
+                                                   chromlengths$name,
                                                    circ_seqs)
     )
     message("OK")
@@ -282,7 +283,7 @@
 ### they run fast on the build machines (which are located on the East Coast).
 makeTxDbFromEnsembl <- function(organism="Homo sapiens",
                                 release=NA,
-                                circ_seqs=DEFAULT_CIRC_SEQS,
+                                circ_seqs=NULL,
                                 server="ensembldb.ensembl.org",
                                 username="anonymous", password=NULL,
                                 port=0L, tx_attrib=NULL)

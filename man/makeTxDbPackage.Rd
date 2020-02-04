@@ -23,12 +23,12 @@
   to do the same thing as \code{makeTxDbPackageFromUCSC} except that the
   annotations originate from biomaRt.
 
-  Finally, the \code{makeTxDbPackage} function allows the user to make a   
+  Finally, the \code{makeTxDbPackage} function allows the user to make a
   \link{TxDb} package directly from a \link{TxDb} object.
 }
-\usage{
 
-  makeTxDbPackageFromUCSC(
+\usage{
+makeTxDbPackageFromUCSC(
     version=,
     maintainer,
     author,
@@ -37,9 +37,9 @@
     genome="hg19",
     tablename="knownGene",
     transcript_ids=NULL,
-    circ_seqs=DEFAULT_CIRC_SEQS,
+    circ_seqs=NULL,
     url="http://genome.ucsc.edu/cgi-bin/",
-    goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+    goldenPath.url=getOption("UCSC.goldenPath.url"),
     taxonomyId=NA,
     miRBaseBuild=NA)
 
@@ -54,13 +54,13 @@ makeFDbPackageFromUCSC(
     tablename="tRNAs",
     columns = UCSCFeatureDbTableSchema(genome, track, tablename),
     url="http://genome.ucsc.edu/cgi-bin/",
-    goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+    goldenPath.url=getOption("UCSC.goldenPath.url"),
     chromCol=NULL,
     chromStartCol=NULL,
     chromEndCol=NULL,
     taxonomyId=NA)
 
-  makeTxDbPackageFromBiomart(
+makeTxDbPackageFromBiomart(
     version,
     maintainer,
     author,
@@ -69,7 +69,7 @@ makeFDbPackageFromUCSC(
     biomart="ENSEMBL_MART_ENSEMBL",
     dataset="hsapiens_gene_ensembl",
     transcript_ids=NULL,
-    circ_seqs=DEFAULT_CIRC_SEQS,
+    circ_seqs=NULL,
     filter=NULL,
     id_prefix="ensembl_",
     host="www.ensembl.org",
@@ -77,19 +77,19 @@ makeFDbPackageFromUCSC(
     taxonomyId=NA,
     miRBaseBuild=NA)
 
-  makeTxDbPackage(txdb,
-                  version,
-  		  maintainer,
-                  author,
-  	          destDir=".",
-                  license="Artistic-2.0",
-                  pkgname=NULL,
-                  provider=NULL,
-                  providerVersion=NULL)
+makeTxDbPackage(txdb,
+                version,
+                maintainer,
+                author,
+                destDir=".",
+                license="Artistic-2.0",
+                pkgname=NULL,
+                provider=NULL,
+                providerVersion=NULL)
 
-  supportedMiRBaseBuildValues()
+supportedMiRBaseBuildValues()
 
-  makePackageName(txdb)
+makePackageName(txdb)
 }
 \arguments{
   \item{version}{What is the version number for this package?}
@@ -143,7 +143,7 @@ makeFDbPackageFromUCSC(
         types of the other columns that the downloaded track should
         have.  Use \code{UCSCFeatureDbTableSchema} to retrieve this
         information for a particular table.}
-  \item{url,goldenPath_url}{use to specify the location of an
+  \item{url,goldenPath.url}{use to specify the location of an
     alternate UCSC Genome Browser.}
   \item{chromCol}{If the schema comes back and the 'chrom' column has been
         labeled something other than 'chrom', use this argument to indicate
@@ -155,9 +155,9 @@ makeFDbPackageFromUCSC(
         so that their definition can be re-specified}
   \item{chromStartCol}{Same thing as chromCol, but for renames of 'chromStart'}
   \item{chromEndCol}{Same thing as chromCol, but for renames of 'chromEnd'}
-  \item{txdb}{A \link{TxDb} object that represents a handle to a 
-    transcript database. This object type is what is returned by 
-    \code{makeTxDbFromUCSC}, \code{makeTxDbFromUCSC} or 
+  \item{txdb}{A \link{TxDb} object that represents a handle to a
+    transcript database. This object type is what is returned by
+    \code{makeTxDbFromUCSC}, \code{makeTxDbFromUCSC} or
     \code{makeTxDb}}
   \item{taxonomyId}{By default this value is NA and the organism
     provided (or inferred) will be used to look up the correct value for
@@ -173,11 +173,11 @@ makeFDbPackageFromUCSC(
     override this value, then the package and it's object will be
     instead named after this value.  Be aware that the standard rules
     for package names will apply, (so don't include spaces,
-    underscores or dashes)} 
-  \item{provider}{If not given, a default is taken from the 
+    underscores or dashes)}
+  \item{provider}{If not given, a default is taken from the
     'Data source' field of the metadata table.}
   \item{providerVersion}{If not given, a default is taken from one of
-    'UCSC table', 'BioMart version' or 'Data source' fields of the 
+    'UCSC table', 'BioMart version' or 'Data source' fields of the
     metadata table.}
 }
 \details{
@@ -203,8 +203,7 @@ makeFDbPackageFromUCSC(
   \code{\link{makeTxDbFromUCSC}},
   \code{\link{makeTxDbFromBiomart}},
   \code{\link{makeTxDb}},
-  \code{\link[rtracklayer]{ucscGenomes}},
-  \code{\link{DEFAULT_CIRC_SEQS}}
+  \code{\link[rtracklayer]{ucscGenomes}}
 }
 
 \examples{
@@ -218,13 +217,13 @@ supportedMiRBaseBuildValues()
 ## Next are examples of actually building a package:
 \dontrun{
 ## Makes a transcript package for Yeast from the ensGene table at UCSC:
-makeTxDbPackageFromUCSC(version="0.01", 
-                        maintainer="Some One <so@someplace.org>", 
+makeTxDbPackageFromUCSC(version="0.01",
+                        maintainer="Some One <so@someplace.org>",
                         author="Some One <so@someplace.com>",
-                        genome="sacCer2", 
+                        genome="sacCer2",
                         tablename="ensGene")
 
-## Makes a transcript package from Human by using biomaRt and limited to a 
+## Makes a transcript package from Human by using biomaRt and limited to a
 ## small subset of the transcripts.
 transcript_ids <- c(
     "ENST00000400839",
@@ -234,9 +233,9 @@ transcript_ids <- c(
     "ENST00000268655",
     "ENST00000313243",
     "ENST00000341724")
-    
-makeTxDbPackageFromBiomart(version="0.01", 
-                           maintainer="Some One <so@someplace.org>", 
+
+makeTxDbPackageFromBiomart(version="0.01",
+                           maintainer="Some One <so@someplace.org>",
                            author="Some One <so@someplace.com>",
                            transcript_ids=transcript_ids)
 

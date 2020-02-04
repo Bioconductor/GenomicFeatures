@@ -36,16 +36,12 @@ importFrom(rtracklayer, FileForFormat, import, asBED, asGFF, browserSession,
 exportClasses(TxDb, FeatureDb)
 
 export(
-  ## utils.R:
-  DEFAULT_CIRC_SEQS,
-
   ## makeTxDb.R:
   makeTxDb,
 
   ## makeTxDbFromUCSC.R:
   supportedUCSCtables,
   browseUCSCtrack,
-  getChromInfoFromUCSC,
   makeTxDbFromUCSC,
 
   ## makeTxDbFromBiomart.R:

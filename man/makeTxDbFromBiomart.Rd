@@ -11,12 +11,15 @@
   The \code{makeTxDbFromBiomart} function allows the user
   to make a \link{TxDb} object from transcript annotations
   available on a BioMart database.
+
+  Note that \code{makeTxDbFromBiomart} is being phased out
+  in favor of \code{\link{makeTxDbFromEnsembl}}.
 }
 \usage{
 makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
                     dataset="hsapiens_gene_ensembl",
                     transcript_ids=NULL,
-                    circ_seqs=DEFAULT_CIRC_SEQS,
+                    circ_seqs=NULL,
                     filter=NULL,
                     id_prefix="ensembl_",
                     host="www.ensembl.org",
@@ -145,8 +148,6 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
           \code{\link[biomaRt]{listDatasets}}, and
           \code{\link[biomaRt]{listFilters}} functions in the
           \pkg{biomaRt} package.
-
-    \item \code{\link{DEFAULT_CIRC_SEQS}}.
 
     \item The \code{\link{supportedMiRBaseBuildValues}} function for
           listing all the possible values for the \code{miRBaseBuild}

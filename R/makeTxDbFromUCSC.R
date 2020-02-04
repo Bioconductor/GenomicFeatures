@@ -448,7 +448,7 @@ browseUCSCtrack <- function(genome="hg19",
     )
 )
 
-.howToGetTxName2GeneIdMapping <- function(tablename)
+.get_txname2geneid_mapdef <- function(tablename)
     .UCSC_TXNAME2GENEID_MAPDEFS[[tablename]]
 
 .fetch_UCSC_txtable <- function(genome, tablename, transcript_ids=NULL)
@@ -460,7 +460,7 @@ browseUCSCtrack <- function(genome="hg19",
                          paste(paste0("'", transcript_ids, "'"), collapse=","))
     }
     columns <- names(.UCSC_TXCOL2CLASS)
-    mapdef <- .howToGetTxName2GeneIdMapping(tablename)
+    mapdef <- .get_txname2geneid_mapdef(tablename)
     if (is.character(mapdef))
         columns <- c(columns, mapdef[["colname"]])
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
@@ -483,19 +483,19 @@ browseUCSCtrack <- function(genome="hg19",
     ucsc_txtable
 }
 
-.fetch_UCSC_table <- function(session, tablename, columns=NULL)
+.fetch_UCSC_table <- function(genome, tablename, columns=NULL)
 {
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
     on.exit(message("OK"))
     if (tablename == "hgFixed.refLink")
         return(UCSC_dbselect("hgFixed", "refLink", columns=columns))
-    UCSC_dbselect(genome(session), tablename, columns=columns)
+    UCSC_dbselect(genome, tablename, columns=columns)
 }
 
 ### The 2 functions below must return a named list with 2 elements:
 ###   $genes: data.frame with tx_name and gene_id cols;
 ###   $gene_id_type: single string.
-.fetchTxName2GeneIdMappingFromUCSC <- function(session, Ltablename, mapdef)
+.fetch_txname2geneid_from_UCSC <- function(genome, Ltablename, mapdef)
 {
     nlink <- length(mapdef$L2Rchain)
     for (i in seq_len(nlink)) {
@@ -508,7 +508,7 @@ browseUCSCtrack <- function(genome="hg19",
         ## "wgEncodeGencodeAttrsV17" table does NOT belong to the "GENCODE
         ## Genes V17" track) so we don't need the track information to fetch
         ## these tables.
-        ucsc_table <- .fetch_UCSC_table(session, tablename,
+        ucsc_table <- .fetch_UCSC_table(genome, tablename,
                                         columns=c(Lcolname, Rcolname))
         if (!all(has_col(ucsc_table, c(Lcolname, Rcolname))))
             stop("expected cols \"", Lcolname, "\" or/and \"",
@@ -534,7 +534,7 @@ browseUCSCtrack <- function(genome="hg19",
     list(genes=genes, gene_id_type=gene_id_type)
 }
 
-.extractTxName2GeneIdMappingFromUCSCTxTable <- function(ucsc_txtable, mapdef)
+.extract_txname2geneid_from_UCSC_txtable <- function(ucsc_txtable, mapdef)
 {
     genes <- data.frame(tx_name=ucsc_txtable[["name"]],
                         gene_id=ucsc_txtable[[mapdef[["colname"]]]],
@@ -548,7 +548,7 @@ browseUCSCtrack <- function(genome="hg19",
 ### Extract the 'transcripts' data frame from UCSC table.
 ###
 
-.extractTranscriptsFromUCSCTxTable <- function(ucsc_txtable)
+.extract_transcripts_from_UCSC_txtable <- function(ucsc_txtable)
 {
     message("Extract the 'transcripts' data frame ... ", appendLF=FALSE)
     on.exit(message("OK"))
@@ -604,8 +604,8 @@ browseUCSCtrack <- function(genome="hg19",
 ###       have the cdsStartStat/cdsStartEnd columns). For hg19 ccdsGene, this
 ###       is not true anymore :-/
 ### TODO: Investigate (1) and (2).
-.extractUCSCCdsStartEnd <- function(cdsStart0, cdsEnd1,
-                                    exon_start0, exon_end1, tx_name)
+.extract_UCSC_cds_start_end <- function(cdsStart0, cdsEnd1,
+                                        exon_start0, exon_end1, tx_name)
 {
     cds_start0 <- cds_end1 <- integer(length(exon_start0))
     cds_start0[] <- NA_integer_
@@ -643,13 +643,13 @@ browseUCSCtrack <- function(genome="hg19",
 ### of integer vectors with eventually NAs. The 2 elements have the same
 ### "shape" as ucsc_txtable$exonStarts and ucsc_txtable$exonEnds and the NAs
 ### in them occur at the same places in the 2 elements.
-.extractCdsLocsFromUCSCTxTable <- function(ucsc_txtable)
+.extract_cds_locs_from_UCSC_txtable <- function(ucsc_txtable)
 {
-    startend <- Map(.extractUCSCCdsStartEnd,
-                    ucsc_txtable$cdsStart, ucsc_txtable$cdsEnd,
-                    ucsc_txtable$exonStarts, ucsc_txtable$exonEnds,
-                    ucsc_txtable$name)
-    bad <- sapply(startend, "[[", 3L)
+    start_end <- Map(.extract_UCSC_cds_start_end,
+                     ucsc_txtable$cdsStart, ucsc_txtable$cdsEnd,
+                     ucsc_txtable$exonStarts, ucsc_txtable$exonEnds,
+                     ucsc_txtable$name)
+    bad <- sapply(start_end, "[[", 3L)
     if (any(bad)) {
         bad_cds <- ucsc_txtable$name[bad]
         msg <- sprintf("UCSC data anomaly in %d transcript(s):
@@ -658,11 +658,12 @@ browseUCSCtrack <- function(genome="hg19",
             paste(sQuote(bad_cds), collapse=" "))
         warning(paste(strwrap(msg, exdent=2L), collapse="\n"))
     }
-    list(start=sapply(startend, "[[", 1L),
-         end=sapply(startend, "[[", 2L))
+    list(start=sapply(start_end, "[[", 1L),
+         end=sapply(start_end, "[[", 2L))
 }
 
-.extractSplicingsFromUCSCTxTable <- function(ucsc_txtable, transcripts_tx_id)
+.extract_splicings_from_UCSC_txtable <- function(ucsc_txtable,
+                                                 transcripts_tx_id)
 {
     message("Extract the 'splicings' data frame ... ", appendLF=FALSE)
     on.exit(message("OK"))
@@ -675,8 +676,8 @@ browseUCSCtrack <- function(genome="hg19",
         if (min(exon_count) <= 0L)
             stop("UCSC data anomaly: 'ucsc_txtable$exonCount' contains ",
                  "non-positive values")
-        exon_rank <- makeExonRankCol(exon_count, ucsc_txtable$strand)
-        cds_locs <- .extractCdsLocsFromUCSCTxTable(ucsc_txtable)
+        exon_rank <- make_exon_rank_col(exon_count, ucsc_txtable$strand)
+        cds_locs <- .extract_cds_locs_from_UCSC_txtable(ucsc_txtable)
         exon_start <- unlist(ucsc_txtable$exonStarts) + 1L
         exon_end <- unlist(ucsc_txtable$exonEnds)
         cds_start <- unlist(cds_locs$start) + 1L
@@ -698,7 +699,7 @@ browseUCSCtrack <- function(genome="hg19",
 ### Preprocess the 'genes' data frame.
 ###
 
-.makeUCSCGenes <- function(genes, ucsc_txtable)
+.make_UCSC_genes <- function(genes, ucsc_txtable)
 {
     #genes <- S4Vectors:::extract_data_frame_rows(genes,
     #                             genes$tx_name %in% ucsc_txtable$name)
@@ -710,49 +711,66 @@ browseUCSCtrack <- function(genome="hg19",
 ### Download and preprocess the 'chrominfo' data frame.
 ###
 
-.makeUCSCChrominfo <- function(genome, circ_seqs=DEFAULT_CIRC_SEQS,
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
+.warn_about_circularity_guess <- function(genome, circ_seqs)
+{
+    if (length(circ_seqs) == 0L) {
+        guess <- c("no sequence in ", genome , " is circular")
+    } else if (length(circ_seqs) == 1L) {
+        guess <- c(circ_seqs, " is circular")
+    } else {
+        in1string <- paste(circ_seqs, collapse=", ")
+        guess <- c(length(circ_seqs), " sequences (",
+                   in1string, ") are circular")
+    }
+    warning(wmsg("UCSC genome ", genome, " is not registered in ",
+                 "GenomeInfoDb (see ?registered_UCSC_genomes), so ",
+                 "we made the following guess about this assembly: ",
+                 guess, ". You can see this by calling isCircular() ",
+                 "on the TxDb object returned by makeTxDbFromUCSC(). "),
+            "\n  ",
+            wmsg("If you think this is incorrect, please let us know. ",
+                 "In the meantime you can supply your own list of ",
+                 "circular sequences (as a character vector) via ",
+                 "the 'circ_seqs' argument."))
+}
+
+.make_UCSC_chrominfo <- function(genome, circ_seqs=NULL,
+        goldenPath.url=getOption("UCSC.goldenPath.url"))
 {
     message("Download and preprocess the 'chrominfo' data frame ... ",
             appendLF=FALSE)
     on.exit(message("OK"))
-    ucsc_chrominfotable <- GenomeInfoDb:::fetch_ChromInfo_from_UCSC(genome,
-                                                goldenPath_url)
-    COL2CLASS <- c(
-        chrom="character",
-        size="integer"
-    )
-    ucsc_chrominfotable <- setDataFrameColClass(ucsc_chrominfotable, COL2CLASS,
-                                                drop.extra.cols=TRUE)
+    chrom_info <- getChromInfoFromUCSC(genome, goldenPath.url=goldenPath.url)
+    if (!is.null(circ_seqs)) {
+        chrom_info[ , "circular"] <-
+            GenomeInfoDb:::make_circ_flags_from_circ_seqs(
+                                           chrom_info[ , "chrom"],
+                                           circ_seqs=circ_seqs)
+    } else {
+        UCSC_genomes <- registered_UCSC_genomes()[ , "genome"]
+        if (!(genome %in% UCSC_genomes)) {
+            circ_seqs <- circ_seqs[circ_seqs[ , "circular"], "chrom"]
+            .warn_about_circularity_guess(genome, circ_seqs)
+        }
+    }
     chrominfo <- data.frame(
-        chrom=ucsc_chrominfotable$chrom,
-        length=ucsc_chrominfotable$size,
-        is_circular=make_circ_flags_from_circ_seqs(ucsc_chrominfotable$chrom,
-                                                   circ_seqs),
+        chrom=chrom_info[ , "chrom"],
+        length=chrom_info[ , "size"],
+        is_circular=chrom_info[ , "circular"],
         stringsAsFactors=FALSE
     )
     oo <- order(rankSeqlevels(chrominfo[ , "chrom"]))
     S4Vectors:::extract_data_frame_rows(chrominfo, oo)
 }
 
-## User-friendly wrapper to .makeUCSCChrominfo().
-getChromInfoFromUCSC <- function(genome,
-          goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
-{
-  chrominfo <-.makeUCSCChrominfo(genome, circ_seqs=character(),
-                                 goldenPath_url=goldenPath_url)
-  chrominfo[ , 1:2]
-}
-
-
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Prepare the 'metadata' data frame.
 ###
 
-.prepareUCSCMetadata <- function(genome, tablename, track, gene_id_type,
-                                 full_dataset,
-                                 taxonomyId=NA, miRBaseBuild=NA)
+.prepare_UCSC_metadata <- function(genome, tablename, track, gene_id_type,
+                                   full_dataset,
+                                   taxonomyId=NA, miRBaseBuild=NA)
 {
     message("Prepare the 'metadata' data frame ... ", appendLF=FALSE)
     on.exit(message("OK"))
@@ -785,11 +803,11 @@ getChromInfoFromUCSC <- function(genome,
 ### makeTxDbFromUCSC()
 ###
 
-.makeTxDbFromUCSCTxTable <- function(ucsc_txtable, genes,
+.make_TxDb_from_UCSC_txtable <- function(ucsc_txtable, genes,
         genome, tablename, track, gene_id_type,
         full_dataset,
-        circ_seqs=DEFAULT_CIRC_SEQS,
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+        circ_seqs=NULL,
+        goldenPath.url=getOption("UCSC.goldenPath.url"),
         taxonomyId=NA,
         miRBaseBuild=NA)
 {
@@ -803,14 +821,14 @@ getChromInfoFromUCSC <- function(genome,
                                                             keep_idx)
     }
 
-    transcripts <- .extractTranscriptsFromUCSCTxTable(ucsc_txtable)
-    splicings <- .extractSplicingsFromUCSCTxTable(ucsc_txtable,
-                                                  transcripts$tx_id)
-    genes <- .makeUCSCGenes(genes, ucsc_txtable)
-    chrominfo <- .makeUCSCChrominfo(genome, circ_seqs, goldenPath_url)
-    metadata <- .prepareUCSCMetadata(genome, tablename, track, gene_id_type,
-                                     full_dataset,
-                                     taxonomyId,  miRBaseBuild)
+    transcripts <- .extract_transcripts_from_UCSC_txtable(ucsc_txtable)
+    splicings <- .extract_splicings_from_UCSC_txtable(ucsc_txtable,
+                                                      transcripts$tx_id)
+    genes <- .make_UCSC_genes(genes, ucsc_txtable)
+    chrominfo <- .make_UCSC_chrominfo(genome, circ_seqs, goldenPath.url)
+    metadata <- .prepare_UCSC_metadata(genome, tablename, track, gene_id_type,
+                                       full_dataset,
+                                       taxonomyId,  miRBaseBuild)
     ## Jan 2019 -- The refGene tables in the hg19 and hg38 UCSC databases were
     ## last updated in Nov 2018 and now contain transcripts located on
     ## sequences that don't belong to the underlying genomes (GRCh37 and GRCh38
@@ -854,9 +872,9 @@ getChromInfoFromUCSC <- function(genome,
 makeTxDbFromUCSC <- function(genome="hg19",
         tablename="knownGene",
         transcript_ids=NULL,
-        circ_seqs=DEFAULT_CIRC_SEQS,
+        circ_seqs=NULL,
         url="http://genome.ucsc.edu/cgi-bin/",
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+        goldenPath.url=getOption("UCSC.goldenPath.url"),
         taxonomyId=NA,
         miRBaseBuild=NA)
 {
@@ -871,8 +889,8 @@ makeTxDbFromUCSC <- function(genome="hg19",
     }
     if (!isSingleString(url))
         stop("'url' must be a single string")
-    if (!isSingleString(goldenPath_url))
-        stop("'goldenPath_url' must be a single string")
+    if (!isSingleString(goldenPath.url))
+        stop("'goldenPath.url' must be a single string")
 
     ## Create an UCSC Genome Browser session.
     session <- browserSession(url=url)
@@ -884,25 +902,26 @@ makeTxDbFromUCSC <- function(genome="hg19",
                                         transcript_ids=transcript_ids)
 
     ## Get the tx_name-to-gene_id mapping.
-    mapdef <- .howToGetTxName2GeneIdMapping(tablename)
+    mapdef <- .get_txname2geneid_mapdef(tablename)
     if (is.null(mapdef)) {
         txname2geneid <- list(genes=NULL, gene_id_type="no gene ids")
     } else if (is.list(mapdef)) {
-        txname2geneid <- .fetchTxName2GeneIdMappingFromUCSC(session,
+        txname2geneid <- .fetch_txname2geneid_from_UCSC(
+                                 genome(session),
                                  tablename, mapdef)
     } else if (is.character(mapdef)) {
-        txname2geneid <- .extractTxName2GeneIdMappingFromUCSCTxTable(
+        txname2geneid <- .extract_txname2geneid_from_UCSC_txtable(
                                  ucsc_txtable, mapdef)
     } else {
         stop("GenomicFeatures internal error: invalid 'mapdef'")
     }
-    .makeTxDbFromUCSCTxTable(ucsc_txtable, txname2geneid$genes,
-                             genome, tablename, track,
-                             txname2geneid$gene_id_type,
-                             full_dataset=is.null(transcript_ids),
-                             circ_seqs=circ_seqs,
-                             goldenPath_url=goldenPath_url,
-                             taxonomyId=taxonomyId,
-                             miRBaseBuild=miRBaseBuild)
+    .make_TxDb_from_UCSC_txtable(ucsc_txtable, txname2geneid$genes,
+                                 genome, tablename, track,
+                                 txname2geneid$gene_id_type,
+                                 full_dataset=is.null(transcript_ids),
+                                 circ_seqs=circ_seqs,
+                                 goldenPath.url=goldenPath.url,
+                                 taxonomyId=taxonomyId,
+                                 miRBaseBuild=miRBaseBuild)
 }
 

@@ -17,7 +17,7 @@ makeTxDbFromGFF(file,
                 dataSource=NA,
                 organism=NA,
                 taxonomyId=NA,
-                circ_seqs=DEFAULT_CIRC_SEQS,
+                circ_seqs=NULL,
                 chrominfo=NULL,
                 miRBaseBuild=NA,
                 metadata=NULL,
@@ -105,8 +105,6 @@ makeTxDbFromGFF(file,
     \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromBiomart}},
           and \code{\link{makeTxDbFromEnsembl}}, for making a \link{TxDb}
           object from online resources.
-
-    \item \code{\link{DEFAULT_CIRC_SEQS}}.
 
     \item The \code{\link{supportedMiRBaseBuildValues}} function for
           listing all the possible values for the \code{miRBaseBuild}

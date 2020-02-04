@@ -3,8 +3,7 @@
 ### -------------------------------------------------------------------------
 
 
-.make_Seqinfo_from_chrominfo <- function(chrominfo,
-                                         circ_seqs=DEFAULT_CIRC_SEQS)
+.make_Seqinfo_from_chrominfo <- function(chrominfo, circ_seqs=NULL)
 {
     if (is(chrominfo, "Seqinfo"))
         return(chrominfo)
@@ -16,8 +15,10 @@
     check_colnames(chrominfo, .REQUIRED_COLS, .OPTIONAL_COLS, "chrominfo")
     ans <- Seqinfo(as.character(chrominfo$chrom), chrominfo$length)
     if (!has_col(chrominfo, "is_circular")) {
-        is_circ <- make_circ_flags_from_circ_seqs(seqlevels(ans), circ_seqs)
-    } else if (!identical(circ_seqs, DEFAULT_CIRC_SEQS)) {
+        is_circ <- GenomeInfoDb:::make_circ_flags_from_circ_seqs(
+                                            seqlevels(ans),
+                                            circ_seqs)
+    } else if (!is.null(circ_seqs)) {
         stop(wmsg("'circ_seqs' should not be specified when 'chrominfo' ",
                   "has an \"is_circular\" column"))
     } else {
@@ -27,14 +28,15 @@
     ans
 }
 
-.tidy_seqinfo <- function(gr, circ_seqs=DEFAULT_CIRC_SEQS, chrominfo=NULL)
+.tidy_seqinfo <- function(gr, circ_seqs=NULL, chrominfo=NULL)
 {
     if (is.null(chrominfo)) {
         seqlevels <- seqlevels(gr)
         seqlevels[rankSeqlevels(seqlevels)] <- seqlevels
         seqlevels(gr) <- seqlevels
-        isCircular(gr) <- make_circ_flags_from_circ_seqs(seqlevels(gr),
-                                                         circ_seqs)
+        isCircular(gr) <- GenomeInfoDb:::make_circ_flags_from_circ_seqs(
+                                                   seqlevels(gr),
+                                                   circ_seqs)
         return(gr)
     }
     si <- .make_Seqinfo_from_chrominfo(chrominfo, circ_seqs)
@@ -123,7 +125,7 @@ makeTxDbFromGFF <- function(file,
                             dataSource=NA,
                             organism=NA,
                             taxonomyId=NA,
-                            circ_seqs=DEFAULT_CIRC_SEQS,
+                            circ_seqs=NULL,
                             chrominfo=NULL,
                             miRBaseBuild=NA,
                             metadata=NULL,

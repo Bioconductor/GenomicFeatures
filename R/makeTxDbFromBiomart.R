@@ -217,7 +217,7 @@
 ### Returns NULL if it fails to fetch the chromosome lengths from the
 ### remote resource.
 .makeBiomartChrominfo <- function(mart, extra_seqnames=NULL,
-                                  circ_seqs=DEFAULT_CIRC_SEQS, host, port)
+                                  circ_seqs=NULL, host, port)
 {
     biomart <- biomaRt:::martBM(mart)
     dataset <- biomaRt:::martDataset(mart)
@@ -260,7 +260,8 @@
         chrominfo <- data.frame(
             chrom=chromlengths$name,
             length=chromlengths$length,
-            is_circular=make_circ_flags_from_circ_seqs(chromlengths$name,
+            is_circular=GenomeInfoDb:::make_circ_flags_from_circ_seqs(
+                                                       chromlengths$name,
                                                        circ_seqs)
         )
         message("OK")
@@ -765,7 +766,7 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
 makeTxDbFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                                 dataset="hsapiens_gene_ensembl",
                                 transcript_ids=NULL,
-                                circ_seqs=DEFAULT_CIRC_SEQS,
+                                circ_seqs=NULL,
                                 filter=NULL,
                                 id_prefix="ensembl_",
                                 host="www.ensembl.org",

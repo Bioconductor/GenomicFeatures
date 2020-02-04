@@ -426,27 +426,6 @@ supportedUCSCtables(genome="mm9")
 mm9KG_txdb <- makeTxDbFromUCSC(genome="mm9", tablename="knownGene")
 @
 
-The function \Rfunction{makeTxDbFromUCSC} also takes an
-important argument called \Robject{circ\_seqs} to label which
-chromosomes are circular.  The argument is a character vector of
-strings that correspond to the circular chromosomes (as labeled by the
-source).  To discover what the source calls their chromosomes, use the
-\Rfunction{getChromInfoFromUCSC} function to list them.  By default,
-there is a supplied character vector that will attempt to label all
-the mitochondrial chromosomes as circular by matching to them.  This
-is the \Robject{DEFAULT\_CIRC\_SEQS} vector.  It contains strings that
-usually correspond to mitochondrial chromosomes.  Once the database
-has been generated with the circular chromosomes tagged in this way,
-all subsequent analysis of these chromosomes will be able to consider
-their circularity for analysis.  So it is important for the user to
-make sure that they pass in the correct strings to the
-\Robject{circ\_seqs} argument to ensure that the correct sequences are
-tagged as circular by the database.
-
-<<discoverChromNames>>=
-head(getChromInfoFromUCSC("hg19"))
-@ 
-
 \subsection{Using \Rfunction{makeTxDbFromBiomart}}
 
 Retrieve data from BioMart by specifying the mart and the data set to

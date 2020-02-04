@@ -226,7 +226,7 @@ makeFeatureDbFromUCSC <- function(genome,
          tablename,
          columns = UCSCFeatureDbTableSchema(genome, track, tablename),
          url="http://genome.ucsc.edu/cgi-bin/",
-         goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+         goldenPath.url=getOption("UCSC.goldenPath.url"),
          chromCol=NULL,
          chromStartCol=NULL,
          chromEndCol=NULL,
@@ -254,8 +254,8 @@ makeFeatureDbFromUCSC <- function(genome,
     ## Check other arguments
     if (!isSingleString(url))
         stop("'url' must be a single string")
-    if (!isSingleString(goldenPath_url))
-        stop("'goldenPath_url' must be a single string")
+    if (!isSingleString(goldenPath.url))
+        stop("'goldenPath.url' must be a single string")
 
     ## Create a UCSC Genome Browser session.
     session <- browserSession(url=url)

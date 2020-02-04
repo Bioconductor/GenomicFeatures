@@ -32,8 +32,8 @@
 ## simplify DB retrievals from metadata table
 .getMetaDataValue <- function(txdb, name){
   con <- dbconn(txdb)
-  res <- dbGetQuery(con, 
-    paste0("SELECT value FROM metadata WHERE name='", name, "'"))[[1]]  
+  res <- dbGetQuery(con,
+    paste0("SELECT value FROM metadata WHERE name='", name, "'"))[[1]]
   if(!length(res))
       stop("metadata table missing a value for '", name, "'")
   res
@@ -53,7 +53,7 @@
 makePackageName <- function(txdb){
   prefix <- .choosePrefix(txdb)
   con <- dbconn(txdb)
-  species <- .abbrevOrganismName(.getMetaDataValue(txdb,'Organism'))  
+  species <- .abbrevOrganismName(.getMetaDataValue(txdb,'Organism'))
   type <- .getMetaDataValue(txdb,'Data source')
   if(type=="UCSC"){
     genome <- .getMetaDataValue(txdb,'Genome')
@@ -62,10 +62,10 @@ makePackageName <- function(txdb){
   }else if(type=="BioMart"){
     db <- .getMetaDataValue(txdb,'BioMart database')
     if(tolower(substr(db, 1, 7)) == "ensembl"){
-    dbVer <- .getMetaDataValue(txdb,'BioMart dataset version')      
-      pkgName <- paste(prefix,species,type,db,dbVer, sep=".")      
+    dbVer <- .getMetaDataValue(txdb,'BioMart dataset version')
+      pkgName <- paste(prefix,species,type,db,dbVer, sep=".")
     }else{
-      pkgName <- paste(prefix,species,type,db, sep=".")      
+      pkgName <- paste(prefix,species,type,db, sep=".")
     }
   }else{
     type <- gsub(" ",".",type)
@@ -82,16 +82,16 @@ makePackageName <- function(txdb){
 .getTxDbVersion <- function(txdb){
     type <- .getMetaDataValue(txdb,'Data source')
 
-    if (type=="UCSC") { 
+    if (type=="UCSC") {
         version <- paste(.getMetaDataValue(txdb,'Genome'),
-                         "genome based on the", 
+                         "genome based on the",
                          .getMetaDataValue(txdb,'UCSC Table'), "table")
     } else if(type=="BioMart") {
-      version <- .getMetaDataValue(txdb,'BioMart database version') 
+      version <- .getMetaDataValue(txdb,'BioMart database version')
     } else {
-      version <- .getMetaDataValue(txdb,'Data source') 
+      version <- .getMetaDataValue(txdb,'Data source')
     }
-    version 
+    version
 }
 
 .normMaintainer <- function(maintainer) {
@@ -163,10 +163,10 @@ makeTxDbPackage <- function(txdb,
        stop("'providerVersion' must be a single string")
    dbType <- .getMetaDataValue(txdb,'Db type')
    authors <- .normAuthor(author, maintainer)
- 
+
    ## there should only be one template
    template_path <- system.file("txdb-template",package="GenomicFeatures")
-   ## We need to define some symbols in order to have the 
+   ## We need to define some symbols in order to have the
    ## template filled out correctly.
    symvals <- list(
     PKGTITLE=paste("Annotation package for",dbType,
@@ -205,7 +205,7 @@ makeTxDbPackage <- function(txdb,
    createPackage(pkgname=pkgname, destinationDir=destDir,
                  originDir=template_path, symbolValues=symvals)
    ## then copy the contents of the database into the extdata dir
-   db_path <- file.path(destDir, pkgname, "inst", "extdata", 
+   db_path <- file.path(destDir, pkgname, "inst", "extdata",
                         paste(pkgname,"sqlite",sep="."))
    if (!dir.exists(dirname(db_path)))
        dir.create(dirname(db_path), recursive=TRUE)
@@ -231,7 +231,7 @@ makeTxDbPackage <- function(txdb,
 ## txdb <- makeTxDbPackageFromUCSC(version="1.0", genome = 'mm9', tablename = 'refGene')
 
 makeTxDbPackageFromUCSC <- function(
-  version,   
+  version,
   maintainer,
   author,
   destDir=".",
@@ -239,9 +239,9 @@ makeTxDbPackageFromUCSC <- function(
   genome="hg19",
   tablename="knownGene",
   transcript_ids=NULL,    ## optional
-  circ_seqs=DEFAULT_CIRC_SEQS,
+  circ_seqs=NULL,
   url="http://genome.ucsc.edu/cgi-bin/",
-  goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+  goldenPath.url=getOption("UCSC.goldenPath.url"),
   taxonomyId=NA,
   miRBaseBuild=NA){
     ## checks
@@ -271,20 +271,20 @@ makeTxDbPackageFromUCSC <- function(
     if(!isSingleString(url)){
         stop("'url' must be supplied as a single element",
              " character vector.")}
-    if(!isSingleString(goldenPath_url)){
-        stop("'goldenPath_url' must be supplied as a single element",
+    if(!isSingleString(goldenPath.url)){
+        stop("'goldenPath.url' must be supplied as a single element",
              " character vector.")}
     if(!isSingleStringOrNA(miRBaseBuild)){
         stop("'miRBaseBuild' must be supplied as a single element",
              " character vector or be NA.")}
-    
+
     ## Make the DB
     txdb <- makeTxDbFromUCSC(genome=genome,
                              tablename=tablename,
                              transcript_ids=transcript_ids,
                              circ_seqs=circ_seqs,
                              url=url,
-                             goldenPath_url=goldenPath_url,
+                             goldenPath.url=goldenPath.url,
                              taxonomyId=taxonomyId,
                              miRBaseBuild=miRBaseBuild)
     ## Make the Package
@@ -306,7 +306,7 @@ makeTxDbPackageFromBiomart <- function(
   biomart="ENSEMBL_MART_ENSEMBL",
   dataset="hsapiens_gene_ensembl",
   transcript_ids=NULL,   ## optional
-  circ_seqs=DEFAULT_CIRC_SEQS, 
+  circ_seqs=NULL,
   filter=NULL,
   id_prefix="ensembl_",
   host="www.ensembl.org",
@@ -372,9 +372,9 @@ makeFDbPackageFromUCSC <- function(
     genome="hg19",
     track="tRNAs",
     tablename="tRNAs",
-    columns = UCSCFeatureDbTableSchema(genome, track, tablename), 
+    columns = UCSCFeatureDbTableSchema(genome, track, tablename),
     url="http://genome.ucsc.edu/cgi-bin/",
-    goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+    goldenPath.url=getOption("UCSC.goldenPath.url"),
     chromCol=NULL,
     chromStartCol=NULL,
     chromEndCol=NULL,
@@ -403,15 +403,15 @@ makeFDbPackageFromUCSC <- function(
              " character vector.")}
     if(!isSingleString(tablename)){
         stop("'tablename' must be supplied as a single element",
-             " character vector.")}    
+             " character vector.")}
     if(!is.character(columns) || length(columns)<1  ||
        length(names(columns))==0 ){
         stop("columns must be supplied as a named character vector.")}
     if(!isSingleString(url)){
         stop("'url' must be supplied as a single element",
              " character vector.")}
-    if(!isSingleString(goldenPath_url)){
-        stop("'goldenPath_url' must be supplied as a single element",
+    if(!isSingleString(goldenPath.url)){
+        stop("'goldenPath.url' must be supplied as a single element",
              " character vector.")}
     if(!isSingleString(chromCol)){
         stop("'chromCol' must be supplied as a single element",
@@ -422,19 +422,19 @@ makeFDbPackageFromUCSC <- function(
     if(!isSingleString(chromEndCol)){
         stop("'chromEndCol' must be supplied as a single element",
              " character vector.")}
-   
+
     ## make the fdb
     fdb <- makeFeatureDbFromUCSC(genome=genome,
                                  track=track,
                                  tablename=tablename,
                                  columns=columns,
                                  url=url,
-                                 goldenPath_url=goldenPath_url,
+                                 goldenPath.url=goldenPath.url,
                                  chromCol=chromCol,
                                  chromStartCol=chromStartCol,
                                  chromEndCol=chromEndCol,
                                  taxonomyId=taxonomyId)
-  
+
     ## Make the Package (recycle functions and templates from txdb)
     makeTxDbPackage(fdb,
                     version=version,

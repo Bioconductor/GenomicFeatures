@@ -2,7 +2,6 @@
 
 \alias{supportedUCSCtables}
 \alias{browseUCSCtrack}
-\alias{getChromInfoFromUCSC}
 \alias{makeTxDbFromUCSC}
 
 \title{
@@ -18,13 +17,11 @@
   that this package is installed.
 }
 \usage{
-makeTxDbFromUCSC(
-        genome="hg19",
-        tablename="knownGene",
+makeTxDbFromUCSC(genome="hg19", tablename="knownGene",
         transcript_ids=NULL,
-        circ_seqs=DEFAULT_CIRC_SEQS,
+        circ_seqs=NULL,
         url="http://genome.ucsc.edu/cgi-bin/",
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+        goldenPath.url=getOption("UCSC.goldenPath.url"),
         taxonomyId=NA,
         miRBaseBuild=NA)
 
@@ -32,43 +29,71 @@ supportedUCSCtables(genome="hg19", url="http://genome.ucsc.edu/cgi-bin/")
 
 browseUCSCtrack(genome="hg19", tablename="knownGene",
                 url="http://genome.ucsc.edu/cgi-bin/")
-
-getChromInfoFromUCSC(
-        genome,
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath")
 }
 \arguments{
-  \item{genome}{genome abbreviation used by UCSC and obtained by
-    \code{\link[rtracklayer]{ucscGenomes}()[ , "db"]}.
-    For example: \code{"hg19"}.}
-  \item{tablename}{name of the UCSC table containing the transcript
-    annotations to retrieve. Use the \code{supportedUCSCtables}
-    utility function to get the list of tables known to work with
-    \code{makeTxDbFromUCSC}.}
-  \item{transcript_ids}{optionally, only retrieve transcript
-    annotation data for the specified set of transcript ids.
-    If this is used, then the meta information displayed for the
-    resulting \link{TxDb} object will say 'Full dataset: no'.
-    Otherwise it will say 'Full dataset: yes'.}
-  \item{circ_seqs}{a character vector to list out which chromosomes
-    should be marked as circular.}
-  \item{url,goldenPath_url}{use to specify the location of an
-    alternate UCSC Genome Browser.}
-  \item{taxonomyId}{By default this value is NA and the organism
-    inferred will be used to look up the correct value for this.  But
-    you can use this argument to supply your own valid taxId here.}
-  \item{miRBaseBuild}{specify the string for the appropriate build
-    Information from mirbase.db to use for microRNAs.  This can be
-    learned by calling \code{supportedMiRBaseBuildValues}.  By default,
-    this value will be set to \code{NA}, which will inactivate the
-    \code{microRNAs} accessor.}
+  \item{genome}{
+    The name of a UCSC genome assembly e.g. \code{"hg19"} or \code{"panTro6"}.
+    You can use \code{rtracklayer::\link[rtracklayer]{ucscGenomes}()[ , "db"]}
+    to obtain the current list of valid UCSC genome assemblies.
+  }
+  \item{tablename}{
+    The name of the UCSC table containing the transcript genomic locations
+    to retrieve. Use the \code{supportedUCSCtables} utility function to get
+    the list of tables known to work with \code{makeTxDbFromUCSC}.
+  }
+  \item{transcript_ids}{
+    Optionally, only retrieve transcript locations for the specified
+    set of transcript ids. If this is used, then the meta information
+    displayed for the resulting \link{TxDb} object will say
+    'Full dataset: no'. Otherwise it will say 'Full dataset: yes'.
+  }
+  \item{circ_seqs}{
+    Like \link[GenomicRanges]{GRanges} objects,
+    \link[SummarizedExperiment]{SummarizedExperiment} objects,
+    and many other objects in Bioconductor, the \link{TxDb} object
+    returned by \code{makeTxDbFromUCSC} contains a
+    \link[GenomeInfoDb]{seqinfo} component that can be
+    accessed with \code{\link[GenomeInfoDb]{seqinfo}()}.
+    This component contains various sequence-level information
+    like the sequence names, lengths, and circularity flag for the
+    genome assembly of the \link{TxDb} object.
+
+    As far as we know the information of which sequences are circular
+    is not available in the UCSC Genome Browser. However, for the
+    most commonly used UCSC genome assemblies \code{makeTxDbFromUCSC}
+    will get this information from a knowledge database stored in the
+    \pkg{GenomeInfoDb} package (see \code{?\link{registered_UCSC_genomes}}).
+
+    For less commonly used UCSC genome assemblies, \code{makeTxDbFromUCSC}
+    will make a guess based on the chromosome names (e.g. chrM or 2micron
+    will be assumed to be circular). Even though this works most of the
+    time, it is not guaranteed to work \emph{all the time}. So in this
+    case a warning is issued. If you think the guess is incorrect then
+    you can supply your own list of circular sequences (as a character
+    vector) via the \code{circ_seqs} argument.
+  }
+  \item{url,goldenPath.url}{
+    Use to specify the location of an alternate UCSC Genome Browser.
+  }
+  \item{taxonomyId}{
+    By default this value is NA and the organism inferred will be used
+    to look up the correct value for this. But you can use this argument
+    to supply your own valid taxId here.
+  }
+  \item{miRBaseBuild}{
+    Specify the string for the appropriate build information from
+    \pkg{mirbase.db} to use for microRNAs.  This can be learned by
+    calling \code{supportedMiRBaseBuildValues}. By default, this value
+    will be set to \code{NA}, which will inactivate the \code{microRNAs}
+    accessor.
+  }
 }
 \details{
   \code{makeTxDbFromUCSC} is a convenience function that feeds
   data from the UCSC source to the lower level \code{\link{makeTxDb}}
   function.
-  See \code{?\link{makeTxDbFromBiomart}} for a similar function
-  that feeds data from a BioMart database.
+  See \code{?\link{makeTxDbFromEnsembl}} for a similar function that
+  feeds data from an Ensembl database.
 }
 
 \value{
@@ -80,9 +105,6 @@ getChromInfoFromUCSC(
   IMPORTANT NOTE: In the returned data frame, the set of tables associated
   with a track with subtracks might contain tables that don't exist for the
   specified genome.
-
-  For \code{getChromInfoFromUCSC}: A data frame with 1 row per chromosome
-  (or scaffold) and with columns \code{chrom} and \code{length}.
 }
 
 \author{
@@ -91,9 +113,9 @@ getChromInfoFromUCSC(
 
 \seealso{
   \itemize{
-    \item \code{\link{makeTxDbFromBiomart}} and
-          \code{\link{makeTxDbFromEnsembl}} for making a \link{TxDb} object
-          from other online resources.
+    \item \code{\link{makeTxDbFromEnsembl}} and
+          \code{\link{makeTxDbFromBiomart}} for making a \link{TxDb}
+          object from other online resources.
 
     \item \code{\link{makeTxDbFromGRanges}} and \code{\link{makeTxDbFromGFF}}
           for making a \link{TxDb} object from a \link[GenomicRanges]{GRanges}
@@ -101,8 +123,6 @@ getChromInfoFromUCSC(
 
     \item \code{\link[rtracklayer]{ucscGenomes}} in the \pkg{rtracklayer}
           package.
-
-    \item \code{\link{DEFAULT_CIRC_SEQS}}.
 
     \item The \code{\link{supportedMiRBaseBuildValues}} function for
           listing all the possible values for the \code{miRBaseBuild}
@@ -134,8 +154,7 @@ supportedUCSCtables()
 browseUCSCtrack(genome="sacCer3", tablename="ensGene")
 
 ## Retrieve a full transcript dataset for Yeast from UCSC:
-txdb1 <- makeTxDbFromUCSC(genome="sacCer3", tablename="ensGene",
-                          circ_seqs="chrM")
+txdb1 <- makeTxDbFromUCSC(genome="sacCer3", tablename="ensGene")
 txdb1
 
 ## Retrieve an incomplete transcript dataset for Mouse from UCSC (only
@@ -149,8 +168,7 @@ transcript_ids <- c(
 )
 
 txdb2 <- makeTxDbFromUCSC(genome="mm10", tablename="knownGene",
-                          transcript_ids=transcript_ids,
-                          circ_seqs="chrM")
+                          transcript_ids=transcript_ids)
 txdb2
 
 ## ---------------------------------------------------------------------
@@ -162,12 +180,5 @@ txdb2
 ## that don't exist for the specified genome:
 supported_tables <- supportedUCSCtables("hg38")
 browseUCSCtrack(genome="hg38", tablename="augustusHints")  # no such table
-
-## ---------------------------------------------------------------------
-## C. RETRIEVING CHROMOSOME INFORMATION ONLY
-## ---------------------------------------------------------------------
-
-chrominfo <- getChromInfoFromUCSC(genome="hg38")
-chrominfo
 }
 }

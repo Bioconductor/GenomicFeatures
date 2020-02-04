@@ -335,55 +335,10 @@ makeFeatureIds <- function(chrom_ids, strand, start, end,
 ### Miscellaneous.
 ###
 
-### Global character vector to hold default names for circular sequences.
-### This is exported!
-DEFAULT_CIRC_SEQS <- c(
-    ## Mitochondrial genome
-    "chrM", "MT", "MtDNA", "mit", "Mito", "mitochondrion",
-    "dmel_mitochondrion_genome",
-    ## Chloroplast genome
-    "Pltd", "ChrC", "Pt", "chloroplast", "Chloro",
-    ## Plasmid (yeast)
-    "2micron", "2-micron", "2uM"
-)
-
-### AFAIK UCSC doesn't flag circular sequences.
-### As of Sep 21, 2010 (Ensembl release 59), Ensembl was still not flagging
-### circular sequences in their db (see this thread for the details
-### http://lists.ensembl.org/pipermail/dev/2010-September/000139.html),
-make_circ_flags_from_circ_seqs <- function(seqlevels,
-                                           circ_seqs=DEFAULT_CIRC_SEQS)
-{
-    if (!is.character(seqlevels))
-        stop(wmsg("'seqlevels' must be a character vector"))
-    if (identical(circ_seqs, DEFAULT_CIRC_SEQS)) {
-        ## 'circ_seqs' is set to the default (very likely the user did NOT
-        ## specify this argument).
-        seqlevels <- tolower(seqlevels)
-        circ_seqs <- tolower(circ_seqs)
-        circ_flags <- rep.int(NA, length(seqlevels))
-        circ_flags[seqlevels %in% circ_seqs] <- TRUE
-    } else {
-        ## The user specified the 'circ_seqs' argument.
-        if (!is.character(circ_seqs) ||
-            any(circ_seqs %in% c(NA_character_, "")))
-            stop(wmsg("'circ_seqs' must be a character vector with no NAs ",
-                      "and no empty strings"))
-        bad_circ_seqs <- setdiff(circ_seqs, seqlevels)
-        if (length(bad_circ_seqs) != 0L) {
-            in1string <- paste0(bad_circ_seqs, collapse=", ")
-            stop(wmsg("The following chromosome names in 'circ_seqs' are ",
-                      "not found in the TxDb object to be made: ", in1string))
-        }
-        circ_flags <- seqlevels %in% circ_seqs
-    }
-    circ_flags
-}
-
 ### 'exon_count' must be a vector of positive integers and 'tx_strand' a
 ### character vector with "+" or "-" values. Both vectors must have the
 ### same length.
-makeExonRankCol <- function(exon_count, tx_strand)
+make_exon_rank_col <- function(exon_count, tx_strand)
 {
     ans <- lapply(seq_len(length(exon_count)),
         function(i)

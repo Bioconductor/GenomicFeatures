@@ -34,7 +34,7 @@ makeFeatureDbFromUCSC(
         tablename,
         columns = UCSCFeatureDbTableSchema(genome,track,tablename),
         url="http://genome.ucsc.edu/cgi-bin/",
-        goldenPath_url="http://hgdownload.cse.ucsc.edu/goldenPath",
+        goldenPath.url=getOption("UCSC.goldenPath.url"),
         chromCol, 
         chromStartCol, 
         chromEndCol,
@@ -54,7 +54,7 @@ makeFeatureDbFromUCSC(
         types of the other columns that the downloaded track should
         have.  Use \code{UCSCFeatureDbTableSchema} to retrieve this
         information for a particular table.}
-  \item{url,goldenPath_url}{use to specify the location of an
+  \item{url,goldenPath.url}{use to specify the location of an
         alternate UCSC Genome Browser.}
   \item{chromCol}{If the schema comes back and the 'chrom' column has been 
         labeled something other than 'chrom', use this argument to indicate 

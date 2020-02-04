@@ -18,7 +18,7 @@
 \usage{
 makeTxDbFromEnsembl(organism="Homo sapiens",
                     release=NA,
-                    circ_seqs=DEFAULT_CIRC_SEQS,
+                    circ_seqs=NULL,
                     server="ensembldb.ensembl.org",
                     username="anonymous", password=NULL, port=0L,
                     tx_attrib=NULL)
@@ -79,8 +79,6 @@ makeTxDbFromEnsembl(organism="Homo sapiens",
     \item \code{\link{makeTxDbFromGRanges}} and \code{\link{makeTxDbFromGFF}}
           for making a \link{TxDb} object from a \link[GenomicRanges]{GRanges}
           object, or from a GFF or GTF file.
-
-    \item \code{\link{DEFAULT_CIRC_SEQS}}.
 
     \item The \link{TxDb} class.
 
