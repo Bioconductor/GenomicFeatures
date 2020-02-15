@@ -166,7 +166,8 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
         df <- DataFrame(xHits=xHits, transcriptsHits=transcriptsHits)
         if (intronJunctions)
             df$intronic <- mcols(hits)$intronic
-        GRanges(names(transcripts)[transcriptsHits],
+        GRanges(factor(names(transcripts)[transcriptsHits],
+                       unique(names(transcripts))),
                 xrange, strand(flat)[txHits], df,
                 seqlengths=seqlengths)
     } else {
