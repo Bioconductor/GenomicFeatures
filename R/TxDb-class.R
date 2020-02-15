@@ -603,8 +603,8 @@ setMethod("asGFF", "TxDb", function(x) {
   ## Make 'cds' GRanges.
   cds <- cds(x, columns = c(Parent = "tx_id", Name = "cds_name"))
   mcols(cds)$Parent <- addPrefix(mcols(cds)$Parent, "TxID")
-  mcols(cds)$ID <- NA
-  mcols(cds)$type <- "CDS"
+  mcols(cds)$ID <- rep(NA, length(cds))
+  mcols(cds)$type <- rep("CDS", length(cds))
   mcols(cds) <- mcols(cds)[ , colnames(mcols(gene))]
 
   gff <- c(gene, tx, exon, cds)
