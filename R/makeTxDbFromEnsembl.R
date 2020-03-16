@@ -138,12 +138,12 @@
     m <- match(splicings$tx_id, translations$transcript_id)
     cds_name <- translations$stable_id[m]
 
-    m1 <- S4Vectors:::matchIntegerPairs(splicings$tx_id,
+    m1 <- matchIntegerPairs(splicings$tx_id,
                                         splicings$exon_id,
                                         translations$transcript_id,
                                         translations$start_exon_id)
     offset1 <- translations$seq_start[m1] - 1L
-    m2 <- S4Vectors:::matchIntegerPairs(splicings$tx_id,
+    m2 <- matchIntegerPairs(splicings$tx_id,
                                         splicings$exon_id,
                                         translations$transcript_id,
                                         translations$end_exon_id)
@@ -190,7 +190,7 @@
                              "exon_end",
                              "exon_strand")
     splicings$exon_strand <- strand(splicings$exon_strand)
-    oo <- S4Vectors:::orderIntegerPairs(splicings$tx_id, splicings$exon_rank)
+    oo <- orderIntegerPairs(splicings$tx_id, splicings$exon_rank)
     splicings <- S4Vectors:::extract_data_frame_rows(splicings, oo)
     splicings <- .add_cds_cols(dbconn, splicings, tx_attrib_type_id)
     message("OK")

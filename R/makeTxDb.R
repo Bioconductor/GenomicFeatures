@@ -135,7 +135,7 @@
     if (any(splicings$exon_rank <= 0L))
         stop(wmsg("'splicings$exon_rank' contains non-positive values"))
     ## Check uniqueness of (tx_id, exon_rank) pairs.
-    if (any(S4Vectors:::duplicatedIntegerPairs(splicings$tx_id,
+    if (any(duplicatedIntegerPairs(splicings$tx_id,
                                                splicings$exon_rank)))
         stop(wmsg("'splicings' must contain unique (tx_id, exon_rank) pairs"))
     ## Check 'exon_id'.
