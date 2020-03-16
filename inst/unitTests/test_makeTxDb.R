@@ -10,7 +10,8 @@ test_makeTxDb <- function()
                         tx_chrom=c("chr1", "chr2", "chr2"),
                         tx_strand=c("+", "-", "-"),
                         tx_start=c(1L, 16844685L, 16844685L),
-                        tx_end=c(100L, 16844760L, 16844760L))
+                        tx_end=c(100L, 16844760L, 16844760L),
+                        stringsAsFactors = TRUE)
     splicings0 <-  data.frame(
                         tx_id=c(26L, 5L, 26L, 11L),
                         exon_rank=c(2L, 1L, 1L, 1L),
