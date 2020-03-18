@@ -242,11 +242,13 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     ans
 }
 
-### If 'single.strand.genes.only' is TRUE (the default), then genes that
-### have exons located on both strands of the same chromosome, or on 2
-### different chromosomes are dropped. In that case, the genes are returned
-### in a GRanges object. Otherwise, they're returned in a GRangesList object
-### with the metadata columns requested thru 'columns' set at the top level.
+### If 'single.strand.genes.only' is TRUE (the default), then genes are
+### returned in a GRanges object and those genes that cannot be represented
+### by a single genomic range (because they have exons located on both strands
+### of the same reference sequence or on more than one reference sequence)
+### are dropped with a message. Otherwise, they're returned in a GRangesList
+### object with the metadata columns requested thru 'columns' set at the top
+### level.
 .TxDb.genes <- function(x, columns="gene_id", filter=NULL,
                            single.strand.genes.only=TRUE)
 {
@@ -288,7 +290,23 @@ setGeneric("genes", function(x, ...) standardGeneric("genes"))
     if (!single.strand.genes.only)
         return(genes)
 
-    keep_idx <- which(elementNROWS(genes) == 1L)
+    is_single_range_gene <- elementNROWS(genes) == 1L
+    nb_multi_range_genes <- sum(!is_single_range_gene)
+    if (nb_multi_range_genes != 0L) {
+        if (nb_multi_range_genes == 1L) {
+            what <- "gene was dropped because it has"
+        } else {
+            what <- "genes were dropped because they have"
+        }
+        message("  ", wmsg(nb_multi_range_genes, " ", what, " exons located ",
+                "on both strands of the same reference sequence or on more ",
+                "than one reference sequence, so cannot be represented by a ",
+                "single genomic range."), "\n  ",
+                wmsg("Use 'single.strand.genes.only=FALSE' to get all the ",
+                "genes in a GRangesList object, or use suppressMessages() ",
+                "to suppress this message."))
+    }
+    keep_idx <- which(is_single_range_gene)
     genes <- genes[keep_idx]
     ans <- unlist(genes, use.names=FALSE)
     mcols(ans) <- mcols(genes)

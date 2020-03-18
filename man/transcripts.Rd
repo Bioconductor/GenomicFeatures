@@ -79,15 +79,19 @@ genes(x, ...)
     empty strings.
   }
   \item{single.strand.genes.only}{
-    \code{TRUE} or \code{FALSE}. If \code{TRUE} (the default), then genes
-    that have exons located on both strands of the same chromosome or on
-    two different chromosomes are dropped. In that case, the genes are
-    returned in a \link[GenomicRanges]{GRanges} object. Otherwise, all genes
-    are returned in a \link[GenomicRanges]{GRangesList} object with the
-    columns specified thru the \code{columns} argument set as \emph{top level}
-    metadata columns. (Please keep in mind that the \emph{top level} metadata
+    \code{TRUE} or \code{FALSE}.
+    If \code{TRUE} (the default), then genes are returned in a
+    \link[GenomicRanges]{GRanges} object and those genes that cannot be
+    represented by a single genomic range (because they have exons located
+    on both strands of the same reference sequence or on more than one
+    reference sequence) are dropped with a message.
+
+    If \code{FALSE}, then all the genes are returned in a
+    \link[GenomicRanges]{GRangesList} object with the columns specified
+    thru the \code{columns} argument set as \emph{top level} metadata
+    columns. (Please keep in mind that the \emph{top level} metadata
     columns of a \link[GenomicRanges]{GRangesList} object are not displayed
-    by the \code{show} method.)
+    by the \code{show()} method.)
   }
   \item{upstream}{
     For \code{promoters} : An \code{integer(1)} value indicating the
@@ -142,7 +146,7 @@ genes(x, ...)
           TxDb-like object.
 
     \item \code{\link{extractTranscriptSeqs}} for extracting transcript
-          (or CDS) sequences from chromosome sequences.
+          (or CDS) sequences from reference sequences.
 
     \item \code{\link{coverageByTranscript}} for computing coverage by
           transcript (or CDS) of a set of ranges.
@@ -202,6 +206,10 @@ exons(txdb, columns=c("EXONID", "TXNAME"),
 genes(txdb)  # a GRanges object
 cols <- c("tx_id", "tx_chrom", "tx_strand",
           "exon_id", "exon_chrom", "exon_strand")
+## By default, genes are returned in a GRanges object and those that
+## cannot be represented by a single genomic range (because they have
+## exons located on both strands of the same reference sequence or on
+## more than one reference sequence) are dropped with a message:
 single_strand_genes <- genes(txdb, columns=cols)
 
 ## Because we've returned single strand genes only, the "tx_chrom"
@@ -211,6 +219,7 @@ stopifnot(identical(as.character(seqnames(single_strand_genes)),
                     as.character(mcols(single_strand_genes)$tx_chrom)))
 stopifnot(identical(as.character(seqnames(single_strand_genes)),
                     as.character(mcols(single_strand_genes)$exon_chrom)))
+
 ## and also the "tx_strand" and "exon_strand" metadata columns are
 ## guaranteed to match 'strand(single_strand_genes)':
 stopifnot(identical(as.character(strand(single_strand_genes)),
