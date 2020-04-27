@@ -1,3 +1,37 @@
+CHANGES IN VERSION 1.40.0
+-------------------------
+
+NEW FEATURES
+
+    o Small improvements to makeTxDbFromEnsembl():
+      - check validity of user supplied transcript attribute code
+      - report nb of fetched transcripts and genes during progress
+      - produced TxDb will "remember" which transcript attribute code was used
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o genes() now prints a message when genes are dropped.
+
+    o getChromInfoFromUCSC() is now defined in the GenomeInfoDb package.
+      Note that the new function is a much improved version of the old one
+      but also the returned data frame has its columns named differently!
+      See ?getChromInfoFromUCSC in the GenomeInfoDb package for the details.
+
+    o Argument 'goldenPath_url' was renamed 'goldenPath.url' in functions
+      makeTxDbFromUCSC(), makeFeatureDbFromUCSC(), makeTxDbPackageFromUCSC(),
+      and makeFDbPackageFromUCSC().
+
+    o Default value for argument 'circ_seqs' was changed from DEFAULT_CIRC_SEQS
+      to NULL in all functions that have this argument.
+
+    o Global constant DEFAULT_CIRC_SEQS (character vector) was removed. It is
+      now defined in GenomeInfoDb but no longer exported, at least for now.
+
+BUG FIXES
+
+    o Make asGFF() method for TxDb objects robust to absence of CDS ranges.
+
+
 CHANGES IN VERSION 1.38.0
 -------------------------
 
