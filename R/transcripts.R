@@ -119,7 +119,7 @@
         names(ans) <- ans_names
     }
     mcols(ans) <- setNames(DF[db_mcolumns0], mcolumns)
-    keep_user_seqlevels_from_TxDb(ans, txdb)
+    set_user_seqlevels_and_genome(ans, txdb)
 }
 
 

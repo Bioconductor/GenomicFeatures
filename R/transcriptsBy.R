@@ -59,7 +59,7 @@
     gr_mcols <- setNames(df[columns], names(columns))
     mcols(gr) <- DataFrame(gr_mcols, check.names=FALSE)
     grl <- split(gr, f)
-    grl <- keep_user_seqlevels_from_TxDb(grl, txdb)
+    grl <- set_user_seqlevels_and_genome(grl, txdb)
     grl <- .set_group_names(grl, use.names, txdb, by)
     .assignMetadataList(grl, txdb)
 }
@@ -251,7 +251,7 @@ setMethod("intronsByTranscript", "TxDb",
                   seqinfo = seqinfo0)
     idx <- width(gr) != 0L  # drop 0-width UTRs
     grl <- split(gr[idx], splicings$tx_id[idx])
-    keep_user_seqlevels_from_TxDb(grl, txdb)
+    set_user_seqlevels_and_genome(grl, txdb)
 }
 
 .make5UTRsByTranscript <- function(txdb, splicings, use.names=FALSE)

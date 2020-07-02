@@ -237,10 +237,10 @@
 \author{V. Obenchain, M. Lawrence and H. Pagès}
 
 \examples{
-
-## -------------------------------------------------------------------------
-## A. Basic Use: Conversion between CDS and Exon coordinates and the genome
-## -------------------------------------------------------------------------
+## ---------------------------------------------------------------------
+## A. Basic Use: Conversion between CDS and Exon coordinates and the
+##    genome
+## ---------------------------------------------------------------------
 
 ## Gene "Dgkb" has ENTREZID "217480":
 library(org.Mm.eg.db)
@@ -265,7 +265,8 @@ Dgkb_tx_names
 ## Use these names to isolate the region of interest:
 cds_by_tx <- cdsBy(txdb, "tx", use.names=TRUE)
 Dgkb_cds_by_tx <- cds_by_tx[intersect(Dgkb_tx_names, names(cds_by_tx))]
-Dgkb_cds_by_tx  # Dgkb CDS grouped by transcript (no-CDS transcripts omitted)
+## Dgkb CDS grouped by transcript (no-CDS transcripts omitted):
+Dgkb_cds_by_tx
 lengths(Dgkb_cds_by_tx)  # nb of CDS per transcript
 ## A requirement for mapping from transcript space to genome space
 ## is that seqnames in 'x' match the names in 'transcripts'.
@@ -303,17 +304,15 @@ if (!is_32bit_windows) {
 ## B. Map sequence locations in exons to the genome
 ## ---------------------------------------------------------------------
 
-## NAGNAG alternative splicing plays an essential role in biological processes
-## and represents a highly adaptable system for posttranslational regulation
-## of gene function. The majority of NAGNAG studies largely focus on messenger
-## RNA. A study by Sun, Lin, and Yan
-## (http://www.hindawi.com/journals/bmri/2014/736798/) demonstrated that
-## NAGNAG splicing is also operative in large intergenic noncoding RNA
-## (lincRNA).
-
-## One finding of interest was that linc-POLR3G-10 exhibited two NAGNAG
-## acceptors located in two distinct transcripts: TCONS_00010012 and
-## TCONS_00010010.
+## NAGNAG alternative splicing plays an essential role in biological
+## processes and represents a highly adaptable system for
+## posttranslational regulation of gene function. The majority of
+## NAGNAG studies largely focus on messenger RNA. A study by Sun,
+## Lin, and Yan (http://www.hindawi.com/journals/bmri/2014/736798/)
+## demonstrated that NAGNAG splicing is also operative in large
+## intergenic noncoding RNA (lincRNA). One finding of interest was
+## that linc-POLR3G-10 exhibited two NAGNAG acceptors located in two
+## distinct transcripts: TCONS_00010012 and TCONS_00010010.
 
 ## Extract the exon coordinates of TCONS_00010012 and TCONS_00010010:
 lincrna <- c("TCONS_00010012", "TCONS_00010010")
@@ -336,30 +335,34 @@ exons_seq
 ## the location of this pattern in all exons.
 cag_loc <- vmatchPattern("CAG", exons_seq)
 
-## Convert the first occurance of CAG in each exon back to genome coordinates.
+## Convert the first occurance of CAG in each exon back to genome
+## coordinates.
 first_loc <- do.call(c, sapply(cag_loc, "[", 1, simplify=TRUE))
 pmapFromTranscripts(first_loc, exons[[1]])
 
-## -----------------------------------------------------------------------
+## ---------------------------------------------------------------------
 ## C. Map dbSNP variants to CDS or cDNA coordinates
-## -----------------------------------------------------------------------
+## ---------------------------------------------------------------------
 
-## The GIPR gene encodes a G-protein coupled receptor for gastric inhibitory
-## polypeptide (GIP). Originally GIP was identified to inhibited gastric acid
-## secretion and gastrin release but was later demonstrated to stimulate
-## insulin release in the presence of elevated glucose.
+## The GIPR gene encodes a G-protein coupled receptor for gastric
+## inhibitory polypeptide (GIP). Originally GIP was identified to
+## inhibited gastric acid secretion and gastrin release but was later
+## demonstrated to stimulate insulin release in the presence of elevated
+## glucose.
 
 ## In this example 5 SNPs located in the GIPR gene are mapped to cDNA
-## coordinates. A list of SNPs in GIPR can be downloaded from dbSNP or NCBI.
-rsids <- c("rs4803846", "rs139322374", "rs7250736", "rs7250754", "rs9749185")
+## coordinates. A list of SNPs in GIPR can be downloaded from dbSNP or
+## NCBI.
+rsids <- c("rs4803846", "rs139322374", "rs7250736", "rs7250754",
+           "rs9749185")
 
 ## Extract genomic coordinates with a SNPlocs package.
 library(SNPlocs.Hsapiens.dbSNP144.GRCh38)
 snps <- snpsById(SNPlocs.Hsapiens.dbSNP144.GRCh38, rsids)
 
-## Gene regions of GIPR can be extracted from a TxDb package of compatible
-## build. The TxDb package uses Entrez gene identifiers and GIPR is a gene
-## symbol. Let's first lookup its Entrez gene ID.
+## Gene regions of GIPR can be extracted from a TxDb package of
+## compatible build. The TxDb package uses Entrez gene identifiers
+## and GIPR is a gene symbol. Let's first lookup its Entrez gene ID.
 library(org.Hs.eg.db)
 GIPR_geneid <- get("GIPR", org.Hs.egSYMBOL2EG)
 
@@ -377,13 +380,12 @@ GIPR_transcripts  # all 8 GIPR transcripts are on chr19, positive strand
 seqlevelsStyle(snps)
 seqlevelsStyle(GIPR_transcripts)
 
-## Modify the style and genome in 'snps' to match 'GIPR_transcripts'.
+## Modify the style (and genome) in 'snps' to match 'GIPR_transcripts'.
 seqlevelsStyle(snps) <- seqlevelsStyle(GIPR_transcripts)
-genome(snps) <- genome(GIPR_transcripts)
 
 ## The 'GIPR_transcripts' object is a GRangesList of length 1. This single
-## list element contains the cDNA range for 8 different transcripts. To map
-## to each transcript individually 'GIPR_transcripts' must be unlisted
+## list element contains the cDNA range for 8 different transcripts. To
+## map to each transcript individually 'GIPR_transcripts' must be unlisted
 ## before mapping.
 
 ## Map all 5 SNPS to all 8 transcripts:
@@ -404,13 +406,13 @@ cds
 ## To map to the concatenated group of ranges leave 'cds' as a GRangesList.
 mapToTranscripts(snps, cds)
 
-## Only the second SNP could be mapped. Unlisting the 'cds' object maps the
-## SNPs to the individual cds ranges (vs the concatenated range).
+## Only the second SNP could be mapped. Unlisting the 'cds' object maps
+## the SNPs to the individual cds ranges (vs the concatenated range).
 mapToTranscripts(snps[2], unlist(cds))
 
-## The location is the same because the SNP hit the first CDS range. If the
-## transcript were on the "-" strand the difference in concatenated vs
-## non-concatenated position would be more obvious.
+## The location is the same because the SNP hit the first CDS range. If
+## the transcript were on the "-" strand the difference in concatenated
+## vs non-concatenated position would be more obvious.
 
 ## Change strand:
 strand(cds) <- strand(snps) <- "-"

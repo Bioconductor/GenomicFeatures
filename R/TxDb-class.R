@@ -13,18 +13,20 @@ gc()
 ### Concrete GenomicFeatures types
 .TxDb <-
     setRefClass("TxDb", contains="AnnotationDb",
-        fields=list(user_seqlevels="character",
-                    user2seqlevels0="integer",
+        fields=list(user2seqlevels0="integer",
+                    user_seqlevels="character",
+                    user_genome="character",
                     isActiveSeq="logical"),
         methods=list(
           initialize=function(...) {
               callSuper(...)
               if (length(dbListTables(conn) != 0L)) {
                   chrominfo <- load_chrominfo(.self, set.col.class=TRUE)
-                  .self$user_seqlevels <- chrominfo$chrom 
                   .self$user2seqlevels0 <- seq_along(chrominfo$chrom)
+                  .self$user_seqlevels <- chrominfo$chrom
+                  .self$user_genome <- load_genome(.self)
                   ## deprecate isActiveSeq
-                  .self$isActiveSeq <- !logical(length(.self$user_seqlevels)) 
+                  .self$isActiveSeq <- !logical(length(.self$user_seqlevels))
               }
           .self
       }))
@@ -35,6 +37,15 @@ gc()
 ###
 ### For internal use only (i.e. NOT exported)
 ###
+
+load_genome <- function(txdb)
+{
+    SQL <- "SELECT value FROM metadata WHERE name='Genome'"
+    genome <- unlist(queryAnnotationDb(txdb, SQL), use.names=FALSE)
+    if (length(genome) == 0L)
+        genome <- NA_character_
+    genome
+}
 
 .format_chrominfo <- function(chrominfo, set.col.class=FALSE)
 {
@@ -359,8 +370,8 @@ setMethod("seqlevels0", "TxDb",
     mode <- GenomeInfoDb:::getSeqlevelsReplacementMode(value, x_seqlevels0)
     if (identical(mode, -2L)) {
         ## "subsetting of the real seqlevels" mode
-        x$user_seqlevels <- value
         x$user2seqlevels0 <- match(value, x_seqlevels0)
+        x$user_seqlevels <- value
         return(x)
     }
     ## Then we compare the user-supplied seqlevels with the current user-
@@ -391,8 +402,8 @@ setMethod("seqlevels0", "TxDb",
                       "stored in the db (", seqlevel0, ")"))
         }
     }
-    x$user_seqlevels <- unname(value)
     x$user2seqlevels0 <- user2seqlevels0
+    x$user_seqlevels <- unname(value)
     x
 }
 
@@ -400,16 +411,12 @@ setReplaceMethod("seqlevels", "TxDb", .set_TxDb_seqlevels)
 
 get_TxDb_seqinfo0 <- function(x)
 {
-    data <- load_chrominfo(x, set.col.class=TRUE)
-    ans <- Seqinfo(seqnames=data[ , "chrom"],
-                   seqlengths=data[ , "length"],
-                   isCircular=data[ , "is_circular"])
-    sql <- "SELECT value FROM metadata WHERE name='Genome'"
-    genome <- unlist(queryAnnotationDb(x, sql))
-    names(genome) <- NULL
-    if (length(genome) != 0L)
-        genome(ans) <- genome
-    ans
+    chrominfo <- load_chrominfo(x, set.col.class=TRUE)
+    genome <- load_genome(x)
+    Seqinfo(seqnames=chrominfo[ , "chrom"],
+            seqlengths=chrominfo[ , "length"],
+            isCircular=chrominfo[ , "is_circular"],
+            genome=genome)
 }
 
 .get_TxDb_seqinfo <- function(x)
@@ -417,10 +424,66 @@ get_TxDb_seqinfo0 <- function(x)
     seqinfo0 <- get_TxDb_seqinfo0(x)
     ans <- seqinfo0[seqlevels(seqinfo0)[x$user2seqlevels0]]
     seqnames(ans) <- x$user_seqlevels
+    genome(ans) <- x$user_genome
     ans
 }
 
 setMethod("seqinfo", "TxDb", .get_TxDb_seqinfo)
+
+### We implement a restricted seqinfo() setter for TxDb objects that supports
+### altering only the seqlevels and/or genome of the object, but not its
+### seqlengths or circularity flags. This is all we need to make the
+### seqlevelsStyle() setter work on TxDb objects.
+.normarg_new2old_and_check_new_seqinfo <-
+    function(new2old, new_seqinfo, old_seqinfo, context="")
+{
+    new_seqlevels <- seqlevels(new_seqinfo)
+    old_seqlevels <- seqlevels(old_seqinfo)
+    if (is.null(new2old)) {
+        if (!identical(new_seqlevels, old_seqlevels))
+            stop(wmsg("'new2old' must be specified when the supplied ",
+                      "'seqlevels' are not identical to the current ",
+                      "'seqlevels'"))
+        new2old <- seq_along(new_seqlevels)
+    } else {
+        new2old <- GenomeInfoDb:::normarg_new2old(new2old,
+                                                  length(new_seqlevels),
+                                                  length(old_seqlevels))
+        if (anyNA(new2old))
+            stop(wmsg("'new2old' cannot contain NAs", context))
+        old_seqinfo <- old_seqinfo[old_seqlevels[new2old]]
+        seqnames(old_seqinfo) <- new_seqlevels
+    }
+    genome(old_seqinfo) <- genome(new_seqinfo)
+    if (!identical(new_seqinfo, old_seqinfo))
+        stop(wmsg("seqlengths() and isCircular() of the supplied 'seqinfo' ",
+                  "must be identical to seqlengths() and isCircular() of ",
+                  "the current 'seqinfo'", context))
+    new2old
+}
+
+.set_TxDb_seqinfo <-
+    function(x, new2old=NULL,
+                pruning.mode=c("error", "coarse", "fine", "tidy"),
+                value)
+{
+    if (!is(value, "Seqinfo"))
+        stop(wmsg("the supplied 'seqinfo' must be a Seqinfo object"))
+    context <- paste0(" when replacing the 'seqinfo' of a ",
+                      classNameForDisplay(x), " object")
+    pruning.mode <- match.arg(pruning.mode)
+    if (pruning.mode != "error")
+        stop(wmsg("'pruning.mode' is not supported", context))
+    new2old <- .normarg_new2old_and_check_new_seqinfo(new2old,
+                                                      value, seqinfo(x),
+                                                      context)
+    x$user2seqlevels0 <- x$user2seqlevels0[new2old]
+    x$user_seqlevels <- seqlevels(value)
+    x$user_genome <- unname(genome(value))
+    x
+}
+
+setReplaceMethod("seqinfo", "TxDb", .set_TxDb_seqinfo)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -482,7 +545,7 @@ setReplaceMethod("isActiveSeq","TxDb",
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### keep_user_seqlevels_from_TxDb()
+### set_user_seqlevels_and_genome()
 ###
 ### Used by the TxDb extractors to correct the seqlevels of GRanges or
 ### GRangesList object 'x' before it's returned to the user. The correction
@@ -490,15 +553,16 @@ setReplaceMethod("isActiveSeq","TxDb",
 ### currently set on TxDb object 'txdb'.
 ### 'x' is assumed to have the original TxDb seqlevels on it.
 
-keep_user_seqlevels_from_TxDb <- function(x, txdb)
+set_user_seqlevels_and_genome <- function(x, txdb)
 {
     txdb_seqlevels0 <- seqlevels0(txdb)
-    stopifnot(setequal(seqlevels(x), txdb_seqlevels0))
+    stopifnot(setequal(txdb_seqlevels0, seqlevels(x)))
     from_seqlevels <- txdb_seqlevels0[txdb$user2seqlevels0]
     to_seqlevels <- txdb$user_seqlevels
     new_seqlevels <- setNames(to_seqlevels, from_seqlevels)
     new_seqlevels <- new_seqlevels[txdb$isActiveSeq[txdb$user2seqlevels0]]
     seqlevels(x, pruning.mode="coarse") <- new_seqlevels
+    genome(x) <- genome(txdb)
     x
 }
 

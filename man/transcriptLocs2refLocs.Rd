@@ -81,73 +81,75 @@ transcriptWidths(exonStarts=list(), exonEnds=list())
 
 \examples{
 ## ---------------------------------------------------------------------
-## GOING FROM TRANSCRIPT-BASED TO REFERENCE-BASED LOCATIONS
+## WITH A SMALL SET OF HUMAN TRANSCRIPTS
 ## ---------------------------------------------------------------------
-library(BSgenome.Hsapiens.UCSC.hg19)  # load the genome
-genome <- BSgenome.Hsapiens.UCSC.hg19
 txdb_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
                          package="GenomicFeatures")
 txdb <- loadDb(txdb_file)
-transcripts <- exonsBy(txdb, by="tx", use.names=TRUE)
-tx_seqs <- extractTranscriptSeqs(genome, transcripts)
+ex_by_tx <- exonsBy(txdb, by="tx", use.names=TRUE)
+genome <- BSgenome::getBSgenome("hg19")  # load the hg19 genome
+tx_seqs <- extractTranscriptSeqs(genome, ex_by_tx)
 
 ## Get the reference-based locations of the first 4 (5' end)
 ## and last 4 (3' end) nucleotides in each transcript:
 tlocs <- lapply(width(tx_seqs), function(w) c(1:4, (w-3):w))
-tx_strand <- sapply(strand(transcripts), runValue)
-## Note that, because of how we made them, 'tlocs', 'start(exbytx)',
-## 'end(exbytx)' and 'tx_strand' have the same length, and, for any
-## valid positional index, elements at this position are corresponding
-## to each other. This is how transcriptLocs2refLocs() expects them
-## to be!
+tx_strand <- sapply(strand(ex_by_tx), runValue)
+
+## Note that, because of how we made them, 'tlocs', 'start(ex_by_tx)',
+## 'end(ex_by_tx)' and 'tx_strand' are "parallel" objects i.e. they
+## have the same length, and, for any valid positional index, elements
+## at this position are corresponding to each other. This is how
+## transcriptLocs2refLocs() expects them to be!
 rlocs <- transcriptLocs2refLocs(tlocs,
-             start(transcripts), end(transcripts),
+             start(ex_by_tx), end(ex_by_tx),
              tx_strand, decreasing.rank.on.minus.strand=TRUE)
 
 ## ---------------------------------------------------------------------
-## EXTRACTING WORM TRANSCRIPTS ZC101.3 AND F37B1.1
+## WITH TWO WORM TRANSCRIPTS: ZC101.3.1 AND F37B1.1.1
 ## ---------------------------------------------------------------------
-## Transcript ZC101.3 (is on + strand):
-##   Exons starts/ends relative to transcript:
-rstarts1 <- c(1, 488, 654, 996, 1365, 1712, 2163, 2453)
-rends1 <- c(137, 578, 889, 1277, 1662, 1870, 2410, 2561)
-##   Exons starts/ends relative to chromosome:
-starts1 <- 14678410 + rstarts1
-ends1 <- 14678410 + rends1
+library(TxDb.Celegans.UCSC.ce11.ensGene)
+txdb <- TxDb.Celegans.UCSC.ce11.ensGene
+my_tx_names <- c("ZC101.3.1", "F37B1.1.1")
+## Both transcripts are on chromosome II, the first one on its positive
+## strand and the second one on its negative strand:
+my_tx <- transcripts(txdb, filter=list(tx_name=my_tx_names))
+my_tx
 
-## Transcript F37B1.1 (is on - strand):
-##   Exons starts/ends relative to transcript:
-rstarts2 <- c(1, 325)
-rends2 <- c(139, 815)
-##   Exons starts/ends relative to chromosome:
-starts2 <- 13611188 - rends2
-ends2 <- 13611188 - rstarts2
+## Using transcripts stored in a GRangesList object:
+ex_by_tx <- exonsBy(txdb, use.names=TRUE)[my_tx_names]
+genome <- getBSgenome("ce11")  # load the ce11 genome
+tx_seqs <- extractTranscriptSeqs(genome, ex_by_tx)
+tx_seqs
 
-exon_starts <- list(as.integer(starts1), as.integer(starts2))
-exon_ends <- list(as.integer(ends1), as.integer(ends2))
-transcripts <- IRangesList(start=exon_starts, end=exon_ends)
+## Since the 2 transcripts are on the same chromosome, an alternative
+## is to store them in an IRangesList object and use that object with
+## extractTranscriptSeqs():
+ex_by_tx2 <- ranges(ex_by_tx)
+tx_seqs2 <- extractTranscriptSeqs(genome$chrII, ex_by_tx2,
+                                  strand=strand(my_tx))
+stopifnot(identical(as.character(tx_seqs), as.character(tx_seqs2)))
 
-library(BSgenome.Celegans.UCSC.ce2)
-## Both transcripts are on chrII:
-chrII <- Celegans$chrII
-tx_seqs <- extractTranscriptSeqs(chrII, transcripts, strand=c("+","-"))
+## Store exon starts and ends in two IntegerList objects for use with
+## transcriptWidths() and transcriptLocs2refLocs():
+exon_starts <- start(ex_by_tx)
+exon_ends <- end(ex_by_tx)
 
 ## Same as 'width(tx_seqs)':
 transcriptWidths(exonStarts=exon_starts, exonEnds=exon_ends)
 
-transcriptLocs2refLocs(list(c(1:6, 135:140, 1555:1560),
-                            c(1:6, 137:142, 625:630)),
+transcriptLocs2refLocs(list(c(1:2, 202:205, 1687:1688),
+                            c(1:2, 193:196, 721:722)),
                        exonStarts=exon_starts,
                        exonEnds=exon_ends,
                        strand=c("+","-"))
 
 ## A sanity check:
-ref_locs <- transcriptLocs2refLocs(list(1:1560, 1:630),
+ref_locs <- transcriptLocs2refLocs(list(1:1688, 1:722),
                                    exonStarts=exon_starts,
                                    exonEnds=exon_ends,
                                    strand=c("+","-"))
-stopifnot(chrII[ref_locs[[1]]] == tx_seqs[[1]])
-stopifnot(complement(chrII)[ref_locs[[2]]] == tx_seqs[[2]])
+stopifnot(genome$chrII[ref_locs[[1]]] == tx_seqs[[1]])
+stopifnot(complement(genome$chrII)[ref_locs[[2]]] == tx_seqs[[2]])
 }
 
 \keyword{manip}
