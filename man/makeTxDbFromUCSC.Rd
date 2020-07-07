@@ -137,7 +137,6 @@ browseUCSCtrack(genome="hg19", tablename="knownGene",
 }
 
 \examples{
-\dontrun{
 ## ---------------------------------------------------------------------
 ## A. BASIC USAGE
 ## ---------------------------------------------------------------------
@@ -148,13 +147,22 @@ library(rtracklayer)
 ucscGenomes()[ , "db"]
 
 ## Display the list of tables known to work with makeTxDbFromUCSC():
-supportedUCSCtables()
+supportedUCSCtables("hg38")
+supportedUCSCtables("hg19")
 
-## Browse the UCSC track page for a given organism/table:
-browseUCSCtrack(genome="sacCer3", tablename="ensGene")
+## Open the UCSC track page for a given organism/table:
+browseUCSCtrack("hg38", tablename="knownGene")
+browseUCSCtrack("hg19", tablename="knownGene")
+
+browseUCSCtrack("hg38", tablename="ncbiRefSeqSelect")
+browseUCSCtrack("hg19", tablename="ncbiRefSeqSelect")
+
+browseUCSCtrack("hg19", tablename="pseudoYale60")
+
+browseUCSCtrack("sacCer3", tablename="ensGene")
 
 ## Retrieve a full transcript dataset for Yeast from UCSC:
-txdb1 <- makeTxDbFromUCSC(genome="sacCer3", tablename="ensGene")
+txdb1 <- makeTxDbFromUCSC("sacCer3", tablename="ensGene")
 txdb1
 
 ## Retrieve an incomplete transcript dataset for Mouse from UCSC (only
@@ -167,7 +175,7 @@ transcript_ids <- c(
     "uc009uzj.1"
 )
 
-txdb2 <- makeTxDbFromUCSC(genome="mm10", tablename="knownGene",
+txdb2 <- makeTxDbFromUCSC("mm10", tablename="knownGene",
                           transcript_ids=transcript_ids)
 txdb2
 
@@ -178,7 +186,6 @@ txdb2
 ## In the data frame returned by supportedUCSCtables(), the set of
 ## tables associated with a track with subtracks might contain tables
 ## that don't exist for the specified genome:
-supported_tables <- supportedUCSCtables("hg38")
-browseUCSCtrack(genome="hg38", tablename="augustusHints")  # no such table
-}
+supportedUCSCtables("mm10")
+browseUCSCtrack("mm10", tablename="ncbiRefSeqSelect")  # no such table
 }
