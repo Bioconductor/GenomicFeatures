@@ -22,9 +22,10 @@ gc()
               callSuper(...)
               if (length(dbListTables(conn) != 0L)) {
                   chrominfo <- load_chrominfo(.self, set.col.class=TRUE)
-                  .self$user2seqlevels0 <- seq_along(chrominfo$chrom)
+                  nseq <- length(chrominfo$chrom)
+                  .self$user2seqlevels0 <- seq_len(nseq)
                   .self$user_seqlevels <- chrominfo$chrom
-                  .self$user_genome <- load_genome(.self)
+                  .self$user_genome <- rep.int(load_genome(.self), nseq)
                   ## deprecate isActiveSeq
                   .self$isActiveSeq <- !logical(length(.self$user_seqlevels))
               }
@@ -372,6 +373,7 @@ setMethod("seqlevels0", "TxDb",
         ## "subsetting of the real seqlevels" mode
         x$user2seqlevels0 <- match(value, x_seqlevels0)
         x$user_seqlevels <- value
+        x$user_genome <- rep.int(load_genome(x), length(value))
         return(x)
     }
     ## Then we compare the user-supplied seqlevels with the current user-
@@ -387,6 +389,7 @@ setMethod("seqlevels0", "TxDb",
         new2old <- match(value, x_seqlevels)
     }
     user2seqlevels0 <- x$user2seqlevels0[new2old]
+    user_genome <- x$user_genome[new2old]
     na_idx <- which(is.na(user2seqlevels0))
     if (length(na_idx) != 0L) {
         user2seqlevels0[na_idx] <- match(value[na_idx], x_seqlevels0)
@@ -404,6 +407,7 @@ setMethod("seqlevels0", "TxDb",
     }
     x$user2seqlevels0 <- user2seqlevels0
     x$user_seqlevels <- unname(value)
+    x$user_genome <- user_genome
     x
 }
 
@@ -430,10 +434,13 @@ get_TxDb_seqinfo0 <- function(x)
 
 setMethod("seqinfo", "TxDb", .get_TxDb_seqinfo)
 
-### We implement a restricted seqinfo() setter for TxDb objects that supports
-### altering only the seqlevels and/or genome of the object, but not its
-### seqlengths or circularity flags. This is all we need to make the
-### seqlevelsStyle() setter work on TxDb objects.
+### We implement a restricted seqinfo() setter for TxDb object 'x' that
+### supports altering **only** the seqlevels and/or genome of 'seqinfo(x)',
+### possibly in addition to subsetting 'seqinfo(x)' by dropping/reordering
+### some of its seqlevels. It does NOT allow altering the seqlengths or
+### circularity flags!
+### This is all we need to make the seqlevelsStyle() setter work on a
+### TxDb object.
 .normarg_new2old_and_check_new_seqinfo <-
     function(new2old, new_seqinfo, old_seqinfo, context="")
 {
