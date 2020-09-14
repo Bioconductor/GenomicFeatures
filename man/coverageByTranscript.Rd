@@ -14,7 +14,7 @@
 }
 
 \usage{
-coverageByTranscript(x, transcripts, ignore.strand=FALSE)
+coverageByTranscript(x, transcripts, ignore.strand=FALSE, weight = 1L)
 
 pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
 }
@@ -64,6 +64,13 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
     \code{x} and exon in \code{transcripts} must be the same in order for
     the range to contribute coverage to the exon. If TRUE then the strand
     is ignored.
+  }
+  \item{weight}{
+    weight assigns a weight to each range in x.
+
+If x is an IntegerRanges or Views object: each of these arguments must be an integer or numeric vector parallel to x (will get recycled if necessary). Alternatively, each of these arguments can also be specified as a single string naming a metadata column in x (i.e. a column in mcols(x)) to be used as the shift (or weight) vector. Note that when x is an IPos object, each of these arguments can only be a single number.
+
+If x is an IntegerRangesList object: each of these arguments must be a numeric vector or list-like object of the same length as x (will get recycled if necessary). If it's a numeric vector, it's first turned into a list with as.list. After recycling, each list element shift[[i]] (or weight[[i]]) must be an integer or numeric vector parallel to x[[i]] (will get recycled if necessary).
   }
   \item{...}{
     Additional arguments passed to the internal call to
