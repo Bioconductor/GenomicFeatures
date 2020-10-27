@@ -1,10 +1,5 @@
 Package: GenomicFeatures
 Title: Conveniently import and query gene models
-Version: 1.41.3
-Encoding: UTF-8
-Author: M. Carlson, H. Pagès, P. Aboyoun, S. Falcon, M. Morgan,
-	D. Sarkar, M. Lawrence, V. Obenchain
-License: Artistic-2.0
 Description: A set of tools and methods for making and manipulating
 	transcript centric annotations. With these tools the user can
 	easily download the genomic locations of the transcripts, exons
@@ -15,6 +10,15 @@ Description: A set of tools and methods for making and manipulating
 	transcripts, exons, cds and genes. Flexible methods are
 	provided for extracting the desired features in a convenient
 	format.
+biocViews: Genetics, Infrastructure, Annotation, Sequencing,
+	GenomeAnnotation
+URL: https://bioconductor.org/packages/GenomicFeatures
+BugReports: https://github.com/Bioconductor/GenomicFeatures/issues
+Version: 1.41.3
+License: Artistic-2.0
+Encoding: UTF-8
+Author: M. Carlson, H. Pagès, P. Aboyoun, S. Falcon, M. Morgan,
+	D. Sarkar, M. Lawrence, V. Obenchain
 Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
 Depends: BiocGenerics (>= 0.1.0), S4Vectors (>= 0.17.29), IRanges (>= 2.13.23),
 	GenomeInfoDb (>= 1.25.7), GenomicRanges (>= 1.31.17),
@@ -37,6 +41,7 @@ Suggests: RMariaDB, org.Mm.eg.db, org.Hs.eg.db,
 	Rsamtools, pasillaBamSubset (>= 0.0.5), GenomicAlignments (>= 1.15.7),
 	ensembldb,
 	RUnit, BiocStyle, knitr
+VignetteBuilder: knitr
 Collate: utils.R
 	TxDb-schema.R
 	TxDb-SELECT-helpers.R
@@ -70,6 +75,3 @@ Collate: utils.R
 	coordinate-mapping-methods.R
 	coverageByTranscript.R
 	zzz.R
-VignetteBuilder: knitr
-biocViews: Genetics, Infrastructure, Annotation, Sequencing,
-	GenomeAnnotation
