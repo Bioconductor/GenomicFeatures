@@ -1,3 +1,20 @@
+CHANGES IN VERSION 1.42.0
+-------------------------
+
+NEW FEATURES
+
+    o Implement a restricted seqinfo() setter for TxDb objects that supports
+      altering only the seqlevels and/or genome of the object, but not its
+      seqlengths or circularity flags. This is all we need to make the improved
+      seqlevelsStyle() setter work on TxDb objects (see below).
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The seqlevelsStyle() getter and setter do a better job when the
+      underlying genome is known. See NEWS file in the GenomeInfoDb package
+      for more information.
+
+
 CHANGES IN VERSION 1.40.0
 -------------------------
 
