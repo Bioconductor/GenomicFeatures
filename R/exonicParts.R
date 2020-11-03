@@ -13,7 +13,7 @@
 {
     groups <- splitAsList(seq_along(x), x)
     i <- unlist(groups, use.names=FALSE)
-    ans <- S4Vectors:::fancy_mseq(lengths(groups))
+    ans <- sequence(lengths(groups))
     ans[i] <- ans
     ans
 }

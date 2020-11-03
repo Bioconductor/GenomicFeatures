@@ -99,8 +99,7 @@ setMethod("extractTranscriptSeqs", "DNAString",
         stop(wmsg("\"exon_rank\" inner metadata column in GRangesList ",
                   "object 'transcripts' contains ranks < 1"))
     tx1_eltNROWS <- elementNROWS(partitioning)
-    target <- S4Vectors:::fancy_mseq(tx1_eltNROWS,
-                                     offset=min_rank - 1L)
+    target <- sequence(tx1_eltNROWS, from=min_rank)
     if (!identical(target, unname(exon_rank)))
         stop(wmsg("\"exon_rank\" inner metadata column in GRangesList ",
                   "object 'transcripts' does not contain increasing ",
