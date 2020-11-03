@@ -47,8 +47,8 @@ setGeneric("pmapFromTranscripts", signature=c("x", "transcripts"),
     pend <- end(part)[width(part) != 0L]
 
     neg <- strand(gr)[pstart] == "-"
-    ord <- S4Vectors:::mseq(ifelse(neg, pend, pstart),
-                            ifelse(neg, pstart, pend))
+    ord <- sequence(width(part), from=ifelse(neg, pend, pstart),
+                                 by=ifelse(neg, -1L, 1L))
     res <- relist(gr[ord], x)
     res@unlistData$unordered <- original[idx[ord]]
     res
