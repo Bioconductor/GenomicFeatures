@@ -132,7 +132,7 @@ export(
 )
 
 exportMethods(
-  species, organism,
+  organism,
   show,
   as.list,
   seqlevels0, "seqlevels<-", seqinfo,

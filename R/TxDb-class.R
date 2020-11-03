@@ -313,21 +313,9 @@ TxDb <- function(conn) .TxDb$new(conn=conn)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### species() and organism() getters
+### organism() getter
 ###
 
-### The "species" method currently defined in AnnotationDbi (1.29.20) for
-### AnnotationDb objects is too messed up so here we overwrite it for TxDb
-### objects and deprecate it in favor of organism(). Once things are fixed
-### in AnnotationDbi, we won't need this anymore and can remove it.
-setMethod("species", "TxDb",
-    function(object)
-    {
-         msg <- wmsg("Calling species() on a ", class(object), " object ",
-                     "is defunct.\n  Please use organism() instead.")
-        .Defunct(msg=msg)
-    }
-)
 setMethod("organism", "TxDb",
     function(object)
     {
