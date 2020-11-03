@@ -11,9 +11,8 @@
   \code{disjointExons} extracts the non-overlapping exon parts from a
   \link{TxDb} object or any other supported object.
 
-  WARNING: \code{disjointExons} is superseded by \code{\link{exonicParts}}
-  and will be deprecated soon. Please use improved \code{\link{exonicParts}}
-  instead.
+  WARNING: \code{disjointExons} is deprecated in BioC 3.13. Please use
+  \code{\link{exonicParts}} instead.
 }
 
 \usage{
@@ -66,10 +65,6 @@ disjointExons(x, ...)
 
 \seealso{
   \code{\link{exonicParts}} for an improved version of \code{disjointExons}.
-}
-
-\examples{
-## TODO
 }
 
 \keyword{methods}
