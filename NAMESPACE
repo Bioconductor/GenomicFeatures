@@ -28,6 +28,8 @@ importFrom(Biostrings, DNAStringSet, reverseComplement, getSeq)
 importFrom(biomaRt, getBM, listAttributes, listDatasets, listFilters,
                     listMarts, useDataset, useMart)
 
+importClassesFrom(BiocIO, BiocFile, CompressedFile)
+
 importFrom(rtracklayer, FileForFormat, import, asBED, asGFF, browserSession,
                         ucscTableQuery, tableNames, getTable, trackNames,
                         ucscSchema)

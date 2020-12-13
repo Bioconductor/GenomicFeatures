@@ -102,7 +102,7 @@
             return(tools::file_ext(file))
         file <- file2
     }
-    if (is(file, "RTLFile")) {
+    if (is(file, "BiocFile")) {
         if (is(file, "GFF3File"))
             return("gff3")
         if (is(file, "GTFFile"))
