@@ -126,7 +126,7 @@
 
 ## helper function to ID tables that rtracklayer won't process.
 checkTable <- function(query){
-  "primaryTable" %in% rtracklayer:::ucscTableOutputs(query)
+  query@table %in% rtracklayer:::tableNames(query)
 }
 
 ## helper to check a track
