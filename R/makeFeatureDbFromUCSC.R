@@ -188,24 +188,49 @@ UCSCFeatureDbTableSchema <- function(genome,
   res <- ucscSchema(query)
   ## now for the tricky part: converting from MYSQL to R...  There is no good
   ## way to extract the "R" type information from the data.frame since it
-  ## appears that they are all treated as "character" information.  And there
-  ## is no good way to convert from MySQL to R since that is handled elsewhere
-  ## at the C-level and baked into the code that extracts the data.  So here
-  ## we will just assume (as michael does for his $example slot) that he has
-  ## done something reasonable in making all these things to be "character"
-  ## (and realistically, this is probably fine for what we are doing here)
-  ## So for now, just fake up the fake track info. from rtracklayer...
-  ## maybe someday i will be able to get more complete information from
-  ## rtracklayer, but for now, character is ok
-  types <- unlist(lapply(res@listData$example, class))
-  names <- res@listData$field  
-  result <- types
-  names(result) <- names
-  result
+  ## appears that they are all treated as "character" information.
+  sqlTypes <- res@listData$SQL.type
+  Rtypes <- sqlTypesToRTypes(sqlTypes)
+  names <- res@listData$field
+  names(Rtypes) <- names
+  Rtypes
 }
 
-
-
+## Convert SQL types to R types
+## rtracklayer utilizes UCSC REST API. So conversion logic needs
+## to consider what kind of SQL types to expect returned from the API.
+## Mapping reference taken from UCSC REST API
+## if mapping does not work properly refer to the UCSC REST API
+## https://github.com/ucscGenomeBrowser/kent/blob/v410_base/src/hg/hubApi/apiUtils.c#L113-L167
+sqlTypesToRTypes <- function(sqlTypes)
+{
+  Rtypes <- lapply(sqlTypes, function(sqlType) {
+    ## assume string, good enough for just about anything
+    Rtype <- "character"
+    if (startsWith(sqlType, "tinyint(1)")) {
+      Rtype <- "logical"
+    } else if (startsWith(sqlType, "bigint") || startsWith(sqlType, "int")
+               || startsWith(sqlType, "mediumint") || startsWith(sqlType, "smallint")
+               || startsWith(sqlType, "tinyint") || startsWith(sqlType, "unsigned")) {
+      Rtype <- "integer"
+    } else if (startsWith(sqlType, "decimal") || startsWith(sqlType, "double")
+               || startsWith(sqlType, "float")) {
+      Rtype <- "numeric"
+    } else if (startsWith(sqlType, "binary") || startsWith(sqlType, "bit")
+               || startsWith(sqlType, "blob") || startsWith(sqlType, "char")
+               || startsWith(sqlType, "date") || startsWith(sqlType, "datetime")
+               || startsWith(sqlType, "enum") || startsWith(sqlType, "longblob")
+               || startsWith(sqlType, "longtetypet") || startsWith(sqlType, "mediumblob")
+               || startsWith(sqlType, "set") || startsWith(sqlType, "tetypet")
+               || startsWith(sqlType, "time") || startsWith(sqlType, "timestamp")
+               || startsWith(sqlType, "tinyblob") || startsWith(sqlType, "tinytetypet")
+               || startsWith(sqlType, "varbinary") || startsWith(sqlType, "varchar")) {
+      Rtype <- "character"
+    }
+    return(Rtype)
+  })
+  unlist(Rtypes)
+}
 
 ## I will need a function to actually make the DB
 makeFeatureDb <- function(data, tableName, columns, metadata=NULL, ...)
