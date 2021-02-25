@@ -156,7 +156,8 @@ supportedUCSCFeatureDbTables <- function(genome, track)
 {
   session <- browserSession()
   genome(session) <- genome
-  query <- ucscTableQuery(session, track=track)
+  table <- ucscTables(genome, track)
+  query <- ucscTableQuery(session, table=table)
   if(checkTable(query)){
     tableNames(query)	
   }else{
@@ -182,9 +183,7 @@ UCSCFeatureDbTableSchema <- function(genome,
     stop("table \"", tablename, "\" is not supported")
   
   ## then make a query
-  query <- ucscTableQuery(session,
-                          track=track,
-                          table=tablename)  
+  query <- ucscTableQuery(session, table=tablename)
   res <- ucscSchema(query)
   ## now for the tricky part: converting from MYSQL to R...  There is no good
   ## way to extract the "R" type information from the data.frame since it
@@ -267,7 +266,7 @@ makeFeatureDbFromUCSC <- function(genome,
     ## Create a UCSC Genome Browser session.
     session <- browserSession(url=url)
     genome(session) <- genome
-    track_tables <- tableNames(ucscTableQuery(session, track=track))
+    track_tables <- ucscTables(genome, track)
     if (!(tablename %in% track_tables))
         stop("GenomicFeatures internal error: ", tablename, " table doesn't ",
              "exist or is not associated with ", track, " track. ",
@@ -277,7 +276,7 @@ makeFeatureDbFromUCSC <- function(genome,
     
     ## Download the data table.
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
-    query <- ucscTableQuery(session, track, table=tablename)
+    query <- ucscTableQuery(session, table=tablename)
     ucsc_table <- getTable(query)
     
     ## check that we have strand info, and if not, add some in

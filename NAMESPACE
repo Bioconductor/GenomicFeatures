@@ -32,7 +32,7 @@ importClassesFrom(BiocIO, BiocFile, CompressedFile)
 
 importFrom(rtracklayer, FileForFormat, import, asBED, asGFF, browserSession,
                         ucscTableQuery, tableNames, getTable, trackNames,
-                        ucscSchema)
+                        ucscSchema, ucscTables)
 
 
 exportClasses(TxDb, FeatureDb)
