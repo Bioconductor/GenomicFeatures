@@ -131,8 +131,9 @@ checkTable <- function(query){
 
 ## helper to check a track
 isGoodTrack <- function(track, session){
-  query <- ucscTableQuery(session, track=track)
-  checkTable(query)
+  query <- ucscTableQuery(session)
+  tracks <- trackNames(query)
+  track %in% names(tracks)
 }
 
 ## helper to detect and generate a list of "legitimate" tracks
