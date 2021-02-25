@@ -189,47 +189,29 @@ UCSCFeatureDbTableSchema <- function(genome,
   ## now for the tricky part: converting from MYSQL to R...  There is no good
   ## way to extract the "R" type information from the data.frame since it
   ## appears that they are all treated as "character" information.
-  sqlTypes <- res@listData$SQL.type
-  Rtypes <- sqlTypesToRTypes(sqlTypes)
-  names <- res@listData$field
+  sqlTypes <- res$SQL.type
+  Rtypes <- map_SQLtypes_to_Rtypes(sqlTypes)
+  names <- res$field
   names(Rtypes) <- names
   Rtypes
 }
 
-## Convert SQL types to R types
-## rtracklayer utilizes UCSC REST API. So conversion logic needs
-## to consider what kind of SQL types to expect returned from the API.
-## Mapping reference taken from UCSC REST API
-## if mapping does not work properly refer to the UCSC REST API
-## https://github.com/ucscGenomeBrowser/kent/blob/v410_base/src/hg/hubApi/apiUtils.c#L113-L167
-sqlTypesToRTypes <- function(sqlTypes)
+## Convert SQL types to R types by creating a
+## dummy SQL table and reading it's type information
+map_SQLtypes_to_Rtypes <- function(SQLtypes)
 {
-  Rtypes <- lapply(sqlTypes, function(sqlType) {
-    ## assume string, good enough for just about anything
-    Rtype <- "character"
-    if (startsWith(sqlType, "tinyint(1)")) {
-      Rtype <- "logical"
-    } else if (startsWith(sqlType, "bigint") || startsWith(sqlType, "int")
-               || startsWith(sqlType, "mediumint") || startsWith(sqlType, "smallint")
-               || startsWith(sqlType, "tinyint") || startsWith(sqlType, "unsigned")) {
-      Rtype <- "integer"
-    } else if (startsWith(sqlType, "decimal") || startsWith(sqlType, "double")
-               || startsWith(sqlType, "float")) {
-      Rtype <- "numeric"
-    } else if (startsWith(sqlType, "binary") || startsWith(sqlType, "bit")
-               || startsWith(sqlType, "blob") || startsWith(sqlType, "char")
-               || startsWith(sqlType, "date") || startsWith(sqlType, "datetime")
-               || startsWith(sqlType, "enum") || startsWith(sqlType, "longblob")
-               || startsWith(sqlType, "longtetypet") || startsWith(sqlType, "mediumblob")
-               || startsWith(sqlType, "set") || startsWith(sqlType, "tetypet")
-               || startsWith(sqlType, "time") || startsWith(sqlType, "timestamp")
-               || startsWith(sqlType, "tinyblob") || startsWith(sqlType, "tinytetypet")
-               || startsWith(sqlType, "varbinary") || startsWith(sqlType, "varchar")) {
-      Rtype <- "character"
-    }
-    return(Rtype)
-  })
-  unlist(Rtypes)
+    stopifnot(is.character(SQLtypes))
+    SQLtypes <- gsub(" *unsigned", "", SQLtypes)
+    col_defs <- sprintf("col%d %s", seq_along(SQLtypes), SQLtypes)
+    sql <- sprintf("CREATE TABLE dummy (%s)", paste0(col_defs, collapse=", "))
+    conn <- dbConnect(SQLite())
+    on.exit(dbDisconnect(conn))
+    dbExecute(conn, sql)
+    dummy <- dbReadTable(conn, "dummy")
+    col_types <- vapply(dummy, function(col) class(col)[[1L]], character(1))
+    # edge case
+    col_types[col_types == "blob"] <- "character"
+    setNames(col_types, SQLtypes)
 }
 
 ## I will need a function to actually make the DB
