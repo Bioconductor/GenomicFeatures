@@ -154,12 +154,9 @@ supportedUCSCFeatureDbTracks <- function(genome)
 ## Discover table names available in Tracks
 supportedUCSCFeatureDbTables <- function(genome, track)
 {
-  session <- browserSession()
-  genome(session) <- genome
-  table <- ucscTables(genome, track)
-  query <- ucscTableQuery(session, table=table)
-  if(checkTable(query)){
-    tableNames(query)	
+  tables <- ucscTables(genome, track)
+  if(length(tables)){
+    tables
   }else{
     stop("The track provided does not contain tables that are available in tabular form.")
   }
