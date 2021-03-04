@@ -126,13 +126,14 @@
 
 ## helper function to ID tables that rtracklayer won't process.
 checkTable <- function(query){
-  "primaryTable" %in% rtracklayer:::ucscTableOutputs(query)
+  query@table %in% rtracklayer:::tableNames(query)
 }
 
 ## helper to check a track
 isGoodTrack <- function(track, session){
-  query <- ucscTableQuery(session, track=track)
-  checkTable(query)
+  query <- ucscTableQuery(session)
+  tracks <- trackNames(query)
+  track %in% names(tracks)
 }
 
 ## helper to detect and generate a list of "legitimate" tracks
@@ -154,11 +155,9 @@ supportedUCSCFeatureDbTracks <- function(genome)
 ## Discover table names available in Tracks
 supportedUCSCFeatureDbTables <- function(genome, track)
 {
-  session <- browserSession()
-  genome(session) <- genome
-  query <- ucscTableQuery(session, track=track)
-  if(checkTable(query)){
-    tableNames(query)	
+  tables <- ucscTables(genome, track)
+  if(length(tables)){
+    tables
   }else{
     stop("The track provided does not contain tables that are available in tabular form.")
   }
@@ -182,30 +181,35 @@ UCSCFeatureDbTableSchema <- function(genome,
     stop("table \"", tablename, "\" is not supported")
   
   ## then make a query
-  query <- ucscTableQuery(session,
-                          track=track,
-                          table=tablename)  
+  query <- ucscTableQuery(session, table=tablename)
   res <- ucscSchema(query)
   ## now for the tricky part: converting from MYSQL to R...  There is no good
   ## way to extract the "R" type information from the data.frame since it
-  ## appears that they are all treated as "character" information.  And there
-  ## is no good way to convert from MySQL to R since that is handled elsewhere
-  ## at the C-level and baked into the code that extracts the data.  So here
-  ## we will just assume (as michael does for his $example slot) that he has
-  ## done something reasonable in making all these things to be "character"
-  ## (and realistically, this is probably fine for what we are doing here)
-  ## So for now, just fake up the fake track info. from rtracklayer...
-  ## maybe someday i will be able to get more complete information from
-  ## rtracklayer, but for now, character is ok
-  types <- unlist(lapply(res@listData$example, class))
-  names <- res@listData$field  
-  result <- types
-  names(result) <- names
-  result
+  ## appears that they are all treated as "character" information.
+  sqlTypes <- res$SQL.type
+  Rtypes <- map_SQLtypes_to_Rtypes(sqlTypes)
+  names <- res$field
+  names(Rtypes) <- names
+  Rtypes
 }
 
-
-
+## Convert SQL types to R types by creating a
+## dummy SQL table and reading it's type information
+map_SQLtypes_to_Rtypes <- function(SQLtypes)
+{
+    stopifnot(is.character(SQLtypes))
+    SQLtypes <- gsub(" *unsigned", "", SQLtypes)
+    col_defs <- sprintf("col%d %s", seq_along(SQLtypes), SQLtypes)
+    sql <- sprintf("CREATE TABLE dummy (%s)", paste0(col_defs, collapse=", "))
+    conn <- dbConnect(SQLite())
+    on.exit(dbDisconnect(conn))
+    dbExecute(conn, sql)
+    dummy <- dbReadTable(conn, "dummy")
+    col_types <- vapply(dummy, function(col) class(col)[[1L]], character(1))
+    # edge case
+    col_types[col_types == "blob"] <- "character"
+    setNames(col_types, SQLtypes)
+}
 
 ## I will need a function to actually make the DB
 makeFeatureDb <- function(data, tableName, columns, metadata=NULL, ...)
@@ -260,7 +264,7 @@ makeFeatureDbFromUCSC <- function(genome,
     ## Create a UCSC Genome Browser session.
     session <- browserSession(url=url)
     genome(session) <- genome
-    track_tables <- tableNames(ucscTableQuery(session, track=track))
+    track_tables <- ucscTables(genome, track)
     if (!(tablename %in% track_tables))
         stop("GenomicFeatures internal error: ", tablename, " table doesn't ",
              "exist or is not associated with ", track, " track. ",
@@ -270,7 +274,7 @@ makeFeatureDbFromUCSC <- function(genome,
     
     ## Download the data table.
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
-    query <- ucscTableQuery(session, track, table=tablename)
+    query <- ucscTableQuery(session, table=tablename)
     ucsc_table <- getTable(query)
     
     ## check that we have strand info, and if not, add some in
