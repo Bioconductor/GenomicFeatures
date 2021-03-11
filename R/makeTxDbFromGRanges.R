@@ -49,42 +49,172 @@ GFF3_COLNAMES <- c("type", "phase", "ID", "Parent", "Name", "Dbxref", "geneID")
 ### Used in R/makeTxDbFromGFF.R
 GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
 
-### Only valid Sequence Ontology terms that are "gene" offsprings
-### should be added to .GENE_TYPES. Note however that we've made an
-### exception for "pseudogene" which is NOT an offspring of "gene"!
-### Not clear though when exceptions like this are OK or not. For example
-### some GFF3 files (e.g. ref_GRCh38.p12_top_level.gff3.gz found at
-### ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/GFF/) link some of their
-### exons to parents of type "C_gene_segment", which is neither a "gene" or
-### "transcript" offspring. However, it's not clear that we should make an
-### exception for this term.
-.GENE_TYPES <- c("gene", "pseudogene", "transposable_element_gene")
+### Only valid SO terms (Sequence Ontology terms) that are "gene"
+### offsprings via the is_a relationship should be added to .GENE_TYPES.
+.GENE_TYPES <- c(
+    "gene",
 
-### Only valid Sequence Ontology terms that are "transcript" offsprings
-### should be added to .TX_TYPES. Note however that we've made an exception
-### for "pseudogenic_transcript" which is NOT an offspring of "transcript"!
-.TX_TYPES <- c("transcript", "pseudogenic_transcript", "primary_transcript",
-               "mRNA", "ncRNA", "rRNA", "snoRNA", "snRNA", "tRNA", "tmRNA",
-               "miRNA", "miRNA_primary_transcript",
-               "RNase_P_RNA", "RNase_MRP_RNA", "SRP_RNA", "misc_RNA",
-               "antisense_RNA", "antisense",
-               "lnc_RNA", "antisense_lncRNA", "transcript_region",
-               "pseudogenic_tRNA", "scRNA", "guide_RNA", "telomerase_RNA",
-               "vault_RNA", "Y_RNA")
+    ## ncRNA_gene and its offsprings:
+    "ncRNA_gene",
+        "snoRNA_gene",
+        "gRNA_gene",
+        "RNase_P_RNA_gene",
+        "tmRNA_gene",
+        "SRP_RNA_gene",
+        "tRNA_gene",
+        "rRNA_gene",
+            "rRNA_25S_gene",
+            "rRNA_16S_gene",
+            "rRNA_21S_gene",
+            "rRNA_5S_gene",
+            "rRNA_28S_gene",
+            "rRNA_23S_gene",
+            "rRNA_5_8S_gene",
+            "rRNA_18S_gene",
+        "lncRNA_gene",
+            "bidirectional_promoter_lncRNA",
+            "sense_overlap_ncRNA_gene",
+            "lincRNA_gene",
+            "antisense_lncRNA_gene",
+            "sense_intronic_ncRNA_gene",
+        "enzymatic_RNA_gene",
+            "ribozyme_gene",
+        "RNase_MRP_RNA_gene",
+        "snRNA_gene",
+        "telomerase_RNA_gene",
+        "miRNA_gene",
+        "piRNA_gene",
+        "scRNA_gene",
 
-### Only valid Sequence Ontology terms that are "exon" offsprings
-### should be added to .EXON_TYPES. Note however that we've made an
-### exception for "pseudogenic_exon" which is NOT an offspring of "exon"!
-.EXON_TYPES <- c("exon", "pseudogenic_exon", "coding_exon",
-                 "five_prime_coding_exon", "interior_coding_exon",
-                 "three_prime_coding_exon", "exon_of_single_exon_gene",
-                 "interior_exon", "noncoding_exon",
-                 "five_prime_noncoding_exon", "three_prime_noncoding_exon")
+    ## pseudogene and its offsprings:
+    "pseudogene",
+        "non_processed_pseudogene",
+            "duplicated_pseudogene",
+            "cassette_pseudogene",
+            "nuclear_mt_pseudogene",
+            "translated_unprocessed_pseudogene",
+            "pseudogene_by_unequal_crossing_over",
+            "transcribed_unprocessed_pseudogene",
+            "unitary_pseudogene",
+                "transcribed_unitary_pseudogene",
+                "allelic_pseudogene",
+        "processed_pseudogene",
+            "transcribed_processed_pseudogene",
+            "translated_processed_pseudogene",
+        "polymorphic_pseudogene",
+            "polymorphic_pseudogene_with_retained_intron",
+        "vertebrate_immune_system_pseudogene",
+            "T_cell_receptor_pseudogene",
+                "TR_J_pseudogene",
+                "TR_V_pseudogene",
+            "immunoglobulin_pseudogene",
+                "IG_J_pseudogene",
+                "IG_V_pseudogene",
+                "IG_C_pseudogene",
+        "transposable_element_pseudogene",
 
-### Only valid Sequence Ontology terms that are "CDS" offsprings
-### should be added to .CDS_TYPES.
-.CDS_TYPES <- c("CDS", "transposable_element_CDS",
-                "CDS_predicted", "edited_CDS")
+    ## transposable_element_gene and its only child (no grandchildren):
+    "transposable_element_gene",
+        "engineered_foreign_transposable_element_gene"
+)
+
+### Only valid SO terms (Sequence Ontology terms) that are "transcript"
+### offsprings via the is_a relationship should be added to .TX_TYPES.
+### HOWEVER we've made exceptions for "pseudogenic_transcript" and
+### the 4 "vertebrate_immunoglobulin_T_cell_receptor_segment"
+### children ("V_gene_segment", "D_gene_segment", "C_gene_segment",
+### "J_gene_segment") which, according to SO, are NOT offsprings
+### of "transcript" via the is_a relationship. The reason for these
+### exceptions is that Ensembl assigns transcript-like IDs to these
+### features (e.g. ENST00000488147 for pseudogenic_transcript WASH7P-201,
+### or ENST00000542354 for V_gene_segment TRAV1-1-201), and this is
+### reinforced by their use of "transcript:ENST00000488147" and
+### "transcript:ENST00000542354" for the corresponding ID tag in the
+### GFF3 files that they produce. In addition, some GFF3 files produced
+### by NCBI (e.g. ref_GRCh38.p12_top_level.gff3.gz found at
+### ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/GFF/) link some
+### of their exons to parents of type "C_gene_segment".
+.TX_TYPES <- c(
+    "transcript",
+
+    "primary_transcript",
+    "mRNA",
+    "ncRNA",
+    "rRNA",
+    "snoRNA",
+    "snRNA",
+    "tRNA",
+    "tmRNA",
+    "miRNA",
+    "miRNA_primary_transcript",
+    "RNase_P_RNA",
+    "RNase_MRP_RNA",
+    "SRP_RNA",
+    "misc_RNA",
+    "antisense_RNA",
+    "antisense",
+    "lnc_RNA",
+    "antisense_lncRNA",
+    "transcript_region",
+    "pseudogenic_tRNA",
+    "scRNA",
+    "guide_RNA",
+    "telomerase_RNA",
+    "vault_RNA",
+    "Y_RNA",
+
+    ## predicted_transcript and its only child (no grandchildren):
+    "predicted_transcript",
+        "unconfirmed_transcript",
+
+    ## pseudogenic_transcript and its offsprings:
+    "pseudogenic_transcript",
+        "pseudogenic_rRNA",
+            "unitary_pseudogenic_rRNA",
+            "allelic_pseudogenic_rRNA",
+            "unprocessed_pseudogenic_rRNA",
+            "processed_pseudogenic_rRNA",
+        "pseudogenic_tRNA",
+            "unitary_pseudogenic_tRNA",
+            "allelic_pseudogenic_tRNA",
+            "processed_pseudogenic_tRNA",
+            "unprocessed_pseudogenic_tRNA",
+
+    ## vertebrate_immunoglobulin_T_cell_receptor_segment and its 4
+    ## children (no grandchildren via the is_a relationship):
+    "vertebrate_immunoglobulin_T_cell_receptor_segment",
+        "V_gene_segment",
+        "D_gene_segment",
+        "C_gene_segment",
+        "J_gene_segment"
+)
+
+### Only valid SO terms (Sequence Ontology terms) that are "exon"
+### offsprings via the is_a relationship should be added to .EXON_TYPES.
+.EXON_TYPES <- c(
+    "exon",
+
+    "pseudogenic_exon",
+    "coding_exon",
+    "five_prime_coding_exon",
+    "interior_coding_exon",
+    "three_prime_coding_exon",
+    "exon_of_single_exon_gene",
+    "interior_exon",
+    "noncoding_exon",
+    "five_prime_noncoding_exon",
+    "three_prime_noncoding_exon"
+)
+
+### Only valid SO terms (Sequence Ontology terms) that are "CDS"
+### offsprings via the is_a relationship should be added to .CDS_TYPES.
+.CDS_TYPES <- c(
+    "CDS",
+
+    "transposable_element_CDS",
+    "CDS_predicted",
+    "edited_CDS"
+)
 
 .STOP_CODON_TYPES <- "stop_codon"
 
@@ -667,7 +797,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 
     tx_start <- unname(min(transcripts_by_id[ , "tx_start"]))
     tx_end <- unname(max(transcripts_by_id[ , "tx_end"]))
-    
+
     data.frame(
         tx_id=tx_id,
         tx_name=tx_name,
@@ -737,7 +867,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 
     tx_start <- unname(min(exons_by_id[ , "exon_start"]))
     tx_end <- unname(max(exons_by_id[ , "exon_end"]))
-    
+
     data.frame(
         tx_id=tx_id,
         tx_name=tx_id,

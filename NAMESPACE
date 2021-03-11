@@ -29,8 +29,9 @@ importFrom(biomaRt, getBM, listAttributes, listDatasets, listFilters,
                     listMarts, useDataset, useMart)
 
 importClassesFrom(BiocIO, BiocFile, CompressedFile)
+importFrom(BiocIO, FileForFormat)
 
-importFrom(rtracklayer, FileForFormat, import, asBED, asGFF, browserSession,
+importFrom(rtracklayer, import, asBED, asGFF, browserSession,
                         ucscTableQuery, tableNames, getTable, trackNames,
                         ucscSchema, ucscTables)
 
