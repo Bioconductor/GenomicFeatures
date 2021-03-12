@@ -156,7 +156,6 @@ GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
     "lnc_RNA",
     "antisense_lncRNA",
     "transcript_region",
-    "pseudogenic_tRNA",
     "scRNA",
     "guide_RNA",
     "telomerase_RNA",
