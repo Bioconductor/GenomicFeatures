@@ -39,13 +39,20 @@
 
 ### Expected metadata columns for GRanges in GFF3 format:
 ###   - required: type, ID
-###   - optional: Parent, Name, Dbxref, geneID
+###   - optional: 1) phase, Parent, Name, Dbxref
+###               2) gene_id, transcript_id, exon_id, protein_id (used
+###                  by Ensembl for their gene, transcript, exon, and CDS
+###                  features, note that exon_id and protein_id are ignored
+###                  at the moment)
+###               3) geneID (used by Flybase)
 ### Used in R/makeTxDbFromGFF.R
-GFF3_COLNAMES <- c("type", "phase", "ID", "Parent", "Name", "Dbxref", "geneID")
+GFF3_COLNAMES <- c("type", "phase", "ID", "Parent", "Name", "Dbxref",
+                   "gene_id", "transcript_id", "exon_id", "protein_id",
+                   "geneID")
 
 ### Expected metadata columns for GRanges in GTF format:
 ###   - required: type, gene_id, transcript_id
-###   - optional: exon_id
+###   - optional: phase, exon_id
 ### Used in R/makeTxDbFromGFF.R
 GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
 
@@ -129,8 +136,8 @@ GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
 ### features (e.g. ENST00000488147 for pseudogenic_transcript WASH7P-201,
 ### or ENST00000542354 for V_gene_segment TRAV1-1-201), and this is
 ### reinforced by their use of "transcript:ENST00000488147" and
-### "transcript:ENST00000542354" for the corresponding ID tag in the
-### GFF3 files that they produce. In addition, some GFF3 files produced
+### "transcript:ENST00000542354" for the corresponding "ID" attribute in
+### the GFF3 files that they produce. In addition, some GFF3 files produced
 ### by NCBI (e.g. ref_GRCh38.p12_top_level.gff3.gz found at
 ### ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/GFF/) link some
 ### of their exons to parents of type "C_gene_segment".
@@ -225,7 +232,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 {
     type <- gr_mcols$type
     if (is.null(type))
-        stop("'gr' must have a \"type\" metadata column")
+        stop(wmsg("'gr' must have a \"type\" metadata column"))
     ## Return a factor where all levels are in use.
     if (is.factor(type)) {
         levels_in_use <- levels(type)[tabulate(type, nbins=nlevels(type)) != 0L]
@@ -264,8 +271,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 .get_transcript_id <- function(gr_mcols, gene_id, type)
 {
     transcript_id <- gr_mcols$transcript_id
-    ## We've seen silly GTF files that contain only lines of type transcript
-    ## but no transcript_id tag.
+    ## We've seen silly GTF files that contain only lines of type "transcript"
+    ## but no "transcript_id" attribute.
     if (!.no_id(gene_id) && .no_id(transcript_id) && all(type %in% .TX_TYPES))
         return(seq_along(type))  # inferred ids
     if (is.null(transcript_id))
@@ -334,8 +341,9 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     Parent
 }
 
-### Remove "<type_level>:" prefix (like in "gene:Si016158m.g" and
-### "CDS:Si016158m") if present in *all* non-NA elements of 'ID'.
+### Remove "<type_level>:" prefix (like in "gene:Si016158m.g" or
+### "CDS:Si016158m" or "CDS:ENSP00000493376") but only if it's present
+### in *all* non-NA elements of 'ID'.
 .infer_Name_from_ID <- function(ID, type_level)
 {
     prefix <- paste0(type_level, ":")
@@ -410,8 +418,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     Dbxref
 }
 
-### The FlyBase people use the geneID tag to assign an external gene id to
-### each of their transcripts in their GFF3 files. There is no corresponding
+### The FlyBase people use the "geneID" attribute to assign an external gene
+### id to each transcript in their GFF3 files. There is no corresponding
 ### "gene" line in the file.
 .get_geneID <- function(gr_mcols)
 {
@@ -809,12 +817,28 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     )
 }
 
-.extract_transcripts_from_GRanges <- function(tx_IDX, gr, type, ID, Name)
+.extract_transcripts_from_GRanges <- function(tx_IDX, gr, type, ID,
+                                              transcript_id, Name)
 {
     tx_id <- ID[tx_IDX]
+    if (is.character(transcript_id) && !all(is.na(transcript_id))) {
+        what <- "transcript_id"
+        tx_name <- transcript_id[tx_IDX]
+    } else {
+        what <- "Name"
+        tx_name <- Name[tx_IDX]
+    }
+    if (anyNA(tx_name))
+        warning(wmsg("some transcripts have no \"", what, "\" attribute ==> ",
+                     "their name (\"tx_name\" column in the TxDb object) ",
+                     "was set to NA"))
+    if (anyDuplicated(tx_name))
+        warning(wmsg("the transcript names (\"tx_name\" column in the TxDb ",
+                     "object) imported from the \"", what, "\" attribute ",
+                     "are not unique"))
     transcripts <- data.frame(
         tx_id=tx_id,
-        tx_name=Name[tx_IDX],
+        tx_name=tx_name,
         tx_type=type[tx_IDX],
         tx_chrom=seqnames(gr)[tx_IDX],
         tx_strand=strand(gr)[tx_IDX],
@@ -1004,7 +1028,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 ###
 
 .extract_genes_from_gff3_GRanges <- function(gene_IDX, tx_IDX,
-                                             ID, Name, Parent,
+                                             ID, Parent,
+                                             gene_id, Name,
                                              Dbxref=NULL, geneID=NULL)
 {
     tx_id <- ID[tx_IDX]
@@ -1015,9 +1040,9 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     tx2genes[idx0] <- tx_id[idx0]
 
     ## Transcripts with no parents are sometimes linked to a gene via the
-    ## Dbxref or geneID tag.
+    ## "Dbxref" or "geneID" attribute.
 
-    ## First we try to find their parent via the Dbxref tag, if present.
+    ## First we try to find their parent via the "Dbxref" attribute, if present.
     if (!is.null(Dbxref)) {
         idx0 <- which(elementNROWS(tx2genes) == 0L)
         tx_Dbxref <- Dbxref[tx_IDX[idx0]]
@@ -1034,15 +1059,37 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
                                  as(hits, "PartitioningByEnd"))
     }
 
-    ## Replace gene IDs by gene Names and remove NAs.
-    tmp <- unlist(tx2genes, use.names=FALSE)
-    ID2Name <- Name[gene_IDX]
-    names(ID2Name) <- ID[gene_IDX]
-    tx2genes <- relist(unname(ID2Name[tmp]), tx2genes)
+    ## Replace gene IDs with ids from the "gene_id" or "Name" attribute.
+    if (!is.null(gene_id)) {
+        ## First we try to use the "gene_id" attribute.
+        ## For example, gene features in GFF3 files from Ensembl have
+        ## a "gene_id" attribute set to their Ensembl id (e.g. ENSG00000223972)
+        ## so we will import that in the TxDb object instead of the "Name"
+        ## attribute which might contain duplicates.
+        what <- "gene_id"
+        ID2gene <- gene_id[gene_IDX]
+    }
+    if (is.null(gene_id) || all(is.na(ID2gene))) {
+        ## If we can't use the "gene_id" attribute, then we try to use
+        ## the "Name" attribute.
+        what <- "Name"
+        ID2gene <- Name[gene_IDX]
+    }
+    if (anyNA(ID2gene))
+        stop(wmsg("some genes have no \"", what, "\" attribute"))
+    if (anyDuplicated(ID2gene))
+        stop(wmsg("the gene ids (\"gene_id\" column in the TxDb object) ",
+                  "imported from the \"", what, "\" attribute ",
+                  "are not unique"))
+    names(ID2gene) <- ID[gene_IDX]
+    ID2gene <- ID2gene[unlist(tx2genes, use.names=FALSE)]
+    tx2genes <- relist(unname(ID2gene), tx2genes)
+
+    ## Remove NAs.
     tx2genes <- tx2genes[!is.na(tx2genes)]
 
-    ## Then, if we still have transcripts with no parent, we use the geneID
-    ## tag (if present) to assign them an external gene id.
+    ## Then, if we still have transcripts with no parent, we use the "geneID"
+    ## attribute (if present) to assign them an external gene id.
     if (!is.null(geneID)) {
         idx0 <- which(elementNROWS(tx2genes) == 0L)
         tx2genes[idx0] <- geneID[tx_IDX[idx0]]
@@ -1213,7 +1260,9 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
     }
     transcripts <- .extract_transcripts_from_GRanges(tx_IDX, gr,
                                                      mcols0$type,
-                                                     mcols0$ID, mcols0$Name)
+                                                     mcols0$ID,
+                                                     mcols0$transcript_id,
+                                                     mcols0$Name)
     if (gtf.format) {
         transcripts <- .add_missing_transcripts(transcripts, exons)
         genes <- .extract_genes_from_gtf_GRanges(mcols0$transcript_id,
@@ -1223,8 +1272,8 @@ makeTxDbFromGRanges <- function(gr, drop.stop.codons=FALSE, metadata=NULL,
         Dbxref <- .get_Dbxref(gr_mcols)
         geneID <- .get_geneID(gr_mcols)
         genes <- .extract_genes_from_gff3_GRanges(gene_IDX, tx_IDX,
-                                                  mcols0$ID, mcols0$Name,
-                                                  mcols0$Parent,
+                                                  mcols0$ID, mcols0$Parent,
+                                                  mcols0$gene_id, mcols0$Name,
                                                   Dbxref, geneID)
     }
 
@@ -1489,8 +1538,8 @@ gr6 <- import(file6, format="gff3", colnames=GFF3_COLNAMES,
 ## (a) makeTxDbFromGFF() fails on TheCanonicalGene_v1.gff3
 ##
 ## (b) gene_id, tx_name, exon_name, and cds_name are now imported from the
-##     Name tag instead of the ID tag (GFF3 Spec: "IDs do not have meaning
-##     outside the file in which they reside")
+##     "Name" attribute instead of the "ID" attribute (GFF3 Spec: "IDs do
+##     not have meaning outside the file in which they reside")
 
 
 ## Test with GRanges obtained from GTF files
