@@ -285,7 +285,10 @@ browseUCSCtrack <- function(genome="hg19",
     if (!isSingleString(url))
         stop("'url' must be a single string")
     url <- sprintf("%s/hgTrackUi?db=%s&g=%s", url, genome, tablename)
-    browseURL(url)
+    ## Avoid "file association for 'http://...' not available or invalid"
+    ## error during 'R CMD check' on some Windows systems (e.g. riesling1).
+    if (interactive())
+        browseURL(url)
 }
 
 .tablename2track <- function(tablename, session)
