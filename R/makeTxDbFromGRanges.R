@@ -344,12 +344,15 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 ### Remove "<type_level>:" prefix (like in "gene:Si016158m.g" or
 ### "CDS:Si016158m" or "CDS:ENSP00000493376") but only if it's present
 ### in *all* non-NA elements of 'ID'.
-.infer_Name_from_ID <- function(ID, type_level)
+.drop_ID_prefix <- function(ID, type_level)
 {
     prefix <- paste0(type_level, ":")
-    if (!all(substr(ID, start=1L, stop=nchar(prefix)) == prefix, na.rm=TRUE))
-        return(ID)
-    substr(ID, start=nchar(prefix)+1L, stop=nchar(ID))
+    if (all(substr(ID, start=1L, stop=nchar(prefix)) == prefix, na.rm=TRUE))
+        return(substr(ID, start=nchar(prefix)+1L, stop=nchar(ID)))
+    prefix <- paste0(type_level, "-")
+    if (all(substr(ID, start=1L, stop=nchar(prefix)) == prefix, na.rm=TRUE))
+        return(substr(ID, start=nchar(prefix)+1L, stop=nchar(ID)))
+    ID
 }
 
 .get_Name <- function(gr_mcols, type, ID, transcript_id)
@@ -369,7 +372,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
             next
         idx <- which(type == type_level)
         if (all(is.na(Name[idx])))
-            Name[idx] <- .infer_Name_from_ID(ID[idx], type_level)
+            Name[idx] <- .drop_ID_prefix(ID[idx], type_level)
     }
     Name
 }
@@ -504,7 +507,10 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 {
     if (gtf.format)
         return(integer(0))
-    exon_IDX[as.logical(unique(Parent[exon_IDX] %in% ID[gene_IDX]))]
+    has_gene_parent <- as.logical(unique(Parent[exon_IDX] %in% ID[gene_IDX]))
+    ## We've seen silly GFF files where exons have no parents. This introduces
+    ## NAs in 'has_gene_parent' so we use which() here to get rid of them.
+    exon_IDX[which(has_gene_parent)]
 }
 
 ### Returns the index of genes that have exons as direct children. These genes
@@ -555,7 +561,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 {
     tx_ids <- sort(as.character(tx_ids))
     in1string <- paste0(tx_ids, collapse=", ")
-    warning(wmsg("The following transcripts were rejected because ",
+    warning(wmsg("The following transcripts were dropped because ",
                  because, ": ", in1string))
 
     objnames <- .ls_rejected_tx_envir()
@@ -762,43 +768,60 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     tx_id <- transcripts$tx_id
     if (!is.character(tx_id))
         tx_id <- as.character(tx_id)
+    ## 'transcripts_by_id' is a SplitDataFrameList object.
     transcripts_by_id <- splitAsList(transcripts, tx_id, drop=TRUE)
 
-    tx_id <- names(transcripts_by_id)
-
-    tx_name <- unique(transcripts_by_id[ , "tx_name"])
-    bad_tx <- names(which(elementNROWS(tx_name) != 1L))
-    if (length(bad_tx) != 0L) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have multiple parts that cannot ",
-                  "be merged because of incompatible Name: ", in1string))
+    tx_name <- unique(transcripts_by_id[ , "tx_name"])  # CharacterList
+    drop_idx <- which(elementNROWS(tx_name) != 1L)
+    if (length(drop_idx) != 0L) {
+        in1string <- paste0(sort(names(drop_idx)), collapse=", ")
+        warning(wmsg("The following transcripts were dropped because they ",
+                     "have multiple parts that could not be merged due to ",
+                     "incompatible \"Name\" attributes: ", in1string))
+        transcripts_by_id <- transcripts_by_id[-drop_idx]
+        tx_name <- tx_name[-drop_idx]
     }
     tx_name <- as.character(tx_name)
 
-    tx_type <- unique(transcripts_by_id[ , "tx_type"])
-    bad_tx <- names(which(elementNROWS(tx_type) != 1L))
-    if (length(bad_tx) != 0L) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have multiple parts that cannot ",
-                  "be merged because of incompatible type: ", in1string))
+    tx_type <- unique(transcripts_by_id[ , "tx_type"])  # CharacterList
+    drop_idx <- which(elementNROWS(tx_type) != 1L)
+    if (length(drop_idx) != 0L) {
+        in1string <- paste0(sort(names(drop_idx)), collapse=", ")
+        warning(wmsg("The following transcripts were dropped because they ",
+                     "have multiple parts that could not be merged due to ",
+                     "incompatible types: ", in1string))
+        transcripts_by_id <- transcripts_by_id[-drop_idx]
+        tx_name <- tx_name[-drop_idx]
+        tx_type <- tx_type[-drop_idx]
     }
     tx_type <- as.character(tx_type)
 
-    tx_chrom <- unique(transcripts_by_id[ , "tx_chrom"])
-    bad_tx <- names(which(elementNROWS(tx_chrom) != 1L))
-    if (length(bad_tx) != 0L) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have multiple parts that cannot ",
-                  "be merged because of incompatible seqnames: ", in1string))
+    tx_chrom <- unique(transcripts_by_id[ , "tx_chrom"])  # CharacterList
+    drop_idx <- which(elementNROWS(tx_chrom) != 1L)
+    if (length(drop_idx) != 0L) {
+        in1string <- paste0(sort(names(drop_idx)), collapse=", ")
+        warning(wmsg("The following transcripts were dropped because they ",
+                     "have multiple parts that could not be merged due to ",
+                     "incompatible seqnames: ", in1string))
+        transcripts_by_id <- transcripts_by_id[-drop_idx]
+        tx_name <- tx_name[-drop_idx]
+        tx_type <- tx_type[-drop_idx]
+        tx_chrom <- tx_chrom[-drop_idx]
     }
     tx_chrom <- as.character(tx_chrom)
 
-    tx_strand <- unique(transcripts_by_id[ , "tx_strand"])
-    bad_tx <- names(which(elementNROWS(tx_strand) != 1L))
-    if (length(bad_tx) != 0L) {
-        in1string <- paste0(sort(bad_tx), collapse=", ")
-        stop(wmsg("The following transcripts have multiple parts that cannot ",
-                  "be merged because of incompatible strand: ", in1string))
+    tx_strand <- unique(transcripts_by_id[ , "tx_strand"])  # FactorList
+    drop_idx <- which(elementNROWS(tx_strand) != 1L)
+    if (length(drop_idx) != 0L) {
+        in1string <- paste0(sort(names(drop_idx)), collapse=", ")
+        warning(wmsg("The following transcripts were dropped because they ",
+                     "have multiple parts that could not be merged due to ",
+                     "incompatible strands: ", in1string))
+        transcripts_by_id <- transcripts_by_id[-drop_idx]
+        tx_name <- tx_name[-drop_idx]
+        tx_type <- tx_type[-drop_idx]
+        tx_chrom <- tx_chrom[-drop_idx]
+        tx_strand <- tx_strand[-drop_idx]
     }
     tx_strand <- as.character(tx_strand)
 
@@ -806,7 +829,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     tx_end <- unname(max(transcripts_by_id[ , "tx_end"]))
 
     data.frame(
-        tx_id=tx_id,
+        tx_id=names(transcripts_by_id),
         tx_name=tx_name,
         tx_type=tx_type,
         tx_chrom=tx_chrom,
@@ -849,9 +872,9 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     merged_tx <- unique(tx_id[duplicated(tx_id)])
     if (length(merged_tx) != 0L) {
         transcripts <- .merge_transcript_parts(transcripts)
-        in1string <- paste0(sort(merged_tx), collapse=", ")
-        warning(wmsg("The following transcripts have multiple parts that ",
-                     "were merged: ", in1string))
+        #in1string <- paste0(sort(merged_tx), collapse=", ")
+        #warning(wmsg("The following transcripts have multiple parts that ",
+        #             "were merged: ", in1string))
     }
     ## We've seen silly GFF/GTF files where each transcript in the file is
     ## reported to be on its own contig and spans it (start=1) but no strand
@@ -1027,11 +1050,35 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 ### Extract the 'genes' data frame
 ###
 
+.get_gene_ids <- function(ID, Name, gene_id, gene_IDX)
+{
+    ## First we try to get the gene ids from the "gene_id" attribute.
+    ## For example, gene features in GFF3 files from Ensembl have
+    ## a "gene_id" attribute set to their Ensembl id (e.g. ENSG00000223972)
+    ## so we will import that in the TxDb object instead of the "Name"
+    ## attribute which might contain duplicates.
+    if (!is.null(gene_id)) {
+        gene_ids <- gene_id[gene_IDX]
+        if (!anyNA(gene_ids))
+            return(gene_ids)
+    }
+    ## If we can't use the "gene_id" attribute, then we get the gene ids
+    ## from the "Name" attribute.
+    gene_ids <- Name[gene_IDX]
+    if (!anyNA(gene_ids))
+        return(gene_ids)
+    ## If both attempts failed, we return NULL.
+    NULL
+}
+
 .extract_genes_from_gff3_GRanges <- function(gene_IDX, tx_IDX,
                                              ID, Parent,
                                              gene_id, Name,
                                              Dbxref=NULL, geneID=NULL)
 {
+    if (anyNA(ID[gene_IDX]))
+        stop(wmsg("some genes have no \"ID\" attribute"))
+
     tx_id <- ID[tx_IDX]
     tx2genes <- Parent[tx_IDX]
 
@@ -1059,31 +1106,25 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
                                  as(hits, "PartitioningByEnd"))
     }
 
-    ## Replace gene IDs with ids from the "gene_id" or "Name" attribute.
-    if (!is.null(gene_id)) {
-        ## First we try to use the "gene_id" attribute.
-        ## For example, gene features in GFF3 files from Ensembl have
-        ## a "gene_id" attribute set to their Ensembl id (e.g. ENSG00000223972)
-        ## so we will import that in the TxDb object instead of the "Name"
-        ## attribute which might contain duplicates.
-        what <- "gene_id"
-        ID2gene <- gene_id[gene_IDX]
+    ## Try to get the gene ids from the "gene_id" or "Name" attributes.
+    gene_ids <- .get_gene_ids(ID, Name, gene_id, gene_IDX)
+    if (is.null(gene_ids)) {
+        gene_ids <- .drop_ID_prefix(ID[gene_IDX], "gene")
+    } else {
+        ## The mapping between 'ID[gene_IDX]' and 'gene_ids' must be
+        ## one-to-one. If it's not, then we can't use 'gene_ids' to reliably
+        ## identify genes so we get the gene ids from the "ID" attribute.
+        sm1 <- match(ID[gene_IDX], ID[gene_IDX])
+        sm2 <- match(gene_ids, gene_ids)
+        if (!identical(sm1, sm2))
+            gene_ids <- .drop_ID_prefix(ID[gene_IDX], "gene")
     }
-    if (is.null(gene_id) || all(is.na(ID2gene))) {
-        ## If we can't use the "gene_id" attribute, then we try to use
-        ## the "Name" attribute.
-        what <- "Name"
-        ID2gene <- Name[gene_IDX]
-    }
-    if (anyNA(ID2gene))
-        stop(wmsg("some genes have no \"", what, "\" attribute"))
-    if (anyDuplicated(ID2gene))
-        stop(wmsg("the gene ids (\"gene_id\" column in the TxDb object) ",
-                  "imported from the \"", what, "\" attribute ",
-                  "are not unique"))
-    names(ID2gene) <- ID[gene_IDX]
-    ID2gene <- ID2gene[unlist(tx2genes, use.names=FALSE)]
-    tx2genes <- relist(unname(ID2gene), tx2genes)
+
+    ## Replace the gene IDs in the 'tx2genes' mapping with the gene ids
+    ## in 'gene_ids'.
+    names(gene_ids) <- ID[gene_IDX]
+    gene_ids <- gene_ids[unlist(tx2genes, use.names=FALSE)]
+    tx2genes <- relist(unname(gene_ids), tx2genes)
 
     ## Remove NAs.
     tx2genes <- tx2genes[!is.na(tx2genes)]
