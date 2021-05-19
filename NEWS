@@ -1,3 +1,24 @@
+CHANGES IN VERSION 1.44.0
+-------------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Several improvements to makeTxDbFromGFF():
+      - More GFF3 feature types are recognized as transcripts or genes (commit
+        d7f5980f).
+      - Improve handling of GFF3 files from Ensembl (commit c1e3fb92).
+      - Handle exons with no Parent attribute. GFF3 files that contain exons
+        with no Parent attribute no longer break makeTxDbFromGRanges() or
+        makeTxDbFromGFF(). Orphan exons are dropped.
+
+DEPRECATED AND DEFUNCT
+
+    o Deprecate disjointExons() in favor of exonicParts().
+
+    o Remove species() method for TxDb objects (was deprecated in BioC 3.3
+      and defunct in BioC 3.4).
+
+
 CHANGES IN VERSION 1.42.0
 -------------------------
 
