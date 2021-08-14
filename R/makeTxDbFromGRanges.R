@@ -61,6 +61,18 @@ GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
 .GENE_TYPES <- c(
     "gene",
 
+    ## protein_coding_gene and its offsprings:
+    "protein_coding_gene",
+        "gene_with_edited_transcript",
+        "gene_with_mRNA_with_frameshift",
+        "gene_with_polyadenylated_mRNA",
+        "gene_with_recoded_mRNA",
+            "gene_with_mRNA_recoded_by_translational_bypass",
+            "gene_with_transcript_with_translational_frameshift",
+            "gene_with_stop_codon_read_through",
+                "gene_with_stop_codon_redefined_as_pyrrolysine",
+                "gene_with_stop_codon_redefined_as_selenocysteine",
+
     ## ncRNA_gene and its offsprings:
     "ncRNA_gene",
         "snoRNA_gene",
