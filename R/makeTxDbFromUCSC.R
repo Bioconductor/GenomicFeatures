@@ -205,8 +205,8 @@
 ### reasonable time. For this we need to be able to retrieve all the "central
 ### tables" for all the transcript-centric tracks available for a given
 ### organism. Using a combination of calls to rtracklayer::trackNames(session)
-### and rtracklayer::tableNames(ucscTableQuery(session, track=track)) would
-### partly achieve this but is unfortunately very slow.
+### and rtracklayer::ucscTables(genome(session), track) would partly achieve
+### this but is unfortunately very slow.
 supportedUCSCtables <- function(genome="hg19",
                                 url="http://genome.ucsc.edu/cgi-bin/")
 {
@@ -235,9 +235,8 @@ supportedUCSCtables <- function(genome="hg19",
     ## track has subtracks (e.g. the Augustus track for hg18 has 3 subtracks),
     ## in which case there is 1 "central table" per subtrack. So trackNames()
     ## alone cannot be used to get the one-to-many mapping from tracks to
-    ## "central tables". Calling tableNames(ucscTableQuery(session,
-    ## track=track)) in a loop on all the tracks returned by trackNames()
-    ## would work but is very slow :-/
+    ## "central tables". Calling ucscTables(genome(session), track) in a loop
+    ## on all the tracks returned by trackNames() would work but is very slow.
     genome_tracknames <- trackNames(session)
 
     ## Resolve NAs in the tablename column.
