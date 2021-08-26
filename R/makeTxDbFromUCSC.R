@@ -302,7 +302,7 @@ browseUCSCtrack <- function(genome="hg19",
     ## Sanity check.
     stopifnot(length(idx) == 1L)  # should never happen
     track <- as.character(supported_tables$track[idx])
-    track_tables <- tableNames(ucscTableQuery(session, track=track))
+    track_tables <- ucscTables(genome(session), track)
     if (!(tablename %in% track_tables))
         stop("UCSC table \"", tablename, "\" does not exist ",
              "for genome \"", genome(session), "\", sorry")
