@@ -1,3 +1,15 @@
+CHANGES IN VERSION 1.46.0
+-------------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Small update to makeTxDbFromGFF()/makeTxDbFromGRanges():
+      makeTxDbFromGFF() and makeTxDbFromGRanges() now recognize and import
+      features of type protein_coding_gene (or of type any offspring of
+      the protein_coding_gene term) as genes. This was achieved by adding
+      protein_coding_gene + its offsprings to GenomicFeatures:::.GENE_TYPES.
+
+
 CHANGES IN VERSION 1.44.0
 -------------------------
 
