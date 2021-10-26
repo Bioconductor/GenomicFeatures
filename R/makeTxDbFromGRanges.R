@@ -57,11 +57,11 @@ GFF3_COLNAMES <- c("type", "phase", "ID", "Parent", "Name", "Dbxref",
 GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
 
 ### Only valid SO terms (Sequence Ontology terms) that are "gene"
-### offsprings via the is_a relationship should be added to .GENE_TYPES.
+### offsprings via the **is_a** relationship should be added to .GENE_TYPES.
 .GENE_TYPES <- c(
     "gene",
 
-    ## protein_coding_gene and its offsprings:
+    ## "protein_coding_gene" and its offsprings:
     "protein_coding_gene",
         "gene_with_edited_transcript",
         "gene_with_mRNA_with_frameshift",
@@ -73,7 +73,7 @@ GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
                 "gene_with_stop_codon_redefined_as_pyrrolysine",
                 "gene_with_stop_codon_redefined_as_selenocysteine",
 
-    ## ncRNA_gene and its offsprings:
+    ## "ncRNA_gene" and its offsprings:
     "ncRNA_gene",
         "snoRNA_gene",
         "gRNA_gene",
@@ -105,7 +105,7 @@ GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
         "piRNA_gene",
         "scRNA_gene",
 
-    ## pseudogene and its offsprings:
+    ## "pseudogene" and its offsprings:
     "pseudogene",
         "non_processed_pseudogene",
             "duplicated_pseudogene",
@@ -132,33 +132,37 @@ GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
                 "IG_C_pseudogene",
         "transposable_element_pseudogene",
 
-    ## transposable_element_gene and its only child (no grandchildren):
+    ## "transposable_element_gene" and its only child (no grandchildren):
     "transposable_element_gene",
         "engineered_foreign_transposable_element_gene"
 )
 
 ### Only valid SO terms (Sequence Ontology terms) that are "transcript"
-### offsprings via the is_a relationship should be added to .TX_TYPES.
-### HOWEVER we've made exceptions for "pseudogenic_transcript" and
-### the 4 "vertebrate_immunoglobulin_T_cell_receptor_segment"
-### children ("V_gene_segment", "D_gene_segment", "C_gene_segment",
-### "J_gene_segment") which, according to SO, are NOT offsprings
-### of "transcript" via the is_a relationship. The reason for these
-### exceptions is that Ensembl assigns transcript-like IDs to these
-### features (e.g. ENST00000488147 for pseudogenic_transcript WASH7P-201,
-### or ENST00000542354 for V_gene_segment TRAV1-1-201), and this is
-### reinforced by their use of "transcript:ENST00000488147" and
-### "transcript:ENST00000542354" for the corresponding "ID" attribute in
-### the GFF3 files that they produce. In addition, some GFF3 files produced
-### by NCBI (e.g. ref_GRCh38.p12_top_level.gff3.gz found at
-### ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/GFF/) link some
-### of their exons to parents of type "C_gene_segment".
+### offsprings via the **is_a** relationship should be added to .TX_TYPES.
+### HOWEVER we've made exceptions for:
+###   - "pseudogenic_transcript";
+###   - the 4 children of "vertebrate_immunoglobulin_T_cell_receptor_segment":
+###     "V_gene_segment", "D_gene_segment", "C_gene_segment", and
+###     "J_gene_segment";
+###   - "gene_segment".
+### According to SO these terms are NOT offsprings of "transcript" via
+### the **is_a** relationship. The reason for these exceptions is that Ensembl
+### assigns transcript-like IDs to these features (e.g. ENST00000488147
+### for "pseudogenic_transcript" WASH7P-201, or ENST00000542354 for
+### "V_gene_segment" TRAV1-1-201, or ENSMUST00000167638 for "gene_segment"
+### Gm17472-201), and this is reinforced by their use of
+### "transcript:ENST00000488147", "transcript:ENST00000542354",
+### and "transcript:ENSMUST00000167638", for the corresponding "ID"
+### attribute in the GFF3 files that they produce.
+### In addition, some GFF3 files produced by NCBI (e.g.
+### ref_GRCh38.p12_top_level.gff3.gz found at
+### ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/GFF/) link
+### some of their exons to parents of type "C_gene_segment".
 .TX_TYPES <- c(
     "transcript",
 
     "primary_transcript",
     "mRNA",
-    "ncRNA",
     "rRNA",
     "snoRNA",
     "snRNA",
@@ -181,11 +185,17 @@ GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
     "vault_RNA",
     "Y_RNA",
 
-    ## predicted_transcript and its only child (no grandchildren):
+    ## "ncRNA" and some of its children:
+    "ncRNA",
+        "antisense_RNA",
+        "three_prime_overlapping_ncrna",
+        "vault_RNA",
+
+    ## "predicted_transcript" and its only child (no grandchildren):
     "predicted_transcript",
         "unconfirmed_transcript",
 
-    ## pseudogenic_transcript and its offsprings:
+    ## "pseudogenic_transcript" and its offsprings:
     "pseudogenic_transcript",
         "pseudogenic_rRNA",
             "unitary_pseudogenic_rRNA",
@@ -198,17 +208,21 @@ GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
             "processed_pseudogenic_tRNA",
             "unprocessed_pseudogenic_tRNA",
 
-    ## vertebrate_immunoglobulin_T_cell_receptor_segment and its 4
-    ## children (no grandchildren via the is_a relationship):
+    ## "vertebrate_immunoglobulin_T_cell_receptor_segment" and its 4
+    ## children (no grandchildren via the **is_a** relationship):
     "vertebrate_immunoglobulin_T_cell_receptor_segment",
         "V_gene_segment",
         "D_gene_segment",
         "C_gene_segment",
-        "J_gene_segment"
+        "J_gene_segment",
+
+    ## "gene_segment" and its only child (no grandchildren):
+    "gene_segment",
+        "pseudogenic_gene_segment"
 )
 
 ### Only valid SO terms (Sequence Ontology terms) that are "exon"
-### offsprings via the is_a relationship should be added to .EXON_TYPES.
+### offsprings via the **is_a** relationship should be added to .EXON_TYPES.
 .EXON_TYPES <- c(
     "exon",
 
@@ -225,7 +239,7 @@ GTF_COLNAMES <- c("type", "phase", "gene_id", "transcript_id", "exon_id")
 )
 
 ### Only valid SO terms (Sequence Ontology terms) that are "CDS"
-### offsprings via the is_a relationship should be added to .CDS_TYPES.
+### offsprings via the **is_a** relationship should be added to .CDS_TYPES.
 .CDS_TYPES <- c(
     "CDS",
 
