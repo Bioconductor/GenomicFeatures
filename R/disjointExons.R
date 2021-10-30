@@ -11,8 +11,8 @@ setGeneric("disjointExons",
 setMethod("disjointExons", "TxDb", 
     function(x, aggregateGenes=FALSE, includeTranscripts=TRUE, ...) 
     {
-        msg <- "  disjointExons() is deprecated. Please use exonicParts() instead."
-        .Deprecated(msg=msg)
+        msg <- "  disjointExons() is defunct in BioC 3.15. Please use exonicParts() instead."
+        .Defunct(msg=wmsg(msg))
         exonsByGene <- exonsBy(x, by="gene")
         exonicParts <- disjoin(unlist(exonsByGene, use.names=FALSE))
 
