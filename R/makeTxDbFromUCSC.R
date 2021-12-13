@@ -330,6 +330,14 @@ browseUCSCtrack <- function(genome="hg19",
         ),
         gene_id_type="Entrez Gene ID"
     ),
+    ncbiRefSeq=list(
+        L2Rchain=list(
+            c(tablename="ncbiRefSeqLink",
+              Lcolname="id",
+              Rcolname="locusLinkId")
+        ),
+        gene_id_type="Entrez Gene ID"
+    ),
     vegaGene=list(
         L2Rchain=list(
             c(tablename="vegaGtp",
