@@ -562,7 +562,7 @@ browseUCSCtrack <- function(genome="hg19",
     ucsc_txtable <- UCSC_dbselect(genome, tablename,
                                   columns=columns, where=where)
     ## new check because exon starts and ends are blobs now
-    stopifnot(all(mapply(function(x, y) is(x, y) ucsc_txtable, .UCSC_TXCOL2CLASS)))
+    stopifnot(all(mapply(function(x, y) is(x, y), ucsc_txtable, .UCSC_TXCOL2CLASS)))
     ##current_classes <- head(sapply(ucsc_txtable, class),
     ##                        n=length(.UCSC_TXCOL2CLASS))
     ##stopifnot(identical(current_classes, .UCSC_TXCOL2CLASS))
