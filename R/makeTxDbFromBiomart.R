@@ -224,7 +224,7 @@
         message("Download and preprocess the 'chrominfo' data frame ... ",
                 appendLF=FALSE)
         if (is_ensembl_mart) {
-            if (tolower(host) == "grch37.ensembl.org") {
+            if (grepl("grch37.ensembl.org", host, ignore.case = TRUE)) {
                 ## Ensembl GRCh37 mart
                 chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
                                         use.grch37=TRUE,
