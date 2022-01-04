@@ -310,7 +310,6 @@ makeTxDbPackageFromBiomart <- function(
   filter=NULL,
   id_prefix="ensembl_",
   host="https://www.ensembl.org",
-  port=80,
   taxonomyId=NA,
   miRBaseBuild=NA){
     ## checks
@@ -348,7 +347,6 @@ makeTxDbPackageFromBiomart <- function(
                                 filter=filter,
                                 id_prefix=id_prefix,
                                 host=host,
-                                port=port,
                                 taxonomyId=taxonomyId,
                                 miRBaseBuild=miRBaseBuild)
     ## Make the Package
