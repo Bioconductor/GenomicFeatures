@@ -23,13 +23,15 @@ makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
                     filter=NULL,
                     id_prefix="ensembl_",
                     host="https://www.ensembl.org",
+                    port,
                     taxonomyId=NA,
                     miRBaseBuild=NA)
 
 getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
                         dataset="hsapiens_gene_ensembl",
                         id_prefix="ensembl_",
-                        host="https://www.ensembl.org")
+                        host="https://www.ensembl.org",
+                        port)
 }
 \arguments{
   \item{biomart}{which BioMart database to use.
@@ -57,6 +59,9 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
     \code{"ensembl_transcript_id"} whereas others have the same attribute
     specified as \code{"transcript_id"}. Defaults to \code{"ensembl_"}.}
   \item{host}{The host URL of the BioMart. Defaults to www.ensembl.org.}
+  \item{port}{The port to use in the HTTP communication with the host. This
+    argument has been deprecated. It is handled by \code{useEnsembl}
+    depending on the host input.}
   \item{taxonomyId}{By default this value is NA and the dataset
     selected will be used to look up the correct value for this.  But
     you can use this argument to override that and supply your own

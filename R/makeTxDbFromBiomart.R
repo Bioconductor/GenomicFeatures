@@ -271,8 +271,11 @@
 getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                                     dataset="hsapiens_gene_ensembl",
                                     id_prefix="ensembl_",
-                                    host="https://www.ensembl.org")
+                                    host="https://www.ensembl.org",
+                                    port)
 {
+    if (!missing(port))
+        warning("The 'port' argument is deprecated and will be ignored.")
     mart <- .useMart2(biomart=biomart, dataset=dataset, host=host)
     id_prefix <- .normarg_id_prefix(id_prefix)
     recognized_attribs <- recognizedBiomartAttribs(id_prefix)
@@ -766,9 +769,12 @@ makeTxDbFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                                 filter=NULL,
                                 id_prefix="ensembl_",
                                 host="https://www.ensembl.org",
+                                port,
                                 taxonomyId=NA,
                                 miRBaseBuild=NA)
 {
+    if (!missing(port))
+        warning("The 'port' argument is deprecated and will be ignored.")
     mart <- .useMart2(biomart=biomart, dataset=dataset, host=host)
     id_prefix <- .normarg_id_prefix(id_prefix)
     filter <- .add_tx_id_filter(filter, transcript_ids, id_prefix)

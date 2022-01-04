@@ -73,6 +73,7 @@ makeTxDbPackageFromBiomart(
     filter=NULL,
     id_prefix="ensembl_",
     host="https://www.ensembl.org",
+    port,
     taxonomyId=NA,
     miRBaseBuild=NA)
 
@@ -133,6 +134,9 @@ makePackageName(txdb)
   \item{filter}{Additional filters to use in the BioMart query. Must be
     a named list. An example is \code{filter=as.list(c(source="entrez"))}}
   \item{host}{The host URL of the BioMart. Defaults to https://www.ensembl.org.}
+  \item{port}{The port to use in the HTTP communication with the host. This
+    argument has been deprecated. It is handled by \code{useEnsembl}
+    depending on the host input.}
   \item{id_prefix}{Specifies the prefix used in BioMart attributes. For
     example, some BioMarts may have an attribute specified as
     \code{"ensembl_transcript_id"} whereas others have the same attribute

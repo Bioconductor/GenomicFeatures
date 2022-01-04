@@ -310,6 +310,7 @@ makeTxDbPackageFromBiomart <- function(
   filter=NULL,
   id_prefix="ensembl_",
   host="https://www.ensembl.org",
+  port,
   taxonomyId=NA,
   miRBaseBuild=NA){
     ## checks
@@ -339,6 +340,8 @@ makeTxDbPackageFromBiomart <- function(
     if(!isSingleStringOrNA(miRBaseBuild)){
         stop("'miRBaseBuild' must be supplied as a single element",
              " character vector or be NA.")}
+    if (!missing(port))
+        warning("The 'port' argument is deprecated and will be ignored.")
     ## Make the DB
     txdb <- makeTxDbFromBiomart(biomart=biomart,
                                 dataset=dataset,
