@@ -18,7 +18,7 @@ makeTxDbFromGRanges(gr, drop.stop.codons=FALSE, metadata=NULL, taxonomyId=NA)
 \arguments{
   \item{gr}{
     A \link[GenomicRanges]{GRanges} object structured as GFF3 or GTF,
-    typically obtained with \code{rtracklayer::\link[rtracklayer]{import}()}.
+    typically obtained with \code{BiocIO::\link[BiocIO]{import}()}.
   }
   \item{drop.stop.codons}{
     \code{TRUE} or \code{FALSE}. If \code{TRUE}, then features of type
@@ -54,8 +54,8 @@ makeTxDbFromGRanges(gr, drop.stop.codons=FALSE, metadata=NULL, taxonomyId=NA)
     \item \code{\link{makeTxDbFromGFF}} for making a \link{TxDb} object
           from a GFF or GTF file.
 
-    \item The \code{\link[rtracklayer]{import}} function in the
-          \pkg{rtracklayer} package.
+    \item The \code{\link[BiocIO]{import}} generic function in the
+          \pkg{BiocIO} package.
 
     \item The \code{asGFF} method for \link{TxDb} objects
           (\link{asGFF,TxDb-method}) for the reverse of
@@ -72,7 +72,7 @@ makeTxDbFromGRanges(gr, drop.stop.codons=FALSE, metadata=NULL, taxonomyId=NA)
 }
 
 \examples{
-library(rtracklayer)  # for the import() function
+library(BiocIO)  # for the import() function
 
 ## ---------------------------------------------------------------------
 ## WITH A GRanges OBJECT STRUCTURED AS GFF3
