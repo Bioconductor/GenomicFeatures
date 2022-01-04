@@ -72,7 +72,7 @@ makeTxDbPackageFromBiomart(
     circ_seqs=NULL,
     filter=NULL,
     id_prefix="ensembl_",
-    host="www.ensembl.org",
+    host="https://www.ensembl.org",
     port=80,
     taxonomyId=NA,
     miRBaseBuild=NA)
@@ -133,7 +133,7 @@ makePackageName(txdb)
     should be marked as circular.}
   \item{filter}{Additional filters to use in the BioMart query. Must be
     a named list. An example is \code{filter=as.list(c(source="entrez"))}}
-  \item{host}{The host URL of the BioMart. Defaults to www.ensembl.org.}
+  \item{host}{The host URL of the BioMart. Defaults to https://www.ensembl.org.}
   \item{port}{The port to use in the HTTP communication with the host.}
   \item{id_prefix}{Specifies the prefix used in BioMart attributes. For
     example, some BioMarts may have an attribute specified as

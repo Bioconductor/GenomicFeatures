@@ -309,7 +309,7 @@ makeTxDbPackageFromBiomart <- function(
   circ_seqs=NULL,
   filter=NULL,
   id_prefix="ensembl_",
-  host="www.ensembl.org",
+  host="https://www.ensembl.org",
   port=80,
   taxonomyId=NA,
   miRBaseBuild=NA){

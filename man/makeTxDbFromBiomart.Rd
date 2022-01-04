@@ -22,7 +22,7 @@ makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
                     circ_seqs=NULL,
                     filter=NULL,
                     id_prefix="ensembl_",
-                    host="www.ensembl.org",
+                    host="https://www.ensembl.org",
                     port=80,
                     taxonomyId=NA,
                     miRBaseBuild=NA)
@@ -30,7 +30,7 @@ makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
 getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
                         dataset="hsapiens_gene_ensembl",
                         id_prefix="ensembl_",
-                        host="www.ensembl.org",
+                        host="https://www.ensembl.org")
                         port=80)
 }
 \arguments{
@@ -85,7 +85,7 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
     \item All the datasets in the main Ensembl database.
           Get the list with:
 \preformatted{    mart <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL",
-                             host="www.ensembl.org")
+                             host="https://www.ensembl.org")
     biomaRt::listDatasets(mart)}
 
     \item All the datasets in the Ensembl Fungi database.
@@ -169,8 +169,8 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
 ## We can use listDatasets() from the biomaRt package to list the
 ## datasets available in the "ENSEMBL_MART_ENSEMBL" BioMart database:
 library(biomaRt)
-listMarts(host="www.ensembl.org")
-mart <- useMart(biomart="ENSEMBL_MART_ENSEMBL", host="www.ensembl.org")
+listMarts(host="https://www.ensembl.org")
+mart <- useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://www.ensembl.org")
 datasets <- listDatasets(mart)
 head(datasets)
 subset(datasets, grepl("elegans", dataset, ignore.case=TRUE))
@@ -302,7 +302,7 @@ if (interactive()) {
 ## names:
 mart <- useMart(biomart="ENSEMBL_MART_ENSEMBL",
                 dataset="hsapiens_gene_ensembl",
-                host="www.ensembl.org")
+                host="https://www.ensembl.org")
 head(listFilters(mart))
 
 ## Retrieve transcript dataset for Ensembl gene ENSG00000011198:

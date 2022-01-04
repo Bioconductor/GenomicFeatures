@@ -19,7 +19,7 @@
 ### A thin wrapper to useEnsembl() that checks the user-supplied arguments.
 .useMart2 <- function(biomart="ENSEMBL_MART_ENSEMBL",
                       dataset="hsapiens_gene_ensembl",
-                      host="www.ensembl.org",
+                      host="https://www.ensembl.org")
                       port=80)
 {
     ### Could be that the user got the 'biomart' and/or 'dataset' values
@@ -274,7 +274,7 @@
 getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                                     dataset="hsapiens_gene_ensembl",
                                     id_prefix="ensembl_",
-                                    host="www.ensembl.org",
+                                    host="https://www.ensembl.org")
                                     port=80)
 {
     mart <- .useMart2(biomart=biomart, dataset=dataset, host=host, port=port)
@@ -769,7 +769,7 @@ makeTxDbFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                                 circ_seqs=NULL,
                                 filter=NULL,
                                 id_prefix="ensembl_",
-                                host="www.ensembl.org",
+                                host="https://www.ensembl.org",
                                 port=80,
                                 taxonomyId=NA,
                                 miRBaseBuild=NA)
