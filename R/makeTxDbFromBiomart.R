@@ -16,7 +16,7 @@
 ### Some helper functions to facilitate working with the biomaRt package.
 ###
 
-### A thin wrapper to useMart() that checks the user-supplied arguments.
+### A thin wrapper to useEnsembl() that checks the user-supplied arguments.
 .useMart2 <- function(biomart="ENSEMBL_MART_ENSEMBL",
                       dataset="hsapiens_gene_ensembl",
                       host="www.ensembl.org",
@@ -39,7 +39,7 @@
         stop("'host' must be a single non-empty string")
     if (!(isSingleNumber(port) && port > 0))
         stop("'port' must be a single positive number")
-    useMart(biomart=biomart, dataset=dataset, host=host, port=port)
+    useEnsembl(biomart=biomart, dataset=dataset, host=host, port=port)
 }
 
 ### TODO: Share this with normalization of 'filter' arg in the transcripts(),

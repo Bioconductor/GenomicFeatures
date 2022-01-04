@@ -26,7 +26,7 @@ importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
 importFrom(Biostrings, DNAStringSet, reverseComplement, getSeq)
 
 importFrom(biomaRt, getBM, listAttributes, listDatasets, listFilters,
-                    listMarts, useDataset, useMart)
+                    listMarts, useDataset, useEnsembl)
 
 importClassesFrom(BiocIO, BiocFile, CompressedFile)
 importFrom(BiocIO, FileForFormat)

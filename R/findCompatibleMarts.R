@@ -115,7 +115,7 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
 .get_attribs_for_each_dataset <- function(mart, length.out=NULL)
 {
     if (!is(mart, "Mart"))
-        mart <- useMart(mart)
+        mart <- useEnsembl(mart)
     available_datasets <- listDatasets(mart)
     if (!is.null(length.out))
         available_datasets <- head(available_datasets, n=length.out)
