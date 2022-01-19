@@ -199,6 +199,7 @@ map_SQLtypes_to_Rtypes <- function(SQLtypes)
 {
     stopifnot(is.character(SQLtypes))
     SQLtypes <- gsub(" *unsigned", "", SQLtypes)
+    SQLtypes <- gsub("^enum\\(.*\\)$", "TEXT", SQLtypes)
     col_defs <- sprintf("col%d %s", seq_along(SQLtypes), SQLtypes)
     sql <- sprintf("CREATE TABLE dummy (%s)", paste0(col_defs, collapse=", "))
     conn <- dbConnect(SQLite())
