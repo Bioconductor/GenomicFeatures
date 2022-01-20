@@ -10,6 +10,13 @@
   UCSC Genome Browser
 }
 \description{
+  WARNING: The FeatureDb/makeFeatureDbFromUCSC/features code base is
+  no longer actively maintained and FeatureDb-releated functionalities
+  might get deprecated in the near future. Please use
+  \code{\link{makeFeatureDbFromUCSC}} for a convenient way to
+  import transcript annotations from UCSC online resources into
+  Bioconductor.
+
   The \code{makeFeatureDbFromUCSC} function allows the user
   to make a \link{FeatureDb} object from simple annotation tracks at
   UCSC.  The tracks in question must (at a minimum) have a start, end and

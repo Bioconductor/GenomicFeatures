@@ -21,9 +21,6 @@
 
 \description{
   The TxDb class is a container for storing transcript annotations.
-
-  See \code{?\link{FeatureDb}} for a more generic container for storing
-  genomic locations of an arbitrary type of genomic features.
 }
 
 \section{Methods}{
@@ -110,9 +107,6 @@
     \item \link[GenomicFeatures]{select-methods} for how to use the
           simple "select" interface to extract information from a
           TxDb object.
-
-    \item The \link{FeatureDb} class for storing genomic locations
-          of an arbitrary type of genomic features.
 
     \item The \link[GenomeInfoDb]{Seqinfo} class in the \pkg{GenomeInfoDb}
           package.
