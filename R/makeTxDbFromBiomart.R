@@ -16,11 +16,10 @@
 ### Some helper functions to facilitate working with the biomaRt package.
 ###
 
-### A thin wrapper to useMart() that checks the user-supplied arguments.
+### A thin wrapper to useEnsembl() that checks the user-supplied arguments.
 .useMart2 <- function(biomart="ENSEMBL_MART_ENSEMBL",
                       dataset="hsapiens_gene_ensembl",
-                      host="www.ensembl.org",
-                      port=80)
+                      host="https://www.ensembl.org")
 {
     ### Could be that the user got the 'biomart' and/or 'dataset' values
     ### programmatically via calls to listMarts() and/or listDatasets(). Note
@@ -37,9 +36,7 @@
         stop("'dataset' must be a single non-empty string")
     if (!(isSingleString(host) && host != ""))
         stop("'host' must be a single non-empty string")
-    if (!(isSingleNumber(port) && port > 0))
-        stop("'port' must be a single positive number")
-    useMart(biomart=biomart, dataset=dataset, host=host, port=port)
+    useEnsembl(biomart=biomart, dataset=dataset, host=host)
 }
 
 ### TODO: Share this with normalization of 'filter' arg in the transcripts(),
@@ -115,15 +112,15 @@
     filter
 }
 
-.getBiomartDbVersion <- function(mart, host, port, biomart) 
+.getBiomartDbVersion <- function(host, biomart)
 {
-    marts <- listMarts(mart=mart, host=host, port=port)
+    marts <- listMarts(host = host)
 
-    mart_rowidx <- which(as.character(marts$biomart) == biomart)
+    mart_rowidx <- match(biomart, marts[["biomart"]])
     ## This should never happen.
-    if (length(mart_rowidx) != 1L)
+    if (is.na(mart_rowidx) || length(mart_rowidx) != 1L)
         stop("found 0 or more than 1 \"", biomart, "\" BioMart database")
-    as.character(marts$version)[mart_rowidx]
+    marts[mart_rowidx, "version"]
 }
 
 .get_Ensembl_release_from_db_version <- function(db_version)
@@ -217,7 +214,7 @@
 ### Returns NULL if it fails to fetch the chromosome lengths from the
 ### remote resource.
 .makeBiomartChrominfo <- function(mart, extra_seqnames=NULL,
-                                  circ_seqs=NULL, host, port)
+                                  circ_seqs=NULL, host)
 {
     biomart <- biomaRt:::martBM(mart)
     dataset <- biomaRt:::martDataset(mart)
@@ -227,7 +224,7 @@
         message("Download and preprocess the 'chrominfo' data frame ... ",
                 appendLF=FALSE)
         if (is_ensembl_mart) {
-            if (tolower(host) == "grch37.ensembl.org") {
+            if (grepl("grch37.ensembl.org", host, ignore.case = TRUE)) {
                 ## Ensembl GRCh37 mart
                 chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
                                         use.grch37=TRUE,
@@ -235,7 +232,7 @@
                                     silent=TRUE)
             } else {
                 ## Ensembl mart
-                db_version <- .getBiomartDbVersion(mart, host, port, biomart)
+                db_version <- .getBiomartDbVersion(host, biomart)
                 ensembl_release <-
                               .get_Ensembl_release_from_db_version(db_version)
                 chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
@@ -245,7 +242,7 @@
             }
         } else {
             ## One of the EnsemblGenomes marts
-            db_version <- .getBiomartDbVersion(mart, host, port, biomart)
+            db_version <- .getBiomartDbVersion(host, biomart)
             ensembl_release <- .get_Ensembl_release_from_db_version(db_version)
             chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
                                     release=ensembl_release,
@@ -274,10 +271,12 @@
 getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                                     dataset="hsapiens_gene_ensembl",
                                     id_prefix="ensembl_",
-                                    host="www.ensembl.org",
-                                    port=80)
+                                    host="https://www.ensembl.org",
+                                    port)
 {
-    mart <- .useMart2(biomart=biomart, dataset=dataset, host=host, port=port)
+    if (!missing(port))
+        warning("The 'port' argument is deprecated and will be ignored.")
+    mart <- .useMart2(biomart=biomart, dataset=dataset, host=host)
     id_prefix <- .normarg_id_prefix(id_prefix)
     recognized_attribs <- recognizedBiomartAttribs(id_prefix)
     transcripts <- .makeBiomartTranscripts(NULL, mart,
@@ -286,7 +285,7 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                                            id_prefix)
     chrominfo <- .makeBiomartChrominfo(mart,
                                        extra_seqnames=transcripts$tx_chrom,
-                                       host=host, port=port)
+                                       host=host)
     chrominfo[ , 1:2, drop=FALSE]
 }
 
@@ -698,7 +697,7 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
 ### Prepare the 'metadata' data frame.
 ###
 
-.prepareBiomartMetadata <- function(mart, is_full_dataset, host, port,
+.prepareBiomartMetadata <- function(mart, is_full_dataset, host,
                                     taxonomyId, miRBaseBuild)
 {
     message("Prepare the 'metadata' data frame ... ",
@@ -708,7 +707,7 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
     mart_url <- biomaRt:::martHost(mart)
     mart_url <- sub("^[^/]+//", "", mart_url)
     mart_url <- unlist(strsplit(mart_url, "/"))[1]
-    db_version <- .getBiomartDbVersion(mart, host, port, biomart)
+    db_version <- .getBiomartDbVersion(host, biomart)
     datasets <- listDatasets(mart)
     dataset_rowidx <- which(as.character(datasets$dataset) == dataset)
     ## This should never happen (the earlier call to useMart() would have
@@ -769,12 +768,14 @@ makeTxDbFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
                                 circ_seqs=NULL,
                                 filter=NULL,
                                 id_prefix="ensembl_",
-                                host="www.ensembl.org",
-                                port=80,
+                                host="https://www.ensembl.org",
+                                port,
                                 taxonomyId=NA,
                                 miRBaseBuild=NA)
 {
-    mart <- .useMart2(biomart=biomart, dataset=dataset, host=host, port=port)
+    if (!missing(port))
+        warning("The 'port' argument is deprecated and will be ignored.")
+    mart <- .useMart2(biomart=biomart, dataset=dataset, host=host)
     id_prefix <- .normarg_id_prefix(id_prefix)
     filter <- .add_tx_id_filter(filter, transcript_ids, id_prefix)
     valid_filter_names <- listFilters(mart, what="name")
@@ -797,7 +798,7 @@ makeTxDbFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
     chrominfo <- .makeBiomartChrominfo(mart,
                                        extra_seqnames=transcripts$tx_chrom,
                                        circ_seqs=circ_seqs,
-                                       host, port)
+                                       host)
     if (!is_full_dataset) {
         keep_idx <- which(chrominfo[ , "chrom"] %in% transcripts$tx_chrom)
         chrominfo <- S4Vectors:::extract_data_frame_rows(chrominfo, keep_idx)
@@ -830,7 +831,7 @@ makeTxDbFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
     genes <- .makeBiomartGenes(filter, mart, transcripts_tx_id,
                                recognized_attribs, id_prefix)
     metadata <- .prepareBiomartMetadata(mart, is_full_dataset,
-                                        host, port, taxonomyId, miRBaseBuild)
+                                        host, taxonomyId, miRBaseBuild)
 
     message("Make the TxDb object ... ", appendLF=FALSE)
     txdb <- makeTxDb(transcripts, splicings,

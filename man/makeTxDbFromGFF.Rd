@@ -98,7 +98,7 @@ makeTxDbFromGFF(file,
           is based on, for making a \link{TxDb} object from a
           \link[GenomicRanges]{GRanges} object.
 
-    \item The \code{\link[rtracklayer]{import}} function in the
+    \item The \code{\link[BiocIO]{import}} function in the
           \pkg{rtracklayer} package (also used by \code{makeTxDbFromGFF}
           internally).
 

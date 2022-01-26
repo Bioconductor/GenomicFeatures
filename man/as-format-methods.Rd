@@ -9,7 +9,7 @@
   metadata columns encoding transcript structures according to the
   model of a standard file format. Currently, BED and GFF models are
   supported. If a \code{TxDb} is passed to
-  \code{\link[rtracklayer]{export}}, when targeting a BED or GFF file,
+  \code{\link[BiocIO]{export}}, when targeting a BED or GFF file,
   this coercion occurs automatically.
 }
 \usage{
