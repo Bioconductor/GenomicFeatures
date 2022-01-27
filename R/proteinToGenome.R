@@ -13,7 +13,7 @@ setGeneric("proteinToGenome", signature="txdb",
 ### Make fancy error or warning messages
 ###
 
-.make_bad_names_msg <- function(tx_names, bad_idx, what="invalid name",
+.make_bad_names_msg <- function(x_names, bad_idx, what="invalid name",
                                 max.show=5L)
 {
     nbad <- length(bad_idx)
@@ -36,8 +36,8 @@ setGeneric("proteinToGenome", signature="txdb",
             bad_idx <- head(bad_idx, n=max.show)
         }
     }
-    bad_tx_names <- tx_names[bad_idx]
-    paste0(paste(msg, collapse=""), ": ", paste(bad_tx_names, collapse=", "))
+    bad_names <- x_names[bad_idx]
+    paste0(paste(msg, collapse=""), ": ", paste(bad_names, collapse=", "))
 }
 
 
