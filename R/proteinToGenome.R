@@ -10,6 +10,38 @@ setGeneric("proteinToGenome", signature="txdb",
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Make fancy error or warning messages
+###
+
+.make_bad_names_msg <- function(tx_names, bad_idx, what="invalid name",
+                                max.show=5L)
+{
+    nbad <- length(bad_idx)
+    if (max.show == 0L) {
+        msg <- c("the names on 'x' contain ", nbad, " ", what)
+        if (nbad != 1L)
+            msg <- c(msg, "s")
+        return(paste(msg, collapse=""))
+    }
+    if (nbad == 1L) {
+        msg <- c("The names on 'x' contain ", what)
+    } else {
+        msg <- c("The names on 'x' contain ", nbad, " ", what, "s")
+        if (nbad > max.show) {
+            if (max.show == 1L) {
+                msg <- c(msg, " (showing the first one only)")
+            } else {
+                msg <- c(msg, " (showing the first ", max.show, " only)")
+            }
+            bad_idx <- head(bad_idx, n=max.show)
+        }
+    }
+    bad_tx_names <- tx_names[bad_idx]
+    paste0(paste(msg, collapse=""), ": ", paste(bad_tx_names, collapse=", "))
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### proteinToGenome() method for GRangesList objects
 ###
 
@@ -135,15 +167,21 @@ setMethod("proteinToGenome", "GRangesList",
         coding_tx_names <- names(txdb)
         if (is.null(coding_tx_names))
             stop(wmsg("'txdb' must have names when it's a GRangesList object"))
+        non_coding_idx <- which(!(x_names %in% coding_tx_names))
+        if (length(non_coding_idx) != 0L) {
+            msg <- .make_bad_names_msg(x_names, non_coding_idx,
+                                       what="non-coding transcript name")
+            warning(wmsg(msg), immediate.=TRUE)
+        }
         x_start <- start(x)
         x_end <- end(x)
         ## TODO: Replace this inefficient lapply-based implementation with
         ## something better.
         ans <- lapply(setNames(seq_along(x), x_names),
             function(i) {
-                tx_name <- x_names[[i]]
-                if (!(tx_name %in% coding_tx_names))
+                if (i %in% non_coding_idx)
                     return(GRanges())
+                tx_name <- x_names[[i]]
                 cds_parts <- txdb[[tx_name]]
                 .map_protein_to_cds_parts(x_start[[i]], x_end[[i]], cds_parts)
             }
@@ -178,17 +216,9 @@ setMethod("proteinToGenome", "GRangesList",
              "\n    mcols(tx)$tx_name")
     bad_idx <- which(bad)
     if (length(bad_idx) != 0L) {
-        if (length(bad_idx) == 1L) {
-            msg <- "The names on 'x' contain invalid transcript name"
-        } else {
-            msg <- "The names on 'x' contain invalid transcript names"
-            if (length(bad_idx) > 5L) {
-                msg <- c(msg, " (showing the first 5 only)")
-                bad_idx <- head(bad_idx, n=5L)
-            }
-        }
-        bad_tx_names <- supplied_tx_names[bad_idx]
-        stop(wmsg(msg, ": ", paste(bad_tx_names, collapse=", ")))
+        msg <- .make_bad_names_msg(supplied_tx_names, bad_idx,
+                                   what="invalid transcript name")
+        stop(wmsg(msg))
     }
 }
 

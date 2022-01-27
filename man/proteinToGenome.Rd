@@ -83,7 +83,7 @@ proteinToGenome(x, txdb, ...)  # dispatch is on 2nd argument 'txdb'
   if the name on it is the name of a \emph{coding} transcript. If it's
   not (i.e. if it's the name of a \emph{non-coding} transcript), then
   an empty \link[GenomicRanges]{GRanges} object is placed in the returned
-  object to indicate the impossible mapping.
+  object to indicate the impossible mapping, and a warning is issued.
 
   Otherwise, if a given range in \code{x} can be mapped to the
   genome, then the result of the mapping is represented by a
@@ -171,7 +171,8 @@ txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
 
 ## The first transcript (FBtr0309810) is non-coding:
 x <- IRanges(c(FBtr0309810="11-55", FBtr0306539="90-300"))
-proteinToGenome(x, txdb)
+res <- proteinToGenome(x, txdb)
+res
 }
 
 \keyword{methods}
