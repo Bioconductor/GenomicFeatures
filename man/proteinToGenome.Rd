@@ -89,7 +89,7 @@ proteinToGenome(x, txdb, ...)  # dispatch is on 2nd argument 'txdb'
   genome, then the result of the mapping is represented by a
   non-empty \link[GenomicRanges]{GRanges} object.
   Note that this object represents the original CDS associated to
-  \code{x} trimmed on its 5' end or 3' end, or on both.
+  \code{x}, trimmed on its 5' end or 3' end, or on both.
   Furthermore, this object will have the same metadata columns as the
   \link[GenomicRanges]{GRanges} object representing the original CDS,
   plus the 2 following ones:
@@ -119,7 +119,8 @@ proteinToGenome(x, txdb, ...)  # dispatch is on 2nd argument 'txdb'
   \itemize{
     \item The \code{\link[ensembldb]{proteinToGenome}} function in the
           \pkg{ensembldb} package, which the \code{proteinToGenome()}
-          generic and methods described above are (loosely) modeled on.
+          generic and methods documented in this man page are (loosely)
+          modeled on.
 
     \item \link{TxDb} objects.
 
