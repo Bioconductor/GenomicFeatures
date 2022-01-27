@@ -129,6 +129,9 @@ export(
   mapToTranscripts, pmapToTranscripts,
   mapFromTranscripts, pmapFromTranscripts,
 
+  ## proteinToGenome.R:
+  proteinToGenome,
+
   ## coverageByTranscript.R:
   coverageByTranscript,
   pcoverageByTranscript
@@ -162,5 +165,7 @@ exportMethods(
   distance,
   mapToTranscripts, pmapToTranscripts,
   mapFromTranscripts, pmapFromTranscripts,
-  mapIdsToRanges, mapRangesToIds
+  mapIdsToRanges, mapRangesToIds,
+  proteinToGenome
 )
+
