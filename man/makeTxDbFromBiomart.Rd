@@ -66,7 +66,7 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
     selected will be used to look up the correct value for this.  But
     you can use this argument to override that and supply your own
     taxId here (which will be independently checked to make sure its a
-    real taxonomy id).  Normally you should never need to use this.}  
+    real taxonomy id).  Normally you should never need to use this.}
   \item{miRBaseBuild}{specify the string for the appropriate build
     Information from mirbase.db to use for microRNAs.  This can be
     learned by calling \code{supportedMiRBaseBuildValues}.  By default,
@@ -86,37 +86,37 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
   \enumerate{
     \item All the datasets in the main Ensembl database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL",
+\preformatted{    mart <- biomaRt::useEnsembl(biomart="ENSEMBL_MART_ENSEMBL",
                              host="https://www.ensembl.org")
     biomaRt::listDatasets(mart)}
 
     \item All the datasets in the Ensembl Fungi database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useMart(biomart="fungi_mart",
+\preformatted{    mart <- biomaRt::useEnsembl(biomart="fungi_mart",
                              host="https://fungi.ensembl.org")
     biomaRt::listDatasets(mart)}
 
     \item All the datasets in the Ensembl Metazoa database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useMart(biomart="metazoa_mart",
+\preformatted{    mart <- biomaRt::useEnsembl(biomart="metazoa_mart",
                              host="https://metazoa.ensembl.org")
     biomaRt::listDatasets(mart)}
 
     \item All the datasets in the Ensembl Plants database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useMart(biomart="plants_mart",
+\preformatted{    mart <- biomaRt::useEnsembl(biomart="plants_mart",
                              host="https://plants.ensembl.org")
     biomaRt::listDatasets(mart)}
 
     \item All the datasets in the Ensembl Protists database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useMart(biomart="protists_mart",
+\preformatted{    mart <- biomaRt::useEnsembl(biomart="protists_mart",
                              host="https://protists.ensembl.org")
     biomaRt::listDatasets(mart)}
 
     \item All the datasets in the Gramene Mart.
           Get the list with:
-\preformatted{    mart <- biomaRt::useMart(biomart="ENSEMBL_MART_PLANT",
+\preformatted{    mart <- biomaRt::useEnsembl(biomart="ENSEMBL_MART_PLANT",
                              host="https://ensembl.gramene.org")
     biomaRt::listDatasets(mart)}
   }
@@ -146,7 +146,8 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
           for making a \link{TxDb} object from a \link[GenomicRanges]{GRanges}
           object, or from a GFF or GTF file.
 
-    \item The \code{\link[biomaRt]{listMarts}}, \code{\link[biomaRt]{useMart}},
+    \item The \code{\link[biomaRt]{listMarts}},
+          \code{\link[biomaRt]{useEnsembl}},
           \code{\link[biomaRt]{listDatasets}}, and
           \code{\link[biomaRt]{listFilters}} functions in the
           \pkg{biomaRt} package.
@@ -172,7 +173,7 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
 ## datasets available in the "ENSEMBL_MART_ENSEMBL" BioMart database:
 library(biomaRt)
 listMarts(host="https://www.ensembl.org")
-mart <- useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://www.ensembl.org")
+mart <- useEnsembl(biomart="ENSEMBL_MART_ENSEMBL", host="https://www.ensembl.org")
 datasets <- listDatasets(mart)
 head(datasets)
 subset(datasets, grepl("elegans", dataset, ignore.case=TRUE))
@@ -208,7 +209,7 @@ library(biomaRt)
 ## ---------------------
 ## --- Ensembl Fungi ---
 
-mart <- useMart(biomart="fungi_mart", host="https://fungi.ensembl.org")
+mart <- useEnsembl(biomart="fungi_mart", host="https://fungi.ensembl.org")
 datasets <- listDatasets(mart)
 datasets$dataset
 yeast_txdb <- makeTxDbFromBiomart(biomart="fungi_mart",
@@ -232,7 +233,7 @@ all(transcripts(yeast_txdb) \%in\% transcripts(yeast_txdb0))
 ## happens with the example below so we don't try to run it for now.
 
 \dontrun{
-  mart <- useMart(biomart="metazoa_mart", host="https://metazoa.ensembl.org")
+  mart <- useEnsembl(biomart="metazoa_mart", host="https://metazoa.ensembl.org")
   datasets <- listDatasets(mart)
   datasets$dataset
   worm_txdb <- makeTxDbFromBiomart(biomart="metazoa_mart",
@@ -256,7 +257,7 @@ all(transcripts(yeast_txdb) \%in\% transcripts(yeast_txdb0))
 ## So we don't try to run the example below for now.
 
 \dontrun{
-mart <- useMart(biomart="plants_mart", host="https://plants.ensembl.org")
+mart <- useEnsembl(biomart="plants_mart", host="https://plants.ensembl.org")
 datasets <- listDatasets(mart)
 datasets[ , 1:2]
 athaliana_txdb <- makeTxDbFromBiomart(biomart="plants_mart",
@@ -267,7 +268,7 @@ athaliana_txdb
 ## ------------------------
 ## --- Ensembl Protists ---
 
-mart <- useMart(biomart="protists_mart", host="https://protists.ensembl.org")
+mart <- useEnsembl(biomart="protists_mart", host="https://protists.ensembl.org")
 datasets <- listDatasets(mart)
 datasets$dataset
 tgondii_txdb <- makeTxDbFromBiomart(biomart="protists_mart",
@@ -302,7 +303,7 @@ if (interactive()) {
 
 ## We can use listFilters() from the biomaRt package to get valid filter
 ## names:
-mart <- useMart(biomart="ENSEMBL_MART_ENSEMBL",
+mart <- useEnsembl(biomart="ENSEMBL_MART_ENSEMBL",
                 dataset="hsapiens_gene_ensembl",
                 host="https://www.ensembl.org")
 head(listFilters(mart))
