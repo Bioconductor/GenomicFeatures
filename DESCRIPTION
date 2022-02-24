@@ -14,15 +14,15 @@ biocViews: Genetics, Infrastructure, Annotation, Sequencing,
 	GenomeAnnotation
 URL: https://bioconductor.org/packages/GenomicFeatures
 BugReports: https://github.com/Bioconductor/GenomicFeatures/issues
-Version: 1.47.10
+Version: 1.47.11
 License: Artistic-2.0
 Encoding: UTF-8
 Author: M. Carlson, H. Pagès, P. Aboyoun, S. Falcon, M. Morgan,
 	D. Sarkar, M. Lawrence, V. Obenchain
 Maintainer: Bioconductor Package Maintainer <maintainer@bioconductor.org>
 Depends: R (>= 3.5.0), BiocGenerics (>= 0.1.0), S4Vectors (>= 0.17.29),
-    IRanges (>= 2.13.23), GenomeInfoDb (>= 1.25.7), GenomicRanges (>= 1.31.17),
-	AnnotationDbi (>= 1.41.4)
+	IRanges (>= 2.13.23), GenomeInfoDb (>= 1.25.7),
+	GenomicRanges (>= 1.31.17), AnnotationDbi (>= 1.41.4)
 Imports: methods, utils, stats, tools, DBI, RSQLite (>= 2.0), RCurl,
 	XVector (>= 0.19.7), Biostrings (>= 2.47.6), BiocIO,
 	rtracklayer (>= 1.51.5), biomaRt (>= 2.17.1), Biobase (>= 2.15.1)
@@ -39,7 +39,7 @@ Suggests: RMariaDB, org.Mm.eg.db, org.Hs.eg.db,
 	TxDb.Hsapiens.UCSC.hg38.knownGene (>= 3.4.6),
 	SNPlocs.Hsapiens.dbSNP144.GRCh38,
 	Rsamtools, pasillaBamSubset (>= 0.0.5), GenomicAlignments (>= 1.15.7),
-	ensembldb,
+	ensembldb, AnnotationFilter,
 	RUnit, BiocStyle, knitr
 VignetteBuilder: knitr
 Collate: utils.R
@@ -73,5 +73,6 @@ Collate: utils.R
 	nearest-methods.R
 	transcriptLocs2refLocs.R
 	coordinate-mapping-methods.R
+	proteinToGenome.R
 	coverageByTranscript.R
 	zzz.R
