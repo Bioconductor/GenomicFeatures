@@ -330,6 +330,14 @@ browseUCSCtrack <- function(genome="hg19",
         ),
         gene_id_type="Entrez Gene ID"
     ),
+    ncbiRefSeq=list(
+        L2Rchain=list(
+            c(tablename="ncbiRefSeqLink",
+              Lcolname="id",
+              Rcolname="locusLinkId")
+        ),
+        gene_id_type="Entrez Gene ID"
+    ),
     vegaGene=list(
         L2Rchain=list(
             c(tablename="vegaGtp",
@@ -553,9 +561,11 @@ browseUCSCtrack <- function(genome="hg19",
     on.exit(message("OK"))
     ucsc_txtable <- UCSC_dbselect(genome, tablename,
                                   columns=columns, where=where)
-    current_classes <- head(sapply(ucsc_txtable, class),
-                            n=length(.UCSC_TXCOL2CLASS))
-    stopifnot(identical(current_classes, .UCSC_TXCOL2CLASS))
+    ## new check because exon starts and ends are blobs now
+    stopifnot(all(mapply(function(x, y) is(x, y), ucsc_txtable, .UCSC_TXCOL2CLASS)))
+    ##current_classes <- head(sapply(ucsc_txtable, class),
+    ##                        n=length(.UCSC_TXCOL2CLASS))
+    ##stopifnot(identical(current_classes, .UCSC_TXCOL2CLASS))
     ucsc_txtable$exonStarts <- toListOfIntegerVectors(ucsc_txtable$exonStarts)
     ucsc_txtable$exonEnds <- toListOfIntegerVectors(ucsc_txtable$exonEnds)
     if (!identical(lengths(ucsc_txtable$exonStarts),
