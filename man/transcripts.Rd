@@ -145,6 +145,9 @@ genes(x, ...)
           extracting non-overlapping exonic or intronic parts from a
           TxDb-like object.
 
+    \item \code{\link{extendExonsIntoIntrons}} for extending exons
+          into their adjacent introns.
+
     \item \code{\link{extractTranscriptSeqs}} for extracting transcript
           (or CDS) sequences from reference sequences.
 

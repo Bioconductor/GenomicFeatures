@@ -95,6 +95,9 @@ export(
   ## disjointExons.R:
   disjointExons,
 
+  ## extendExonsIntoIntrons.R:
+  extendExonsIntoIntrons,
+
   ## features.R:
   features,
 

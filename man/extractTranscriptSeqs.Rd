@@ -115,6 +115,9 @@ extractTranscriptSeqs(x, transcripts, ...)
     \item \code{\link{transcriptLengths}} for extracting the transcript
           lengths (and other metrics) from a \link{TxDb} object.
 
+    \item \code{\link{extendExonsIntoIntrons}} for extending exons
+          into their adjacent introns.
+
     \item The \code{\link{transcriptLocs2refLocs}} function for converting
           transcript-based locations into reference-based locations.
 

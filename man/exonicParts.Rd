@@ -147,6 +147,9 @@ tidyIntrons(txdb, drop.geneless=FALSE)
     \item \code{\link{transcriptLengths}} for extracting the transcript
           lengths (and other metrics) from a \link{TxDb} object.
 
+    \item \code{\link{extendExonsIntoIntrons}} for extending exons into
+          their adjacent introns.
+
     \item \code{\link{extractTranscriptSeqs}} for extracting transcript
           (or CDS) sequences from chromosome sequences.
 
