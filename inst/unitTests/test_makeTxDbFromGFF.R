@@ -71,7 +71,7 @@ test_makeTxDbFromGFF <- function(){
   txdb_bac <- makeTxDbFromGFF(file = gffB,
                               chrominfo = chrominfoBac,
                               dataSource = "NCBI",
-                              organism = "Mycoplasma arthritidis")
+                              organism = "Metamycoplasma arthritidis")
 
   ## Tests
   checkTrue(class(txdb_bac)=="TxDb")
