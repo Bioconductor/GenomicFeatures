@@ -1,3 +1,35 @@
+CHANGES IN VERSION 1.48.0
+-------------------------
+
+NEW FEATURES
+
+    o Add proteinToGenome() generic and methods. Loosely modeled on
+      ensembldb::proteinToGenome().
+
+    o Add extendExonsIntoIntrons().
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Use useEnsembl() instead of useMart() wherever possible.
+
+    o makeTxDbFromGFF() and makeTxDbFromGRanges() now recognize and
+      import features of type "gene_segment", "pseudogenic_gene_segment",
+      "antisense_RNA", "three_prime_overlapping_ncrna", or "vault_RNA",
+      as transcripts.
+      Note that, according to the Sequence Ontology, the "gene_segment"
+      and "pseudogenic_gene_segment" terms are NOT offsprings of the
+      "transcript" term via the **is_a** relationship but we still treat
+      them as if they were because that's what Ensembl does in their GFF3
+      files!
+
+DEPRECATED AND DEFUNCT
+
+    o Add warning about FeatureDb-related functionalities no longer being
+      actively maintained.
+
+    o disjointExons() is now defunct after being deprecated in BioC 3.13.
+
+
 CHANGES IN VERSION 1.46.0
 -------------------------
 

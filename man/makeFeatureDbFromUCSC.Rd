@@ -11,7 +11,7 @@
 }
 \description{
   WARNING: The FeatureDb/makeFeatureDbFromUCSC/features code base is
-  no longer actively maintained and FeatureDb-releated functionalities
+  no longer actively maintained and FeatureDb-related functionalities
   might get deprecated in the near future. Please use
   \code{\link{makeFeatureDbFromUCSC}} for a convenient way to
   import transcript annotations from UCSC online resources into
