@@ -285,17 +285,19 @@ tgondii_txdb
 ## when doing this is that the name of the database on the mirror might
 ## be different! We can check this with listMarts() from the biomaRt
 ## package:
-listMarts(host="https://useast.ensembl.org")
-
-## Therefore in addition to setting 'host' to "uswest.ensembl.org" we
-## might also need to specify the 'biomart' argument:
 if (interactive()) {
+
+  listMarts(host="https://useast.ensembl.org")
+
   txdb3 <- makeTxDbFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
                                dataset="hsapiens_gene_ensembl",
                                transcript_ids=transcript_ids,
                                host="https://useast.ensembl.org")
   txdb3
 }
+## Therefore in addition to setting 'host' to "uswest.ensembl.org", we
+## might also need to specify the 'biomart' argument.
+
 
 ## ---------------------------------------------------------------------
 ## D. USING FILTERS
