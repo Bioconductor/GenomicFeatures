@@ -20,7 +20,7 @@
 ## For when you need to get the true table names back from the abbrev's
 .reverseColAbbreviations <- function(x, cnames){
   abr <- .makeColAbbreviations(x)
-  names(abr)[abr %in% cnames] 
+  names(abr)[abr %in% cnames]
 }
 
 ## used to retrieve vector of table names that go with vector of col names
@@ -47,7 +47,7 @@
 ## this just takes the 1 letter abrevs and makes them into a sorted string
 ## that can be used as a key below
 .encodeSortedTableKey <- function(sTNames){
-  prefSort <- c("g","t","s","e","c")  
+  prefSort <- c("g","t","s","e","c")
   res <- sTNames[match(prefSort, sTNames)]
   paste(res[!is.na(res)], collapse="")
 }
@@ -57,7 +57,7 @@
   .encodeSortedTableKey(sTNames)
 }
 
-## for unlikely table combos 
+## for unlikely table combos
 .missingTableInterpolator <- function(tName){
   tName <- switch(EXPR = tName,
                   "se" = "tse",
@@ -109,7 +109,7 @@
                 "ON (transcript._tx_id = splicing._tx_id) ",
                 "INNER JOIN exon ON (splicing._exon_id = exon._exon_id) ",
                 "LEFT JOIN cds ON (splicing._cds_id = cds._cds_id) )")
-  
+
   sql <- switch(EXPR = tName,
                 "g" = gt, ## becomes gt b/c we always need chr info
                 "t" = "transcript", ##OK
@@ -142,9 +142,9 @@
     tNames <- .getTableNames(x, cnames)
     ## Here is where we only grab the 1st one...
     tNames <- lapply(tNames,function(x){x[1]})
-    ## then continue on...  
+    ## then continue on...
     tabAbbrevs <- substr(unlist(tNames),1,1)
-    names(tabAbbrevs) <- rep(names(tNames),elementNROWS(tNames))   
+    names(tabAbbrevs) <- rep(names(tNames),elementNROWS(tNames))
   if(abbrev==TRUE){
     paste(paste0(tabAbbrevs, ".", names(tabAbbrevs)), collapse=", ")
   }else{
@@ -161,7 +161,7 @@
 ## WHERE g._tx_id = s._tx_id etc.
 .makeJoinSQL <- function(x, cnames){
   tKey <- .makeTableKey(x,cnames)
-  .tableJoinSelector(tKey)  
+  .tableJoinSelector(tKey)
 }
 
 .makeKeyList <- function(x, keys, keytype, abbrev=TRUE){
@@ -192,9 +192,9 @@
           skipValidKeysTest<-FALSE}
           testSelectArgs(x, keys=keys, cols=columns, keytype=keytype,
                          skipValidKeysTest=skipValidKeysTest)
- 
+
   ## 1st we check the keytype to see if it is valid:
-  if(is.na(keys(x, keytype)[1]) & length(keys(x, keytype))==1){ 
+  if(is.na(keys(x, keytype)[1]) & length(keys(x, keytype))==1){
     stop(paste("There do not appear to be any keys",
                "for the keytype you have specified."))
     }
@@ -202,7 +202,7 @@
   ## we used to add TXID to cnames, which forces splicing to always be included
   ## Splicing is a almost always needed, but almost never requested.
   ## cnames <- unique(c(columns, "TXID", keytype))
-  ## 
+  ##
   cnames <- unique(c(keytype, columns))
   tKey <- .makeTableKey(x,cnames)
   ## message(paste("keytype generated:",tKey))
@@ -216,7 +216,7 @@
   }
 
   ## This is where/how we respect isActiveSeq()
-  if(FALSE %in% .isActiveSeq(x)){ 
+  if(FALSE %in% .isActiveSeq(x)){
   ## Then we have to append a where clause to majorJoin
     if(tKey %in% c("t","e","c")){
       majorJoin <- paste("( SELECT * FROM", majorJoin,
@@ -235,22 +235,22 @@
                  "FROM",
                  majorJoin,
                  "WHERE",
-                 .makeKeyList(x, keys, keytype, abbrev=FALSE))  
+                 .makeKeyList(x, keys, keytype, abbrev=FALSE))
   }else{
           sql <- paste("SELECT DISTINCT",
                  .makeSelectList(x, cnames, abbrev=FALSE),
                  "FROM",
                  majorJoin)
   }
-  
+
   res <- AnnotationDbi:::dbQuery(dbconn(x), sql)
 
   if(length(keys) > 1000){ ##Then drop the extras now(in event there are some)
       ktColId <- .reverseColAbbreviations(x, keytype)
       res <-  res[res[[ktColId]] %in% keys,,drop=FALSE]
   }
-  
-  
+
+
   ## Then drop any columns that were not explicitely requested but that may have
   ## been appended to make a joind (like TXID)
   res <- res[,.reverseColAbbreviations(x,cnames),drop=FALSE]
@@ -262,12 +262,12 @@
     res <- resort_base(res, keys, joinType,
                        .reverseColAbbreviations(x,cnames))
   }
-  
+
 #  ## Then I need to filter out rows of NAs
 #  res <- res[!apply(is.na(res),1,all),,drop=FALSE]
 #  ## always reset rownames after removing rows
 #  rownames(res) <- NULL
-  
+
   ## Then put the user preferred headers onto the table
   fcNames <- .makeColAbbreviations(x)
   colnames(res) <- fcNames[match(colnames(res), names(fcNames))]
@@ -277,24 +277,97 @@
 
 ## ##  Remove this select warning function after 2.13 has released
 ## .selectWarnTxDb <- function(x, keys, columns, keytype, ...){
-    
+
 ##     ## remove condition after 2.13
 ##     extraArgs <- list(...)
 ##     if("cols" %in% names(extraArgs)){
 ##         ## warn the user about the old argument
 ##         AnnotationDbi:::.colsArgumentWarning()
-##         ## ## then call it using cols in place of columns    
+##         ## ## then call it using cols in place of columns
 ##         ## if(missing(keytype)){
 ##         ##     .select(x, keys, columns=extraArgs[["cols"]], keytype = columns)
 ##         ## }else{
 ##         ##     .select(x, keys, columns=extraArgs[["cols"]], keytype = keytype)
-##         ## }        
+##         ## }
 ##     }else{
 ##         .select(x, keys, columns, keytype)
 ##     }
 ## }
 
 
+#' Using the "select" interface on TxDb objects
+#'
+#' \code{select}, \code{columns} and \code{keys} can be used together to
+#' extract data from a \link{TxDb} object.
+#'
+#' In the code snippets below, \code{x} is a \link{TxDb} object.
+#'
+#' \describe{ \item{}{ \code{keytypes(x)}: allows the user to discover which
+#' keytypes can be passed in to \code{select} or \code{keys} and the
+#' \code{keytype} argument.  } \item{}{ \code{keys(x, keytype, pattern, column,
+#' fuzzy)}: Return keys for the database contained in the \link{TxDb} object .
+#'
+#' The \code{keytype} argument specifies the kind of keys that will be
+#' returned. By default \code{keys} will return the "GENEID" keys for the
+#' database.
+#'
+#' If \code{keys} is used with \code{pattern}, it will pattern match on the
+#' \code{keytype}.
+#'
+#' But if the \code{column} argument is also provided along with the
+#' \code{pattern} argument, then \code{pattern} will be matched against the
+#' values in \code{column} instead.
+#'
+#' And if \code{keys} is called with \code{column} and no \code{pattern}
+#' argument, then it will return all keys that have corresponding values in the
+#' \code{column} argument.
+#'
+#' Thus, the behavior of \code{keys} all depends on how many arguments are
+#' specified.
+#'
+#' Use of the \code{fuzzy} argument will toggle fuzzy matching to TRUE or
+#' FALSE.  If \code{pattern} is not used, fuzzy is ignored.  } \item{}{
+#' \code{columns(x)}: Show which kinds of data can be returned for the
+#' \link{TxDb} object.  } \item{}{ \code{select(x, keys, columns, keytype)}:
+#' When all the appropriate arguments are specified \code{select} will retrieve
+#' the matching data as a data.frame based on parameters for selected
+#' \code{keys} and \code{columns} and \code{keytype} arguments.  } }
+#'
+#' @aliases select-methods columns,TxDb-method keytypes,TxDb-method
+#' keys,TxDb-method select,TxDb-method
+#' @author Marc Carlson
+#' @seealso \itemize{ \item \link[AnnotationDbi]{AnnotationDb-class} for more
+#' descriptsion of methods \code{select},\code{keytypes},\code{keys} and
+#' \code{columns}.  \item \code{\link{transcripts}},
+#' \code{\link{transcriptsBy}}, and \code{\link{transcriptsByOverlaps}}, for
+#' other ways to extract genomic features from a \link{TxDb} object.  \item The
+#' \link{TxDb} class.  }
+#' @keywords methods
+#' @examples
+#'
+#' txdb_file <- system.file("extdata", "Biomart_Ensembl_sample.sqlite",
+#'                          package="GenomicFeatures")
+#' txdb <- loadDb(txdb_file)
+#' txdb
+#'
+#' ## find key types
+#' keytypes(txdb)
+#'
+#' ## list IDs that can be used to filter
+#' head(keys(txdb, "GENEID"))
+#' head(keys(txdb, "TXID"))
+#' head(keys(txdb, "TXNAME"))
+#'
+#' ## list columns that can be returned by select
+#' columns(txdb)
+#'
+#' ## call select
+#' res <- select(txdb, head(keys(txdb, "GENEID")),
+#'               columns=c("GENEID","TXNAME"),
+#'               keytype="GENEID")
+#' head(res)
+#'
+#' @export
 setMethod("select", "TxDb",
     function(x, keys, columns, keytype, ...) {
 ##          .selectWarnTxDb(x, keys, columns, keytype, ...)
@@ -337,9 +410,9 @@ setMethod("columns", "TxDb",
              "EXONNAME" =  AnnotationDbi:::dbQuery(dbconn(x),
                "SELECT DISTINCT exon_name FROM exon", 1L),
              "CDSID" =  AnnotationDbi:::dbQuery(dbconn(x),
-               "SELECT DISTINCT _cds_id FROM cds", 1L),                  
+               "SELECT DISTINCT _cds_id FROM cds", 1L),
              "CDSNAME" =  AnnotationDbi:::dbQuery(dbconn(x),
-               "SELECT DISTINCT cds_name FROM cds", 1L),                  
+               "SELECT DISTINCT cds_name FROM cds", 1L),
                   stop(paste(keytype, "is not a supported keytype.",
                              " Please use the keytypes",
                              "method to identify viable keytypes")))
@@ -432,7 +505,7 @@ setMethod("keytypes", "TxDb",
 
 
 ##   keytypes(txdb)
-##   head(keys(txdb, "GENEID")) 
+##   head(keys(txdb, "GENEID"))
 ##   head(keys(txdb, "TXID"))
 ##   head(keys(txdb, "EXONID"))
 ##   head(keys(txdb, "CDSID"))
@@ -443,7 +516,7 @@ setMethod("keytypes", "TxDb",
 ##   cols(txdb)
 
 
-##   AnnotationDbi:::debugSQL()  
+##   AnnotationDbi:::debugSQL()
 ##   k = c("foo",head(keys(txdb, "GENEID"))); foo = select(txdb, k, cols = c("GENEID","TXNAME"), keytype="GENEID"); head(foo)
 
 

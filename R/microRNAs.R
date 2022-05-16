@@ -47,7 +47,7 @@
   ## What I need is the join of mirna with mirna_chromosome_build (via _id),
   ## that is then filtered to only have rows that match the species which goes
   ## with the build.
-  
+
   ## connection
   mcon <- mirbase.db::mirbase_dbconn()
   ## 1st lets get the organism abbreviation
@@ -73,11 +73,33 @@
                    end=abs(data$contig_end)),
                  mirna_id = data$mirna_id,
                  strand=data$strand)
-  
+
   ## Filter seqinfo
   .syncSeqlevel(x, ans)
 }
 
+#' Extract microRNA or tRNA genomic ranges from an object
+#'
+#' Generic functions to extract microRNA or tRNA genomic ranges from an object.
+#' This page documents the methods for \link{TxDb} objects only.
+#'
+#'
+#' @aliases microRNAs microRNAs,TxDb-method tRNAs tRNAs,TxDb-method
+#' @param x A \link{TxDb} object.
+#' @return A \link[GenomicRanges]{GRanges} object.
+#' @author M. Carlson
+#' @seealso \itemize{ \item \code{\link{transcripts}},
+#' \code{\link{transcriptsBy}}, and \code{\link{transcriptsByOverlaps}} for the
+#' core genomic features extractors.  \item The \link{TxDb} class.  }
+#' @keywords methods
+#' @examples
+#'
+#' \dontrun{library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+#' library(mirbase.db)
+#' microRNAs(TxDb.Hsapiens.UCSC.hg19.knownGene)
+#' }
+#'
+#' @export
 setGeneric("microRNAs", function(x) standardGeneric("microRNAs"))
 
 ## Then set our method

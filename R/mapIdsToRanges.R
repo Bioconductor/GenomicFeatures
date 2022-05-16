@@ -1,3 +1,26 @@
+#' Map IDs to Genomic Ranges
+#'
+#'
+#' @name mapIdsToRanges
+#' @aliases mapIdsToRanges mapIdsToRanges,TxDb-method
+#' @docType methods
+#' @param x Database to use for mapping
+#' @param keys Values to lookup, passed to \code{\link{transcripts}} et. al.
+#' @param type Types of feature to return
+#' @param columns Additional metadata columns to include in the output
+#' @param ... Additional arguments passed to methods
+#' @return \code{\link[GenomicRanges]{GRangesList}} corresponding to the keys
+#' @section Methods (by class): \itemize{ \item \code{TxDb}: TxDb method }
+#' @examples
+#'
+#' fl <- system.file(package = "GenomicFeatures", "extdata", "sample_ranges.rds")
+#' txdb <- makeTxDbFromGRanges(readRDS(fl))
+#'
+#' keys <- list(tx_name = c("ENST00000371582", "ENST00000371588",
+#'     "ENST00000494752", "ENST00000614008", "ENST00000496771"))
+#' mapIdsToRanges(txdb, keys = keys, type = "tx")
+#'
+#' @export
 setGeneric("mapIdsToRanges", signature="x",
     function(x, ...) standardGeneric("mapIdsToRanges")
 )
@@ -31,6 +54,31 @@ setMethod("mapIdsToRanges", "TxDb",
     splitAsList(ranges, f, drop = FALSE)[keys[[1]]]
 })
 
+#' Map Genomic Ranges to IDs
+#'
+#'
+#' @name mapRangesToIds
+#' @aliases mapRangesToIds mapRangesToIds,TxDb-method
+#' @docType methods
+#' @param x Database to use for mapping
+#' @param ranges range object used to subset
+#' @param type of feature to return
+#' @param columns additional metadata columns to include in the output.
+#' @param ... Additional arguments passed to
+#' \code{\link[GenomicRanges:findOverlaps-methods]{findOverlaps}}
+#' @return \code{\link[S4Vectors]{DataFrame}} of mcols from the database.
+#' @section Methods (by class): \itemize{ \item \code{TxDb}: TxDb method }
+#' @examples
+#'
+#' fl <- system.file(package = "GenomicFeatures", "extdata", "sample_ranges.rds")
+#' txdb <- makeTxDbFromGRanges(readRDS(fl))
+#'
+#' keys <- list(tx_name = c("ENST00000371582", "ENST00000371588",
+#'     "ENST00000494752", "ENST00000614008", "ENST00000496771"))
+#' res <- mapIdsToRanges(txdb, keys = keys, type = "tx")
+#' mapRangesToIds(txdb, res, "tx")
+#'
+#' @export
 setGeneric("mapRangesToIds", signature="x",
     function(x, ...) standardGeneric("mapRangesToIds")
 )
