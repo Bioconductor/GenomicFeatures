@@ -36,7 +36,10 @@
         stop("'dataset' must be a single non-empty string")
     if (!(isSingleString(host) && host != ""))
         stop("'host' must be a single non-empty string")
-    useEnsembl(biomart=biomart, dataset=dataset, host=host)
+    if (grepl("www\\.ensembl", host, ignore.case = TRUE))
+        useEnsembl(biomart = biomart, dataset = dataset, host = host)
+    else
+        useEnsemblGenomes(biomart=biomart, dataset=dataset)
 }
 
 ### TODO: Share this with normalization of 'filter' arg in the transcripts(),

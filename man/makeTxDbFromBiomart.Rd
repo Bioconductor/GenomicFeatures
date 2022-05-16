@@ -92,26 +92,22 @@ getChromInfoFromBiomart(biomart="ENSEMBL_MART_ENSEMBL",
 
     \item All the datasets in the Ensembl Fungi database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useEnsembl(biomart="fungi_mart",
-                             host="https://fungi.ensembl.org")
+\preformatted{    mart <- biomaRt::useEnsemblGenomes(biomart="fungi_mart")
     biomaRt::listDatasets(mart)}
 
     \item All the datasets in the Ensembl Metazoa database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useEnsembl(biomart="metazoa_mart",
-                             host="https://metazoa.ensembl.org")
+\preformatted{    mart <- biomaRt::useEnsemblGenomes(biomart="metazoa_mart")
     biomaRt::listDatasets(mart)}
 
     \item All the datasets in the Ensembl Plants database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useEnsembl(biomart="plants_mart",
-                             host="https://plants.ensembl.org")
+\preformatted{    mart <- biomaRt::useEnsemblGenomes(biomart="plants_mart")
     biomaRt::listDatasets(mart)}
 
     \item All the datasets in the Ensembl Protists database.
           Get the list with:
-\preformatted{    mart <- biomaRt::useEnsembl(biomart="protists_mart",
-                             host="https://protists.ensembl.org")
+\preformatted{    mart <- biomaRt::useEnsemblGenomes(biomart="protists_mart")
     biomaRt::listDatasets(mart)}
 
     \item All the datasets in the Gramene Mart.
@@ -209,7 +205,7 @@ library(biomaRt)
 ## ---------------------
 ## --- Ensembl Fungi ---
 
-mart <- useEnsembl(biomart="fungi_mart", host="https://fungi.ensembl.org")
+mart <- useEnsemblGenomes(biomart="fungi_mart")
 datasets <- listDatasets(mart)
 datasets$dataset
 yeast_txdb <- makeTxDbFromBiomart(biomart="fungi_mart",
@@ -233,7 +229,7 @@ all(transcripts(yeast_txdb) \%in\% transcripts(yeast_txdb0))
 ## happens with the example below so we don't try to run it for now.
 
 \dontrun{
-  mart <- useEnsembl(biomart="metazoa_mart", host="https://metazoa.ensembl.org")
+  mart <- useEnsemblGenomes(biomart="metazoa_mart")
   datasets <- listDatasets(mart)
   datasets$dataset
   worm_txdb <- makeTxDbFromBiomart(biomart="metazoa_mart",
@@ -257,7 +253,7 @@ all(transcripts(yeast_txdb) \%in\% transcripts(yeast_txdb0))
 ## So we don't try to run the example below for now.
 
 \dontrun{
-mart <- useEnsembl(biomart="plants_mart", host="https://plants.ensembl.org")
+mart <- useEnsemblGenomes(biomart="plants_mart")
 datasets <- listDatasets(mart)
 datasets[ , 1:2]
 athaliana_txdb <- makeTxDbFromBiomart(biomart="plants_mart",
@@ -268,7 +264,7 @@ athaliana_txdb
 ## ------------------------
 ## --- Ensembl Protists ---
 
-mart <- useEnsembl(biomart="protists_mart", host="https://protists.ensembl.org")
+mart <- useEnsemblGenomes(biomart="protists_mart")
 datasets <- listDatasets(mart)
 datasets$dataset
 tgondii_txdb <- makeTxDbFromBiomart(biomart="protists_mart",
