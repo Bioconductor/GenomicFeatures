@@ -16,6 +16,13 @@
 ### Some helper functions to facilitate working with the biomaRt package.
 ###
 
+.isEnsemblMirror <- function(host) {
+    hostadd <- gsub("http[s]*://", "", host, ignore.case = TRUE)
+    domain <- vapply(strsplit(hostadd, "\\."), `[[`, character(1L), 1L)
+    ## capture known hosts
+    domain %in% c("useast", "uswest", "asia", "www", "ensembl")
+}
+
 ### A thin wrapper to useEnsembl() that checks the user-supplied arguments.
 .useMart2 <- function(biomart="ENSEMBL_MART_ENSEMBL",
                       dataset="hsapiens_gene_ensembl",
@@ -36,7 +43,7 @@
         stop("'dataset' must be a single non-empty string")
     if (!(isSingleString(host) && host != ""))
         stop("'host' must be a single non-empty string")
-    if (grepl("www\\.ensembl", host, ignore.case = TRUE))
+    if (.isEnsemblMirror(host))
         useEnsembl(biomart = biomart, dataset = dataset, host = host)
     else
         useEnsemblGenomes(biomart=biomart, dataset=dataset)
