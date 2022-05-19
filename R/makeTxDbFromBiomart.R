@@ -20,7 +20,7 @@
     hostadd <- gsub("http[s]*://", "", host, ignore.case = TRUE)
     domain <- vapply(strsplit(hostadd, "\\."), `[[`, character(1L), 1L)
     ## capture known hosts
-    domain %in% c("useast", "uswest", "asia", "www", "ensembl")
+    tolower(domain) %in% c("useast", "uswest", "asia", "www", "ensembl")
 }
 
 ### A thin wrapper to useEnsembl() that checks the user-supplied arguments.
