@@ -287,39 +287,64 @@ coverageByTranscript <- function(x, transcripts, ignore.strand=FALSE)
     .set_transcriptome_seqinfo(ans, transcripts)
 }
 
+### The workhorse behind .project_GRangesList_on_transcripts_BY_CHUNK() below.
 ### Return a GRangesList object parallel to 'transcripts' (but the shape is
-### different). Names and metadata columns on 'transcripts' are propagated.
-.project_GRangesList_on_transcripts <- function(x, transcripts,
-                                                ignore.strand=FALSE,
-                                                keep.nohit.exons=FALSE)
+### different).
+.project_GRangesList_on_transcripts <-
+    function(x, transcripts, ignore.strand=FALSE, keep.nohit.exons=FALSE)
+{
+    stopifnot(is(x, "GRangesList"),
+              is(transcripts, "GRangesList"),
+              length(x) == length(transcripts))
+    x2 <- unlist(x, use.names=FALSE)
+    ## This call to rep.int() will fail if it results in a
+    ## CompressedGRangesList object with a total number of ranges that
+    ## exceeds .Machine$integer.max. This is why we're using a chunking
+    ## strategy (see below) with the hope that the chunks are small enough
+    ## so that won't run into this problem on real data.
+    transcripts2 <- rep.int(transcripts, elementNROWS(x))
+    y <- .project_GRanges_on_transcripts(
+                    x2, transcripts2,
+                    ignore.strand, keep.nohit.exons,
+                    set.transcriptome.seqinfo=FALSE)
+    IRanges:::regroupBySupergroup(y, x)
+}
+
+### Names and metadata columns on 'transcripts' are propagated.
+.project_GRangesList_on_transcripts_BY_CHUNK <-
+    function(x, transcripts, ignore.strand=FALSE, keep.nohit.exons=FALSE)
 {
     stopifnot(is(x, "GRangesList"), is(transcripts, "GRangesList"))
 
-    ## Recycle arguments.
-    transcripts_was_recycled <- FALSE
-    if (length(x) != length(transcripts)) {
-        if (length(x) == 1L) {
-            x <- rep.int(x, length(transcripts))
-        } else if (length(transcripts) == 1L) {
-            transcripts <- rep.int(transcripts, length(x))
-            transcripts_was_recycled <- TRUE
-        } else {
+    ans_len <- max(length(x), length(transcripts))
+    if (length(x) != length(transcripts) &&
+        length(x) != 1L && length(transcripts) != 1L)
             stop(wmsg("when 'x' and 'transcripts' don't have the ",
                       "same length, one of them must have length 1"))
-        }
-    }
 
-    x_eltNROWS <- elementNROWS(x)
-    transcripts2 <- rep.int(transcripts, x_eltNROWS)
-    unlisted_x <- unlist(x, use.names=FALSE)
-    y <- .project_GRanges_on_transcripts(unlisted_x, transcripts2,
-                                         ignore.strand, keep.nohit.exons,
-                                         set.transcriptome.seqinfo=FALSE)
-    ans <- IRanges:::regroupBySupergroup(y, x)
+    chunks <- breakInChunks(ans_len, chunksize=200L)
+    ans_chunks <- lapply(seq_along(chunks),
+        function(i) {
+            chunk_idx <- chunks[[i]]
+            if (length(x) == 1L) {
+                x_chunk <- rep.int(x, length(chunk_idx))
+            } else {
+                x_chunk <- x[chunk_idx]
+            }
+            if (length(transcripts) == 1L) {
+                transcripts_chunk <- rep.int(transcripts, length(chunk_idx))
+            } else {
+                transcripts_chunk <- transcripts[chunk_idx]
+            }
+            .project_GRangesList_on_transcripts(
+                            x_chunk, transcripts_chunk,
+                            ignore.strand=ignore.strand,
+                            keep.nohit.exons=keep.nohit.exons)
+        }
+    )
+    ans <- do.call(c, ans_chunks)
 
     ## Put nice transcriptome costume on.
-    if (transcripts_was_recycled)
-        transcripts <- transcripts[1L]
     .set_transcriptome_seqinfo(ans, transcripts)
 }
 
@@ -334,7 +359,7 @@ setMethod("projectOnTranscripts", "GRanges",
 )
 
 setMethod("projectOnTranscripts", "GRangesList",
-    .project_GRangesList_on_transcripts
+    .project_GRangesList_on_transcripts_BY_CHUNK
 )
 
 setMethod("projectOnTranscripts", "ANY",
