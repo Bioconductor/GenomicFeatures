@@ -19,11 +19,11 @@
 
 \usage{
 ## S4 generic function:
-proteinToGenome(x, txdb, ...)  # dispatch is on 2nd argument 'txdb'
+proteinToGenome(x, db, ...)  # dispatch is on 2nd argument 'db'
 
-\S4method{proteinToGenome}{ANY}(x, txdb)
+\S4method{proteinToGenome}{ANY}(x, db)
 
-\S4method{proteinToGenome}{GRangesList}(x, txdb)
+\S4method{proteinToGenome}{GRangesList}(x, db)
 }
 
 \arguments{
@@ -32,17 +32,17 @@ proteinToGenome(x, txdb, ...)  # dispatch is on 2nd argument 'txdb'
     of \emph{protein-relative positions} (protein-relative positions are
     positions relative to a protein sequence).
 
-    The names on \code{x} must be transcript names present in \code{txdb}.
+    The names on \code{x} must be transcript names present in \code{db}.
     More precisely, for the default \code{proteinToGenome()} method,
     \code{names(x)} must be a subset of:
-    \preformatted{  mcols(transcripts(txdb, columns="tx_name"))$tx_name
+    \preformatted{  mcols(transcripts(db, columns="tx_name"))$tx_name
     }
     And for the method for \link[GenomicRanges]{GRangesList} objects,
     \code{names(x)} must be a subset of:
-    \preformatted{  names(txdb)
+    \preformatted{  names(db)
     }
   }
-  \item{txdb}{
+  \item{db}{
     For the default \code{proteinToGenome()} method: A \link{TxDb}
     object or any object that supports \code{\link{transcripts}()}
     and \code{\link{cdsBy}()} (e.g. an \link[ensembldb]{EnsDb} object
@@ -64,7 +64,7 @@ proteinToGenome(x, txdb, ...)  # dispatch is on 2nd argument 'txdb'
   objects is the workhorse behind the default method. Note that the latter
   is a thin wrapper around the former, which simply does the following:
   \enumerate{
-    \item Use \code{\link{cdsBy}()} to extract the CDS from \code{txdb}.
+    \item Use \code{\link{cdsBy}()} to extract the CDS from \code{db}.
           The CDS are returned in a \link[GenomicRanges]{GRangesList}
           object with transcript names on it.
     \item Call \code{proteinToGenome()} on \code{x} and the
@@ -112,8 +112,8 @@ proteinToGenome(x, txdb, ...)  # dispatch is on 2nd argument 'txdb'
   Ensembl, GTF/GFF3 file, FlyBase, etc...)
 }
 
-\author{H. Pagès, and the authors of \code{ensembldb::proteinToGenome()}
-        for the inspiration and design.}
+\author{H. Pagès, using \code{ensembldb::proteinToGenome()} for
+        inspiration and design.}
 
 \seealso{
   \itemize{

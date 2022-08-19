@@ -4,8 +4,8 @@
 
 
 ### Dispatch is on 2nd argument!
-setGeneric("proteinToGenome", signature="txdb",
-    function(x, txdb, ...) standardGeneric("proteinToGenome")
+setGeneric("proteinToGenome", signature="db",
+    function(x, db, ...) standardGeneric("proteinToGenome")
 )
 
 
@@ -157,16 +157,16 @@ setGeneric("proteinToGenome", signature="txdb",
 ### Returns a named GRangesList object parallel to 'x' (names on 'x' are
 ### propagated).
 setMethod("proteinToGenome", "GRangesList",
-    function(x, txdb)
+    function(x, db)
     {
         if (!is(x, "IRanges"))
             stop(wmsg("'x' must be an IRanges object or derivative"))
         x_names <- names(x)
         if (is.null(x_names))
             stop(wmsg("'x' must have names"))
-        coding_tx_names <- names(txdb)
+        coding_tx_names <- names(db)
         if (is.null(coding_tx_names))
-            stop(wmsg("'txdb' must have names when it's a GRangesList object"))
+            stop(wmsg("'db' must have names when it's a GRangesList object"))
         non_coding_idx <- which(!(x_names %in% coding_tx_names))
         if (length(non_coding_idx) != 0L) {
             msg <- .make_bad_names_msg(x_names, non_coding_idx,
@@ -182,7 +182,7 @@ setMethod("proteinToGenome", "GRangesList",
                 if (i %in% non_coding_idx)
                     return(GRanges())
                 tx_name <- x_names[[i]]
-                cds_parts <- txdb[[tx_name]]
+                cds_parts <- db[[tx_name]]
                 .map_protein_to_cds_parts(x_start[[i]], x_end[[i]], cds_parts)
             }
         )
@@ -195,24 +195,24 @@ setMethod("proteinToGenome", "GRangesList",
 ### Default proteinToGenome() method
 ###
 
-### 'txdb' must be a TxDb object or any object that supports transcripts()
+### 'db' must be a TxDb object or any object that supports transcripts()
 ### (e.g. EnsDb object).
-.check_supplied_tx_names <- function(supplied_tx_names, txdb)
+.check_supplied_tx_names <- function(supplied_tx_names, db)
 {
     if (is.null(supplied_tx_names))
         stop(wmsg("'x' must have names and they must be transcript names"))
     stopifnot(is.character(supplied_tx_names))
     if (any(supplied_tx_names %in% c(NA_character_, "")))
         stop(wmsg("the names on 'x' cannot contain NAs or empty strings"))
-    tx <- transcripts(txdb, columns="tx_name")
+    tx <- transcripts(db, columns="tx_name")
     tx_names <- mcols(tx)$tx_name
     bad <- !(supplied_tx_names %in% tx_names)
     if (all(bad))
         stop(wmsg("The names on 'x' must be transcript names present in ",
-                  "the supplied ", class(txdb), " object. Note that the ",
+                  "the supplied ", class(db), " object. Note that the ",
                   "transcript names in this object can be obtained/seen ",
                   "with:"),
-             "\n    tx <- transcripts(txdb, columns=\"tx_name\")",
+             "\n    tx <- transcripts(db, columns=\"tx_name\")",
              "\n    mcols(tx)$tx_name")
     bad_idx <- which(bad)
     if (length(bad_idx) != 0L) {
@@ -222,14 +222,14 @@ setMethod("proteinToGenome", "GRangesList",
     }
 }
 
-### 'txdb' must be a TxDb object or any object that supports cdsBy()
+### 'db' must be a TxDb object or any object that supports cdsBy()
 ### (e.g. EnsDb object).
-.extract_cds_by_tx <- function(txdb, tx_names)
+.extract_cds_by_tx <- function(db, tx_names)
 {
     stopifnot(is.character(tx_names))
-    if (!is(txdb, "EnsDb"))
-        return(cdsBy(txdb, by="tx", use.names=TRUE))
-    ## Should never happen in practice because if 'txdb' is an EnsDb object
+    if (!is(db, "EnsDb"))
+        return(cdsBy(db, by="tx", use.names=TRUE))
+    ## Should never happen in practice because if 'db' is an EnsDb object
     ## then the ensembldb package should be loaded already, and ensembldb
     ## depends on AnnotationFilter.
     if (!requireNamespace("AnnotationFilter", quietly=TRUE))
@@ -238,20 +238,20 @@ setMethod("proteinToGenome", "GRangesList",
                   "calling proteinToGenome() on an EnsDb object. ",
                   "Please install it."))
     filter <- AnnotationFilter::TxIdFilter(tx_names)
-    cdsBy(txdb, by="tx", filter=filter)
+    cdsBy(db, by="tx", filter=filter)
 }
 
-### 'txdb' must be a TxDb object or any object that supports transcripts()
+### 'db' must be a TxDb object or any object that supports transcripts()
 ### and cdsBy() (e.g. EnsDb object).
 ### Returns a named GRangesList object parallel to 'x' (names on 'x' are
 ### propagated).
-.default_proteinToGenome <- function(x, txdb)
+.default_proteinToGenome <- function(x, db)
 {
     if (!is(x, "IRanges"))
         stop(wmsg("'x' must be an IRanges object or derivative"))
     x_names <- names(x)
-    .check_supplied_tx_names(x_names, txdb)
-    cds_by_tx <- .extract_cds_by_tx(txdb, x_names)
+    .check_supplied_tx_names(x_names, db)
+    cds_by_tx <- .extract_cds_by_tx(db, x_names)
     proteinToGenome(x, cds_by_tx)
 }
 

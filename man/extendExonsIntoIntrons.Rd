@@ -17,12 +17,12 @@ extendExonsIntoIntrons(ex_by_tx, extent=2)
 
 \arguments{
   \item{ex_by_tx}{
-    A \link[GenomicRange]{GRangesList} object containing exons grouped
+    A \link[GenomicRanges]{GRangesList} object containing exons grouped
     by transcript. This must be an object as returned by
     \code{\link{exonsBy}(txdb, by="tx")}, that is:
     \itemize{
       \item each list element in \code{ex_by_tx} must be a
-            \link[GenomicRange]{GRanges} object representing the
+            \link[GenomicRanges]{GRanges} object representing the
             exons of a given transcript;
       \item the exons in each list element must be ordered by ascending
             rank with respect to their transcript.
@@ -45,7 +45,7 @@ extendExonsIntoIntrons(ex_by_tx, extent=2)
 }
 
 \value{
-  A copy of \link[GenomicRange]{GRangesList} object \code{ex_by_tx}
+  A copy of \link[GenomicRanges]{GRangesList} object \code{ex_by_tx}
   where the original exon ranges have been extended.
 
   Names and metadata columns on \code{ex_by_tx} are propagated to the

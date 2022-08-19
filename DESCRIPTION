@@ -14,7 +14,7 @@ biocViews: Genetics, Infrastructure, Annotation, Sequencing,
 	GenomeAnnotation
 URL: https://bioconductor.org/packages/GenomicFeatures
 BugReports: https://github.com/Bioconductor/GenomicFeatures/issues
-Version: 1.49.5
+Version: 1.49.6
 License: Artistic-2.0
 Encoding: UTF-8
 Author: M. Carlson, H. Pagès, P. Aboyoun, S. Falcon, M. Morgan,
@@ -40,7 +40,7 @@ Suggests: RMariaDB, org.Mm.eg.db, org.Hs.eg.db,
 	SNPlocs.Hsapiens.dbSNP144.GRCh38,
 	Rsamtools, pasillaBamSubset (>= 0.0.5), GenomicAlignments (>= 1.15.7),
 	ensembldb, AnnotationFilter,
-	RUnit, BiocStyle, knitr
+	RUnit, BiocStyle, knitr, markdown
 VignetteBuilder: knitr
 Collate: utils.R
 	TxDb-schema.R
