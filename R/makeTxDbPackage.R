@@ -266,7 +266,10 @@ makeTxDbPackageFromUCSC <- function(
     if(!isSingleString(tablename)){
         stop("'tablename' must be supplied as a single element",
              " character vector.")}
-    if(!is.character(circ_seqs) || length(circ_seqs)<1){
+    if(is.null(circ_seqs)) {
+        warning("Circular chromosomes were automatically inferred.\n", call. = FALSE)
+    }
+    if(is.character(circ_seqs) && length(circ_seqs)<1){
         stop("'circ_seqs' must be supplied as a named character vector.")}
     if(!isSingleString(url)){
         stop("'url' must be supplied as a single element",
