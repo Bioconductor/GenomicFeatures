@@ -1,4 +1,17 @@
-###
+### This test sometimes breaks following a new Ensembl release.
+### Updating it is a little bit of an ad hoc process. First we need to
+### understand what has changed at Ensembl about the 6 transcripts used
+### in the test. A careful comparison of 'target_txdb' and 'current_txdb'
+### should reveal that. The new transcript attributes can also be checked
+### on the Ensembl site directly e.g. by looking up the transcript id using
+### the search box at http://www.ensembl.org/ (remember to select Human).
+### If the content of 'current_txdb' is in accordance with what the Ensembl
+### site says, then:
+### - adjust any of the TARGET_ variable below that needs adjustment
+### - dump 'current_txdb' to GenomicFeatures/inst/extdata/ with
+###   saveDb(current_txdb, "Biomart_Ensembl_sample.sqlite")
+### Then reinstall GenomicFeatures and try to run test_makeTxDbFromBiomart()
+### again. Hopefully it'll pass now.
 
 test_makeTxDbFromBiomart <- function()
 {
