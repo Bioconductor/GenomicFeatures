@@ -1,3 +1,23 @@
+CHANGES IN VERSION 1.50.0
+-------------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Use useEnsemblGenomes() instead of useMart() wherever possible.
+
+    o Improve pcoverageByTranscript() implementation. The function now uses
+      a chunking strategy to handle bigger CompressedGRangesList objects and
+      to reduce memory footprint. Note that even with this improvement, the
+      function is still not very efficient.
+
+    o Rename proteinToGenome() argument 'txdb' -> 'db'.
+
+BUG FIXES
+
+    o Change test for 'circ_seqs' argument in makeTxDbPackageFromUCSC() from
+      an error to a warning if argument set to NULL.
+
+
 CHANGES IN VERSION 1.48.0
 -------------------------
 
