@@ -558,34 +558,36 @@ browseUCSCtrack <- function(genome="hg19",
     if (is.character(mapdef))
         columns <- c(columns, mapdef[["colname"]])
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
-    on.exit(message("OK"))
-    ucsc_txtable <- UCSC_dbselect(genome, tablename,
-                                  columns=columns, where=where)
+    ans <- UCSC_dbselect(genome, tablename, columns=columns, where=where)
+    message("OK")
     ## DBI is returning blobs for exon starts and stops so the old check fails
-    stopifnot(all(mapply(function(x, y) is(x, y), ucsc_txtable, .UCSC_TXCOL2CLASS)))
-    ##current_classes <- head(sapply(ucsc_txtable, class),
+    stopifnot(all(mapply(function(x, y) is(x, y), ans, .UCSC_TXCOL2CLASS)))
+    ##current_classes <- head(sapply(ans, class),
     ##                        n=length(.UCSC_TXCOL2CLASS))
     ##stopifnot(identical(current_classes, .UCSC_TXCOL2CLASS))
-    ucsc_txtable$exonStarts <- toListOfIntegerVectors(ucsc_txtable$exonStarts)
-    ucsc_txtable$exonEnds <- toListOfIntegerVectors(ucsc_txtable$exonEnds)
-    if (!identical(lengths(ucsc_txtable$exonStarts),
-                   ucsc_txtable$exonCount))
+    ans$exonStarts <- toListOfIntegerVectors(ans$exonStarts)
+    ans$exonEnds <- toListOfIntegerVectors(ans$exonEnds)
+    if (!identical(lengths(ans$exonStarts),
+                   ans$exonCount))
         stop(wmsg("UCSC data anomaly in table ", genome, ".", tablename, ": ",
                   "columns exonStarts and exonCount are inconsistent"))
-    if (!identical(lengths(ucsc_txtable$exonEnds),
-                   ucsc_txtable$exonCount))
+    if (!identical(lengths(ans$exonEnds),
+                   ans$exonCount))
         stop(wmsg("UCSC data anomaly in table ", genome, ".", tablename, ": ",
                   "columns exonEnds and exonCount are inconsistent"))
-    ucsc_txtable
+    ans
 }
 
 .fetch_UCSC_table <- function(genome, tablename, columns=NULL)
 {
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
-    on.exit(message("OK"))
-    if (tablename == "hgFixed.refLink")
-        return(UCSC_dbselect("hgFixed", "refLink", columns=columns))
-    UCSC_dbselect(genome, tablename, columns=columns)
+    if (tablename == "hgFixed.refLink") {
+        genome <- "hgFixed"
+        tablename <- "refLink"
+    }
+    ans <- UCSC_dbselect(genome, tablename, columns=columns)
+    message("OK")
+    ans
 }
 
 ### The 2 functions below must return a named list with 2 elements:
@@ -647,14 +649,13 @@ browseUCSCtrack <- function(genome="hg19",
 .extract_transcripts_from_UCSC_txtable <- function(ucsc_txtable)
 {
     message("Extract the 'transcripts' data frame ... ", appendLF=FALSE)
-    on.exit(message("OK"))
     tx_id <- seq_len(nrow(ucsc_txtable))
     tx_name <- ucsc_txtable$name
     tx_chrom <- ucsc_txtable$chrom
     tx_strand <- ucsc_txtable$strand
     tx_start <- ucsc_txtable$txStart + 1L
     tx_end <- ucsc_txtable$txEnd
-    data.frame(
+    ans <- data.frame(
         tx_id=tx_id,
         tx_name=tx_name,
         tx_chrom=tx_chrom,
@@ -663,6 +664,8 @@ browseUCSCtrack <- function(genome="hg19",
         tx_end=tx_end,
         stringsAsFactors=FALSE
     )
+    message("OK")
+    ans
 }
 
 
@@ -762,7 +765,6 @@ browseUCSCtrack <- function(genome="hg19",
                                                  transcripts_tx_id)
 {
     message("Extract the 'splicings' data frame ... ", appendLF=FALSE)
-    on.exit(message("OK"))
     exon_count <- ucsc_txtable$exonCount
     splicings_tx_id <- rep.int(transcripts_tx_id, exon_count)
     if (length(exon_count) == 0L) {
@@ -779,7 +781,7 @@ browseUCSCtrack <- function(genome="hg19",
         cds_start <- unlist(cds_locs$start) + 1L
         cds_end <- unlist(cds_locs$end)
     }
-    data.frame(
+    ans <- data.frame(
         tx_id=splicings_tx_id,
         exon_rank=exon_rank,
         exon_start=exon_start,
@@ -788,6 +790,8 @@ browseUCSCtrack <- function(genome="hg19",
         cds_end=cds_end,
         stringsAsFactors=FALSE
     )
+    message("OK")
+    ans
 }
 
 
@@ -835,7 +839,6 @@ browseUCSCtrack <- function(genome="hg19",
 {
     message("Download and preprocess the 'chrominfo' data frame ... ",
             appendLF=FALSE)
-    on.exit(message("OK"))
     chrom_info <- getChromInfoFromUCSC(genome, goldenPath.url=goldenPath.url)
     if (!is.null(circ_seqs)) {
         chrom_info[ , "circular"] <-
@@ -856,7 +859,9 @@ browseUCSCtrack <- function(genome="hg19",
         stringsAsFactors=FALSE
     )
     oo <- order(rankSeqlevels(chrominfo[ , "chrom"]))
-    S4Vectors:::extract_data_frame_rows(chrominfo, oo)
+    ans <- S4Vectors:::extract_data_frame_rows(chrominfo, oo)
+    message("OK")
+    ans
 }
 
 
@@ -869,7 +874,6 @@ browseUCSCtrack <- function(genome="hg19",
                                    taxonomyId=NA, miRBaseBuild=NA)
 {
     message("Prepare the 'metadata' data frame ... ", appendLF=FALSE)
-    on.exit(message("OK"))
     if (!isSingleStringOrNA(miRBaseBuild))
         stop("'miRBaseBuild' must be a a single string or NA")
     organism <- lookup_organism_by_UCSC_genome(genome)
@@ -879,7 +883,7 @@ browseUCSCtrack <- function(genome="hg19",
         GenomeInfoDb:::check_tax_id(taxonomyId)
     }
 
-    data.frame(
+    ans <- data.frame(
         name=c("Data source", "Genome", "Organism", "Taxonomy ID",
                "UCSC Table", "UCSC Track",
                "Resource URL", "Type of Gene ID",
@@ -892,6 +896,8 @@ browseUCSCtrack <- function(genome="hg19",
                 miRBaseBuild),
         stringsAsFactors=FALSE
     )
+    message("OK")
+    ans
 }
 
 
@@ -942,11 +948,12 @@ browseUCSCtrack <- function(genome="hg19",
         on.foreign.transcripts <- "error"
 
     message("Make the TxDb object ... ", appendLF=FALSE)
-    on.exit(message("OK"))
-    makeTxDb(transcripts, splicings, genes=genes,
-             chrominfo=chrominfo, metadata=metadata,
-             reassign.ids=TRUE,
-             on.foreign.transcripts=on.foreign.transcripts)
+    ans <- makeTxDb(transcripts, splicings, genes=genes,
+                    chrominfo=chrominfo, metadata=metadata,
+                    reassign.ids=TRUE,
+                    on.foreign.transcripts=on.foreign.transcripts)
+    message("OK")
+    ans
 }
 
 ### Some timings (as of Jan 31, 2018, GenomicFeatures 1.31.7):
