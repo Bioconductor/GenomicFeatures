@@ -109,31 +109,6 @@ tidyIntrons(txdb, drop.geneless=FALSE)
   \code{tx_name}, and \code{gene_id}.
 }
 
-\note{
-  \code{exonicParts} is a replacement for \code{\link{disjointExons}} with
-  the following differences/improvements:
-  \itemize{
-    \item Argument \code{linked.to.single.gene.only} in \code{exonicParts}
-          replaces argument \code{aggregateGenes} in \code{disjointExons},
-          but has opposite meaning i.e.
-          \code{exonicParts(txdb, linked.to.single.gene.only=TRUE)}
-          returns the same exonic parts as
-          \code{disjointExons(txdb, aggregateGenes=FALSE)}.
-
-    \item Unlike \code{disjointExons(txdb, aggregateGenes=TRUE)},
-          \code{exonicParts(txdb, linked.to.single.gene.only=FALSE)} does
-          NOT discard exon parts that are not linked to a gene.
-
-    \item \code{exonicParts} is almost 2x more efficient than
-          \code{disjointExons}.
-
-    \item \code{exonicParts} works out-of-the-box on any \link{TxDb}-like
-          object that supports the \code{\link{transcripts}()} and
-          \code{\link{exonsBy}()} extractors (e.g. on an
-          \link[ensembldb]{EnsDb} object).
-  }
-}
-
 \author{Hervé Pagès}
 
 \seealso{

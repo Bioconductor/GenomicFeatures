@@ -124,6 +124,28 @@ tidyIntrons <- function(txdb, drop.geneless=FALSE)
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### exonicParts() and intronicParts()
 ###
+### exonicParts() is a replacement for the old disjointExons() function, with
+### the following differences/improvements:
+###
+### 1. Argument 'linked.to.single.gene.only' in exonicParts() replaces
+###    argument 'aggregateGenes' in disjointExons(), but has the opposite
+###    meaning, that is:
+###       exonicParts(txdb, linked.to.single.gene.only=TRUE)
+###    returns the same exonic parts as:
+###       disjointExons(txdb, aggregateGenes=FALSE)
+###
+### 2. Unlike disjointExons(txdb, aggregateGenes=TRUE),
+###    exonicParts(txdb, linked.to.single.gene.only=FALSE)
+###    does NOT discard exon parts that are not linked to a gene.
+###
+### 3. exonicParts() is almost 2x more efficient than disjointExons().
+###
+### 4. exonicParts() works out-of-the-box on any TxDb-like object that
+###    supports the transcripts() and exonsBy() extractors, e.g. on an
+###    EnsDb object.
+###
+### Note that disjointExons() was deprecated in BioC 3.13, then defunct in
+### BioC 3.15, and finally removed from BioC 3.17.
 
 ### Return a disjoint and strictly sorted GRanges object with 1 range per
 ### exonic part and with metadata columns tx_id, tx_name, gene_id, exon_id,

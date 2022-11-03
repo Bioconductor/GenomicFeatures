@@ -92,9 +92,6 @@ export(
   tidyTranscripts, tidyExons, tidyIntrons,
   exonicParts, intronicParts,
 
-  ## disjointExons.R:
-  disjointExons,
-
   ## extendExonsIntoIntrons.R:
   extendExonsIntoIntrons,
 
@@ -156,7 +153,6 @@ exportMethods(
   intronsByTranscript,
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
-  disjointExons,
   microRNAs,
   tRNAs,
   extractTranscriptSeqs,

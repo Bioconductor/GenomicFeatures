@@ -77,7 +77,6 @@ Collate: utils.R
 	transcriptsByOverlaps.R
 	transcriptLengths.R
 	exonicParts.R
-	disjointExons.R
 	extendExonsIntoIntrons.R
 	features.R
 	microRNAs.R
