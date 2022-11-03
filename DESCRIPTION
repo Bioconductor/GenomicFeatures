@@ -36,7 +36,7 @@ Authors@R: c(
 	person("D.", "Tenenbaum", role="ctb"),
 	person("D.", "Van Twisk", role="ctb"))
 Depends: R (>= 3.5.0), BiocGenerics (>= 0.1.0), S4Vectors (>= 0.17.29),
-	IRanges (>= 2.13.23), GenomeInfoDb (>= 1.25.7),
+	IRanges (>= 2.13.23), GenomeInfoDb (>= 1.35.1),
 	GenomicRanges (>= 1.31.17), AnnotationDbi (>= 1.41.4)
 Imports: methods, utils, stats, tools, DBI, RSQLite (>= 2.0), RCurl,
 	XVector (>= 0.19.7), Biostrings (>= 2.47.6), BiocIO,
