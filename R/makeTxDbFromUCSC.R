@@ -811,55 +811,30 @@ browseUCSCtrack <- function(genome="hg19",
 ### Download and preprocess the 'chrominfo' data frame.
 ###
 
-.warn_about_circularity_guess <- function(genome, circ_seqs)
-{
-    if (length(circ_seqs) == 0L) {
-        guess <- c("no sequence in ", genome , " is circular")
-    } else if (length(circ_seqs) == 1L) {
-        guess <- c(circ_seqs, " is circular")
-    } else {
-        in1string <- paste(circ_seqs, collapse=", ")
-        guess <- c(length(circ_seqs), " sequences (",
-                   in1string, ") are circular")
-    }
-    warning(wmsg("UCSC genome ", genome, " is not registered in ",
-                 "GenomeInfoDb (see ?registered_UCSC_genomes), so ",
-                 "we made the following guess about this assembly: ",
-                 guess, ". You can see this by calling isCircular() ",
-                 "on the TxDb object returned by makeTxDbFromUCSC(). "),
-            "\n  ",
-            wmsg("If you think this is incorrect, please let us know. ",
-                 "In the meantime you can supply your own list of ",
-                 "circular sequences (as a character vector) via ",
-                 "the 'circ_seqs' argument."))
-}
-
 .make_UCSC_chrominfo <- function(genome, circ_seqs=NULL,
         goldenPath.url=getOption("UCSC.goldenPath.url"))
 {
     message("Download and preprocess the 'chrominfo' data frame ... ",
             appendLF=FALSE)
-    chrom_info <- getChromInfoFromUCSC(genome, goldenPath.url=goldenPath.url)
-    if (!is.null(circ_seqs)) {
-        chrom_info[ , "circular"] <-
-            GenomeInfoDb:::make_circ_flags_from_circ_seqs(
-                                           chrom_info[ , "chrom"],
-                                           circ_seqs=circ_seqs)
-    } else {
-        UCSC_genomes <- registered_UCSC_genomes()[ , "genome"]
-        if (!(genome %in% UCSC_genomes)) {
-            circ_seqs <- circ_seqs[circ_seqs[ , "circular"], "chrom"]
-            .warn_about_circularity_guess(genome, circ_seqs)
-        }
-    }
-    chrominfo <- data.frame(
-        chrom=chrom_info[ , "chrom"],
-        length=chrom_info[ , "size"],
-        is_circular=chrom_info[ , "circular"],
+    warning_tip1 <- paste0("You can see this by calling isCircular() on the ",
+                           "TxDb object returned by makeTxDbFromUCSC().")
+    warning_tip2 <- paste0("See '?makeTxDbFromUCSC' in the GenomicFeatures ",
+                           "package for more information.")
+    chrominfo <- get_and_fix_chrom_info_from_UCSC(genome,
+                                   goldenPath.url=goldenPath.url,
+                                   circ_seqs=circ_seqs,
+                                   warning_tip1=warning_tip1,
+                                   warning_tip2=warning_tip2)
+    ## Prepare the data frame that will be passed to the 'chrominfo' argument
+    ## of makeTxDb(). Note that the naming convention for the columns in this
+    ## data frame differs from what's used in the data frame returned by
+    ## get_and_fix_chrom_info_from_UCSC().
+    ans <- data.frame(
+        chrom=chrominfo[ , "chrom"],
+        length=chrominfo[ , "size"],
+        is_circular=chrominfo[ , "circular"],
         stringsAsFactors=FALSE
     )
-    oo <- order(rankSeqlevels(chrominfo[ , "chrom"]))
-    ans <- S4Vectors:::extract_data_frame_rows(chrominfo, oo)
     message("OK")
     ans
 }
