@@ -10,15 +10,15 @@
 ### list_ftp_dir()
 ###
 
-### Strip the "ftp://" part from the supplied URL and add the trailing slash
-### to it if missing.
+### Strip the "protocol://" part (e.g. "ftp://" or "https://") from the
+### supplied URL, and add the trailing slash to it if missing.
 .normarg_ftp_dir <- function(ftp_dir)
 {
     stopifnot(isSingleString(ftp_dir))
     pattern <- "^[[:alpha:]]*://"
     ftp_dir <- sub(pattern, "", ftp_dir)
     ## 'getURL(ftp_dir)' will fail if 'ftp_dir' does not have a trailing
-    ## slash, so we add the slash but only if it's missing.
+    ## slash, so we append the slash but only if it's missing.
     nc <- nchar(ftp_dir)
     last_char <- substr(ftp_dir, nc, nc)
     if (last_char != "/")
@@ -59,11 +59,12 @@
     matrix(ans_data, ncol=ans_ncol, byrow=TRUE)
 }
 
-### Keys are URLs to FTP directories, with a trailing slash.
+### The keys must be URLs to FTP directories that went thru .normarg_ftp_dir(),
+### that is, without the "protolol://" part and with a trailing slash.
 .cached_ftp_dir_listing <- new.env(parent=emptyenv())
 
-### Uses RCurl to retrieve the listing of an FTP dir. The result is
-### cached in order to make subsequent calls to list_ftp_dir() on the
+### Uses RCurl::getURL() to retrieve the listing of an FTP dir. The result
+### is cached in order to make subsequent calls to list_ftp_dir() on the
 ### same 'ftp_dir' faster.
 ### If 'long.listing' is TRUE then return a character matrix with 1 row
 ### per entry in the FTP dir listing, and at least 9 columns (but sometimes
@@ -78,15 +79,6 @@ list_ftp_dir <- function(ftp_dir, subdirs.only=FALSE, long.listing=FALSE,
     stopifnot(isTRUEorFALSE(long.listing))
     stopifnot(isTRUEorFALSE(recache))
 
-    stopifnot(isSingleString(ftp_dir))
-    ## 'getURL(ftp_dir)' will fail if 'ftp_dir' does not have a trailing
-    ## slash, so we add the slash if it's missing.
-    nc <- nchar(ftp_dir)
-    last_char <- substr(ftp_dir, nc, nc)
-    if (last_char != "/")
-        ftp_dir <- paste0(ftp_dir, "/")
-
-    ## Always use an URL with a trailing slash when querying the cache.
     listing <- .cached_ftp_dir_listing[[ftp_dir]]
     if (is.null(listing) || recache) {
         doc <- getURL(ftp_dir)
