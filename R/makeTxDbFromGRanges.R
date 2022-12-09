@@ -1477,7 +1477,7 @@ test_makeTxDbFromGRanges_on_Ensembl_organism_gtf <- function(organism)
     cat("Download GTF file ... ")
     gtf_url <- ftp_url_to_Ensembl_gtf()
     url <- paste0(gtf_url, organism, "/")
-    organism_files <- ls_ftp_url(url)
+    organism_files <- list_ftp_dir(url)
     gtf_file <- grep("gtf", organism_files, ignore.case=TRUE, value=TRUE)
     if (length(gtf_file) != 1L) {
         cat("ABORT (0 or more than 1 GTF file found)\n")
@@ -1524,7 +1524,7 @@ test_makeTxDbFromGRanges_on_Ensembl_gtf <- function(all=FALSE)
 {
     gtf_url <- ftp_url_to_Ensembl_gtf()
     if (all) {
-        organisms <- ls_ftp_url(gtf_url, subdirs.only=TRUE)
+        organisms <- list_ftp_dir(gtf_url, subdirs.only=TRUE)
     } else {
         organisms <- c("caenorhabditis_elegans",
                        "ciona_intestinalis",

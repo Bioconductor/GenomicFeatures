@@ -26,24 +26,17 @@
 ### Very low-level internal utils used here and in other files
 ###
 
-### Uses RCurl to access and list the content of an FTP dir.
-ls_ftp_url <- function(url, subdirs.only=FALSE)
+.checkarg_release <- function(release)
 {
-    doc <- getURL(url)
-    listing <- strsplit(doc, "\n", fixed=TRUE)[[1L]]
-    if (subdirs.only)
-        listing <- listing[substr(listing, 1L, 1L) == "d"]
-    ## Keep field no. 8 only
-    pattern <- paste(c("^", rep.int("[^[:space:]]+[[:space:]]+", 8L)),
-                     collapse="")
-    listing <- sub(pattern, "", listing)
-    sub("[[:space:]].*$", "", listing)
+    if (!isSingleNumberOrNA(release))
+        stop(wmsg("'release' must be a valid Ensembl release number or NA"))
 }
 
 ### 'kingdom' must be NA or one of the EnsemblGenomes marts i.e. "bacteria",
 ### "fungi", "metazoa", "plants", or "protists".
 ftp_url_to_Ensembl_mysql <- function(release=NA, use.grch37=FALSE, kingdom=NA)
 {
+    .checkarg_release(release)
     if (is.na(kingdom)) {
         if (is.na(release)) {
             if (use.grch37) {
@@ -72,6 +65,7 @@ ftp_url_to_Ensembl_mysql <- function(release=NA, use.grch37=FALSE, kingdom=NA)
 
 ftp_url_to_Ensembl_gtf <- function(release=NA)
 {
+    .checkarg_release(release)
     if (is.na(release))
         pub_subdir <- "current_gtf"
     else
@@ -84,29 +78,19 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 ### .Ensembl_getMySQLCoreUrl()
 ###
 
-### 'kingdom' must be NA or one of the EnsemblGenomes marts i.e. "bacteria",
-### "fungi", "metazoa", "plants", or "protists".
-Ensembl_listMySQLCoreDirs <- function(release=NA,
-                                      use.grch37=FALSE, kingdom=NA, url=NA)
+Ensembl_listMySQLCoreDirs <- function(mysql_url, release=NA, recache=FALSE)
 {
-    if (is.na(url))
-        url <- ftp_url_to_Ensembl_mysql(release, use.grch37, kingdom)
-    core_dirs <- ls_ftp_url(url, subdirs.only=TRUE)
+    .checkarg_release(release)
+    core_dirs <- list_ftp_dir(mysql_url, subdirs.only=TRUE, recache=recache)
     pattern <- "_core_"
     if (!is.na(release))
         pattern <- paste0(pattern, release, "_")
     core_dirs[grep(pattern, core_dirs, fixed=TRUE)]
 }
 
-.Ensembl_getMySQLCoreDir <- function(dataset, release=NA,
-                                     use.grch37=FALSE, kingdom=NA, url=NA)
+.Ensembl_getMySQLCoreDir <- function(dataset, mysql_url, release=NA)
 {
-    if (is.na(url))
-        url <- ftp_url_to_Ensembl_mysql(release, use.grch37, kingdom)
-    core_dirs <- Ensembl_listMySQLCoreDirs(release=release,
-                                           use.grch37=use.grch37,
-                                           kingdom=kingdom,
-                                           url=url)
+    core_dirs <- Ensembl_listMySQLCoreDirs(mysql_url, release=release)
     trimmed_core_dirs <- sub("_core_.*$", "", core_dirs)
     shortnames <- sub("^(.)[^_]*_", "\\1", trimmed_core_dirs)
     if (dataset == "mfuro_gene_ensembl") {
@@ -117,21 +101,15 @@ Ensembl_listMySQLCoreDirs <- function(release=NA,
     core_dir <- core_dirs[shortnames == shortname0]
     if (length(core_dir) != 1L)
         stop("found 0 or more than 1 subdir for \"", dataset,
-             "\" dataset at ", url)
+             "\" dataset at ", mysql_url)
     core_dir
 }
 
 ### Return URL of Ensemble Core DB (FTP access).
-.Ensembl_getMySQLCoreUrl <- function(dataset, release=NA,
-                                     use.grch37=FALSE, kingdom=NA, url=NA)
+.Ensembl_getMySQLCoreUrl <- function(dataset, mysql_url, release=NA)
 {
-    if (is.na(url))
-        url <- ftp_url_to_Ensembl_mysql(release, use.grch37, kingdom)
-    core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release,
-                                         use.grch37=use.grch37,
-                                         kingdom=kingdom,
-                                         url=url)
-    paste0(url, core_dir, "/")
+    core_dir <- .Ensembl_getMySQLCoreDir(dataset, mysql_url, release=release)
+    paste0(mysql_url, core_dir, "/")
 }
 
 
@@ -259,7 +237,8 @@ extract_chromlengths_from_seq_region <- function(seq_region,
 
 ### Fetch sequence names and lengths from the 'seq_region' table.
 ### Typical use:
-###   core_url <- .Ensembl_getMySQLCoreUrl("hsapiens_gene_ensembl")
+###   mysql_url <- ftp_url_to_Ensembl_mysql()
+###   core_url <- .Ensembl_getMySQLCoreUrl("hsapiens_gene_ensembl", mysql_url)
 ###   extra_seqnames <- c("GL000217.1", "NC_012920", "HG79_PATCH")
 ###   .Ensembl_fetchChromLengthsFromCoreUrl(core_url,
 ###                                         extra_seqnames=extra_seqnames)
@@ -281,12 +260,10 @@ extract_chromlengths_from_seq_region <- function(seq_region,
 
 get_organism_from_Ensembl_Mart_dataset <- function(dataset, release=NA,
                                                    use.grch37=FALSE,
-                                                   kingdom=NA, url=NA)
+                                                   kingdom=NA)
 {
-    core_dir <- .Ensembl_getMySQLCoreDir(dataset, release=release,
-                                         use.grch37=use.grch37,
-                                         kingdom=kingdom,
-                                         url=url)
+    mysql_url <- ftp_url_to_Ensembl_mysql(release, use.grch37, kingdom)
+    core_dir <- .Ensembl_getMySQLCoreDir(dataset, mysql_url, release=release)
     organism <- sub("_core.*", "", core_dir)
     organism <- sub("_", " ", organism)
     substr(organism, 1L, 1L) <- toupper(substr(organism, 1L, 1L))
@@ -304,9 +281,8 @@ fetchChromLengthsFromEnsembl <- function(dataset, release=NA,
                                          use.grch37=FALSE, kingdom=NA,
                                          extra_seqnames=NULL)
 {
-    core_url <- .Ensembl_getMySQLCoreUrl(dataset, release=release,
-                                         use.grch37=use.grch37,
-                                         kingdom=kingdom)
+    mysql_url <- ftp_url_to_Ensembl_mysql(release, use.grch37, kingdom)
+    core_url <- .Ensembl_getMySQLCoreUrl(dataset, mysql_url, release=release)
     .Ensembl_fetchChromLengthsFromCoreUrl(core_url,
                                           extra_seqnames=extra_seqnames)
 }
