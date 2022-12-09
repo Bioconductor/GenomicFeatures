@@ -24,12 +24,25 @@
 .lookup_dbname <- function(organism, release=NA)
 {
     organism <- .normarg_organism(organism)
-    if (!isSingleNumberOrNA(release))
-        stop("'release' must be a valid Ensembl release number or NA")
-    available_dbs <- Ensembl_listMySQLCoreDirs(release=release)
+    mysql_url <- ftp_url_to_Ensembl_mysql(release)
+    core_dirs <- Ensembl_listMySQLCoreDirs(mysql_url, release=release)
     prefix <- paste0(gsub(" ", "_", tolower(organism), fixed=TRUE), "_core_")
-    i <- match(prefix, substr(available_dbs, 1L, nchar(prefix)))
-    dbname <- available_dbs[[i]]
+    i <- match(prefix, substr(core_dirs, 1L, nchar(prefix)))
+    if (is.na(i)) {
+        pattern <- "^([^_])[^_]*_(.*_core_.*)$"
+        replacement <- "\\1\\2"
+        alt_core_dirs <- sub(pattern, replacement, core_dirs)
+        i <- match(prefix, substr(alt_core_dirs, 1L, nchar(prefix)))
+        if (is.na(i)) {
+            if (is.na(release))
+                where <- "the current Ensembl release"
+            else
+                where <- paste0("Ensembl release ", release)
+            stop(wmsg("no core db found in ", where, " ",
+                      "for organism \"", organism, "\""))
+        }
+    }
+    dbname <- core_dirs[[i]]
     if (!is.na(release))  # sanity check
         stopifnot(.dbname2release(dbname) == release)
     dbname
