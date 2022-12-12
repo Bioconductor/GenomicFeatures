@@ -26,17 +26,27 @@
 ### Very low-level internal utils used here and in other files
 ###
 
-.checkarg_release <- function(release)
+.normarg_release <- function(release)
 {
-    if (!isSingleNumberOrNA(release))
-        stop(wmsg("'release' must be a valid Ensembl release number or NA"))
+    error_msg <- "'release' must be a valid Ensembl release number or NA"
+    if (!(is.atomic(release) && length(release) == 1L))
+        stop(wmsg(error_msg))
+    if (!(is.integer(release) || is.na(release))) {
+        if (!(is.numeric(release) || is.character(release)))
+            stop(wmsg(error_msg))
+        release2 <- suppressWarnings(as.integer(release))
+        if (is.na(release2) || release2 != release)
+            stop(wmsg(error_msg))
+        release <- release2
+    }
+    release
 }
 
 ### 'kingdom' must be NA or one of the EnsemblGenomes marts i.e. "bacteria",
 ### "fungi", "metazoa", "plants", or "protists".
 ftp_url_to_Ensembl_mysql <- function(release=NA, use.grch37=FALSE, kingdom=NA)
 {
-    .checkarg_release(release)
+    release <- .normarg_release(release)
     if (is.na(kingdom)) {
         if (is.na(release)) {
             if (use.grch37) {
@@ -65,7 +75,7 @@ ftp_url_to_Ensembl_mysql <- function(release=NA, use.grch37=FALSE, kingdom=NA)
 
 ftp_url_to_Ensembl_gtf <- function(release=NA)
 {
-    .checkarg_release(release)
+    release <- .normarg_release(release)
     if (is.na(release))
         pub_subdir <- "current_gtf"
     else
@@ -80,7 +90,7 @@ ftp_url_to_Ensembl_gtf <- function(release=NA)
 
 Ensembl_listMySQLCoreDirs <- function(mysql_url, release=NA, recache=FALSE)
 {
-    .checkarg_release(release)
+    release <- .normarg_release(release)
     core_dirs <- list_ftp_dir(mysql_url, subdirs.only=TRUE, recache=recache)
     pattern <- "_core_"
     if (!is.na(release))
