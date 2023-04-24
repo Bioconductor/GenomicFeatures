@@ -1,3 +1,23 @@
+CHANGES IN VERSION 1.52.0
+-------------------------
+
+NEW FEATURES
+
+    o Small improvement to makeTxDbFromEnsembl(): The function can now be
+      called on the abbreviated organism, e.g. "hsapiens", in addition
+      to "homo sapiens".
+
+DEPRECATED AND DEFUNCT
+
+    o Finally remove disjointExons() (got deprecated in BioC 3.13 and defunct
+      in BioC 3.15).
+
+BUG FIXES
+
+    o Fix issue with order of sequences in seqinfo(makeTxDbFromUCSC()).
+      See commit e4381bc.
+
+
 CHANGES IN VERSION 1.50.0
 -------------------------
 
