@@ -744,11 +744,16 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
     )
 
     if (feature == "exon") {
-        exon_rank <- .extract_rank_from_id(exon_id, tx_id)
-        if (is.null(exon_rank))
-            exon_rank <- .infer_rank_from_position(tx_id,
-                                                   exon_chrom, exon_strand,
-                                                   exon_start, exon_end)
+        exon_rank <- .infer_rank_from_position(tx_id,
+                                               exon_chrom, exon_strand,
+                                               exon_start, exon_end)
+        na_idx <- which(is.na(exon_rank))
+        if (length(na_idx) != 0L) {
+            ## Try to infer the exon ranks from their ids.
+            exon_rank2 <- .extract_rank_from_id(exon_id, tx_id)
+            if (!is.null(exon_rank2))
+                exon_rank[na_idx] <- exon_rank2[na_idx]
+        }
         exons$exon_rank <- exon_rank
     } else {
         colnames(exons) <- sub("^exon_", "", colnames(exons))
