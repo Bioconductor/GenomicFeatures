@@ -230,3 +230,81 @@ test_intronsByTranscript <- function()
     seqinfo(want) <- seqinfo
     checkIdentical(intronByTx[[4L]], want)
 }
+
+test_exonsBy_cdsBy_fiveUTRsByTranscript_threeUTRsByTranscript <- function()
+{
+    ## ITAG4.1_gene_models.subset.gff: 10 coding transcripts
+    gff <- system.file("extdata", "GFF3_files",
+                       "ITAG4.1_gene_models.subset.gff",
+                       package="GenomicFeatures")
+    txdb <- makeTxDbFromGFF(gff)
+
+    ex_by_tx <- exonsBy(txdb, by="tx", use.names=TRUE)
+    checkTrue(is(ex_by_tx, "GRangesList"))
+    checkTrue(validObject(ex_by_tx))
+    checkIdentical(length(ex_by_tx), 10L)
+    tx1_exons <- ex_by_tx$Solyc00g025400.2.1
+    checkIdentical(mcols(tx1_exons)$exon_rank, 1:2)
+    checkTrue(all(strand(tx1_exons) == "+"))
+    checkIdentical(ranges(tx1_exons),
+                   IRanges(c("2030916-2031456", "2032190-2032369")))
+    tx2_exons <- ex_by_tx$Solyc00g142170.2.1
+    checkIdentical(mcols(tx2_exons)$exon_rank, 1:3)
+    checkTrue(all(strand(tx2_exons) == "-"))
+    checkIdentical(ranges(tx2_exons),
+                   IRanges(c("2082902-2083225",
+                             "2082546-2082748",
+                             "2081817-2082335")))
+    tx3_exons <- ex_by_tx$Solyc00g007330.1.1
+    checkIdentical(mcols(tx3_exons)$exon_rank, 1:2)
+    checkTrue(all(strand(tx3_exons) == "-"))
+    checkIdentical(ranges(tx3_exons),
+                   IRanges(c("2380640-2380807", "2379604-2380324")))
+
+    cds_by_tx <- cdsBy(txdb, by="tx", use.names=TRUE)
+    checkTrue(is(cds_by_tx, "GRangesList"))
+    checkTrue(validObject(cds_by_tx))
+    checkIdentical(length(cds_by_tx), 10L)
+    tx1_cds <- cds_by_tx$Solyc00g025400.2.1
+    checkIdentical(mcols(tx1_cds)$exon_rank, 1:2)
+    checkTrue(all(strand(tx1_cds) == "+"))
+    checkIdentical(ranges(tx1_cds),
+                   IRanges(c("2031166-2031456", "2032190-2032369")))
+    tx2_cds <- cds_by_tx$Solyc00g142170.2.1
+    checkIdentical(mcols(tx2_cds)$exon_rank, 1:3)
+    checkTrue(all(strand(tx2_cds) == "-"))
+    checkIdentical(ranges(tx2_cds),
+                   IRanges(c("2082902-2083136",
+                             "2082546-2082748",
+                             "2081856-2082335")))
+    tx3_cds <- cds_by_tx$Solyc00g007330.1.1
+    checkIdentical(mcols(tx3_cds)$exon_rank, 2L)
+    checkTrue(all(strand(tx3_cds) == "-"))
+    checkIdentical(ranges(tx3_cds),
+                   IRanges("2379604-2380119"))
+
+    utr5_by_tx <- fiveUTRsByTranscript(txdb, use.names=TRUE)
+    checkTrue(is(utr5_by_tx, "GRangesList"))
+    checkTrue(validObject(utr5_by_tx))
+    checkIdentical(length(utr5_by_tx), 4L)
+    tx1_5UTRs <- utr5_by_tx$Solyc00g025400.2.1
+    checkIdentical(mcols(tx1_5UTRs)$exon_rank, 1L)
+    checkTrue(all(strand(tx1_5UTRs) == "+"))
+    checkIdentical(ranges(tx1_5UTRs), IRanges("2030916-2031165"))
+    tx2_5UTRs <- utr5_by_tx$Solyc00g142170.2.1
+    checkIdentical(mcols(tx2_5UTRs)$exon_rank, 1L)
+    checkTrue(all(strand(tx2_5UTRs) == "-"))
+    checkIdentical(ranges(tx2_5UTRs), IRanges("2083137-2083225"))
+    tx3_5UTRs <- utr5_by_tx$Solyc00g007330.1.1
+    checkIdentical(mcols(tx3_5UTRs)$exon_rank, 1:2)
+    checkTrue(all(strand(tx3_5UTRs) == "-"))
+    checkIdentical(ranges(tx3_5UTRs),
+                   IRanges(c("2380640-2380807", "2380120-2380324")))
+
+    utr3_by_tx <- threeUTRsByTranscript(txdb, use.names=TRUE)
+    checkTrue(is(utr3_by_tx, "GRangesList"))
+    checkTrue(validObject(utr3_by_tx))
+    checkIdentical(length(utr3_by_tx), 4L)
+    checkTrue(is.null(utr3_by_tx$Solyc00g007330.1.1))
+}
+

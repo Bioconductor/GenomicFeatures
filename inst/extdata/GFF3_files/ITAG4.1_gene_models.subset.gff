@@ -1,0 +1,94 @@
+##gff-version 3
+##sequence-regionSL4.0ch00      1       9643250
+##sequence-regionSL4.0ch01      1       90863682
+##sequence-regionSL4.0ch02      1       53473368
+##sequence-regionSL4.0ch03      1       65298490
+##sequence-regionSL4.0ch04      1       64459972
+##sequence-regionSL4.0ch05      1       65269487
+##sequence-regionSL4.0ch06      1       47258699
+##sequence-regionSL4.0ch07      1       67883646
+##sequence-regionSL4.0ch08      1       63995357
+##sequence-regionSL4.0ch09      1       68513564
+##sequence-regionSL4.0ch10      1       64792705
+##sequence-regionSL4.0ch11      1       54379777
+##sequence-regionSL4.0ch12      1       66688036
+SL4.0ch00	maker_ITAG	gene	2030916	2032369	.	+	.	ID=gene:Solyc00g025400.2;Alias=Solyc00g025400;Name=Solyc00g025400.2;length=1453
+SL4.0ch00	maker_ITAG	mRNA	2030916	2032369	.	+	.	ID=mRNA:Solyc00g025400.2.1;Parent=gene:Solyc00g025400.2;Name=Solyc00g025400.2.1;Note=Unknown protein;_AED=1.00;_QI=250|0|0|0|0|0|2|0|156;_eAED=1.00
+SL4.0ch00	maker_ITAG	five_prime_UTR	2030916	2031165	.	+	.	ID=five_prime_UTR:Solyc00g025400.2.1.0;Parent=mRNA:Solyc00g025400.2.1
+SL4.0ch00	maker_ITAG	exon	2030916	2031456	.	+	.	ID=exon:Solyc00g025400.2.1.1;Parent=mRNA:Solyc00g025400.2.1
+SL4.0ch00	maker_ITAG	CDS	2031166	2031456	.	+	0	ID=CDS:Solyc00g025400.2.1.1;Parent=mRNA:Solyc00g025400.2.1
+SL4.0ch00	maker_ITAG	exon	2032190	2032369	.	+	.	ID=exon:Solyc00g025400.2.1.2;Parent=mRNA:Solyc00g025400.2.1
+SL4.0ch00	maker_ITAG	CDS	2032190	2032369	.	+	0	ID=CDS:Solyc00g025400.2.1.2;Parent=mRNA:Solyc00g025400.2.1
+###
+SL4.0ch00	maker	gene	2062209	2063021	.	-	.	ID=gene:Solyc00g500104.2;Name=Solyc00g500104.2
+SL4.0ch00	maker	mRNA	2062209	2063021	.	-	.	ID=mRNA:Solyc00g500104.2.1;Parent=gene:Solyc00g500104.2;Name=Solyc00g500104.2.1;_aed=0.27;_eaed=0.27;_qi=0|-1|0|1|-1|1|1|150|220;Note=RNA-dependent RNA polymerase (AHRD V3.11 *-* tr|A0A2Z6JIR4|A0A2Z6JIR4_9VIRU);Dbxref=InterPro:IPR008686,Pfam:PF05919
+SL4.0ch00	maker	three_prime_UTR	2062209	2062358	.	-	.	ID=three_prime_UTR:Solyc00g500104.2.1.0;Parent=mRNA:Solyc00g500104.2.1
+SL4.0ch00	maker	exon	2062209	2063021	.	-	.	ID=exon:Solyc00g500104.2.1.1;Parent=mRNA:Solyc00g500104.2.1
+SL4.0ch00	maker	CDS	2062359	2063021	.	-	0	ID=CDS:Solyc00g500104.2.1.1;Parent=mRNA:Solyc00g500104.2.1
+###
+SL4.0ch00	maker_ITAG	gene	2081475	2081793	.	-	.	ID=gene:Solyc00g142160.1;Alias=Solyc00g142160;Name=Solyc00g142160.1;length=318
+SL4.0ch00	maker_ITAG	mRNA	2081475	2081793	.	-	.	ID=mRNA:Solyc00g142160.1.1;Parent=gene:Solyc00g142160.1;Name=Solyc00g142160.1.1;Note=RNA-dependent RNA polymerase (AHRD V3.3 *-* A0A2Z6JIR4_9VIRU);_AED=0.64;_QI=0|-1|0|1|-1|0|1|43|91;_eAED=0.64
+SL4.0ch00	maker_ITAG	three_prime_UTR	2081475	2081517	.	-	.	ID=three_prime_UTR:Solyc00g142160.1.1.0;Parent=mRNA:Solyc00g142160.1.1
+SL4.0ch00	maker_ITAG	exon	2081475	2081793	.	-	.	ID=exon:Solyc00g142160.1.1.1;Parent=mRNA:Solyc00g142160.1.1
+SL4.0ch00	maker_ITAG	CDS	2081518	2081793	.	-	0	ID=CDS:Solyc00g142160.1.1.1;Parent=mRNA:Solyc00g142160.1.1
+###
+SL4.0ch00	maker_ITAG	gene	2081817	2083225	.	-	.	ID=gene:Solyc00g142170.2;Alias=Solyc00g142170;Name=Solyc00g142170.2;length=1408
+SL4.0ch00	maker_ITAG	mRNA	2081817	2083225	.	-	.	ID=mRNA:Solyc00g142170.2.1;Parent=gene:Solyc00g142170.2;Name=Solyc00g142170.2.1;Note=RNA-dependent RNA polymerase (AHRD V3.3 *-* A0A2Z6JIR4_9VIRU);Dbxref=InterPro:IPR008686,Pfam:PF05919;_AED=0.38;_QI=89|0|0|0.33|0|0|3|39|305;_eAED=0.43
+SL4.0ch00	maker_ITAG	three_prime_UTR	2081817	2081855	.	-	.	ID=three_prime_UTR:Solyc00g142170.2.1.0;Parent=mRNA:Solyc00g142170.2.1
+SL4.0ch00	maker_ITAG	exon	2081817	2082335	.	-	.	ID=exon:Solyc00g142170.2.1.1;Parent=mRNA:Solyc00g142170.2.1
+SL4.0ch00	maker_ITAG	CDS	2081856	2082335	.	-	0	ID=CDS:Solyc00g142170.2.1.1;Parent=mRNA:Solyc00g142170.2.1
+SL4.0ch00	maker_ITAG	exon	2082546	2082748	.	-	.	ID=exon:Solyc00g142170.2.1.2;Parent=mRNA:Solyc00g142170.2.1
+SL4.0ch00	maker_ITAG	CDS	2082546	2082748	.	-	2	ID=CDS:Solyc00g142170.2.1.2;Parent=mRNA:Solyc00g142170.2.1
+SL4.0ch00	maker_ITAG	CDS	2082902	2083136	.	-	0	ID=CDS:Solyc00g142170.2.1.3;Parent=mRNA:Solyc00g142170.2.1
+SL4.0ch00	maker_ITAG	exon	2082902	2083225	.	-	.	ID=exon:Solyc00g142170.2.1.3;Parent=mRNA:Solyc00g142170.2.1
+SL4.0ch00	maker_ITAG	five_prime_UTR	2083137	2083225	.	-	.	ID=five_prime_UTR:Solyc00g142170.2.1.0;Parent=mRNA:Solyc00g142170.2.1
+###
+SL4.0ch00	maker_ITAG	gene	2136189	2136452	.	-	.	ID=gene:Solyc00g500120.1;Alias=Solyc00g500120;Name=Solyc00g500120.1;length=263
+SL4.0ch00	maker_ITAG	mRNA	2136189	2136452	.	-	.	ID=mRNA:Solyc00g500120.1.1;Parent=gene:Solyc00g500120.1;Name=Solyc00g500120.1.1;Note=Unknown protein;_AED=0.46;_QI=0|-1|0|1|-1|0|1|0|87;_eAED=1.00
+SL4.0ch00	maker_ITAG	exon	2136189	2136452	.	-	.	ID=exon:Solyc00g500120.1.1.1;Parent=mRNA:Solyc00g500120.1.1
+SL4.0ch00	maker_ITAG	CDS	2136189	2136452	.	-	0	ID=CDS:Solyc00g500120.1.1.1;Parent=mRNA:Solyc00g500120.1.1
+###
+SL4.0ch00	maker_ITAG	gene	2139483	2140481	.	-	.	ID=gene:Solyc00g500121.1;Alias=Solyc00g500121;Name=Solyc00g500121.1;length=998
+SL4.0ch00	maker_ITAG	mRNA	2139483	2140481	.	-	.	ID=mRNA:Solyc00g500121.1.1;Parent=gene:Solyc00g500121.1;Name=Solyc00g500121.1.1;Note=Unknown protein;_AED=0.38;_QI=558|1|0.5|1|0|0|2|0|86;_eAED=0.38
+SL4.0ch00	maker_ITAG	exon	2139483	2139659	.	-	.	ID=exon:Solyc00g500121.1.1.1;Parent=mRNA:Solyc00g500121.1.1
+SL4.0ch00	maker_ITAG	CDS	2139483	2139659	.	-	0	ID=CDS:Solyc00g500121.1.1.1;Parent=mRNA:Solyc00g500121.1.1
+SL4.0ch00	maker_ITAG	CDS	2139840	2139923	.	-	0	ID=CDS:Solyc00g500121.1.1.2;Parent=mRNA:Solyc00g500121.1.1
+SL4.0ch00	maker_ITAG	exon	2139840	2140481	.	-	.	ID=exon:Solyc00g500121.1.1.2;Parent=mRNA:Solyc00g500121.1.1
+SL4.0ch00	maker_ITAG	five_prime_UTR	2139924	2140481	.	-	.	ID=five_prime_UTR:Solyc00g500121.1.1.0;Parent=mRNA:Solyc00g500121.1.1
+###
+SL4.0ch00	maker_ITAG	gene	2187524	2191157	.	-	.	ID=gene:Solyc00g500122.1;Alias=Solyc00g500122;Name=Solyc00g500122.1;length=3633
+SL4.0ch00	maker_ITAG	mRNA	2187524	2191157	.	-	.	ID=mRNA:Solyc00g500122.1.1;Parent=gene:Solyc00g500122.1;Name=Solyc00g500122.1.1;Note=Unknown protein;_AED=0.40;_QI=0|0|0.33|1|0|0|3|433|122;_eAED=0.51
+SL4.0ch00	maker_ITAG	three_prime_UTR	2187524	2187956	.	-	.	ID=three_prime_UTR:Solyc00g500122.1.1.0;Parent=mRNA:Solyc00g500122.1.1
+SL4.0ch00	maker_ITAG	exon	2187524	2188176	.	-	.	ID=exon:Solyc00g500122.1.1.1;Parent=mRNA:Solyc00g500122.1.1
+SL4.0ch00	maker_ITAG	CDS	2187957	2188176	.	-	1	ID=CDS:Solyc00g500122.1.1.1;Parent=mRNA:Solyc00g500122.1.1
+SL4.0ch00	maker_ITAG	exon	2190928	2190992	.	-	.	ID=exon:Solyc00g500122.1.1.2;Parent=mRNA:Solyc00g500122.1.1
+SL4.0ch00	maker_ITAG	CDS	2190928	2190992	.	-	0	ID=CDS:Solyc00g500122.1.1.2;Parent=mRNA:Solyc00g500122.1.1
+SL4.0ch00	maker_ITAG	exon	2191074	2191157	.	-	.	ID=exon:Solyc00g500122.1.1.3;Parent=mRNA:Solyc00g500122.1.1
+SL4.0ch00	maker_ITAG	CDS	2191074	2191157	.	-	0	ID=CDS:Solyc00g500122.1.1.3;Parent=mRNA:Solyc00g500122.1.1
+###
+SL4.0ch00	maker	gene	2329909	2332560	.	-	.	ID=gene:Solyc00g160010.1;Name=Solyc00g160010.1
+SL4.0ch00	maker	mRNA	2329909	2332560	.	-	.	ID=mRNA:Solyc00g160010.1.1;Parent=gene:Solyc00g160010.1;Name=Solyc00g160010.1.1;_aed=0.77;_eaed=0.77;_qi=0|0|0|0.25|1|1|4|0|150;_merge_warning=1;Note=zinc finger CCCH domain-containing protein 30-like (AHRD V3.11 *-* XP_025884875.1)
+SL4.0ch00	maker	exon	2329909	2329963	.	-	.	ID=exon:Solyc00g160010.1.1.1;Parent=mRNA:Solyc00g160010.1.1
+SL4.0ch00	maker	CDS	2329909	2329963	.	-	1	ID=CDS:Solyc00g160010.1.1.1;Parent=mRNA:Solyc00g160010.1.1
+SL4.0ch00	maker	exon	2330621	2330687	.	-	.	ID=exon:Solyc00g160010.1.1.2;Parent=mRNA:Solyc00g160010.1.1
+SL4.0ch00	maker	CDS	2330621	2330687	.	-	2	ID=CDS:Solyc00g160010.1.1.2;Parent=mRNA:Solyc00g160010.1.1
+SL4.0ch00	maker	exon	2330792	2330966	.	-	.	ID=exon:Solyc00g160010.1.1.3;Parent=mRNA:Solyc00g160010.1.1
+SL4.0ch00	maker	CDS	2330792	2330966	.	-	0	ID=CDS:Solyc00g160010.1.1.3;Parent=mRNA:Solyc00g160010.1.1
+SL4.0ch00	maker	exon	2332405	2332560	.	-	.	ID=exon:Solyc00g160010.1.1.4;Parent=mRNA:Solyc00g160010.1.1
+SL4.0ch00	maker	CDS	2332405	2332560	.	-	0	ID=CDS:Solyc00g160010.1.1.4;Parent=mRNA:Solyc00g160010.1.1
+###
+SL4.0ch00	maker	gene	2377393	2378166	.	-	.	ID=gene:Solyc00g160330.1;Name=Solyc00g160330.1
+SL4.0ch00	maker	mRNA	2377393	2378166	.	-	.	ID=mRNA:Solyc00g160330.1.1;Parent=gene:Solyc00g160330.1;Name=Solyc00g160330.1.1;_aed=0.58;_eaed=0.59;_qi=0|0|0|0.5|0|0.5|2|0|82;Note=zinc finger CCCH domain-containing protein 30-like (AHRD V3.11 *-* XP_025884875.1)
+SL4.0ch00	maker	exon	2377393	2377434	.	-	.	ID=exon:Solyc00g160330.1.1.1;Parent=mRNA:Solyc00g160330.1.1
+SL4.0ch00	maker	CDS	2377393	2377434	.	-	0	ID=CDS:Solyc00g160330.1.1.1;Parent=mRNA:Solyc00g160330.1.1
+SL4.0ch00	maker	exon	2377960	2378166	.	-	.	ID=exon:Solyc00g160330.1.1.2;Parent=mRNA:Solyc00g160330.1.1
+SL4.0ch00	maker	CDS	2377960	2378166	.	-	0	ID=CDS:Solyc00g160330.1.1.2;Parent=mRNA:Solyc00g160330.1.1
+###
+SL4.0ch00	maker_ITAG	gene	2379604	2380807	.	-	.	ID=gene:Solyc00g007330.1;Alias=Solyc00g007330;Name=Solyc00g007330.1;length=1203
+SL4.0ch00	maker_ITAG	mRNA	2379604	2380807	.	-	.	ID=mRNA:Solyc00g007330.1.1;Parent=gene:Solyc00g007330.1;Name=Solyc00g007330.1.1;Note=Zinc finger transcription factor 1;_AED=1.00;_QI=373|0|0|0|0|0|2|0|171;_eAED=1.00
+SL4.0ch00	maker_ITAG	CDS	2379604	2380119	.	-	0	ID=CDS:Solyc00g007330.1.1.1;Parent=mRNA:Solyc00g007330.1.1
+SL4.0ch00	maker_ITAG	exon	2379604	2380324	.	-	.	ID=exon:Solyc00g007330.1.1.1;Parent=mRNA:Solyc00g007330.1.1
+SL4.0ch00	maker_ITAG	five_prime_UTR	2380120	2380324	.	-	.	ID=five_prime_UTR:Solyc00g007330.1.1.0;Parent=mRNA:Solyc00g007330.1.1
+SL4.0ch00	maker_ITAG	exon	2380640	2380807	.	-	.	ID=exon:Solyc00g007330.1.1.2;Parent=mRNA:Solyc00g007330.1.1
+SL4.0ch00	maker_ITAG	five_prime_UTR	2380640	2380807	.	-	.	ID=five_prime_UTR:Solyc00g007330.1.1.1;Parent=mRNA:Solyc00g007330.1.1
+###
