@@ -28,8 +28,7 @@
   In the code snippets below, \code{x} is a FeatureDb object.
 
   \describe{
-    \item{}{
-      \code{metadata(x)}:
+    \item{\code{metadata(x)}:}{
       Return \code{x}'s metadata in a data frame.
     }
   }

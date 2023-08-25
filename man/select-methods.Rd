@@ -18,13 +18,11 @@
   In the code snippets below, \code{x} is a \link{TxDb} object.
 
   \describe{
-    \item{}{
-      \code{keytypes(x)}:
+    \item{\code{keytypes(x)}:}{
       allows the user to discover which keytypes can be passed in to
       \code{select} or \code{keys} and the \code{keytype} argument.
     }
-    \item{}{
-      \code{keys(x, keytype, pattern, column, fuzzy)}: Return keys for
+    \item{\code{keys(x, keytype, pattern, column, fuzzy)}:}{ Return keys for
       the database contained in the \link{TxDb} object .
 
       The \code{keytype} argument specifies the kind of keys that will
@@ -48,13 +46,11 @@
       Use of the \code{fuzzy} argument will toggle fuzzy matching to
       TRUE or FALSE.  If \code{pattern} is not used, fuzzy is ignored.
     }
-    \item{}{
-      \code{columns(x)}:
+    \item{\code{columns(x)}:}{
       Show which kinds of data can be returned for the
       \link{TxDb} object.
     }
-    \item{}{
-      \code{select(x, keys, columns, keytype)}:
+    \item{\code{select(x, keys, columns, keytype)}:}{
       When all the appropriate arguments are specified \code{select}
       will retrieve the matching data as a data.frame based on
       parameters for selected \code{keys} and \code{columns} and
