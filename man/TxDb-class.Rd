@@ -27,22 +27,18 @@
   In the code snippets below, \code{x} is a TxDb object.
 
   \describe{
-    \item{}{
-      \code{metadata(x)}:
+    \item{\code{metadata(x)}:}{
       Return \code{x}'s metadata in a data frame.
     }
-    \item{}{
-      \code{seqlevels0(x)}:
+    \item{\code{seqlevels0(x)}:}{
       Get the \emph{sequence levels} originally in \code{x}. This ignores any
       change the user might have made to the \emph{sequence levels} with the
       \code{seqlevels} setter.
     }
-    \item{}{
-      \code{seqlevels(x)}, \code{seqlevels(x) <- value}:
+    \item{\code{seqlevels(x)}, \code{seqlevels(x) <- value}:}{
       Get or set the \emph{sequence levels} in \code{x}.
     }
-    \item{}{
-      \code{seqinfo(x)}, \code{seqinfo(x) <- value}:
+    \item{\code{seqinfo(x)}, \code{seqinfo(x) <- value}:}{
       Get or set the information about the underlying sequences.
       Note that, for now, the setter only supports replacement of the
       sequence names, i.e., except for their sequence names (accessed with
@@ -50,27 +46,23 @@
       \link[GenomeInfoDb]{Seqinfo} objects \code{value} (supplied) and
       \code{seqinfo(x)} (current) must be identical.
     }
-    \item{}{
-      \code{isActiveSeq(x)}:
+    \item{\code{isActiveSeq(x)}:}{
       Return the currently active sequences for this txdb object as a
       named logical vector.  Only active sequences will be tapped when
       using the supplied accessor methods.  Inactive sequences will be
       ignored.  By default, all available sequences will be active.
     } 
-    \item{}{
-      \code{isActiveSeq(x) <- value}:
+    \item{\code{isActiveSeq(x) <- value}:}{
       Allows the user to change which sequences will be actively
       accessed by the accessor methods by altering the contents of this
       named logical vector.
     }
-    \item{}{
-      \code{seqlevelsStyle(x)}, \code{seqlevelsStyle(x) <- value}:
+    \item{\code{seqlevelsStyle(x)}, \code{seqlevelsStyle(x) <- value}:}{
       Get or set the seqname style for \code{x}.
       See the \link[GenomeInfoDb]{seqlevelsStyle} generic getter and setter
       in the \pkg{GenomeInfoDb} package for more information.
     }
-    \item{}{
-      \code{as.list(x)}:
+    \item{\code{as.list(x)}:}{
       Dump the entire db into a list of data frames, say \code{txdb_dump},
       that can then be used to recreate the original db with
       \code{do.call(makeTxDb, txdb_dump)} with no loss of information
