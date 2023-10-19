@@ -14,7 +14,7 @@ biocViews: Genetics, Infrastructure, Annotation, Sequencing,
 	GenomeAnnotation
 URL: https://bioconductor.org/packages/GenomicFeatures
 BugReports: https://github.com/Bioconductor/GenomicFeatures/issues
-Version: 1.53.1
+Version: 1.53.3
 License: Artistic-2.0
 Encoding: UTF-8
 Authors@R: c(
