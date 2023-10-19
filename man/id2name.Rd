@@ -18,11 +18,11 @@ id2name(txdb, feature.type=c("tx", "exon", "cds"))
     retrieved.}
 }
 \details{
-  Transcripts, exons and CDS in a \link{TxDb} object are
+  Transcripts, exons and CDS parts in a \link{TxDb} object are
   stored in seperate tables where the primary key is an integer
   called \emph{feature internal id}. This id is stored in the
   \code{"tx_id"} column for transcripts, in the \code{"exon_id"}
-  column for exons, and in the \code{"cds_id"} column for CDS.
+  column for exons, and in the \code{"cds_id"} column for CDS parts.
   Unlike other commonly used ids like Entrez Gene IDs or Ensembl IDs,
   this internal id was generated at the time the \link{TxDb}
   object was created and has no meaning outside the scope of this object.
@@ -31,7 +31,7 @@ id2name(txdb, feature.type=c("tx", "exon", "cds"))
   id into a more informative id or name called \emph{feature external
   name}. This name is stored in the \code{"tx_name"} column for
   transcripts, in the \code{"exon_name"} column for exons, and in
-  the \code{"cds_name"} column for CDS.
+  the \code{"cds_name"} column for CDS parts.
   
   Note that, unlike the feature internal id, the feature external
   name is not guaranteed to be unique or even defined (the column

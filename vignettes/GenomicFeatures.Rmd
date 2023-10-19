@@ -323,10 +323,11 @@ Finally, the order of the results in a `GRangesList` object can
 vary with the way in which things were grouped. In most cases the
 grouped elements of the `GRangesList` object will be listed in
 the order that they occurred along the chromosome.  However, when
-exons or CDS are grouped by transcript, they will instead be grouped
-according to their position along the transcript itself.  This is
-important because alternative splicing can mean that the order along
-the transcript can be different from that along the chromosome.
+exons or CDS parts are grouped by transcript, they will instead be
+grouped according to their position along the transcript itself.
+This is important because alternative splicing can mean that the
+order along the transcript can be different from that along the
+chromosome.
 
 
 ### Predefined grouping functions

@@ -27,7 +27,8 @@ makeTxDb(transcripts, splicings, genes=NULL,
     Data frame containing the genomic locations of a set of transcripts.
   }
   \item{splicings}{
-    Data frame containing the exon and CDS locations of a set of transcripts.
+    Data frame containing the genomic locations of exons and CDS parts of
+    the transcripts in \code{transcripts}.
   }
   \item{genes}{
     Data frame containing the genes associated to a set of transcripts.
@@ -45,12 +46,12 @@ makeTxDb(transcripts, splicings, genes=NULL,
   \item{reassign.ids}{
     \code{TRUE} or \code{FALSE}.
     Controls how internal ids should be assigned for each type of feature
-    i.e. for transcripts, exons, and CDS. For each type, if \code{reassign.ids}
-    is \code{FALSE} (the default) and if the ids are supplied, then they
-    are used as the internal ids, otherwise the internal ids are assigned
-    in a way that is compatible with the order defined by ordering the
-    features first by chromosome, then by strand, then by start, and
-    finally by end.
+    i.e. for transcripts, exons, and CDS parts. For each type, if
+    \code{reassign.ids} is \code{FALSE} (the default) and if the ids are
+    supplied, then they are used as the internal ids, otherwise the internal
+    ids are assigned in a way that is compatible with the order defined by
+    ordering the features first by chromosome, then by strand, then by start,
+    and finally by end.
   }
   \item{on.foreign.transcripts}{
     Controls what to do when the input contains \emph{foreign transcripts}
@@ -63,7 +64,7 @@ makeTxDb(transcripts, splicings, genes=NULL,
   The \code{transcripts} (required), \code{splicings} (required)
   and \code{genes} (optional) arguments must be data frames that
   describe a set of transcripts and the genomic features related
-  to them (exons, CDS and genes at the moment).
+  to them (exons, CDS parts, and genes at the moment).
   The \code{chrominfo} (optional) argument must be a data frame
   containing chromosome information like the length of each chromosome.
 
@@ -94,7 +95,7 @@ makeTxDb(transcripts, splicings, genes=NULL,
 
   \code{splicings} must have N rows per transcript, where N is the nb
   of exons in the transcript. Each row describes an exon plus, optionally,
-  the CDS contained in this exon. Its columns must be:
+  the CDS part associated with this exon. Its columns must be:
   \itemize{
     \item \code{tx_id}: Foreign key that links each row in the \code{splicings}
           data frame to a unique row in the \code{transcripts} data frame.
@@ -127,25 +128,27 @@ makeTxDb(transcripts, splicings, genes=NULL,
     \item \code{exon_start}, \code{exon_end}: Exon start and end.
           Integer vectors with no NAs.
 
-    \item \code{cds_id}: [optional] CDS ID. Integer vector.
+    \item \code{cds_id}: [optional] ID of the CDS part associated with the
+          exon. Integer vector.
           If present then \code{cds_start} and \code{cds_end} must also
           be present.
           NAs are allowed and must match those in \code{cds_start} and
           \code{cds_end}.
 
-    \item \code{cds_name}: [optional] CDS name. Character vector (or factor).
+    \item \code{cds_name}: [optional] Name of the CDS part. Character
+          vector (or factor).
           If present then \code{cds_start} and \code{cds_end} must also be
           present. NAs and/or duplicates are ok. Must contain NAs at least
           where \code{cds_start} and \code{cds_end} contain them.
 
-    \item \code{cds_start}, \code{cds_end}: [optional] CDS start and end.
-          Integer vectors.
+    \item \code{cds_start}, \code{cds_end}: [optional] Start/end of the
+          CDS part. Integer vectors.
           If one of the 2 columns is missing then all \code{cds_*} columns
           must be missing.
           NAs are allowed and must occur at the same positions in
           \code{cds_start} and \code{cds_end}.
 
-    \item \code{cds_phase}: [optional] CDS phase. Integer vector.
+    \item \code{cds_phase}: [optional] Phase of the CDS part. Integer vector.
           If present then \code{cds_start} and \code{cds_end} must also
           be present.
           NAs are allowed and must match those in \code{cds_start} and

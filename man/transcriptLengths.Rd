@@ -8,7 +8,7 @@
 \description{
   The \code{transcriptLengths} function extracts the transcript lengths from
   a \link{TxDb} object. It also returns the CDS and UTR lengths for each
-  transcript if the user requests them.
+  transcript if the user requested them.
 }
 
 \usage{

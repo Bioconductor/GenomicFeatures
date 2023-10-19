@@ -61,7 +61,7 @@
     A named \link[GenomicRanges]{GenomicRanges} or
     \link[GenomicRanges]{GRangesList} object used to map between \code{x}
     and the result. The ranges can be any feature in the transcriptome
-    extracted from a \code{TxDb} (e.g., introns, exons, cds regions).
+    extracted from a \code{TxDb} (e.g., introns, exons, CDS parts).
     See ?\code{transcripts} and ?\code{transcriptsBy} for a list of
     extractor functions.
 
@@ -257,7 +257,7 @@ Dgkb_transcripts  # all 7 Dgkb transcripts are on chr12, positive strand
 ## space use mapFromTranscripts().
 
 ## When mapping CDS coordinates to genome space the 'transcripts'
-## argument is the collection of CDS regions by transcript.
+## argument is the collection of CDS parts by transcript.
 coord <- GRanges("chr12", IRanges(4, width=1))
 ## Get the names of the transcripts in the gene:
 Dgkb_tx_names <- mcols(Dgkb_transcripts)$tx_name
@@ -265,9 +265,9 @@ Dgkb_tx_names
 ## Use these names to isolate the region of interest:
 cds_by_tx <- cdsBy(txdb, "tx", use.names=TRUE)
 Dgkb_cds_by_tx <- cds_by_tx[intersect(Dgkb_tx_names, names(cds_by_tx))]
-## Dgkb CDS grouped by transcript (no-CDS transcripts omitted):
+## Dgkb CDS parts grouped by transcript (no-CDS transcripts omitted):
 Dgkb_cds_by_tx
-lengths(Dgkb_cds_by_tx)  # nb of CDS per transcript
+lengths(Dgkb_cds_by_tx)  # nb of CDS parts per transcript
 ## A requirement for mapping from transcript space to genome space
 ## is that seqnames in 'x' match the names in 'transcripts'.
 names(Dgkb_cds_by_tx) <- rep(seqnames(coord), length(Dgkb_cds_by_tx))
@@ -395,13 +395,13 @@ mapToTranscripts(snps, unlist(GIPR_transcripts))
 ## "ENST00000263281.7".
 pmapToTranscripts(snps[1:2], unlist(GIPR_transcripts)[1:2])
 
-## The cdsBy() extractor returns coding regions by gene or by transcript.
-## Extract the coding regions for transcript "ENST00000263281.7".
+## The cdsBy() extractor returns CDS parts by gene or by transcript.
+## Extract the CDS parts for transcript "ENST00000263281.7".
 cds <- cdsBy(txdb, "tx", use.names=TRUE)["ENST00000263281.7"]
 cds
 
-## The 'cds' object is a GRangesList of length 1 containing all CDS ranges
-## for the single transcript "ENST00000263281.7".
+## The 'cds' object is a GRangesList of length 1 containing the ranges of
+## all CDS parts for single transcript "ENST00000263281.7".
 
 ## To map to the concatenated group of ranges leave 'cds' as a GRangesList.
 mapToTranscripts(snps, cds)
@@ -410,7 +410,7 @@ mapToTranscripts(snps, cds)
 ## the SNPs to the individual cds ranges (vs the concatenated range).
 mapToTranscripts(snps[2], unlist(cds))
 
-## The location is the same because the SNP hit the first CDS range. If
+## The location is the same because the SNP hit the first CDS part. If
 ## the transcript were on the "-" strand the difference in concatenated
 ## vs non-concatenated position would be more obvious.
 

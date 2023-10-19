@@ -80,9 +80,9 @@ threeUTRsByTranscript(x, ...)
   where the ranges within each of the elements are ordered according
   to the following rule:
 
-  When using \code{exonsBy} or \code{cdsBy} with \code{by = "tx"},
-  the returned exons or CDS are ordered by ascending rank for each
-  transcript, that is, by their position in the transcript.
+  When using \code{exonsBy} or \code{cdsBy} with \code{by="tx"},
+  the returned exons or CDS parts are ordered by ascending rank for
+  each transcript, that is, by their position in the transcript.
   In all other cases, the ranges will be ordered by chromosome, strand,
   start, and end values.
 }
@@ -127,13 +127,13 @@ txdb_file <- system.file("extdata", "hg19_knownGene_sample.sqlite",
                          package="GenomicFeatures")
 txdb <- loadDb(txdb_file)
 
-## Get the transcripts grouped by gene:
+## Extract the transcripts grouped by gene:
 transcriptsBy(txdb, "gene")
 
-## Get the exons grouped by gene:
+## Extract the exons grouped by gene:
 exonsBy(txdb, "gene")
 
-## Get the CDS grouped by transcript:
+## Extract the CDS parts grouped by transcript:
 cds_by_tx0 <- cdsBy(txdb, "tx")
 ## With more informative group names:
 cds_by_tx1 <- cdsBy(txdb, "tx", use.names=TRUE)
@@ -141,10 +141,10 @@ cds_by_tx1 <- cdsBy(txdb, "tx", use.names=TRUE)
 names(cds_by_tx0) <- id2name(txdb, feature.type="tx")[names(cds_by_tx0)]
 stopifnot(identical(cds_by_tx0, cds_by_tx1))
 
-## Get the introns grouped by transcript:
+## Extract the introns grouped by transcript:
 intronsByTranscript(txdb)
 
-## Get the 5' UTRs grouped by transcript:
+## Extract the 5' UTRs grouped by transcript:
 fiveUTRsByTranscript(txdb)
 fiveUTRsByTranscript(txdb, use.names=TRUE)  # more informative group names
 }

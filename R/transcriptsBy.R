@@ -105,11 +105,11 @@
         mcolumns <- columns[c("id", "name")]
     } else {
         if (proxy_table == "transcript") {
-            ## Extract transcripts grouped by exon or CDS.
+            ## Extract transcripts grouped by exon or CDS part.
             by_column <- TXDB_table_columns(by)[["id"]]
             orderby <- c(by_column, columns[["id"]], "exon_rank")
         } else {
-            ## Extract exons or CDS grouped by transcript.
+            ## Extract exons or CDS parts grouped by transcript.
             by_column <- TXDB_table_columns("transcript")[["id"]]
             orderby <- c(by_column, "exon_rank")
         }
@@ -196,14 +196,14 @@ setMethod("intronsByTranscript", "TxDb",
 ### 'tx_id': character or integer vector with runs of identical elements (one
 ### run per transcript, and, within each run, one element per exon).
 ### 'exons_with_cds': integer vector containing the indices of the elements
-### in 'tx_id' corresponding to exons with a CDS. The indices must be sorted
-### in ascending order.
-### Returns for each transcript the indices of the first exon with a CDS, plus
-### the indices of the preceding exons in the transcript.
+### in 'tx_id' corresponding to exons with a CDS part. The indices must be
+### sorted in ascending order.
+### Returns for each transcript the indices of the first exon with a CDS part,
+### plus the indices of the preceding exons in the transcript.
 ### Note that, for each transcript, exons that have a 5' UTR are all the exons
-### before the first exon with a CDS, including the first exon with a CDS (even
-### though this one might actually have a 0-width 5' UTR but we will take care
-### of this later).
+### before the first exon with a CDS part, including the first exon with a CDS
+### part (even though this one might actually have a 0-width 5' UTR but we will
+### take care of this later).
 .exons_with_5utr <- function(tx_id, exons_with_cds)
 {
     tx_id_rle <- Rle(tx_id)
@@ -219,12 +219,12 @@ setMethod("intronsByTranscript", "TxDb",
 }
 
 ### 'tx_id', 'exons_with_cds': same as for .exons_with_5utr().
-### Returns for each transcript the indices of the last exon with a CDS, plus
-### the indices of the following exons in the transcript.
+### Returns for each transcript the indices of the last exon with a CDS part,
+### plus the indices of the following exons in the transcript.
 ### Note that, for each transcript, exons that have a 3' UTR are all the exons
-### after the last exon with a CDS, including the last exon with a CDS (even
-### though this one might actually have a 0-width 3' UTR but we will take care
-### of this later).
+### after the last exon with a CDS part, including the last exon with a CDS
+### part (even though this one might actually have a 0-width 3' UTR but we will
+### take care of this later).
 .exons_with_3utr <- function(tx_id, exons_with_cds)
 {
     tx_id_rle <- Rle(tx_id)

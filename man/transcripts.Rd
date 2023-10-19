@@ -41,11 +41,11 @@ genes(x, ...)
     A \link{TxDb} object.
   }
   \item{...}{
-    For the \code{transcripts}, \code{exons}, \code{cds}, and \code{genes}
-    generic functions: arguments to be passed to methods.
+    For the \code{transcripts()}, \code{exons()}, \code{cds()}, and
+    \code{genes()} generic functions: arguments to be passed to methods.
 
-    For the \code{promoters} method for \link{TxDb} objects: arguments
-    to be passed to the internal call to \code{transcripts}.
+    For the \code{promoters()} method for \link{TxDb} objects: arguments
+    to be passed to the internal call to \code{transcripts()}.
   }
   \item{columns}{
     Columns to include in the output.
@@ -53,11 +53,11 @@ genes(x, ...)
     \code{columns} method. With the following restrictions:
     \itemize{
       \item \code{"TXCHROM"} and \code{"TXSTRAND"} are not allowed
-      for \code{transcripts}.
+            for \code{transcripts()}.
       \item \code{"EXONCHROM"} and \code{"EXONSTRAND"} are not allowed
-      for \code{exons}.
+            for \code{exons()}.
       \item \code{"CDSCHROM"} and \code{"CDSSTRAND"} are not allowed
-      for \code{cds}.
+            for \code{cds()}.
     }
     If the vector is named, those names are used for the corresponding
     column in the element metadata of the returned object.
@@ -94,26 +94,29 @@ genes(x, ...)
     by the \code{show()} method.)
   }
   \item{upstream}{
-    For \code{promoters} : An \code{integer(1)} value indicating the
+    For \code{promoters()} : An \code{integer(1)} value indicating the
     number of bases upstream from the transcription start site. For
     additional details see \code{?`promoters,GRanges-method`}.
   }
   \item{downstream}{
-    For \code{promoters} : An \code{integer(1)} value indicating the
+    For \code{promoters()} : An \code{integer(1)} value indicating the
     number of bases downstream from the transcription start site. For
     additional details see \code{?`promoters,GRanges-method`}.
   }
 }
 
 \details{
-  These are the main functions for extracting transcript information
-  from a \link{TxDb}-like object. These methods can restrict the output
-  based on categorical information. To restrict the output based on interval
-  information, use the \code{\link{transcriptsByOverlaps}},
-  \code{\link{exonsByOverlaps}}, and \code{\link{cdsByOverlaps}}
-  functions.
+  These are the main functions for extracting features from a
+  \link{TxDb}-like object. Note that \code{cds()} extracts the
+  bulk \emph{CDS parts} stored in \code{x}, that is, the CDS regions
+  associated with exons. It is often more useful to extract them grouped
+  by transcript with \code{\link{cdsBy}()}.
 
-  The \code{promoters} function computes user-defined promoter regions
+  To restrict the output based on interval information, use the
+  \code{\link{transcriptsByOverlaps}()}, \code{\link{exonsByOverlaps}()},
+  or \code{\link{cdsByOverlaps}()} function.
+
+  The \code{promoters()} function computes user-defined promoter regions
   for the transcripts in a \link{TxDb}-like object. The return object is
   a \code{GRanges} of promoter regions around the transcription start
   site the span of which is defined by \code{upstream} and \code{downstream}.
@@ -124,7 +127,7 @@ genes(x, ...)
 
 \value{
   A \link[GenomicRanges]{GRanges} object. The only exception being
-  when \code{genes} is used with \code{single.strand.genes.only=FALSE},
+  when \code{genes()} is used with \code{single.strand.genes.only=FALSE},
   in which case a \link[GenomicRanges]{GRangesList} object is returned.
 }
 

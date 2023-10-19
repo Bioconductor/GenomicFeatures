@@ -1011,7 +1011,7 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
 {
     cds_tx_id <- factor(cds$tx_id, levels=levels(exons$tx_id))
     if (any(is.na(cds_tx_id)))
-        stop(wmsg("some CDS cannot be mapped to an exon"))
+        stop(wmsg("some CDS parts cannot be mapped to an exon"))
     cds$tx_id <- cds_tx_id
 
     exon2cds <- .find_exon_cds(exons, cds)
@@ -1036,7 +1036,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         stop_codon_start <- stop_codons$start[exon2stop_codon]
         stop_codon_end <- stop_codons$end[exon2stop_codon]
 
-        ## Exons with no CDS get the stop codon as CDS (with phase set to 0).
+        ## Exons with no CDS part get the stop codon as CDS (with phase
+        ## set to 0).
         replace_idx <- which(is.na(exon2cds) & !is.na(exon2stop_codon))
         cds_name[replace_idx] <- stop_codon_name[replace_idx]
         cds_strand[replace_idx] <- stop_codon_strand[replace_idx]
@@ -1045,8 +1046,8 @@ GFF_FEATURE_TYPES <- c(.GENE_TYPES, .TX_TYPES, .EXON_TYPES,
         if (!is.null(cds$phase))
             cds_phase[replace_idx] <- 0L
 
-        ## Exons with a CDS and a stop codon have the latter merged into the
-        ## former (with phase adjusted).
+        ## Exons with a CDS part and a stop codon have the latter merged
+        ## into the former (with phase adjusted).
         merge_idx <- which(!is.na(exon2cds) & !is.na(exon2stop_codon))
         start1 <- cds_start[merge_idx]
         end1 <- cds_end[merge_idx]

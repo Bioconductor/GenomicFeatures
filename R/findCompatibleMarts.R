@@ -74,11 +74,11 @@ recognizedBiomartAttribs <- function(id_prefix="ensembl_")
         ## IMPORTANT NOTE ABOUT GROUP D1: The "cds_start" and "cds_end"
         ## attributes that we get from BioMart are the CDS coordinates
         ## relative to the coding mRNA. This is *not* what we want to store
-        ## in a TxDb object. What we want instead are the CDS *genomic*
-        ## coordinates. Prior to Ensembl release 74, these were not provided
-        ## by Ensembl so we were inferring them from the exon and UTR genomic
-        ## coordinates (the UTR genomic coordinates are obtained thru the
-        ## attributes in group C2).
+        ## in a TxDb object. What we want instead are the *genomic*
+        ## coordinates of the CDS parts. Prior to Ensembl release 74, these
+        ## were not provided by Ensembl so we were inferring them from the
+        ## exon and UTR genomic coordinates (the UTR genomic coordinates are
+        ## obtained thru the attributes in group C2).
         ## So attributes in group D1 (as well as in group D2) are only used
         ## to perform sanity checks.
         D1=c(

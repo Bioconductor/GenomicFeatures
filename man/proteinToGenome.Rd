@@ -64,9 +64,10 @@ proteinToGenome(x, db, ...)  # dispatch is on 2nd argument 'db'
   objects is the workhorse behind the default method. Note that the latter
   is a thin wrapper around the former, which simply does the following:
   \enumerate{
-    \item Use \code{\link{cdsBy}()} to extract the CDS from \code{db}.
-          The CDS are returned in a \link[GenomicRanges]{GRangesList}
-          object with transcript names on it.
+    \item Use \code{\link{cdsBy}()} to extract the CDS parts from \code{db}.
+          The CDS parts are returned in a \link[GenomicRanges]{GRangesList}
+          object that has the names of the transcript on it (one transcript
+          name per list element).
     \item Call \code{proteinToGenome()} on \code{x} and the
           \link[GenomicRanges]{GRangesList} object returned by
           \code{\link{cdsBy}()}.
@@ -130,8 +131,8 @@ proteinToGenome(x, db, ...)  # dispatch is on 2nd argument 'db'
     \item \code{\link{transcripts}} for extracting transcripts from a
           \link{TxDb}-like object.
 
-    \item \code{\link{cdsBy}} for extracting CDS from a \link{TxDb}-like
-          object.
+    \item \code{\link{cdsBy}} for extracting CDS parts from a
+          \link{TxDb}-like object.
 
     \item \link[IRanges]{IRanges} objects in the \pkg{IRanges} package.
 
@@ -144,8 +145,14 @@ proteinToGenome(x, db, ...)  # dispatch is on 2nd argument 'db'
 ## ---------------------------------------------------------------------
 ## USING TOY CDS
 ## ---------------------------------------------------------------------
+
+## CDS1 has 2 CDS parts:
 CDS1 <- GRanges(c("chrX:11-60:+", "chrX:101-125:+"))
+
+## CDS2 has 3 CDS parts:
 CDS2 <- GRanges(c("chrY:201-230:-", "chrY:101-125:-", "chrY:11-60:-"))
+
+## Put them in a GRangesList object:
 cds_by_tx <- GRangesList(TX1=CDS1, TX2=CDS2)
 cds_by_tx
 

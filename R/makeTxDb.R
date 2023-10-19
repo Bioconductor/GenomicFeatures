@@ -199,7 +199,7 @@
                       "must occur at the same positions"))
         if (any(splicings$cds_start > splicings$cds_end, na.rm=TRUE))
             stop(wmsg("cds starts must be <= cds ends"))
-        ## Check CDS and exon compatibility.
+        ## Check compatibility between exons and CDS parts.
         if (any(splicings$cds_start < splicings$exon_start, na.rm=TRUE)
          || any(splicings$cds_end > splicings$exon_end, na.rm=TRUE))
             stop(wmsg("cds starts/ends are incompatible ",

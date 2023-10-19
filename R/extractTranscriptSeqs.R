@@ -69,8 +69,8 @@ setMethod("extractTranscriptSeqs", "DNAString",
 }
 
 ### Check the "exon_rank" inner metadata column if present. When 'transcripts'
-### contains CDSs (instead of exons) grouped by transcript, some of the lowest
-### or/and highest exon ranks can be missing.
+### contains CDS parts (instead of exons) grouped by transcript, some of the
+### lowest or/and highest exon ranks can be missing.
 .check_exon_rank <- function(tx1)
 {
     exon_rank <- mcols(tx1@unlistData)$exon_rank

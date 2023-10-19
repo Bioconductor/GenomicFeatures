@@ -98,30 +98,30 @@ setGeneric("proteinToGenome", signature="db",
     gr
 }
 
-### 'cds_parts' must be a GRanges object representing the CDS of a given
+### 'cds' must be a GRanges object representing the CDS parts of a given
 ### transcript/protein.
 ### 'protein_start' and 'protein_end' must be protein-relative coordinates
 ### i.e. coordinates (counted in Amino Acids) relative to the protein
-### associated with 'cds_parts'.
+### associated with 'cds'.
 ### Returns a GRanges object.
-.map_protein_to_cds_parts <- function(protein_start, protein_end, cds_parts)
+.map_protein_to_cds <- function(protein_start, protein_end, cds)
 {
     stopifnot(isSingleNumber(protein_start),
               isSingleNumber(protein_end),
               protein_start <= protein_end,
-              is(cds_parts, "GRanges"))
-    nparts <- length(cds_parts)
-    cds_widths <- width(cds_parts)
+              is(cds, "GRanges"))
+    nparts <- length(cds)
+    cds_widths <- width(cds)
     stopifnot(nparts >= 1L, all(cds_widths >= 1L))
     protein_start <- as.integer(protein_start)
     protein_end <- as.integer(protein_end)
     cds_cumwidths <- cumsum(cds_widths)
 
-    ## Add metadata columns 'protein_start' and 'protein_end' to 'cds_parts'.
+    ## Add metadata columns 'protein_start' and 'protein_end' to 'cds'.
     protein_ranges <- .make_protein_ranges_from_cumwidths(cds_cumwidths)
     protein_ranges <- DataFrame(protein_start=start(protein_ranges),
                                 protein_end=end(protein_ranges))
-    mcols(cds_parts) <- cbind(mcols(cds_parts), protein_ranges)
+    mcols(cds) <- cbind(mcols(cds), protein_ranges)
 
     ## Translate protein-relative coordinates into 0-based CDS-relative
     ## coordinates.
@@ -136,7 +136,7 @@ setGeneric("proteinToGenome", signature="db",
         idx2 <- nparts
 
     ## Extract all CDS parts touched by the [protein_start,protein_end] range.
-    ans <- cds_parts[idx1:idx2]
+    ans <- cds[idx1:idx2]
 
     ## Trim first and last ranges in 'ans' (trimming should **always**
     ## be valid).
@@ -182,8 +182,8 @@ setMethod("proteinToGenome", "GRangesList",
                 if (i %in% non_coding_idx)
                     return(GRanges())
                 tx_name <- x_names[[i]]
-                cds_parts <- db[[tx_name]]
-                .map_protein_to_cds_parts(x_start[[i]], x_end[[i]], cds_parts)
+                cds <- db[[tx_name]]
+                .map_protein_to_cds(x_start[[i]], x_end[[i]], cds)
             }
         )
         GRangesList(ans)
