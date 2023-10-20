@@ -208,7 +208,7 @@
 ### and rtracklayer::ucscTables(genome(session), track) would partly achieve
 ### this but is unfortunately very slow.
 supportedUCSCtables <- function(genome="hg19",
-                                url="http://genome.ucsc.edu/cgi-bin/")
+                                url="https://genome.ucsc.edu/cgi-bin/")
 {
     if (is(genome, "UCSCSession")) {
         if (!missing(url))
@@ -275,7 +275,7 @@ supportedUCSCtables <- function(genome="hg19",
 ### actually exists.
 browseUCSCtrack <- function(genome="hg19",
                             tablename="knownGene",
-                            url="http://genome.ucsc.edu/cgi-bin/")
+                            url="https://genome.ucsc.edu/cgi-bin/")
 {
     if (!isSingleString(genome))
         stop("'genome' must be a single string")
@@ -284,7 +284,7 @@ browseUCSCtrack <- function(genome="hg19",
     if (!isSingleString(url))
         stop("'url' must be a single string")
     url <- sprintf("%s/hgTrackUi?db=%s&g=%s", url, genome, tablename)
-    ## Avoid "file association for 'http://...' not available or invalid"
+    ## Avoid "file association for 'https://...' not available or invalid"
     ## error during 'R CMD check' on some Windows systems (e.g. riesling1).
     if (interactive())
         browseURL(url)
@@ -866,7 +866,7 @@ browseUCSCtrack <- function(genome="hg19",
                "miRBase build ID"),
         value=c("UCSC", genome, organism, taxonomyId,
                 tablename, track,
-                "http://genome.ucsc.edu/", gene_id_type,
+                "https://genome.ucsc.edu/", gene_id_type,
                 ifelse(full_dataset, "yes", "no"),
                 miRBaseBuild),
         stringsAsFactors=FALSE
@@ -951,7 +951,7 @@ makeTxDbFromUCSC <- function(genome="hg19",
         tablename="knownGene",
         transcript_ids=NULL,
         circ_seqs=NULL,
-        url="http://genome.ucsc.edu/cgi-bin/",
+        url="https://genome.ucsc.edu/cgi-bin/",
         goldenPath.url=getOption("UCSC.goldenPath.url"),
         taxonomyId=NA,
         miRBaseBuild=NA)

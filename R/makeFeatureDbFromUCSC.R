@@ -69,7 +69,7 @@
         name=c("Data source", "Genome", "UCSC Table", "Organism",
                "Taxonomy ID", "Resource URL"),
         value=c("UCSC", genome, tablename, organism,
-                taxonomyId, "http://genome.ucsc.edu/")
+                taxonomyId, "https://genome.ucsc.edu/")
     )
     message("OK")
     metadata
@@ -230,7 +230,7 @@ makeFeatureDbFromUCSC <- function(genome,
          track,
          tablename,
          columns = UCSCFeatureDbTableSchema(genome, track, tablename),
-         url="http://genome.ucsc.edu/cgi-bin/",
+         url="https://genome.ucsc.edu/cgi-bin/",
          goldenPath.url=getOption("UCSC.goldenPath.url"),
          chromCol=NULL,
          chromStartCol=NULL,

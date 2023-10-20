@@ -40,7 +40,7 @@ makeFeatureDbFromUCSC(
         track,
         tablename,
         columns = UCSCFeatureDbTableSchema(genome,track,tablename),
-        url="http://genome.ucsc.edu/cgi-bin/",
+        url="https://genome.ucsc.edu/cgi-bin/",
         goldenPath.url=getOption("UCSC.goldenPath.url"),
         chromCol, 
         chromStartCol, 

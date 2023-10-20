@@ -38,7 +38,7 @@ makeTxDbPackageFromUCSC(
     tablename="knownGene",
     transcript_ids=NULL,
     circ_seqs=NULL,
-    url="http://genome.ucsc.edu/cgi-bin/",
+    url="https://genome.ucsc.edu/cgi-bin/",
     goldenPath.url=getOption("UCSC.goldenPath.url"),
     taxonomyId=NA,
     miRBaseBuild=NA)
@@ -53,7 +53,7 @@ makeFDbPackageFromUCSC(
     track="tRNAs",
     tablename="tRNAs",
     columns = UCSCFeatureDbTableSchema(genome, track, tablename),
-    url="http://genome.ucsc.edu/cgi-bin/",
+    url="https://genome.ucsc.edu/cgi-bin/",
     goldenPath.url=getOption("UCSC.goldenPath.url"),
     chromCol=NULL,
     chromStartCol=NULL,

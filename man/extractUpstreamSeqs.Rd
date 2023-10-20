@@ -149,7 +149,7 @@ txdb <- TxDb.Dmelanogaster.UCSC.dm3.ensGene
 txdb  # contains Ensembl gene IDs
 
 ## Because the chrU and chrUextra sequences are made of concatenated
-## scaffolds (see http://genome.ucsc.edu/cgi-bin/hgGateway?db=dm3),
+## scaffolds (see https://genome.ucsc.edu/cgi-bin/hgGateway?db=dm3),
 ## extracting the upstream sequences for genes located on these
 ## scaffolds is not reliable. So we exclude them:
 exclude <- c("chrU", "chrUextra")

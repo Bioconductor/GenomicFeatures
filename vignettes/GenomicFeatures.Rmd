@@ -19,7 +19,7 @@ vignette: >
 
 The `GenomicFeatures` package retrieves and manages
 transcript-related features from the UCSC Genome
-Bioinformatics\footnote{(http://genome.ucsc.edu/)} and
+Bioinformatics\footnote{(https://genome.ucsc.edu/)} and
 BioMart\footnote{(http://www.biomart.org/)} data resources. The
 package is useful for ChIP-chip, ChIP-seq, and RNA-seq analyses.
 
