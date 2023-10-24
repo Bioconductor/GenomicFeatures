@@ -1,3 +1,30 @@
+CHANGES IN VERSION 1.54.0
+-------------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Fix flaw in heuristic for inferring exon ranks in makeTxDbFromGRanges():
+      makeTxDbFromGRanges() can guess the exon ranks of a given transcript
+      either
+        (a) based on their position on the chromosome
+        (b) or by looking at the suffixes of the exon ids (e.g. .1, .2, etc...)
+            if any
+      Previously (i.e. in GenomicFeatures < 1.53.1) it was trying (b) first,
+      and would fall back on (a) if (b) failed.
+      Starting with GenomicFeatures 1.53.1, it does the opposite: it tries (a)
+      first, and uses (b) only for exons for which (a) failed.
+      This change addresses the problem that the suffixes of the exon ids cannot
+      be trusted to infer the ranks of exons located on the minus strand. See
+      https://github.com/Bioconductor/GenomicFeatures/issues/59 for an example.
+
+    o Try to more clearly distinguish between CDS and CDS parts in
+      documentation.
+
+BUG FIXES
+
+    o Switch from HTTP to HTTPS for requests to *.ucsc.edu
+
+
 CHANGES IN VERSION 1.52.0
 -------------------------
 
