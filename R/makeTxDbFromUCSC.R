@@ -20,21 +20,35 @@
 
 ### .get_GENCODE_tx_tables("All GENCODE %s", "V34") or
 ### .get_GENCODE_tx_tables("GENCODE Genes %s", "V19")
-.get_GENCODE_tx_tables <- function(track, version, only.first.3=FALSE)
+.get_GENCODE_tx_tables <- function(track, version,
+                                   include.2way=FALSE,
+                                   include.PolyA=TRUE)
 {
     tx_tables <- c(
         "wgEncodeGencodeBasic%s",          track, "Basic",
         "wgEncodeGencodeComp%s",           track, "Comprehensive",
         "wgEncodeGencodePseudoGene%s",     track, "Pseudogenes"
     )
-    if (!only.first.3) {
+    if (include.2way)
         tx_tables <- c(tx_tables,
-            "wgEncodeGencode2wayConsPseudo%s", track, "2-way Pseudogenes",
+            "wgEncodeGencode2wayConsPseudo%s", track, "2-way Pseudogenes"
+        )
+    if (include.PolyA)
+        tx_tables <- c(tx_tables,
             "wgEncodeGencodePolya%s",          track, "PolyA"
         )
-    }
     sprintf(tx_tables, version)
 }
+
+.hs1_TX_TABLES <- c(
+  ## tablename (unique key)           track                subtrack
+  "hub_3671779_catLiftOffGenesV1",    "CAT/Liftoff Genes", NA,
+  "hub_3671779_ncbiRefSeq",           "NCBI RefSeq",       "RefSeq All",
+  "hub_3671779_ncbiRefSeqCurated",    "NCBI RefSeq",       "RefSeq Curated",
+  "hub_3671779_ncbiRefSeqPredicted",  "NCBI RefSeq",       "RefSeq Predicted",
+  "hub_3671779_ncbiRefSeqOther",      "NCBI RefSeq",       "RefSeq Other",
+  "hub_3671779_ncbiRefSeqPsl",        "NCBI RefSeq",       "RefSeq Alignments"
+)
 
 ### NAs in the tablename and track columns are resolved via
 ### 'rtracklayer::trackNames(session)'.
@@ -51,17 +65,28 @@
   "ncbiRefSeqSelect",                 "NCBI RefSeq",       "RefSeq Select+MANE",
   "ncbiRefSeqHgmd",                   "NCBI RefSeq",       "RefSeq HGMD",
   "xenoRefGene",                      "Other RefSeq",      NA,
-  .get_GENCODE_tx_tables("All GENCODE %s", "V34"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V33"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V31"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V29"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V28"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V27"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V26"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V25"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V24"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V23"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V22"),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V44"),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V43"),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V42"),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V41", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V40", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V39", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V38", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V37", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V36", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V35", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V34", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V33", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V31", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V30", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V29", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V28", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V27", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V26", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V25", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V24", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V23", include.2way=TRUE),
+  .get_GENCODE_tx_tables("All GENCODE %s", "V22", include.2way=TRUE),
   .get_GENCODE_tx_tables("GENCODE %s (Ensembl 76)", "V20"),
   "augustusGene",                     "AUGUSTUS",          NA,
   "ccdsGene",                         "CCDS",              NA,
@@ -92,12 +117,22 @@
   "ccdsGene",                         "CCDS",              NA,
   "ensGene",                          "Ensembl Genes",     NA,
   "exoniphy",                         "Exoniphy",          NA,
-  .get_GENCODE_tx_tables("GENCODE %s", "V34lift37", only.first.3=TRUE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V33lift37", only.first.3=TRUE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V31lift37", only.first.3=TRUE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V28lift37", only.first.3=TRUE),
-  .get_GENCODE_tx_tables("GENCODE Gene %s", "V27lift37", only.first.3=TRUE),
-  .get_GENCODE_tx_tables("GENCODE Gene %s", "V24lift37", only.first.3=TRUE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V44lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V43lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V42lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V41lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V40lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V39lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V38lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V37lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V36lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V35lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V34lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V33lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V31lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE %s", "V28lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE Gene %s", "V27lift37", include.PolyA=FALSE),
+  .get_GENCODE_tx_tables("GENCODE Gene %s", "V24lift37", include.PolyA=FALSE),
   .get_GENCODE_tx_tables("GENCODE Genes %s", "V19"),
   .get_GENCODE_tx_tables("GENCODE Genes %s", "V17"),
   .get_GENCODE_tx_tables("GENCODE Genes %s", "V14"),
@@ -183,7 +218,19 @@
 
 .get_supported_tx_tables <- function(genome)
 {
+    ### Starting with hs1, UCSC is doing things very differently compared to
+    ### what they've been doing with other genomes for the last 20 years!
+    ### One big difference is that the track data is no longer stored in a
+    ### MySQL db (the "hs1" db on UCSC MySQL server contains only 3 mysterious
+    ### table that don't seem to have anything to do with track data). With
+    ### hs1, the track data is stored directlyt in Big Bed files located here:
+    ### https://hgdownload.soe.ucsc.edu/gbdb/hs1/
+    ### Until we support that, we error graciously on hs1.
+    ### hs1 for now.
+    if (genome == "hs1")
+        stop(wmsg("UCSC genome hs1 is not supported yet"))
     tx_tables <- switch(genome,
+        hs1 =.hs1_TX_TABLES,
         hg38=.hg38_TX_TABLES,
         hg19=.hg19_TX_TABLES,
         .ALL_SUPPORTED_TX_TABLES
@@ -212,14 +259,15 @@ supportedUCSCtables <- function(genome="hg19",
 {
     if (is(genome, "UCSCSession")) {
         if (!missing(url))
-            warning("'url' is ignored when 'genome' is a UCSCSession object")
+            warning(wmsg("'url' is ignored when 'genome' ",
+                         "is a UCSCSession object"))
         session <- genome
         genome <- genome(session)
     } else {
         if (!isSingleString(genome))
-            stop("'genome' must be a single string")
+            stop(wmsg("'genome' must be a single string"))
         if (!isSingleString(url))
-            stop("'url' must be a single string")
+            stop(wmsg("'url' must be a single string"))
         session <- browserSession(url=url)
         genome(session) <- genome
     }
@@ -278,11 +326,11 @@ browseUCSCtrack <- function(genome="hg19",
                             url="https://genome.ucsc.edu/cgi-bin/")
 {
     if (!isSingleString(genome))
-        stop("'genome' must be a single string")
+        stop(wmsg("'genome' must be a single string"))
     if (!isSingleString(tablename))
-        stop("'tablename' must be a single string")
+        stop(wmsg("'tablename' must be a single string"))
     if (!isSingleString(url))
-        stop("'url' must be a single string")
+        stop(wmsg("'url' must be a single string"))
     url <- sprintf("%s/hgTrackUi?db=%s&g=%s", url, genome, tablename)
     ## Avoid "file association for 'https://...' not available or invalid"
     ## error during 'R CMD check' on some Windows systems (e.g. riesling1).
@@ -293,18 +341,18 @@ browseUCSCtrack <- function(genome="hg19",
 .tablename2track <- function(tablename, session)
 {
     if (!isSingleString(tablename))
-        stop("'tablename' must be a single string")
+        stop(wmsg("'tablename' must be a single string"))
     supported_tables <- supportedUCSCtables(session)
     idx <- which(supported_tables$tablename == tablename)
     if (length(idx) == 0L)
-        stop("UCSC table \"", tablename, "\" is not supported")
+        stop(wmsg("UCSC table \"", tablename, "\" is not supported"))
     ## Sanity check.
     stopifnot(length(idx) == 1L)  # should never happen
     track <- as.character(supported_tables$track[idx])
     track_tables <- ucscTables(genome(session), track)
     if (!(tablename %in% track_tables))
-        stop("UCSC table \"", tablename, "\" does not exist ",
-             "for genome \"", genome(session), "\", sorry")
+        stop(wmsg("UCSC table \"", tablename, "\" does not exist ",
+                  "for genome \"", genome(session), "\", sorry"))
     track
 }
 
@@ -609,8 +657,8 @@ browseUCSCtrack <- function(genome="hg19",
         ucsc_table <- .fetch_UCSC_table(genome, tablename,
                                         columns=c(Lcolname, Rcolname))
         if (!all(has_col(ucsc_table, c(Lcolname, Rcolname))))
-            stop("expected cols \"", Lcolname, "\" or/and \"",
-                 Rcolname, "\" not found in table ", tablename)
+            stop(wmsg("expected cols \"", Lcolname, "\" or/and \"",
+                      Rcolname, "\" not found in table ", tablename))
         Lcol <- ucsc_table[[Lcolname]]
         Rcol <- ucsc_table[[Rcolname]]
         if (!is.character(Lcol))
@@ -714,18 +762,18 @@ browseUCSCtrack <- function(genome="hg19",
     first_exon_with_cds <- which(exon_start0 <= cdsStart0
                                  & cdsStart0 < exon_end1)
     if (length(first_exon_with_cds) != 1L)
-        stop("UCSC data ambiguity in transcript ", tx_name,
-             ": cannot determine first exon with cds ('cdsStart' ",
-             "falls in 0 or more than 1 exon)")
+        stop(wmsg("UCSC data ambiguity in transcript ", tx_name,
+                  ": cannot determine first exon with cds ('cdsStart' ",
+                  "falls in 0 or more than 1 exon)"))
     last_exon_with_cds <- which(exon_start0 < cdsEnd1
                                 & cdsEnd1 <= exon_end1)
     if (length(last_exon_with_cds) != 1L)
-        stop("UCSC data ambiguity in transcript ", tx_name,
-             ": cannot determine last exon with cds ('cdsEnd' ",
-             "falls in 0 or more than 1 exon)")
+        stop(wmsg("UCSC data ambiguity in transcript ", tx_name,
+                  ": cannot determine last exon with cds ('cdsEnd' ",
+                  "falls in 0 or more than 1 exon)"))
     if (last_exon_with_cds < first_exon_with_cds)
-        stop("UCSC data anomaly in transcript ", tx_name,
-             ": last exon with cds occurs before first exon with cds")
+        stop(wmsg("UCSC data anomaly in transcript ", tx_name,
+                  ": last exon with cds occurs before first exon with cds"))
     exons_with_cds <- first_exon_with_cds:last_exon_with_cds
     cds_start0[exons_with_cds] <- exon_start0[exons_with_cds]
     cds_end1[exons_with_cds] <- exon_end1[exons_with_cds]
@@ -755,7 +803,7 @@ browseUCSCtrack <- function(genome="hg19",
             the cds cumulative length is not a multiple of 3
             for transcripts %s", length(bad_cds),
             paste(sQuote(bad_cds), collapse=" "))
-        warning(paste(strwrap(msg, exdent=2L), collapse="\n"))
+        warning(wmsg(paste(strwrap(msg, exdent=2L), collapse="\n")))
     }
     list(start=sapply(start_end, "[[", 1L),
          end=sapply(start_end, "[[", 2L))
@@ -772,8 +820,8 @@ browseUCSCtrack <- function(genome="hg19",
             cds_start <- cds_end <- integer(0)
     } else {
         if (min(exon_count) <= 0L)
-            stop("UCSC data anomaly: 'ucsc_txtable$exonCount' contains ",
-                 "non-positive values")
+            stop(wmsg("UCSC data anomaly: 'ucsc_txtable$exonCount' contains ",
+                      "non-positive values"))
         exon_rank <- make_exon_rank_col(exon_count, ucsc_txtable$strand)
         cds_locs <- .extract_cds_locs_from_UCSC_txtable(ucsc_txtable)
         exon_start <- unlist(ucsc_txtable$exonStarts) + 1L
@@ -850,7 +898,7 @@ browseUCSCtrack <- function(genome="hg19",
 {
     message("Prepare the 'metadata' data frame ... ", appendLF=FALSE)
     if (!isSingleStringOrNA(miRBaseBuild))
-        stop("'miRBaseBuild' must be a a single string or NA")
+        stop(wmsg("'miRBaseBuild' must be a a single string or NA"))
     organism <- lookup_organism_by_UCSC_genome(genome)
     if (is.na(taxonomyId)) {
         taxonomyId <- GenomeInfoDb:::lookup_tax_id_by_organism(organism)
@@ -963,12 +1011,13 @@ makeTxDbFromUCSC <- function(genome="hg19",
 
     if (!is.null(transcript_ids)) {
         if (!is.character(transcript_ids) || any(is.na(transcript_ids)))
-            stop("'transcript_ids' must be a character vector with no NAs")
+            stop(wmsg("'transcript_ids' must be a ",
+                      "character vector with no NAs"))
     }
     if (!isSingleString(url))
-        stop("'url' must be a single string")
+        stop(wmsg("'url' must be a single string"))
     if (!isSingleString(goldenPath.url))
-        stop("'goldenPath.url' must be a single string")
+        stop(wmsg("'goldenPath.url' must be a single string"))
 
     ## Create an UCSC Genome Browser session.
     session <- browserSession(url=url)
@@ -991,7 +1040,7 @@ makeTxDbFromUCSC <- function(genome="hg19",
         txname2geneid <- .extract_txname2geneid_from_UCSC_txtable(
                                  ucsc_txtable, mapdef)
     } else {
-        stop("GenomicFeatures internal error: invalid 'mapdef'")
+        stop(wmsg("GenomicFeatures internal error: invalid 'mapdef'"))
     }
     .make_TxDb_from_UCSC_txtable(ucsc_txtable, txname2geneid$genes,
                                  genome, tablename, track,
