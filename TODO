@@ -6,10 +6,6 @@ o Add 'filter' arg to transcriptsBy(), exonsBy(), cdsBy(),
   *UTRByTranscript() should at least support filtering by gene or transcript
   id.
 
-o makeTxDbFromUCSC() - Address the CDS non-completeness issue.
-  The status of the CDS (complete or not) can be inferred from the
-  cds*Stat field (when present) of the UCSC table.
-
 o Too many helper functions are defined and used internally to query the
   db:
   - dbEasyQuery() is defined in AnnotationDbi and GenomicFeatures with
