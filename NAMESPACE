@@ -109,7 +109,7 @@ export(
   extractUpstreamSeqs,
 
   ## getPromoterSeq-methods.R:
-  getPromoterSeq,
+  getPromoterSeq, getTerminatorSeq,
 
   ## makeTxDbPackage.R:
   makePackageName,
@@ -143,7 +143,7 @@ exportMethods(
   as.list,
   seqlevels0, "seqlevels<-", seqinfo,
   transcripts, exons, cds, genes,
-  promoters,
+  promoters, terminators,
   transcriptsByOverlaps,
   exonsByOverlaps,
   cdsByOverlaps,
@@ -157,7 +157,7 @@ exportMethods(
   tRNAs,
   extractTranscriptSeqs,
   extractUpstreamSeqs,
-  getPromoterSeq,
+  getPromoterSeq, getTerminatorSeq,
   isActiveSeq,
   "isActiveSeq<-",
   asBED, asGFF,

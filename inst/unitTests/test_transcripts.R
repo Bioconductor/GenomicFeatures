@@ -170,11 +170,16 @@ test_cds <- function()
 test_promoters <- function()
 {
     txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite", 
-                   package="GenomicFeatures"))
+                               package="GenomicFeatures"))
     tx <- transcripts(txdb, use.names=TRUE)
-    p <- promoters(txdb)
-    checkEquals(c("tx_id", "tx_name"), colnames(mcols(p)))
-    checkIdentical(promoters(tx[4:5]), p[4:5])
+    current <- promoters(txdb)
+    checkTrue(validObject(current))
+    checkEquals(colnames(mcols(current)), c("tx_id", "tx_name"))
+    checkIdentical(current, promoters(tx))
+    current <- terminators(txdb)
+    checkTrue(validObject(current))
+    checkEquals(colnames(mcols(current)), c("tx_id", "tx_name"))
+    checkIdentical(current, terminators(tx))
 }
 
 

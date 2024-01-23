@@ -115,16 +115,15 @@ to the seqlevels stored in the db), then set the seqlevels to
 seqlevels(txdb) <- seqlevels0(txdb)
 ```
 
-\begin{Exercise}
+**Exercise:**
 Use `seqlevels` to set only chromsome 15 to be active.  BTW,
 the rest of this vignette will assume you have succeeded at this.
-\end{Exercise}
-\begin{Solution}
+
+**Solution:**
 ```{r seqlevels4}
 seqlevels(txdb) <- "chr15"
 seqlevels(txdb)
 ```
-\end{Solution}
 
 
 ### Retrieving data using the select method
@@ -149,23 +148,22 @@ keytypes(txdb)
 select(txdb, keys = keys, columns="TXNAME", keytype="GENEID")
 ```
 
-\begin{Exercise}
+**Exercise:**
 For the genes in the example above, find the chromosome and strand
 information that will go with each of the transcript names.
-\end{Exercise}
-\begin{Solution}
+
+**Solution:**
 ```{r selectExercise}
 columns(txdb)
 cols <- c("TXNAME", "TXSTRAND", "TXCHROM")
 select(txdb, keys=keys, columns=cols, keytype="GENEID")
 ```
-\end{Solution}
 
 
 ### Methods for returning `GRanges` objects
 
 Retrieving data with select is useful, but sometimes it is more
-convenient to extract the result as `GRanges` objects.  This is
+convenient to extract the result as a `GRanges` object.  This is
 often the case when you are doing counting or specialized overlap
 operations downstream.  For these use cases there is another family of
 methods available.
@@ -190,8 +188,7 @@ objects by reading the `GenomicRanges` introductory
 vignette.  The `show` method for a `GRanges` object
 will display the ranges, seqnames (a chromosome or a contig), and
 strand on the left side and then present related metadata on the right
-side.  At the bottom, the seqlengths display all the possible seqnames
-along with the length of each sequence.
+side.
 
 The `strand` function is used to obtain the strand
 information from the transcripts.  The sum of the Lengths of the
@@ -207,13 +204,17 @@ length(GR)
 
 In addition, the `transcripts` function can also be used to
 retrieve a subset of the transcripts available such as those on the
-$+$-strand of chromosome 1.
+`+`-strand of chromosome 1.
 
 ```{r transcripts3}
 GR <- transcripts(txdb, filter=list(tx_chrom = "chr15", tx_strand = "+"))
 length(GR)
 unique(strand(GR))
 ```
+
+The `exons` and `cds` functions can also be used
+in a similar fashion to retrive genomic coordinates for exons and
+coding sequences.
 
 The `promoters` function computes a `GRanges` object
 that spans the promoter region around the transcription start site
@@ -227,23 +228,22 @@ PR <- promoters(txdb, upstream=2000, downstream=400)
 PR
 ```
 
-The `exons` and `cds` functions can also be used
-in a similar fashion to retrive genomic coordinates for exons and
-coding sequences.
+A similar function (`terminators`) is provided to compute the
+terminator region around the transcription end site for the
+transcripts in a `TxDb` object.
 
-\begin{Exercise}
+**Exercise:**
 Use `exons` to retrieve all the exons from chromosome 15.
 How does the length of this compare to the value returned by
 `transcripts`?
-\end{Exercise}
-\begin{Solution}
+
+**Solution:**
 ```{r exonsExer1}
 EX <- exons(txdb)
 EX[1:4]
 length(EX)
 length(GR)
 ```
-\end{Solution}
 
 
 ### Working with Grouped Features
@@ -305,19 +305,18 @@ was the case in the 2nd example.  Even though the results will
 sometimes have to come back to you as synthetic IDs, you can still
 always retrieve the original IDs.
 
-\begin{Exercise}
+**Exercise:**
 Starting with the tx_ids that are the names of the GRList object we
 just made, use `select` to retrieve that matching transcript
 names.  Remember that the list used a `by` argument = "tx", so
 the list is grouped by transcript IDs.
-\end{Exercise}
-\begin{Solution}
+
+**Solution:**
 ```{r internalID}
 GRList <- exonsBy(txdb, by = "tx")
 tx_ids <- names(GRList)
 head(select(txdb, keys=tx_ids, columns="TXNAME", keytype="TXID"))
 ```
-\end{Solution}
 
 Finally, the order of the results in a `GRangesList` object can
 vary with the way in which things were grouped. In most cases the
@@ -365,21 +364,20 @@ into proteins with `translate`:
 suppressWarnings(translate(tx_seqs1))
 ```
 
-\begin{Exercise}
+**Exercise:**
 But of course this is not a meaningful translation, because the call
 to `extractTranscriptSeqs` will have extracted all
 the transcribed regions of the genome regardless of whether or not
 they are translated. Look at the manual page for
 `extractTranscriptSeqs` and see how you can use cdsBy
 to only translate only the coding regions.
-\end{Exercise}
-\begin{Solution}
+
+**Solution:**
 ```{r betterTranslation}
 cds_seqs <- extractTranscriptSeqs(Hsapiens,
                                   cdsBy(txdb, by="tx", use.names=TRUE))
 translate(cds_seqs)
 ```
-\end{Solution}
 
 
 ## Creating New `TxDb` Objects or Packages

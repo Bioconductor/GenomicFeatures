@@ -9,7 +9,9 @@
 \alias{genes}
 \alias{genes,TxDb-method}
 \alias{promoters}
+\alias{terminators}
 \alias{promoters,TxDb-method}
+\alias{terminators,TxDb-method}
 
 \title{
   Extract genomic features from a TxDb-like object
@@ -34,6 +36,7 @@ genes(x, ...)
 \S4method{genes}{TxDb}(x, columns="gene_id", filter=NULL, single.strand.genes.only=TRUE)
 
 \S4method{promoters}{TxDb}(x, upstream=2000, downstream=200, use.names=TRUE, ...)
+\S4method{terminators}{TxDb}(x, upstream=2000, downstream=200, use.names=TRUE, ...)
 }
 
 \arguments{
@@ -44,8 +47,9 @@ genes(x, ...)
     For the \code{transcripts()}, \code{exons()}, \code{cds()}, and
     \code{genes()} generic functions: arguments to be passed to methods.
 
-    For the \code{promoters()} method for \link{TxDb} objects: arguments
-    to be passed to the internal call to \code{transcripts()}.
+    For the \code{promoters()} and \code{terminators()} methods for
+    \link{TxDb} objects: arguments to be passed to the internal call
+    to \code{transcripts()}.
   }
   \item{columns}{
     Columns to include in the output.
@@ -93,15 +97,18 @@ genes(x, ...)
     columns of a \link[GenomicRanges]{GRangesList} object are not displayed
     by the \code{show()} method.)
   }
-  \item{upstream}{
-    For \code{promoters()} : An \code{integer(1)} value indicating the
-    number of bases upstream from the transcription start site. For
-    additional details see \code{?`promoters,GRanges-method`}.
-  }
-  \item{downstream}{
-    For \code{promoters()} : An \code{integer(1)} value indicating the
-    number of bases downstream from the transcription start site. For
-    additional details see \code{?`promoters,GRanges-method`}.
+  \item{upstream, downstream}{
+    For \code{promoters()}: Single integer values indicating the number
+    of bases upstream and downstream from the TSS (transcription start
+    sites).
+
+    For \code{terminators()}: Single integer values indicating the number
+    of bases upstream and downstream from the TES (transcription end
+    sites).
+
+    For additional details see
+    \code{?GenomicRanges::\link[GenomicRanges]{promoters}} in the
+    \pkg{GenomicRanges} package.
   }
 }
 
@@ -116,13 +123,20 @@ genes(x, ...)
   \code{\link{transcriptsByOverlaps}()}, \code{\link{exonsByOverlaps}()},
   or \code{\link{cdsByOverlaps}()} function.
 
-  The \code{promoters()} function computes user-defined promoter regions
-  for the transcripts in a \link{TxDb}-like object. The return object is
-  a \code{GRanges} of promoter regions around the transcription start
-  site the span of which is defined by \code{upstream} and \code{downstream}.
-  For additional details on how the promoter range is computed and the
-  handling of \code{+} and \code{-} strands see
-  \code{?`promoters,GRanges-method`}.
+  The \code{promoters()} and \code{terminators()} functions compute
+  user-defined promoter or terminator regions for the transcripts
+  in a \link{TxDb}-like object. The returned object is a
+  \link[GenomicRanges]{GRanges} with one range per transcript
+  in the \link{TxDb}-like object.
+  Each range represents the promoter or terminator region associated
+  with a transcript, that is, the region around the TSS
+  (transcription start site) or TES (transcription end site) the
+  span of which is defined by \code{upstream} and \code{downstream}.
+
+  For additional details on how the promoter and terminator ranges
+  are computed and the handling of \code{+} and \code{-} strands see
+  \code{?GenomicRanges::\link[GenomicRanges]{promoters}} in the
+  \pkg{GenomicRanges} package.
 }
 
 \value{
@@ -153,6 +167,9 @@ genes(x, ...)
 
     \item \code{\link{extractTranscriptSeqs}} for extracting transcript
           (or CDS) sequences from reference sequences.
+
+    \item \code{\link{getPromoterSeq}} for extracting gene promoter or
+          terminator sequences.
 
     \item \code{\link{coverageByTranscript}} for computing coverage by
           transcript (or CDS) of a set of ranges.
@@ -240,13 +257,19 @@ multiple_strand_genes
 mcols(multiple_strand_genes)
 
 ## ---------------------------------------------------------------------
-## promoters()
+## promoters() and terminators()
 ## ---------------------------------------------------------------------
 
 ## This:
 promoters(txdb, upstream=100, downstream=50)
 ## is equivalent to:
-promoters(transcripts(txdb, use.names=TRUE), upstream=100, downstream=50)
+tx <- transcripts(txdb, use.names=TRUE)
+promoters(tx, upstream=100, downstream=50)
+
+## And this:
+terminators(txdb, upstream=100, downstream=50)
+## is equivalent to:
+terminators(tx, upstream=100, downstream=50)
 
 ## Extra arguments are passed to transcripts(). So this:
 columns <- c("tx_name", "gene_id")

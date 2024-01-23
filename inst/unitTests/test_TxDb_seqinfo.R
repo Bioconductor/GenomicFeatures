@@ -96,6 +96,14 @@ test_promoters_accessor <- function()
     seqlevels(txdb, pruning.mode="coarse") <- c(chr5="5")
     prm2 <- promoters(txdb)
     checkIdentical(prm1, prm2)
+
+    txdb <- restoreSeqlevels(txdb)
+    trmn1 <- terminators(txdb)
+    seqlevels(trmn1, pruning.mode="coarse") <- c(chr5="5")
+    ## Then change seqlevels for txdb
+    seqlevels(txdb, pruning.mode="coarse") <- c(chr5="5")
+    trmn2 <- terminators(txdb)
+    checkIdentical(trmn1, trmn2)
 }
 
 test_transcriptsBy_accessors <- function()

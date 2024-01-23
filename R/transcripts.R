@@ -1,5 +1,6 @@
 ### =========================================================================
-### The transcripts(), exons(), cds() and promoters() extractors
+### The transcripts(), exons(), cds(), promoters(), and terminators()
+### extractors
 ### -------------------------------------------------------------------------
 
 
@@ -318,9 +319,9 @@ setMethod("genes", "TxDb", .TxDb.genes)
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### "promoters" method
+### promoters() and terminators() methods
 ###
-### generic is in IRanges
+### Generics are in the IRanges package.
 ###
 
 setMethod("promoters", "TxDb",
@@ -328,6 +329,14 @@ setMethod("promoters", "TxDb",
     {
         gr <- transcripts(x, ..., use.names=use.names)
         promoters(gr, upstream=upstream, downstream=downstream)
+    }
+)
+
+setMethod("terminators", "TxDb",
+    function(x, upstream=2000, downstream=200, use.names=TRUE, ...)
+    {
+        gr <- transcripts(x, ..., use.names=use.names)
+        terminators(gr, upstream=upstream, downstream=downstream)
     }
 )
 
