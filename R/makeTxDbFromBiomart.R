@@ -17,7 +17,7 @@
 ###
 
 .isEnsemblMirror <- function(host) {
-    hostadd <- gsub("http[s]*://", "", host, ignore.case = TRUE)
+    hostadd <- gsub("http[s]*://", "", host, ignore.case=TRUE)
     domain <- vapply(strsplit(hostadd, "\\."), `[[`, character(1L), 1L)
     ## capture known hosts
     tolower(domain) %in% c("useast", "uswest", "asia", "www", "ensembl")
@@ -44,9 +44,9 @@
     if (!(isSingleString(host) && host != ""))
         stop("'host' must be a single non-empty string")
     if (.isEnsemblMirror(host))
-        useEnsembl(biomart = biomart, dataset = dataset, host = host)
+        useEnsembl(biomart=biomart, dataset=dataset, host=host)
     else
-        useEnsemblGenomes(biomart=biomart, dataset=dataset)
+        useEnsemblGenomes(biomart=biomart, dataset=dataset, host=host)
 }
 
 ### TODO: Share this with normalization of 'filter' arg in the transcripts(),
@@ -124,7 +124,7 @@
 
 .getBiomartDbVersion <- function(host, biomart)
 {
-    marts <- listMarts(host = host)
+    marts <- listMarts(host=host)
 
     mart_rowidx <- match(biomart, marts[["biomart"]])
     ## This should never happen.
@@ -234,7 +234,7 @@
         message("Download and preprocess the 'chrominfo' data frame ... ",
                 appendLF=FALSE)
         if (is_ensembl_mart) {
-            if (grepl("grch37.ensembl.org", host, ignore.case = TRUE)) {
+            if (grepl("grch37.ensembl.org", host, ignore.case=TRUE)) {
                 ## Ensembl GRCh37 mart
                 chromlengths <- try(fetchChromLengthsFromEnsembl(dataset,
                                         use.grch37=TRUE,
@@ -534,7 +534,7 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
     cds_length2 <- cds_length2[as.character(tx_name)]
 
     cds_length <- bm_result$cds_length
-    if (!is.null(cds_length)) { 
+    if (!is.null(cds_length)) {
         idx <- which(cds_length2 != cds_length)
         if (length(idx) != 0L) {
             msg <- c("the CDS length inferred from the CDS/UTR genomic ",
@@ -671,7 +671,7 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
         splicings <- cbind(splicings, .make_cds_df_from_ranges(cds_ranges))
     }
     message("OK")
-    splicings  
+    splicings
 }
 
 
@@ -744,7 +744,7 @@ getChromInfoFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
     data.frame(
         name=c("Data source",
                "Organism",
-               "Taxonomy ID", 
+               "Taxonomy ID",
                "Resource URL",
                "BioMart database",
                "BioMart database version",
@@ -837,7 +837,7 @@ makeTxDbFromBiomart <- function(biomart="ENSEMBL_MART_ENSEMBL",
         }
         splicings$utr_anomaly <- NULL
     }
-        
+
     genes <- .makeBiomartGenes(filter, mart, transcripts_tx_id,
                                recognized_attribs, id_prefix)
     metadata <- .prepareBiomartMetadata(mart, is_full_dataset,
