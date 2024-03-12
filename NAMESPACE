@@ -1,16 +1,8 @@
 import(methods)
 importFrom(stats, setNames)
-importFrom(utils, download.file, packageDescription, read.table, browseURL,
-                  as.person, capture.output, str)
-importFrom(tools, file_ext, file_path_sans_ext)
+importFrom(utils, as.person)
 
-importFrom(RCurl, getURL)
-importMethodsFrom(DBI, dbConnect, dbDisconnect,
-                       dbExecute, dbGetQuery,
-                       dbReadTable, dbWriteTable, dbListTables,
-                       dbListFields)
-
-importFrom(RSQLite, SQLite, SQLITE_RO)
+importMethodsFrom(DBI, dbGetQuery, dbListTables, dbListFields)
 
 import(AnnotationDbi)
 import(BiocGenerics)
@@ -20,52 +12,15 @@ import(GenomeInfoDb)
 import(XVector)
 import(GenomicRanges)
 
-importFrom(Biobase, createPackage)
-
 importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
 importFrom(Biostrings, DNAStringSet, reverseComplement, getSeq)
 
-importFrom(biomaRt, getBM, listAttributes, listDatasets, listFilters,
-                    listMarts, useDataset, useEnsembl, useEnsemblGenomes)
-
-importClassesFrom(BiocIO, BiocFile, CompressedFile)
-importFrom(BiocIO, FileForFormat)
-
-importFrom(rtracklayer, import, asBED, asGFF, browserSession,
-                        ucscTableQuery, tableNames, getTable, trackNames,
-                        ucscSchema, ucscTables)
+importFrom(rtracklayer, asBED, asGFF)
 
 
 exportClasses(TxDb, FeatureDb)
 
 export(
-  ## makeTxDb.R:
-  makeTxDb,
-
-  ## makeTxDbFromUCSC.R:
-  supportedUCSCtables,
-  browseUCSCtrack,
-  makeTxDbFromUCSC,
-
-  ## makeTxDbFromBiomart.R:
-  getChromInfoFromBiomart,
-  makeTxDbFromBiomart,
-
-  ## makeTxDbFromEnsembl.R:
-  makeTxDbFromEnsembl,
-
-  ## makeTxDbFromGRanges.R:
-  makeTxDbFromGRanges,
-
-  ## makeTxDbFromGFF.R:
-  makeTxDbFromGFF,
-
-  ## makeFeatureDbFromUCSC.R:
-  supportedUCSCFeatureDbTracks,
-  supportedUCSCFeatureDbTables,
-  UCSCFeatureDbTableSchema,
-  makeFeatureDbFromUCSC,
-
   ## id2name.R:
   id2name,
 
@@ -110,16 +65,6 @@ export(
 
   ## getPromoterSeq-methods.R:
   getPromoterSeq, getTerminatorSeq,
-
-  ## makeTxDbPackage.R:
-  makePackageName,
-  makeTxDbPackage,
-  makeTxDbPackageFromUCSC,
-  makeTxDbPackageFromBiomart,
-  makeFDbPackageFromUCSC,
-  supportedMiRBaseBuildValues,
-  mapToTranscripts, pmapToTranscripts,
-  mapFromTranscripts, pmapFromTranscripts,
 
   ## transcriptLocs2refLocs.R:
   transcriptLocs2refLocs,
@@ -166,5 +111,47 @@ exportMethods(
   mapFromTranscripts, pmapFromTranscripts,
   mapIdsToRanges, mapRangesToIds,
   proteinToGenome
+)
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Stuff that has moved to txdbmaker
+###
+
+export(
+  ## makeTxDb.R:
+  makeTxDb,
+
+  ## makeTxDbFromUCSC.R:
+  supportedUCSCtables,
+  browseUCSCtrack,
+  makeTxDbFromUCSC,
+
+  ## makeTxDbFromBiomart.R:
+  getChromInfoFromBiomart,
+  makeTxDbFromBiomart,
+
+  ## makeTxDbFromEnsembl.R:
+  makeTxDbFromEnsembl,
+
+  ## makeTxDbFromGRanges.R:
+  makeTxDbFromGRanges,
+
+  ## makeTxDbFromGFF.R:
+  makeTxDbFromGFF,
+
+  ## makeFeatureDbFromUCSC.R:
+  supportedUCSCFeatureDbTracks,
+  supportedUCSCFeatureDbTables,
+  UCSCFeatureDbTableSchema,
+  makeFeatureDbFromUCSC,
+
+  ## makeTxDbPackage.R:
+  supportedMiRBaseBuildValues,
+  makePackageName,
+  makeTxDbPackage,
+  makeTxDbPackageFromUCSC,
+  makeFDbPackageFromUCSC,
+  makeTxDbPackageFromBiomart
 )
 

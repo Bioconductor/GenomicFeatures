@@ -1,7 +1,6 @@
 test_transcriptLengths <- function()
 {
-    gff <- system.file("extdata", "GFF3_files",
-                       "ITAG4.1_gene_models.subset.gff",
+    gff <- system.file("extdata", "ITAG4.1_gene_models.subset.gff",
                        package="GenomicFeatures")
     txdb <- makeTxDbFromGFF(gff)
     txlens <- transcriptLengths(txdb, with.cds_len=TRUE,
