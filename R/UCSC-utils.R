@@ -17,6 +17,8 @@
     if (is.null(ans) || recache) {
         url <- "https://api.genome.ucsc.edu"
         response <- GET(url, path="list/tracks", query=list(genome=genome))
+        if (response$status_code != 200L)
+            stop(wmsg(genome, ": unknown genome (or ", url, " is down?)"))
         json <- content(response, as="text", encoding="UTF-8")
         ans <- fromJSON(json)[[genome]]
         .cached_genome_tracks[[genome]] <- ans
@@ -25,8 +27,8 @@
 }
 
 ### Typical usage: list_UCSC_primary_tables("mm9", group="genes")
-### Returns a data.frame with 4 columns ("primary_table", "track", "group",
-### and "composite_track") and 1 row per primary table.
+### Returns a data.frame with 1 row per primary table and 5 columns:
+### primary_table, track, type, group, composite_track.
 ### Note that the "group" and "composite_track" columns can contain NAs.
 list_UCSC_primary_tables <- function(genome, group=NULL, recache=FALSE)
 {
@@ -49,6 +51,10 @@ list_UCSC_primary_tables <- function(genome, group=NULL, recache=FALSE)
         function(track) track$shortLabel,
         character(1), USE.NAMES=FALSE
     )
+    track_types <- vapply(genome_tracks,
+        function(track) track$type,
+        character(1), USE.NAMES=FALSE
+    )
 
     ## Extract tracks nested in composite tracks.
     is_composite <- vapply(genome_tracks,
@@ -66,11 +72,18 @@ list_UCSC_primary_tables <- function(genome, group=NULL, recache=FALSE)
                                 function(track) track$shortLabel,
                                 character(1), USE.NAMES=FALSE)
     )
+    nested_track_types <- lapply(nested_tracks,
+        function(tracks) vapply(tracks,
+                                function(track) track$type,
+                                character(1), USE.NAMES=FALSE)
+    )
     nested_tracks_count <- lengths(nested_tracks)
+
     ## Sanity checks.
     stopifnot(
         identical(lengths(nested_primary_tables), nested_tracks_count),
-        identical(lengths(nested_track_names), nested_tracks_count)
+        identical(lengths(nested_track_names), nested_tracks_count),
+        identical(lengths(nested_track_types), nested_tracks_count)
     )
 
     ## Prepare columns of final data frame.
@@ -84,12 +97,16 @@ list_UCSC_primary_tables <- function(genome, group=NULL, recache=FALSE)
     ans_track <- ans_composite_track <- rep.int(track_names, times)
     ans_track[ans_is_composite] <-
         unlist(nested_track_names, use.names=FALSE)
+    ans_type <- rep.int(track_types, times)
+    ans_type[ans_is_composite] <-
+        unlist(nested_track_types, use.names=FALSE)
     ans_group <- rep.int(track_groups, times)
     ans_composite_track[!ans_is_composite] <- NA_character_
 
     data.frame(
         primary_table=ans_primary_table,
         track=ans_track,
+        type=ans_type,
         group=ans_group,
         composite_track=ans_composite_track
     )

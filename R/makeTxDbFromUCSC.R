@@ -18,9 +18,11 @@
     exonEnds="list"       # list of raw vectors
 )
 
-### A thin wrapper around list_UCSC_primary_tables(genome, group="genes").
-### Returns a data.frame with 3 columns ("tablename", "track", and
-### "composite_track") and 1 row per primary table.
+### We support all tables in the "genes" group that have type "genePred".
+### This is because tables of other types like "bed 3" or "psl" don't have
+### the expected columns.
+### Returns a data.frame with 1 row per supported table and 3 columns:
+### tablename, track, composite_track.
 supportedUCSCtables <- function(genome="hg19",
                                 url="https://genome.ucsc.edu/cgi-bin/")
 {
@@ -29,9 +31,12 @@ supportedUCSCtables <- function(genome="hg19",
     if (!isSingleString(genome))
         stop(wmsg("'genome' must be a single string"))
     df <- list_UCSC_primary_tables(genome, group="genes")
-    expected_colnames <- c("primary_table", "track", "group", "composite_track")
+    expected_colnames <- c("primary_table", "track", "type",
+                           "group", "composite_track")
     stopifnot(identical(colnames(df), expected_colnames))
-    ans <- df[ , -3L]
+    keep_idx <- grep("\\<genePred\\>", df$type)
+    df <- S4Vectors:::extract_data_frame_rows(df, keep_idx)
+    ans <- df[ , c(1:2, 5L)]
     colnames(ans)[[1L]] <- "tablename"
     ans
 }
@@ -62,7 +67,8 @@ browseUCSCtrack <- function(genome="hg19",
     supported_tables <- supportedUCSCtables(genome)
     idx <- match(tablename, supported_tables$tablename)
     if (is.na(idx))
-        stop(wmsg("UCSC table \"", tablename, "\" is not supported"))
+        stop(wmsg("UCSC table \"", tablename, "\" is not supported ",
+                  "for ", genome, " genome"))
     supported_tables$track[idx]
 }
 
@@ -318,8 +324,9 @@ browseUCSCtrack <- function(genome="hg19",
     message("Download the ", tablename, " table ... ", appendLF=FALSE)
     ans <- UCSC_dbselect(genome, tablename, columns=columns, where=where)
     message("OK")
-    ## DBI is returning blobs for exon starts and stops so the old check fails
-    stopifnot(all(mapply(function(x, y) is(x, y), ans, .UCSC_TXCOL2CLASS)))
+    ## DBI is returning blobs for exon starts and stops, so the old check fails
+    stopifnot(all(mapply(function(x, y) is(x, y),
+                         ans[names(.UCSC_TXCOL2CLASS)], .UCSC_TXCOL2CLASS)))
     ##current_classes <- head(sapply(ans, class),
     ##                        n=length(.UCSC_TXCOL2CLASS))
     ##stopifnot(identical(current_classes, .UCSC_TXCOL2CLASS))
