@@ -18,304 +18,21 @@
     exonEnds="list"       # list of raw vectors
 )
 
-### .get_GENCODE_tx_tables("All GENCODE %s", "V34") or
-### .get_GENCODE_tx_tables("GENCODE Genes %s", "V19")
-.get_GENCODE_tx_tables <- function(track, version,
-                                   include.2way=FALSE,
-                                   include.PolyA=TRUE)
-{
-    tx_tables <- c(
-        "wgEncodeGencodeBasic%s",          track, "Basic",
-        "wgEncodeGencodeComp%s",           track, "Comprehensive",
-        "wgEncodeGencodePseudoGene%s",     track, "Pseudogenes"
-    )
-    if (include.2way)
-        tx_tables <- c(tx_tables,
-            "wgEncodeGencode2wayConsPseudo%s", track, "2-way Pseudogenes"
-        )
-    if (include.PolyA)
-        tx_tables <- c(tx_tables,
-            "wgEncodeGencodePolya%s",          track, "PolyA"
-        )
-    sprintf(tx_tables, version)
-}
-
-.hs1_TX_TABLES <- c(
-  ## tablename (unique key)           track                subtrack
-  "hub_3671779_catLiftOffGenesV1",    "CAT/Liftoff Genes", NA,
-  "hub_3671779_ncbiRefSeq",           "NCBI RefSeq",       "RefSeq All",
-  "hub_3671779_ncbiRefSeqCurated",    "NCBI RefSeq",       "RefSeq Curated",
-  "hub_3671779_ncbiRefSeqPredicted",  "NCBI RefSeq",       "RefSeq Predicted",
-  "hub_3671779_ncbiRefSeqOther",      "NCBI RefSeq",       "RefSeq Other",
-  "hub_3671779_ncbiRefSeqPsl",        "NCBI RefSeq",       "RefSeq Alignments"
-)
-
-### NAs in the tablename and track columns are resolved via
-### 'rtracklayer::trackNames(session)'.
-.hg38_TX_TABLES <- c(
-  ## tablename (unique key)           track                subtrack
-  "knownGene",                        NA,                  NA,
-  "ncbiRefSeq",                       "NCBI RefSeq",       "RefSeq All",
-  "ncbiRefSeqCurated",                "NCBI RefSeq",       "RefSeq Curated",
-  "ncbiRefSeqPredicted",              "NCBI RefSeq",       "RefSeq Predicted",
-  "ncbiRefSeqOther",                  "NCBI RefSeq",       "RefSeq Other",
-  #"ncbiRefSeqPsl",                    "NCBI RefSeq",       "RefSeq Alignments",
-  #"ncbiRefSeqGenomicDiff",            "NCBI RefSeq",       "RefSeq Diffs",
-  "refGene",                          "NCBI RefSeq",       "UCSC RefSeq",
-  "ncbiRefSeqSelect",                 "NCBI RefSeq",       "RefSeq Select+MANE",
-  "ncbiRefSeqHgmd",                   "NCBI RefSeq",       "RefSeq HGMD",
-  "xenoRefGene",                      "Other RefSeq",      NA,
-  .get_GENCODE_tx_tables("All GENCODE %s", "V44"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V43"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V42"),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V41", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V40", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V39", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V38", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V37", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V36", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V35", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V34", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V33", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V31", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V30", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V29", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V28", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V27", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V26", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V25", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V24", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V23", include.2way=TRUE),
-  .get_GENCODE_tx_tables("All GENCODE %s", "V22", include.2way=TRUE),
-  .get_GENCODE_tx_tables("GENCODE %s (Ensembl 76)", "V20"),
-  "augustusGene",                     "AUGUSTUS",          NA,
-  "ccdsGene",                         "CCDS",              NA,
-  "geneid",                           "Geneid Genes",      NA,
-  "genscan",                          "Genscan Genes",     NA,
-  NA,                                 "Old UCSC Genes",    NA,
-  "sgpGene",                          "SGP Genes",         NA,
-  "sibGene",                          "SIB Genes",         NA
-)
-
-### NAs in the tablename and track columns are resolved via
-### 'rtracklayer::trackNames(session)'.
-.hg19_TX_TABLES <- c(
-  ## tablename (unique key)           track                subtrack
-  "knownGene",                        NA,                  NA,
-  "ncbiRefSeq",                       "NCBI RefSeq",       "RefSeq All",
-  "ncbiRefSeqCurated",                "NCBI RefSeq",       "RefSeq Curated",
-  "ncbiRefSeqPredicted",              "NCBI RefSeq",       "RefSeq Predicted",
-  "ncbiRefSeqOther",                  "NCBI RefSeq",       "RefSeq Other",
-  #"ncbiRefSeqPsl",                    "NCBI RefSeq",       "RefSeq Alignments",
-  #"ncbiRefSeqGenomicDiff",            "NCBI RefSeq",       "RefSeq Diffs",
-  "refGene",                          "NCBI RefSeq",       "UCSC RefSeq",
-  "ncbiRefSeqSelect",                 "NCBI RefSeq",       "RefSeq Select",
-  "ncbiRefSeqHgmd",                   "NCBI RefSeq",       "RefSeq HGMD",
-  "xenoRefGene",                      "Other RefSeq",      NA,
-  "acembly",                          "AceView Genes",     NA,
-  "augustusGene",                     "AUGUSTUS",          NA,
-  "ccdsGene",                         "CCDS",              NA,
-  "ensGene",                          "Ensembl Genes",     NA,
-  "exoniphy",                         "Exoniphy",          NA,
-  .get_GENCODE_tx_tables("GENCODE %s", "V44lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V43lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V42lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V41lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V40lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V39lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V38lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V37lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V36lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V35lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V34lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V33lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V31lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE %s", "V28lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE Gene %s", "V27lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE Gene %s", "V24lift37", include.PolyA=FALSE),
-  .get_GENCODE_tx_tables("GENCODE Genes %s", "V19"),
-  .get_GENCODE_tx_tables("GENCODE Genes %s", "V17"),
-  .get_GENCODE_tx_tables("GENCODE Genes %s", "V14"),
-  .get_GENCODE_tx_tables("GENCODE Genes %s", "V7"),
-  "geneid",                           "Geneid Genes",      NA,
-  "genscan",                          "Genscan Genes",     NA,
-  "nscanGene",                        "N-SCAN",            NA,
-  NA,                                 "Old UCSC Genes",    NA,
-  "sgpGene",                          "SGP Genes",         NA,
-  "sibGene",                          "SIB Genes",         NA,
-  "vegaGene",                         "Vega Genes",        "Vega Protein Genes",
-  "vegaPseudoGene",                   "Vega Genes",        "Vega Pseudogenes",
-  "pseudoYale60",                     "Yale Pseudo60",     NA
-)
-
-### NAs in the tablename and track columns are resolved via
-### 'rtracklayer::trackNames(session)'.
-.ALL_SUPPORTED_TX_TABLES <- c(
-  ## tablename (unique key)           track                subtrack
-
-  ## Tables/tracks for hg18.
-  ## All the tables/tracks listed in this section belong to the "Genes and
-  ## Gene Prediction" group of tracks for hg18, mm10, and sacCer2.
-  ## On Aug 13 2010, makeTxDbFromUCSC() was successfully tested by hand on
-  ## all of them for hg18 (i.e. with 'genome="hg18"').
-  ## Note: the "acembly" table contains more than 250000 transcripts!
-  "knownGene",                        NA,                  NA,
-  "knownGeneOld11",                   "Old UCSC Genes",    NA,
-  "knownGeneOld8",                    "Old UCSC Genes",    NA,
-  "knownGeneOld7",                    "Old UCSC Genes",    NA,
-  "knownGeneOld6",                    "Old UCSC Genes",    NA,
-  "knownGeneOld4",                    "Old UCSC Genes",    NA,
-  "knownGeneOld3",                    "Old UCSC Genes",    NA,
-  "knownGenePrevious",                "Old Known Genes",   NA,
-  "ccdsGene",                         "CCDS",              NA,
-  "refGene",                          "NCBI RefSeq",       NA,
-  "refGene",                          "RefSeq Genes",      NA,
-  "xenoRefGene",                      "Other RefSeq",      NA,
-  "vegaGene",                         "Vega Genes",        "Vega Protein Genes",
-  "vegaPseudoGene",                   "Vega Genes",        "Vega Pseudogenes",
-  "ensGene",                          "Ensembl Genes",     NA,
-  "acembly",                          "AceView Genes",     NA,
-  "sibGene",                          "SIB Genes",         NA,
-  "nscanPasaGene",                    "N-SCAN",            "N-SCAN PASA-EST",
-  "nscanGene",                        "N-SCAN",            "N-SCAN",
-  "sgpGene",                          "SGP Genes",         NA,
-  "geneid",                           "Geneid Genes",      NA,
-  "genscan",                          "Genscan Genes",     NA,
-  "exoniphy",                         "Exoniphy",          NA,
-  "augustusGene",                     "AUGUSTUS",          NA,
-  "augustusHints",                    "Augustus",          "Augustus Hints",
-  "augustusXRA",                      "Augustus",          "Augustus De Novo",
-  "augustusAbinitio",                 "Augustus",          "Augustus Ab Initio",
-  "acescan",                          "ACEScan",           NA,
-  "lincRNAsTranscripts",              "lincRNAsTranscripts", NA,
-
-  ## Tables/tracks specific to hg18.
-  "wgEncodeGencodeManualV3",          "Gencode Genes",     "Gencode Manual",
-  "wgEncodeGencodeAutoV3",            "Gencode Genes",     "Gencode Auto",
-  "wgEncodeGencodePolyaV3",           "Gencode Genes",     "Gencode PolyA",
-
-  ## Tables/tracks specific to mm10/rn6/danRer10/danRer11/ce11/dm6/sacCer3.
-  "ncbiRefSeq",                       "NCBI RefSeq",       "RefSeq All",
-  "ncbiRefSeqCurated",                "NCBI RefSeq",       "RefSeq Curated",
-  "ncbiRefSeqPredicted",              "NCBI RefSeq",       "RefSeq Predicted",
-  "ncbiRefSeqOther",                  "NCBI RefSeq",       "RefSeq Other",
-  #"ncbiRefSeqPsl",                    "NCBI RefSeq",       "RefSeq Alignments",
-  #"ncbiRefSeqGenomicDiff",            "NCBI RefSeq",       "RefSeq Diffs",
-  "ncbiRefSeqSelect",                 "NCBI RefSeq",       "RefSeq Select+MANE",
-  "ncbiRefSeqHgmd",                   "NCBI RefSeq",       "RefSeq HGMD",
-
-  ## Tables/tracks specific to mm10/rn6/danRer10/danRer11.
-  "ncbiRefSeqPredicted",              "NCBI RefSeq",       "RefSeq Predicted",
-
-  ## Tables/tracks specific to D. melanogaster.
-  "flyBaseGene",                      "FlyBase Genes",     NA,
-
-  ## Tables/tracks specific to sacCer2.
-  ## makeTxDbFromUCSC(genome="sacCer2", tablename="sgdGene")
-  ## successfully tested on On Aug 13 2010.
-  "sgdGene",                          "SGD Genes",         NA
-)
-
-.get_supported_tx_tables <- function(genome)
-{
-    ### Starting with hs1, UCSC is doing things very differently compared to
-    ### what they've been doing with other genomes for the last 20 years!
-    ### One big difference is that the track data is no longer stored in a
-    ### MySQL db (the "hs1" db on UCSC MySQL server contains only 3 mysterious
-    ### table that don't seem to have anything to do with track data). With
-    ### hs1, the track data is stored directlyt in Big Bed files located here:
-    ### https://hgdownload.soe.ucsc.edu/gbdb/hs1/
-    ### Until we support that, we error graciously on hs1.
-    ### hs1 for now.
-    if (genome == "hs1")
-        stop(wmsg("UCSC genome hs1 is not supported yet"))
-    tx_tables <- switch(genome,
-        hs1 =.hs1_TX_TABLES,
-        hg38=.hg38_TX_TABLES,
-        hg19=.hg19_TX_TABLES,
-        .ALL_SUPPORTED_TX_TABLES
-    )
-    m <- matrix(tx_tables, ncol=3L, byrow=TRUE)
-    colnames(m) <- c("tablename", "track", "subtrack")
-    as.data.frame(m)
-}
-
-### Return a data.frame with 3 columns (tablename, track, and subtrack) and
-### 1 row per UCSC table known to work with makeTxDbFromUCSC().
-### A note about the current implementation:
-### Current implementation uses hard-coded matrices .hg38_TX_TABLES,
-### .hg19_TX_TABLES, and .ALL_SUPPORTED_TX_TABLES defined above which
-### is not satisfying in the long run (the matrices need to be manually
-### updated from times to times, a long and boring and error-prone
-### process, and is probably out-of-sync at the moment). Ideally we'd like
-### to be able to generate the 3-column data.frame programmatically in
-### reasonable time. For this we need to be able to retrieve all the "central
-### tables" for all the transcript-centric tracks available for a given
-### organism. Using a combination of calls to rtracklayer::trackNames(session)
-### and rtracklayer::ucscTables(genome(session), track) would partly achieve
-### this but is unfortunately very slow.
+### A thin wrapper around list_UCSC_primary_tables(genome, group="genes").
+### Returns a data.frame with 3 columns ("tablename", "track", and
+### "composite_track") and 1 row per primary table.
 supportedUCSCtables <- function(genome="hg19",
                                 url="https://genome.ucsc.edu/cgi-bin/")
 {
-    if (is(genome, "UCSCSession")) {
-        if (!missing(url))
-            warning(wmsg("'url' is ignored when 'genome' ",
-                         "is a UCSCSession object"))
-        session <- genome
-        genome <- genome(session)
-    } else {
-        if (!isSingleString(genome))
-            stop(wmsg("'genome' must be a single string"))
-        if (!isSingleString(url))
-            stop(wmsg("'url' must be a single string"))
-        session <- browserSession(url=url)
-        genome(session) <- genome
-    }
-
-    ans <- .get_supported_tx_tables(genome)
-
-    ## trackNames() returns a mapping from track names to "central table" names
-    ## in the form of a named character vector where the names are the track
-    ## names and the values the "central table" names (more than 1 table can
-    ## be connected to a given track via joins thru the "central table").
-    ## Unfortunately such mapping cannot handle the situation where a track is
-    ## mapped to more than 1 "central table". This happens for example when a
-    ## track has subtracks (e.g. the Augustus track for hg18 has 3 subtracks),
-    ## in which case there is 1 "central table" per subtrack. So trackNames()
-    ## alone cannot be used to get the one-to-many mapping from tracks to
-    ## "central tables". Calling ucscTables(genome(session), track) in a loop
-    ## on all the tracks returned by trackNames() would work but is very slow.
-    genome_tracknames <- trackNames(session)
-
-    ## Resolve NAs in the tablename column.
-    na_idx <- which(is.na(ans[ , "tablename"]))
-    m <- match(ans[na_idx, "track"], names(genome_tracknames))
-    ans[na_idx, "tablename"] <- genome_tracknames[m]
-
-    ## Resolve NAs in the track column.
-    na_idx <- which(is.na(ans[ , "track"]))
-    m <- match(ans[na_idx, "tablename"], genome_tracknames)
-    ans[na_idx, "track"] <- names(genome_tracknames)[m]
-
-    if (!(genome %in% c("hg38", "hg19"))) {
-        ## Keep only existing tracks.
-        ans <- ans[ans$track %in% names(genome_tracknames), , drop=FALSE]
-        rownames(ans) <- NULL
-
-        ## Associate subtrack "UCSC RefSeq" to table "refGene" for a few
-        ## genome builds.
-        if (genome %in% c("mm10", "rn6",
-                          "bosTau9", "danRer10", "danRer11",
-                          "ce11", "dm6", "galGal6", "panTro6",
-                          "rheMac10", "sacCer3"))
-        {
-            ans_subtrack <- ans[ , "subtrack"]
-            ans_subtrack[ans[ , "tablename"] == "refGene"] <- "UCSC RefSeq"
-            ans[ , "subtrack"] <- ans_subtrack
-        }
-    }
-
-    ans$track <- factor(ans$track, levels=unique(ans$track))
+    if (!missing(url))
+        .Deprecated(msg="'url' argument is deprecated and was ignored")
+    if (!isSingleString(genome))
+        stop(wmsg("'genome' must be a single string"))
+    df <- list_UCSC_primary_tables(genome, group="genes")
+    expected_colnames <- c("primary_table", "track", "group", "composite_track")
+    stopifnot(identical(colnames(df), expected_colnames))
+    ans <- df[ , -3L]
+    colnames(ans)[[1L]] <- "tablename"
     ans
 }
 
@@ -338,22 +55,15 @@ browseUCSCtrack <- function(genome="hg19",
         browseURL(url)
 }
 
-.tablename2track <- function(tablename, session)
+.tablename2track <- function(tablename, genome)
 {
     if (!isSingleString(tablename))
         stop(wmsg("'tablename' must be a single string"))
-    supported_tables <- supportedUCSCtables(session)
-    idx <- which(supported_tables$tablename == tablename)
-    if (length(idx) == 0L)
+    supported_tables <- supportedUCSCtables(genome)
+    idx <- match(tablename, supported_tables$tablename)
+    if (is.na(idx))
         stop(wmsg("UCSC table \"", tablename, "\" is not supported"))
-    ## Sanity check.
-    stopifnot(length(idx) == 1L)  # should never happen
-    track <- as.character(supported_tables$track[idx])
-    track_tables <- ucscTables(genome(session), track)
-    if (!(tablename %in% track_tables))
-        stop(wmsg("UCSC table \"", tablename, "\" does not exist ",
-                  "for genome \"", genome(session), "\", sorry"))
-    track
+    supported_tables$track[idx]
 }
 
 ### The table names above (unique key) must be used to name the top-level
@@ -1014,18 +724,15 @@ makeTxDbFromUCSC <- function(genome="hg19",
             stop(wmsg("'transcript_ids' must be a ",
                       "character vector with no NAs"))
     }
-    if (!isSingleString(url))
-        stop(wmsg("'url' must be a single string"))
+    if (!missing(url))
+        .Deprecated(msg="'url' argument is deprecated and was ignored")
     if (!isSingleString(goldenPath.url))
         stop(wmsg("'goldenPath.url' must be a single string"))
 
-    ## Create an UCSC Genome Browser session.
-    session <- browserSession(url=url)
-    genome(session) <- genome
-    track <- .tablename2track(tablename, session)
+    track <- .tablename2track(tablename, genome)
 
     ## Download the transcript table.
-    ucsc_txtable <- .fetch_UCSC_txtable(genome(session), tablename,
+    ucsc_txtable <- .fetch_UCSC_txtable(genome, tablename,
                                         transcript_ids=transcript_ids)
 
     ## Get the tx_name-to-gene_id mapping.
@@ -1034,7 +741,7 @@ makeTxDbFromUCSC <- function(genome="hg19",
         txname2geneid <- list(genes=NULL, gene_id_type="no gene ids")
     } else if (is.list(mapdef)) {
         txname2geneid <- .fetch_txname2geneid_from_UCSC(
-                                 genome(session),
+                                 genome,
                                  tablename, mapdef)
     } else if (is.character(mapdef)) {
         txname2geneid <- .extract_txname2geneid_from_UCSC_txtable(

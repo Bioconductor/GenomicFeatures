@@ -2,12 +2,11 @@
 ### Utilities for direct query of the Ensembl FTP server
 ### -------------------------------------------------------------------------
 ###
-### The utililities in this file use RCurl or just utils::download.file() for
-### getting stuff directly from the Ensembl FTP server. They can access stuff
-### that is not available thru biomaRt like for example the lengths of the
-### sequences in the reference genome associated with a particular dataset
-### and Ensembl release (e.g. for dataset "hsapiens_gene_ensembl" and Ensembl
-### release "64").
+### The utililities in this file use utils::download.file() to get stuff
+### directly from the Ensembl FTP server. They can access stuff that is not
+### available thru biomaRt like for example the lengths of the sequences in
+### the reference genome associated with a particular dataset and Ensembl
+### release (e.g. for dataset "hsapiens_gene_ensembl" and Ensembl release "64").
 ### Note that querying the Ensembl MySQL server (via RMariaDB) would probably
 ### be a better way to access this stuff.
 ###

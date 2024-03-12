@@ -4,6 +4,102 @@
 ###
 
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### list_UCSC_primary_tables()
+###
+
+.cached_genome_tracks <- new.env(parent=emptyenv())
+
+.get_genome_tracks <- function(genome, recache=FALSE)
+{
+    stopifnot(isSingleString(genome), isTRUEorFALSE(recache))
+    ans <- .cached_genome_tracks[[genome]]
+    if (is.null(ans) || recache) {
+        url <- "https://api.genome.ucsc.edu"
+        response <- GET(url, path="list/tracks", query=list(genome=genome))
+        json <- content(response, as="text", encoding="UTF-8")
+        ans <- fromJSON(json)[[genome]]
+        .cached_genome_tracks[[genome]] <- ans
+    }
+    ans
+}
+
+### Typical usage: list_UCSC_primary_tables("mm9", group="genes")
+### Returns a data.frame with 4 columns ("primary_table", "track", "group",
+### and "composite_track") and 1 row per primary table.
+### Note that the "group" and "composite_track" columns can contain NAs.
+list_UCSC_primary_tables <- function(genome, group=NULL, recache=FALSE)
+{
+    stopifnot(is.null(group) || isSingleString(group))
+    genome_tracks <- .get_genome_tracks(genome, recache=recache)
+
+    track_groups <- vapply(genome_tracks,
+        function(track) {
+            group <- track$group
+            if (is.null(group)) NA_character_ else group
+        },
+        character(1), USE.NAMES=FALSE
+    )
+    if (!is.null(group)) {
+        keep_idx <- which(track_groups %in% group)
+        genome_tracks <- genome_tracks[keep_idx]
+        track_groups <- track_groups[keep_idx]
+    }
+    track_names <- vapply(genome_tracks,
+        function(track) track$shortLabel,
+        character(1), USE.NAMES=FALSE
+    )
+
+    ## Extract tracks nested in composite tracks.
+    is_composite <- vapply(genome_tracks,
+        function(track) identical(track$compositeTrack, "on"),
+        logical(1), USE.NAMES=FALSE
+    )
+    nested_tracks <- lapply(genome_tracks[is_composite],
+        function(track) {
+            track[vapply(track, is.list, logical(1), USE.NAMES=FALSE)]
+        }
+    )
+    nested_primary_tables <- lapply(nested_tracks, names)
+    nested_track_names <- lapply(nested_tracks,
+        function(tracks) vapply(tracks,
+                                function(track) track$shortLabel,
+                                character(1), USE.NAMES=FALSE)
+    )
+    nested_tracks_count <- lengths(nested_tracks)
+    ## Sanity checks.
+    stopifnot(
+        identical(lengths(nested_primary_tables), nested_tracks_count),
+        identical(lengths(nested_track_names), nested_tracks_count)
+    )
+
+    ## Prepare columns of final data frame.
+    times <- rep.int(1L, length(genome_tracks))
+    times[is_composite] <-  nested_tracks_count
+    ans_is_composite <- rep.int(is_composite, times)
+    ans_primary_table <- rep.int(names(genome_tracks), times)
+    ans_primary_table[ans_is_composite] <-
+        unlist(nested_primary_tables, use.names=FALSE)
+    stopifnot(anyDuplicated(ans_primary_table) == 0L)
+    ans_track <- ans_composite_track <- rep.int(track_names, times)
+    ans_track[ans_is_composite] <-
+        unlist(nested_track_names, use.names=FALSE)
+    ans_group <- rep.int(track_groups, times)
+    ans_composite_track[!ans_is_composite] <- NA_character_
+
+    data.frame(
+        primary_table=ans_primary_table,
+        track=ans_track,
+        group=ans_group,
+        composite_track=ans_composite_track
+    )
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### lookup_organism_by_UCSC_genome()
+###
+
 lookup_organism_by_UCSC_genome <- function(genome)
 {
     genome <- gsub("\\d+$", "", genome)
@@ -140,6 +236,11 @@ lookup_organism_by_UCSC_genome <- function(genome)
     )
     genome2org[genome]
 }
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### UCSC_dbselect()
+###
 
 ### See https://genome.ucsc.edu/goldenpath/help/mysql.html for how to connect
 ### to a MySQL server at UCSC.

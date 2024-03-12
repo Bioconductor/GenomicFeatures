@@ -4,7 +4,8 @@ importFrom(utils, download.file, packageDescription, read.table, browseURL,
                   as.person, capture.output, str)
 importFrom(tools, file_ext, file_path_sans_ext)
 
-importFrom(RCurl, getURL)
+importFrom(httr, GET, content)
+importFrom(rjson, fromJSON)
 importMethodsFrom(DBI, dbConnect, dbDisconnect,
                        dbExecute, dbGetQuery,
                        dbReadTable, dbWriteTable, dbListTables,
