@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.60.0
+-------------------------
+
+DEPRECATED AND DEFUNCT
+
+    o Formally deprecate all the functions that went to txdbmaker in BioC 3.19.
+
+
 CHANGES IN VERSION 1.58.0
 -------------------------
 
