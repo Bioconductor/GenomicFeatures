@@ -6,12 +6,7 @@
 
 supportedUCSCtables <- function(...)
 {
-    args <- list(...)
-    if ("url" %in% names(args)) {
-        .Deprecated(msg="'url' argument is deprecated and was ignored")
-        args$url <- NULL
-    }
-    do.call(call_fun_in_txdbmaker, c(list("supportedUCSCtables"), args))
+    call_fun_in_txdbmaker("supportedUCSCtables", ...)
 }
 
 browseUCSCtrack <- function(...)
@@ -21,11 +16,6 @@ browseUCSCtrack <- function(...)
 
 makeTxDbFromUCSC <- function(...)
 {
-    args <- list(...)
-    if ("url" %in% names(args)) {
-        .Deprecated(msg="'url' argument is deprecated and was ignored")
-        args$url <- NULL
-    }
-    do.call(call_fun_in_txdbmaker, c(list("makeTxDbFromUCSC"), args))
+    call_fun_in_txdbmaker("makeTxDbFromUCSC", ...)
 }
 

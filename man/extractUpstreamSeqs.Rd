@@ -94,20 +94,24 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
   Bioconductor.
   Note that you can make your own custom \link{TxDb} object from
   various annotation resources by using one of the \code{makeTxDbFrom*()}
-  functions listed in the "See also" section below.
+  functions defined in the \pkg{txdbmaker} package and listed in
+  the "See also" section below.
 }
 
 \author{Hervé Pagès}
 
 \seealso{
   \itemize{
-    \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromBiomart}},
-          and \code{\link{makeTxDbFromEnsembl}}, for making a \link{TxDb}
+    \item \code{\link[txdbmaker]{makeTxDbFromUCSC}},
+          \code{\link[txdbmaker]{makeTxDbFromBiomart}},
+          and \code{\link[txdbmaker]{makeTxDbFromEnsembl}} in
+          the \pkg{txdbmaker} package for making a \link{TxDb}
           object from online resources.
 
-    \item \code{\link{makeTxDbFromGRanges}} and \code{\link{makeTxDbFromGFF}}
-          for making a \link{TxDb} object from a \link[GenomicRanges]{GRanges}
-          object, or from a GFF or GTF file.
+    \item \code{\link[txdbmaker]{makeTxDbFromGRanges}} and
+          \code{\link[txdbmaker]{makeTxDbFromGFF}} in the \pkg{txdbmaker}
+          package for making a \link{TxDb} object from a
+          \link[GenomicRanges]{GRanges} object, or from a GFF or GTF file.
 
     \item The \code{\link[BSgenome]{available.genomes}} function in the
           \pkg{BSgenome} package for checking avaibility of BSgenome

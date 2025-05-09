@@ -99,13 +99,16 @@ transcriptLengths(txdb, with.cds_len=FALSE,
     \item \code{\link{coverageByTranscript}} for computing coverage by
           transcript (or CDS) of a set of ranges.
 
-    \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromBiomart}},
-          and \code{\link{makeTxDbFromEnsembl}}, for making a \link{TxDb}
+    \item \code{\link[txdbmaker]{makeTxDbFromUCSC}},
+          \code{\link[txdbmaker]{makeTxDbFromBiomart}},
+          and \code{\link[txdbmaker]{makeTxDbFromEnsembl}} in
+          the \pkg{txdbmaker} package for making a \link{TxDb}
           object from online resources.
 
-    \item \code{\link{makeTxDbFromGRanges}} and \code{\link{makeTxDbFromGFF}}
-          for making a \link{TxDb} object from a \link[GenomicRanges]{GRanges}
-          object, or from a GFF or GTF file.
+    \item \code{\link[txdbmaker]{makeTxDbFromGRanges}} and
+          \code{\link[txdbmaker]{makeTxDbFromGFF}} in the \pkg{txdbmaker}
+          package for making a \link{TxDb} object from a
+          \link[GenomicRanges]{GRanges} object, or from a GFF or GTF file.
 
     \item The \link{TxDb} class.
   }

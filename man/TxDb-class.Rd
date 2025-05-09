@@ -67,8 +67,8 @@
     \item{\code{as.list(x)}:}{
       Dump the entire db into a list of data frames, say \code{txdb_dump},
       that can then be used to recreate the original db with
-      \code{do.call(makeTxDb, txdb_dump)} with no loss of information
-      (except possibly for some of the metadata).
+      \code{do.call(txdbmaker::makeTxDb, txdb_dump)} with no loss of
+      information (except possibly for some of the metadata).
       Note that the transcripts are dumped in the same order in all the
       data frames.
     }
@@ -79,13 +79,16 @@
 
 \seealso{
   \itemize{
-    \item \code{\link{makeTxDbFromUCSC}}, \code{\link{makeTxDbFromBiomart}},
-          and \code{\link{makeTxDbFromEnsembl}}, for making a \link{TxDb}
+    \item \code{\link[txdbmaker]{makeTxDbFromUCSC}},
+          \code{\link[txdbmaker]{makeTxDbFromBiomart}},
+          and \code{\link[txdbmaker]{makeTxDbFromEnsembl}} in
+          the \pkg{txdbmaker} package for making a \link{TxDb}
           object from online resources.
 
-    \item \code{\link{makeTxDbFromGRanges}} and \code{\link{makeTxDbFromGFF}}
-          for making a \link{TxDb} object from a \link[GenomicRanges]{GRanges}
-          object, or from a GFF or GTF file.
+    \item \code{\link[txdbmaker]{makeTxDbFromGRanges}} and
+          \code{\link[txdbmaker]{makeTxDbFromGFF}} in the \pkg{txdbmaker}
+          package for making a \link{TxDb} object from a
+          \link[GenomicRanges]{GRanges} object, or from a GFF or GTF file.
 
     \item \code{\link[AnnotationDbi]{saveDb}} and
           \code{\link[AnnotationDbi]{loadDb}} in the \pkg{AnnotationDbi}
@@ -130,6 +133,8 @@ seqlevels(txdb) <- seqlevels0(txdb)
 ## Use of as.list():
 txdb_dump <- as.list(txdb)
 txdb_dump
+
+library(txdbmaker)  # for makeTxDb()
 txdb1 <- do.call(makeTxDb, txdb_dump)
 stopifnot(identical(as.list(txdb1), txdb_dump))
 }

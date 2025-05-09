@@ -31,6 +31,7 @@ Map IDs to Genomic Ranges
 \item \code{TxDb}: TxDb method
 }}
 \examples{
+library(txdbmaker)  # for makeTxDbFromGRanges()
 fl <- system.file(package = "GenomicFeatures", "extdata", "sample_ranges.rds")
 txdb <- makeTxDbFromGRanges(readRDS(fl))
 

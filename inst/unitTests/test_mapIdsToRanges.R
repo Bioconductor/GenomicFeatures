@@ -1,4 +1,5 @@
 txdb <- local({
+    library(txdbmaker)  # for makeTxDbFromGRanges()
     fl <- system.file(package = "GenomicFeatures", "extdata",
                       "sample_ranges.rds")
     makeTxDbFromGRanges(readRDS(fl))

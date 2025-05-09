@@ -1,5 +1,7 @@
 test_transcriptsBy <- function()
 {
+    library(txdbmaker)  # for makeTxDb()
+
     ## A TOY CASE
     ## ----------
     transcripts0 <- data.frame(
@@ -233,6 +235,8 @@ test_intronsByTranscript <- function()
 
 test_exonsBy_cdsBy_fiveUTRsByTranscript_threeUTRsByTranscript <- function()
 {
+    library(txdbmaker)  # for makeTxDbFromGFF()
+
     ## ITAG4.1_gene_models.subset.gff: 10 coding transcripts
     gff <- system.file("extdata", "ITAG4.1_gene_models.subset.gff",
                        package="GenomicFeatures")

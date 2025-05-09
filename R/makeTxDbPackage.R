@@ -17,12 +17,7 @@ makeTxDbPackage <- function(...)
 
 makeTxDbPackageFromUCSC <- function(...)
 {
-    args <- list(...)
-    if ("url" %in% names(args)) {
-        .Deprecated(msg="'url' argument is deprecated and was ignored")
-        args$url <- NULL
-    }
-    do.call(call_fun_in_txdbmaker, c(list("makeTxDbPackageFromUCSC"), args))
+    call_fun_in_txdbmaker("makeTxDbPackageFromUCSC", ...)
 }
 
 makeFDbPackageFromUCSC <- function(...)

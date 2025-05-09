@@ -1,5 +1,6 @@
 test_transcriptLengths <- function()
 {
+    library(txdbmaker)  # for makeTxDbFromGFF()
     gff <- system.file("extdata", "ITAG4.1_gene_models.subset.gff",
                        package="GenomicFeatures")
     txdb <- makeTxDbFromGFF(gff)

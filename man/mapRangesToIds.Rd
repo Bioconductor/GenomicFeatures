@@ -19,7 +19,7 @@ mapRangesToIds(x, ...)
 \item{columns}{additional metadata columns to include in the output.}
 
 \item{...}{Additional arguments passed to
-  \code{\link[GenomicRanges:findOverlaps-methods]{findOverlaps}}}
+  \code{\link[GenomicRanges]{findOverlaps}}}
 }
 \value{
 \code{\link[S4Vectors]{DataFrame}} of mcols from the database.
@@ -32,6 +32,7 @@ Map Genomic Ranges to IDs
 \item \code{TxDb}: TxDb method
 }}
 \examples{
+library(txdbmaker)  # for makeTxDbFromGRanges()
 fl <- system.file(package = "GenomicFeatures", "extdata", "sample_ranges.rds")
 txdb <- makeTxDbFromGRanges(readRDS(fl))
 

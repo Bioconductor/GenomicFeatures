@@ -2,6 +2,7 @@ quiet <- suppressWarnings
 
 test_GenomicRanges_distance <- function()
 {
+    library(txdbmaker)  # for makeTxDb()
     genes <- data.frame(
         tx_id=1:3,
         gene_id=c("gene1", "gene1", "gene2"))
