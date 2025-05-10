@@ -325,7 +325,7 @@ setValidity2("TxDb", .valid.TxDb)
 ### Low-level constructor (not exported)
 ###
 
-### Only used in makeTxDb().
+### Only used in txdbmaker::makeTxDb().
 TxDb <- function(conn) .TxDb$new(conn=conn)
 
 
@@ -583,11 +583,12 @@ set_user_seqlevels_and_genome <- function(x, txdb)
 ### Comparing 2 TxDb objects
 ###
 
-### Used in unit tests for makeTxDbFromGRanges().
-.format_txdb_dump <- function(transcripts=NULL,
-                              splicings=NULL,
-                              genes=NULL,
-                              chrominfo=NULL)
+### NOT exported but used in the txdbmaker package (in the unit tests
+### for txdbmaker::makeTxDbFromGRanges()).
+format_txdb_dump <- function(transcripts=NULL,
+                             splicings=NULL,
+                             genes=NULL,
+                             chrominfo=NULL)
 {
     transcripts <- .format_transcripts(transcripts, drop.tx_name=TRUE,
                                                     drop.tx_type=TRUE,
@@ -614,7 +615,7 @@ setMethod("as.list", "TxDb",
         splicings <- load_splicings(x)
         genes <- load_genes(x)
         chrominfo <- load_chrominfo(x)
-        .format_txdb_dump(transcripts, splicings, genes, chrominfo)
+        format_txdb_dump(transcripts, splicings, genes, chrominfo)
     }
 )
 

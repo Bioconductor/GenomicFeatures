@@ -87,10 +87,16 @@ setMethod("microRNAs", "TxDb", .microRNAs)
 
 ## main function
 .tRNAs <- function(x) {
+    if (!requireNamespace("txdbmaker", quietly=TRUE))
+        stop("Could not load package txdbmaker. Is it installed?\n\n  ",
+             wmsg("Note that the tRNAs() method for TxDb objects requires ",
+                  "the txdbmaker package. Please install it with:"),
+             "\n\n    BiocManager::install(\"txdbmaker\")")
+
   fdbpkg <- "FDb.UCSC.tRNAs"
   fdbenv <- loadNamespace(fdbpkg)
   ## get the current package name
-  pkgName <- makePackageName(x)
+  pkgName <- txdbmaker::makePackageName(x)
   ## from here we know what the FDB should MUST look like
   fdbName <- sub("TxDb","FDb",pkgName)
   fdbName <- unlist(strsplit(fdbName,"\\."))
