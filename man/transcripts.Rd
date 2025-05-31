@@ -178,8 +178,8 @@ genes(x, ...)
           simple "select" interface to extract information from a
           \link{TxDb} object.
 
-    \item \code{\link{microRNAs}} and \code{\link{tRNAs}} for extracting
-          microRNA or tRNA genomic ranges from a \link{TxDb} object.
+    \item \code{\link{tRNAs}} for extracting tRNA genomic ranges from
+          a \link{TxDb} object.
 
     \item \code{\link{id2name}} for mapping \link{TxDb} internal ids
           to external names for a given feature type.

@@ -1,25 +1,23 @@
-\name{microRNAs}
+\name{tRNAs}
 
 \alias{microRNAs}
-\alias{microRNAs,TxDb-method}
 \alias{tRNAs}
 \alias{tRNAs,TxDb-method}
 
 \title{
-  Extract microRNA or tRNA genomic ranges from an object
+  Extract tRNA genomic ranges from an object
 }
 
 \description{
-  Generic functions to extract microRNA or tRNA genomic ranges from an object.
-  This page documents the methods for \link{TxDb} objects only.
+  WARNING: The code base for \code{tRNAs()} is no longer actively
+  maintained and the function might get deprecated in the near future.
+
+  The \code{tRNAs()} function extracts tRNA genomic ranges from a
+  \link{TxDb} object.
 }
 
 \usage{
-microRNAs(x)
-\S4method{microRNAs}{TxDb}(x)
-
 tRNAs(x)
-\S4method{tRNAs}{TxDb}(x)
 }
 
 \arguments{ 
@@ -43,13 +41,6 @@ tRNAs(x)
           extractors.
     \item The \link{TxDb} class.
   }
-}
-
-\examples{
-\dontrun{library(TxDb.Hsapiens.UCSC.hg19.knownGene)
-library(mirbase.db)
-microRNAs(TxDb.Hsapiens.UCSC.hg19.knownGene)
-}
 }
 
 \keyword{methods}

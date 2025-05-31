@@ -53,7 +53,7 @@ export(
   ## features.R:
   features,
 
-  ## microRNAs.R:
+  ## tRNAs.R:
   microRNAs,
   tRNAs,
 
@@ -98,7 +98,6 @@ exportMethods(
   intronsByTranscript,
   fiveUTRsByTranscript,
   threeUTRsByTranscript,
-  microRNAs,
   tRNAs,
   extractTranscriptSeqs,
   extractUpstreamSeqs,

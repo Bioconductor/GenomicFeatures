@@ -225,7 +225,7 @@ setMethod("mapToTranscripts", c("ANY", "TxDb"),
             stop("'extractor.fun' must be a function")
         group1 <- c("transcripts", "exons", "cds", "genes",
                     "promoters", "terminators",
-                    "exonicParts", "microRNAs", "tRNAs")
+                    "exonicParts", "tRNAs")
         group2 <- c("transcriptsBy", "exonsBy", "cdsBy", "intronsByTranscript",
                     "fiveUTRsByTranscript", "threeUTRsByTranscript")
 
