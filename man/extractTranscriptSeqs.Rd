@@ -29,7 +29,7 @@ extractTranscriptSeqs(x, transcripts, ...)
 
     Other objects representing a collection of chromosomes are supported
     (e.g. \link[Rsamtools]{FaFile} objects in the \pkg{Rsamtools} package)
-    as long as \code{\link[GenomeInfoDb]{seqinfo}} and
+    as long as \code{\link[Seqinfo]{seqinfo}} and
     \code{\link[Biostrings]{getSeq}} work on them.
   }
   \item{transcripts}{

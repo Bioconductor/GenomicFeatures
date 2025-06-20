@@ -17,7 +17,8 @@ grb2 <- "2885"   # human gene on the minus strand, chr17
 # than the length 20, blat approach.
 
 test_GRangesListBSgenomeHumanGetPromoterSeq <- function() {
-    txdb <- restoreSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene)  ## safety net
+    ## restore seqlevels for safety
+    txdb <- GenomeInfoDb::restoreSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene)
     genes <- c(e2f3, grb2)
     tx_by_gene <- transcriptsBy(txdb, by="gene")[genes]
     checkIdentical(names(tx_by_gene), genes)
@@ -54,7 +55,8 @@ test_GRangesListBSgenomeFlyGetPromoterSeq <- function() {
      # sequence in the promoter_seqs since the annotation and sequence
      # may change
 
-    txdb <- restoreSeqlevels(TxDb.Dmelanogaster.UCSC.dm3.ensGene)  ## safety net
+    ## restore seqlevels for safety
+    txdb <- GenomeInfoDb::restoreSeqlevels(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
     genes <- c("FBgn0037215", "FBgn0037217")
     tx_by_gene <- transcriptsBy(txdb, by="gene")[genes]
     checkIdentical(names(tx_by_gene), genes)
@@ -85,7 +87,8 @@ test_GRangesListFastaFlyGetPromoterSeq <- function() {
       #    43766 FBgn0025740  plexB    4
       #    43769 FBgn0085432  pan      4
 
-    txdb <- restoreSeqlevels(TxDb.Dmelanogaster.UCSC.dm3.ensGene)  ## safety net
+    ## restore seqlevels for safety
+    txdb <- GenomeInfoDb::restoreSeqlevels(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
     genes <- c("FBgn0025740", "FBgn0085432")
     tx_by_gene <- transcriptsBy(txdb, by="gene")[genes]
     checkIdentical(names(tx_by_gene), genes)
@@ -114,7 +117,8 @@ test_GRangesListFastaFlyGetPromoterSeq <- function() {
 }
 
 test_GRangesBSgenomeHumanGetPromoterSeq <- function() {
-    txdb <- restoreSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene)  ## safety net
+    ## restore seqlevels for safety
+    txdb <- GenomeInfoDb::restoreSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene)
     e2f3_tx <- transcriptsBy(txdb, by="gene")[[e2f3]]
     #names(e2f3_tx) <- mcols(e2f3_tx)$tx_name
     transcript_count <- length(e2f3_tx)

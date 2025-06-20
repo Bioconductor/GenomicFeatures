@@ -61,9 +61,9 @@ test_transcripts_after_seqlevelsStyle_switch <- function()
 {
     txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite", 
                                package="GenomicFeatures"))
-    checkIdentical(seqlevelsStyle(txdb), "UCSC")
-    seqlevelsStyle(txdb) <- "NCBI"
-    checkIdentical(seqlevelsStyle(txdb), c("NCBI", "UCSC"))
+    checkIdentical(GenomeInfoDb::seqlevelsStyle(txdb), "UCSC")
+    GenomeInfoDb::seqlevelsStyle(txdb) <- "NCBI"
+    checkIdentical(GenomeInfoDb::seqlevelsStyle(txdb), c("NCBI", "UCSC"))
 
     filter <- list(gene_id=c("220004", "1183", "10186"))
     current <- transcripts(txdb, columns=c("tx_id", "tx_name", "gene_id"),

@@ -45,7 +45,7 @@
       Note that, for now, the setter only supports replacement of the
       sequence names, i.e., except for their sequence names (accessed with
       \code{seqnames(value)} and \code{seqnames(seqinfo(x))}, respectively),
-      \link[GenomeInfoDb]{Seqinfo} objects \code{value} (supplied) and
+      \link[Seqinfo]{Seqinfo} objects \code{value} (supplied) and
       \code{seqinfo(x)} (current) must be identical.
     }
     \item{\code{isActiveSeq(x)}:}{
@@ -59,10 +59,12 @@
       accessed by the accessor methods by altering the contents of this
       named logical vector.
     }
-    \item{\code{seqlevelsStyle(x)}, \code{seqlevelsStyle(x) <- value}:}{
+    \item{\code{GenomeInfoDb::seqlevelsStyle(x)},
+          \code{GenomeInfoDb::seqlevelsStyle(x) <- value}:}{
       Get or set the seqname style for \code{x}.
-      See the \link[GenomeInfoDb]{seqlevelsStyle} generic getter and setter
-      in the \pkg{GenomeInfoDb} package for more information.
+      See the \code{GenomeInfoDb::\link[GenomeInfoDb]{seqlevelsStyle}}
+      generic getter and setter in the \pkg{GenomeInfoDb} package for
+      more information.
     }
     \item{\code{as.list(x)}:}{
       Dump the entire db into a list of data frames, say \code{txdb_dump},
@@ -105,7 +107,7 @@
           simple "select" interface to extract information from a
           TxDb object.
 
-    \item The \link[GenomeInfoDb]{Seqinfo} class in the \pkg{GenomeInfoDb}
+    \item The \link[Seqinfo]{Seqinfo} class in the \pkg{Seqinfo}
           package.
   }
 }
@@ -117,12 +119,14 @@ txdb <- loadDb(txdb_file)
 txdb
 
 ## Use of seqinfo():
-seqlevelsStyle(txdb)
 seqinfo(txdb)
 seqlevels(txdb)
 seqlengths(txdb)  # shortcut for 'seqlengths(seqinfo(txdb))'
 isCircular(txdb)  # shortcut for 'isCircular(seqinfo(txdb))'
 names(which(isCircular(txdb)))
+
+library(GenomeInfoDb)
+seqlevelsStyle(txdb)
 
 ## You can set user-supplied seqlevels on 'txdb' to restrict any further
 ## operations to a subset of chromosomes:

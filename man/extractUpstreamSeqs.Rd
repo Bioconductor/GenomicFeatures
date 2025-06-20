@@ -30,7 +30,7 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
     \link[rtracklayer]{TwoBitFile}, or \link[Rsamtools]{FaFile} object,
     or any \emph{genome sequence container}.
     More formally, \code{x} must be an object for which
-    \code{\link[GenomeInfoDb]{seqinfo}} and \code{\link[Biostrings]{getSeq}}
+    \code{\link[Seqinfo]{seqinfo}} and \code{\link[Biostrings]{getSeq}}
     are defined.
   }
   \item{genes}{
@@ -133,8 +133,8 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
     \item The \link[Biostrings]{DNAStringSet} class defined and documented
           in the \pkg{Biostrings} package.
 
-    \item The \code{\link[GenomeInfoDb]{seqinfo}} getter defined and documented
-          in the \pkg{GenomeInfoDb} package.
+    \item The \code{\link[Seqinfo]{seqinfo}} getter defined and documented
+          in the \pkg{Seqinfo} package.
 
     \item The \code{\link[Biostrings]{getSeq}} function for extracting
           subsequences from a sequence container.

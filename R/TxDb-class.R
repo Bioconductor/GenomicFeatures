@@ -359,7 +359,7 @@ setMethod("seqlevels0", "TxDb",
     }
 )
 
-### Adapted from default "seqlevels<-" method defined in GenomeInfoDb.
+### Adapted from default "seqlevels<-" method defined in the Seqinfo package.
 ### We only support "renaming" and "strict subsetting" modes.
 .set_TxDb_seqlevels <-
     function(x,
@@ -373,7 +373,7 @@ setMethod("seqlevels0", "TxDb",
     ## First we compare the user-supplied seqlevels with 'x_seqlevels0' to
     ## detect the situation where the user intention is to subset the "real"
     ## seqlevels.
-    mode <- GenomeInfoDb:::getSeqlevelsReplacementMode(value, x_seqlevels0)
+    mode <- Seqinfo:::getSeqlevelsReplacementMode(value, x_seqlevels0)
     if (identical(mode, -2L)) {
         ## "subsetting of the real seqlevels" mode
         x$user2seqlevels0 <- match(value, x_seqlevels0)
@@ -383,7 +383,7 @@ setMethod("seqlevels0", "TxDb",
     }
     ## Then we compare the user-supplied seqlevels with the current user-
     ## defined seqlevels.
-    new2old <- GenomeInfoDb:::getSeqlevelsReplacementMode(value, x_seqlevels)
+    new2old <- Seqinfo:::getSeqlevelsReplacementMode(value, x_seqlevels)
     if (identical(new2old, -3L)) {
         ## "renaming of user-defined seqlevels" mode
         x$user_seqlevels <- value
@@ -444,8 +444,8 @@ setMethod("seqinfo", "TxDb", .get_TxDb_seqinfo)
 ### possibly in addition to subsetting 'seqinfo(x)' by dropping/reordering
 ### some of its seqlevels. It does NOT allow altering the seqlengths or
 ### circularity flags!
-### This is all we need to make the seqlevelsStyle() setter work on a
-### TxDb object.
+### This is all we need to make the GenomeInfoDb::seqlevelsStyle() setter
+### work on a TxDb object.
 .normarg_new2old_and_check_new_seqinfo <-
     function(new2old, new_seqinfo, old_seqinfo, context="")
 {
@@ -458,9 +458,9 @@ setMethod("seqinfo", "TxDb", .get_TxDb_seqinfo)
                       "'seqlevels'"))
         new2old <- seq_along(new_seqlevels)
     } else {
-        new2old <- GenomeInfoDb:::normarg_new2old(new2old,
-                                                  length(new_seqlevels),
-                                                  length(old_seqlevels))
+        new2old <- Seqinfo:::normarg_new2old(new2old,
+                                             length(new_seqlevels),
+                                             length(old_seqlevels))
         if (anyNA(new2old))
             stop(wmsg("'new2old' cannot contain NAs", context))
         old_seqinfo <- old_seqinfo[old_seqlevels[new2old]]

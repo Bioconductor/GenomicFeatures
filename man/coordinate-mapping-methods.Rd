@@ -378,6 +378,7 @@ GIPR_transcripts  # all 8 GIPR transcripts are on chr19, positive strand
 ## Before mapping, the chromosome names (seqlevels) in the two
 ## objects must be harmonized. The style is NCBI for 'snps' and
 ## UCSC for 'GIPR_transcripts'.
+library(GenomeInfoDb)
 seqlevelsStyle(snps)
 seqlevelsStyle(GIPR_transcripts)
 

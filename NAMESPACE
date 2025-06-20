@@ -8,7 +8,7 @@ import(AnnotationDbi)
 import(BiocGenerics)
 import(S4Vectors)
 import(IRanges)
-import(GenomeInfoDb)
+import(Seqinfo)
 import(XVector)
 import(GenomicRanges)
 

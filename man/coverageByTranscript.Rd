@@ -28,7 +28,7 @@ pcoverageByTranscript(x, transcripts, ignore.strand=FALSE, ...)
     \link[GenomicAlignments]{GAlignmentsList} objects are supported.
 
     More generally, for \code{coverageByTranscript} \code{x} can be
-    any object for which \code{\link[GenomeInfoDb]{seqinfo}()} and
+    any object for which \code{\link[Seqinfo]{seqinfo}()} and
     \code{\link[GenomicRanges]{coverage}()} are supported (e.g. a
     \link[Rsamtools]{BamFile} object).
     Note that, for such objects, \code{coverage()} is expected to return an

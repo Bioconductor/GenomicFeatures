@@ -282,9 +282,9 @@ test_select <- function(){
 test_select_isActiveSeq <- function(){
   
   ## set isActiveSeq to only watch chr1
- txdb <- restoreSeqlevels(txdb)  ## This is to reset things (safety measure)
- isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
- isActiveSeq(txdb) <- c("chr1"=TRUE)  
+  txdb <- GenomeInfoDb::restoreSeqlevels(txdb)  # reset things (safety measure)
+  isActiveSeq(txdb)[seqlevels(txdb)] <- FALSE
+  isActiveSeq(txdb) <- c("chr1"=TRUE)  
   
   ## then use select
   keys <- head(keys(txdb, "GENEID"))

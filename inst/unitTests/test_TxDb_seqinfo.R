@@ -3,7 +3,7 @@ txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
 test_rename_seqlevels <- function()
 {
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     new_seqlevels <- as.character(seq_along(seqlevels(txdb)))
     seqlevels(txdb) <- new_seqlevels
     checkIdentical(new_seqlevels, seqlevels(txdb))
@@ -12,12 +12,12 @@ test_rename_seqlevels <- function()
 test_restrict_seqlevels <- function()
 {
     ## This should work
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     seqlevels(txdb, pruning.mode="coarse") <- c(chr5="5")
     checkEquals(length(seqinfo(txdb)), 1)
 
     ## This should work
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     seqlevels(txdb, pruning.mode="coarse") <- c(chr5="5", chr6="6", chr4="4")
     checkTrue(length(seqinfo(txdb)) == 3)
     checkIdentical(c("5", "6", "4"), seqlevels(txdb))
@@ -25,29 +25,29 @@ test_restrict_seqlevels <- function()
     checkTrue(seqlengths(txdb)[3] == max(seqlengths(txdb)))
 
     ## And this should NOT work
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     checkException(seqlevels(txdb, pruning.mode="coarse") <- c(foo="2"))
 }
 
 test_seqinfo_setter <- function()
 {
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     new_seqinfo <- seqinfo(txdb)
     seqnames(new_seqinfo) <- paste0("NEW_", seqnames(new_seqinfo))
     seqinfo(txdb, new2old=seq_along(new_seqinfo)) <- new_seqinfo
     checkIdentical(new_seqinfo, seqinfo(txdb))
 
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     new_seqinfo <- seqinfo(txdb)
     seqlengths(new_seqinfo) <- 5 * seqlengths(new_seqinfo)
     checkException(seqinfo(txdb) <- new_seqinfo)
 
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     new_seqinfo <- seqinfo(txdb)
     isCircular(new_seqinfo) <- rep(TRUE, length(new_seqinfo))
     checkException(seqinfo(txdb) <- new_seqinfo)
 
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     new_seqinfo <- seqinfo(txdb)
     genome(new_seqinfo) <- "foo"
     seqinfo(txdb) <- new_seqinfo
@@ -56,7 +56,7 @@ test_seqinfo_setter <- function()
 
 test_transcripts_accessor <- function()
 {
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     txs1 <- transcripts(txdb)
     seqlevels(txs1, pruning.mode="coarse") <- c(chr5="5")
     ## Then change seqlevels for txdb
@@ -67,7 +67,7 @@ test_transcripts_accessor <- function()
 
 test_exons_accessor <- function()
 {
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     exs1 <- exons(txdb)
     seqlevels(exs1, pruning.mode="coarse") <- c(chr5="5")
     ## Then change seqlevels for txdb
@@ -78,7 +78,7 @@ test_exons_accessor <- function()
 
 test_cds_accessor <- function()
 {
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     cds1 <- cds(txdb)
     seqlevels(cds1, pruning.mode="coarse") <- c(chr5="5")
     ## Then change seqlevels for txdb
@@ -89,7 +89,7 @@ test_cds_accessor <- function()
 
 test_promoters_accessor <- function()
 {
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     prm1 <- promoters(txdb)
     seqlevels(prm1, pruning.mode="coarse") <- c(chr5="5")
     ## Then change seqlevels for txdb
@@ -97,7 +97,7 @@ test_promoters_accessor <- function()
     prm2 <- promoters(txdb)
     checkIdentical(prm1, prm2)
 
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     trmn1 <- terminators(txdb)
     seqlevels(trmn1, pruning.mode="coarse") <- c(chr5="5")
     ## Then change seqlevels for txdb
@@ -112,7 +112,7 @@ test_transcriptsBy_accessors <- function()
     ## There are issues because some genes are annotated as being on
     ## TWO different chromosomes.  Such genes are filtered for txs3,
     ## but NOT for txs4...   Hmmmm.
-    txdb <- restoreSeqlevels(txdb)
+    txdb <- GenomeInfoDb::restoreSeqlevels(txdb)
     txs3 <- transcriptsBy(txdb, by="gene")
     seqlevels(txs3, pruning.mode="coarse") <- c(chr5="5")
     ## Then change seqlevels for txdb

@@ -131,11 +131,11 @@ test_transcriptsBy_seqlevelsStyleSwap <- function(){
     txdb <- loadDb(system.file("extdata", "hg19_knownGene_sample.sqlite", 
                                package="GenomicFeatures"))    
     get_grl <- transcriptsBy(txdb, by="gene")
-    checkTrue(seqlevelsStyle(txdb) == "UCSC")
+    checkTrue(GenomeInfoDb::seqlevelsStyle(txdb) == "UCSC")
     checkTrue(all(seqnames(get_grl[["100130275"]]) =="chr6"))
     
-    seqlevelsStyle(txdb) <- "NCBI"
-    checkTrue(seqlevelsStyle(txdb)[1] == "NCBI")    
+    GenomeInfoDb::seqlevelsStyle(txdb) <- "NCBI"
+    checkTrue(GenomeInfoDb::seqlevelsStyle(txdb)[1] == "NCBI")    
     get_grlN <- transcriptsBy(txdb, by="gene")
     checkTrue(all(seqnames(get_grlN[["100130275"]]) == "6"))
 }
