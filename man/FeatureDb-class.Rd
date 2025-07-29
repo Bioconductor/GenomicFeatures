@@ -41,8 +41,9 @@
     \item The \link{TxDb} class for storing transcript annotations.
     \item \code{\link{makeFeatureDbFromUCSC}} for a convenient way to
           make a FeatureDb object from UCSC online resources.
-    \item \code{\link{saveDb}} and \code{\link{loadDb}} for
-          saving and loading the database content of a FeatureDb object.
+    \item \code{\link[AnnotationDbi]{saveDb}} and
+          \code{\link[AnnotationDbi]{loadDb}} in the \pkg{AnnotationDbi}
+          package for saving and loading a FeatureDb object as an SQLite file.
     \item \code{\link{features}} for how to extract genomic features
           from a FeatureDb object.
   }

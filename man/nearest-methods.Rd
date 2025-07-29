@@ -17,7 +17,8 @@
 
 \arguments{
   \item{x}{
-    The query \link{GenomicRanges} instance.
+    The query as a \link[GenomicRanges]{GRanges} object or other
+    \link[GenomicRanges]{GenomicRanges} derivative.
   }
   \item{y}{
     A \link{TxDb} object. The \code{id} is used to extract

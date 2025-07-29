@@ -71,8 +71,9 @@ extractUpstreamSeqs(x, genes, width=1000, ...)
   display \code{genes} with \code{show(genes)}.
 
   In addition, the returned object has the following metadata columns
-  (accessible with \code{\link{mcols}}) that provide some information about
-  the gene (or transcript) corresponding to each upstream sequence:
+  (accessible with \code{\link[S4Vectors]{mcols}}) that provide some
+  information about the gene (or transcript) corresponding to each
+  upstream sequence:
   \itemize{
     \item \code{gene_seqnames}: the chromosome name of the gene (or
           transcript);

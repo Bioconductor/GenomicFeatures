@@ -4,13 +4,13 @@ importFrom(utils, as.person)
 
 importMethodsFrom(DBI, dbGetQuery, dbListTables, dbListFields)
 
-import(AnnotationDbi)
 import(BiocGenerics)
 import(S4Vectors)
 import(IRanges)
 import(Seqinfo)
 import(XVector)
 import(GenomicRanges)
+import(AnnotationDbi)
 
 importClassesFrom(Biostrings, DNAString, DNAStringSet, MaskedDNAString)
 importFrom(Biostrings, DNAStringSet, reverseComplement, getSeq)

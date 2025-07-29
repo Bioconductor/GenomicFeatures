@@ -11,8 +11,9 @@
 
 \description{
   Extract promoter or terminator sequences for the genes or transcripts
-  specified in the query (a\link{GRanges} or \link{GRangesList} object)
-  from a \link[BSgenome]{BSgenome} or \link[Rsamtools]{FaFile} object.
+  specified in the query (a \link[GenomicRanges]{GRanges} or
+  \link[GenomicRanges]{GRangesList} object) from a \link[BSgenome]{BSgenome}
+  or \link[Rsamtools]{FaFile} object.
 }
 
 \usage{
@@ -36,7 +37,8 @@
 
 \details{
   \code{getPromoterSeq} and \code{getTerminatorSeq} are generic functions
-  dispatching on query, which is either a GRanges or a GRangesList.
+  dispatching on query, which is either a \link[GenomicRanges]{GRanges} or
+  a \link[GenomicRanges]{GRangesList} object.
   They are convenience wrappers for the \code{promoters}, \code{terminators},
   and \code{getSeq} functions.
   The purpose is to allow sequence extraction from either a
@@ -49,9 +51,9 @@
 }
 
 \value{
-  A \link[Biostrings]{DNAStringSet} or
-  \link[Biostrings]{DNAStringSetList} instance corresponding to the
-  GRanges or GRangesList supplied in the query.
+  A \link[Biostrings]{DNAStringSet} or \link[Biostrings]{DNAStringSetList}
+  instance corresponding to the \link[GenomicRanges]{GRanges} or
+  a \link[GenomicRanges]{GRangesList} object supplied in the query.
 }
 
 \author{Paul Shannon}
