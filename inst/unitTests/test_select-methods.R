@@ -14,7 +14,8 @@ test_getTableColMapping <- function(){
               exon=c("_exon_id","exon_name","exon_chrom","exon_strand",
                 "exon_start","exon_end"),
               gene=c("gene_id","_tx_id"),
-              splicing=c("_tx_id","exon_rank","_exon_id","_cds_id"),
+              splicing=c("_tx_id","exon_rank","_exon_id","_cds_id",
+                "cds_phase"),
               transcript=c("_tx_id","tx_name","tx_type","tx_chrom","tx_strand",
                 "tx_start","tx_end"))
   checkIdentical(res, exp)
@@ -23,8 +24,9 @@ test_getTableColMapping <- function(){
 test_makeColAbbreviations <- function(){
   res <- GenomicFeatures:::.makeColAbbreviations(txdb)
   checkTrue(res[["_cds_id"]]=="CDSID")
+  checkTrue(length(res) == 22)
   res2 <- GenomicFeatures:::.getTableColMapping(txdb)
-  checkTrue(length(res)==21, length(unique(unlist(res2))))
+  checkTrue(length(unique(unlist(res2))) == length(res))
 }
 
 test_reverseColAbbreviations <- function(){
@@ -118,22 +120,22 @@ test_keys <- function(){
 
 test_keys_advancedArgs <- function(){
     k1 <- keys(txdb, keytype="TXNAME")
-    checkTrue("uc001aaa.3" %in% k1)
+    checkTrue("ENST00000833856.1_2" %in% k1)
     
-    k2 <- keys(txdb, keytype="TXNAME", pattern=".2$")
-    checkTrue("uc001aaq.2" %in% k2)
-    checkTrue(!("uc001aaa.3" %in% k2))
+    k2 <- keys(txdb, keytype="TXNAME", pattern="\\.1_2$")
+    checkTrue("ENST00000833856.1_2" %in% k2)
+    checkTrue(!("ENST00000387409.1" %in% k2))
     checkTrue(length(k2) < length(k1))
 
     l1 <- length(keys(txdb, keytype="TXID", column="GENEID"))
     l2 <- length(keys(txdb, keytype="TXID"))
     checkTrue(l1 < l2)
     
-    k3 <- head(keys(txdb, keytype="GENEID", pattern=".2$",
+    k3 <- head(keys(txdb, keytype="GENEID", pattern="2$",
                     column="TXNAME", fuzzy=TRUE))
     res <- suppressWarnings( select(txdb, k3, columns=c("GENEID","TXNAME"),
                                    keytype="GENEID"))
-    checkTrue(any(grepl(".2$",res$TXNAME)))
+    checkTrue(any(grepl("2$",res$TXNAME)))
 }
 
 
