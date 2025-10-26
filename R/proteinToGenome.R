@@ -232,11 +232,8 @@ setMethod("proteinToGenome", "GRangesList",
     ## Should never happen in practice because if 'db' is an EnsDb object
     ## then the ensembldb package should be loaded already, and ensembldb
     ## depends on AnnotationFilter.
-    if (!requireNamespace("AnnotationFilter", quietly=TRUE))
-        stop(wmsg("Couldn't load the AnnotationFilter package. ",
-                  "The AnnotationFilter package is needed when ",
-                  "calling proteinToGenome() on an EnsDb object. ",
-                  "Please install it."))
+    S4Vectors:::load_package_gracefully("AnnotationFilter", "when calling ",
+                                        "proteinToGenome() on an EnsDb object")
     filter <- AnnotationFilter::TxIdFilter(tx_names)
     cdsBy(db, by="tx", filter=filter)
 }
