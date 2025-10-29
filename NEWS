@@ -1,3 +1,23 @@
+CHANGES IN VERSION 1.62.0
+-------------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Drop mirbase.db from Suggests (package got removed from BioC 3.22
+      after being deprecated in BioC 3.21). As a consequence, function
+      microRNAs() is now defunct.
+
+    o The package now depends on the new Seqinfo package instead of
+      GenomeInfoDb.
+
+DEPRECATED AND DEFUNCT
+
+    o microRNAs() is defunct.
+
+    o All the functions that went to txdbmaker in BioC 3.19 and got formally
+      deprecated in GenomicFeatures in BioC 3.21 are now defunct.
+
+
 CHANGES IN VERSION 1.60.0
 -------------------------
 
