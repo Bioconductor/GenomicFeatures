@@ -54,7 +54,6 @@ export(
   features,
 
   ## tRNAs.R:
-  microRNAs,
   tRNAs,
 
   ## extractTranscriptSeqs.R:
@@ -110,47 +109,5 @@ exportMethods(
   mapFromTranscripts, pmapFromTranscripts,
   mapIdsToRanges, mapRangesToIds,
   proteinToGenome
-)
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Stuff that has moved to txdbmaker
-###
-
-export(
-  ## makeTxDb.R:
-  makeTxDb,
-
-  ## makeTxDbFromUCSC.R:
-  supportedUCSCtables,
-  browseUCSCtrack,
-  makeTxDbFromUCSC,
-
-  ## makeTxDbFromBiomart.R:
-  getChromInfoFromBiomart,
-  makeTxDbFromBiomart,
-
-  ## makeTxDbFromEnsembl.R:
-  makeTxDbFromEnsembl,
-
-  ## makeTxDbFromGRanges.R:
-  makeTxDbFromGRanges,
-
-  ## makeTxDbFromGFF.R:
-  makeTxDbFromGFF,
-
-  ## makeFeatureDbFromUCSC.R:
-  supportedUCSCFeatureDbTracks,
-  supportedUCSCFeatureDbTables,
-  UCSCFeatureDbTableSchema,
-  makeFeatureDbFromUCSC,
-
-  ## makeTxDbPackage.R:
-  supportedMiRBaseBuildValues,
-  makePackageName,
-  makeTxDbPackage,
-  makeTxDbPackageFromUCSC,
-  makeFDbPackageFromUCSC,
-  makeTxDbPackageFromBiomart
 )
 

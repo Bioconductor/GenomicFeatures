@@ -1,6 +1,5 @@
 \name{tRNAs}
 
-\alias{microRNAs}
 \alias{tRNAs}
 \alias{tRNAs,TxDb-method}
 

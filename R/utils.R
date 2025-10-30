@@ -6,16 +6,6 @@
 ###
 
 
-call_fun_in_txdbmaker <- function(fun, ...)
-{
-    msg <- c(fun, "() has moved from GenomicFeatures to the txdbmaker ",
-             "package, and is formally defunct in GenomicFeatures ",
-             ">= 1.61.1. Please call txdbmaker::", fun, "() to get rid ",
-             "of this error.")
-    .Defunct(msg=wmsg(msg))
-}
-
-
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### DB related.
 ###

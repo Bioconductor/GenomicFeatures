@@ -6,8 +6,6 @@
 ### Such extractors can point to other databases OR they can
 ### point to other FeatureDbs within the same package.
 
-microRNAs <- function(x) .Defunct()
-
 .syncSeqlevel <- function(txdb, ans){
   isActSeq <- .isActiveSeq(txdb)
   n2oNames <- levels(seqnames(ans))

@@ -12,7 +12,7 @@ biocViews: Genetics, Infrastructure, Annotation, Sequencing,
 	GenomeAnnotation
 URL: https://bioconductor.org/packages/GenomicFeatures
 BugReports: https://github.com/Bioconductor/GenomicFeatures/issues
-Version: 1.63.0
+Version: 1.63.1
 License: Artistic-2.0
 Encoding: UTF-8
 Authors@R: c(
@@ -77,12 +77,4 @@ Collate: utils.R
 	coordinate-mapping-methods.R
 	proteinToGenome.R
 	coverageByTranscript.R
-	makeTxDb.R
-	makeTxDbFromUCSC.R
-	makeTxDbFromBiomart.R
-	makeTxDbFromEnsembl.R
-	makeTxDbFromGRanges.R
-	makeTxDbFromGFF.R
-	makeFeatureDbFromUCSC.R
-	makeTxDbPackage.R
 	zzz.R

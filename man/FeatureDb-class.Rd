@@ -10,9 +10,9 @@
   WARNING: The FeatureDb/makeFeatureDbFromUCSC/features code base is
   no longer actively maintained and FeatureDb-related functionalities
   might get deprecated in the near future. Please use
-  \code{\link{makeFeatureDbFromUCSC}} for a convenient way to
-  import transcript annotations from UCSC online resources into
-  Bioconductor.
+  \code{\link[txdbmaker]{makeFeatureDbFromUCSC}} from the \pkg{txdbmaker}
+  package for a convenient way to import transcript annotations from
+  UCSC online resources into Bioconductor.
 
   The FeatureDb class is a generic container for storing
   genomic locations of an arbitrary type of genomic features.
@@ -20,8 +20,9 @@
   See \code{?\link{TxDb}} for a container for storing transcript
   annotations.
 
-  See \code{?\link{makeFeatureDbFromUCSC}} for a convenient way to
-  make FeatureDb objects from BioMart online resources.
+  See \code{?\link[txdbmaker]{makeFeatureDbFromUCSC}} in the \pkg{txdbmaker}
+  package for a convenient way to make FeatureDb objects from BioMart
+  online resources.
 }
 
 \section{Methods}{
@@ -39,8 +40,9 @@
 \seealso{
   \itemize{
     \item The \link{TxDb} class for storing transcript annotations.
-    \item \code{\link{makeFeatureDbFromUCSC}} for a convenient way to
-          make a FeatureDb object from UCSC online resources.
+    \item \code{\link[txdbmaker]{makeFeatureDbFromUCSC}} in the \pkg{txdbmaker}
+          package for a convenient way to make a FeatureDb object from UCSC
+          online resources.
     \item \code{\link[AnnotationDbi]{saveDb}} and
           \code{\link[AnnotationDbi]{loadDb}} in the \pkg{AnnotationDbi}
           package for saving and loading a FeatureDb object as an SQLite file.
