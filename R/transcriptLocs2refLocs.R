@@ -52,10 +52,10 @@ transcriptLocs2refLocs <- function(tlocs, exonStarts=list(), exonEnds=list(),
              "must have the same length")
     if (!isTRUEorFALSE(decreasing.rank.on.minus.strand))
         stop("'decreasing.rank.on.minus.strand' must be TRUE or FALSE")
-    GenomicRanges:::unsafe.transcriptLocs2refLocs(tlocs,
-                            exonStarts, exonEnds, strand,
+    .Call2("C_tlocs2rlocs", tlocs, exonStarts, exonEnds, strand,
                             decreasing.rank.on.minus.strand,
-                            error.if.out.of.bounds)
+                            error.if.out.of.bounds,
+                            PACKAGE="GenomicFeatures")
 }
 
 
@@ -76,6 +76,7 @@ transcriptWidths <- function(exonStarts=list(), exonEnds=list())
     exonEnds <- .normargExonStartsOrEnds(exonEnds, "exonEnds")
     if (length(exonStarts) != length(exonEnds))
         stop("'exonStarts', 'exonEnds' must have the same length")
-    GenomicRanges:::unsafe.transcriptWidths(exonStarts, exonEnds)
+    .Call2("C_transcript_widths", exonStarts, exonEnds,
+                                  PACKAGE="GenomicFeatures")
 }
 

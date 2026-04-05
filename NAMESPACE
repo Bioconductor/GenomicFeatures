@@ -1,3 +1,5 @@
+useDynLib(GenomicFeatures)
+
 import(methods)
 importFrom(stats, setNames)
 importFrom(utils, as.person)
