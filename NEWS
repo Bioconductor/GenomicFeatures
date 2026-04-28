@@ -1,3 +1,15 @@
+CHANGES IN VERSION 1.64.0
+-------------------------
+
+DEPRECATED AND DEFUNCT
+
+    o After they got formally deprecated in GenomicFeatures in BioC 3.21 and
+      defunct in BioC 3.22, all the functions that went to txdbmaker in
+      BioC 3.19 are now gone for good.
+
+    o After being defunct in BioC 3.22, microRNAs() is now gone for good.
+
+
 CHANGES IN VERSION 1.62.0
 -------------------------
 
