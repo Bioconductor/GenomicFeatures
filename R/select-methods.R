@@ -251,7 +251,7 @@
   }
   
   
-  ## Then drop any columns that were not explicitely requested but that may have
+  ## Then drop any columns that were not explicitly requested but that may have
   ## been appended to make a joind (like TXID)
   res <- res[,.reverseColAbbreviations(x,cnames),drop=FALSE]
 
