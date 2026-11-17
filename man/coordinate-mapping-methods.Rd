@@ -315,11 +315,12 @@ if (!is_32bit_windows) {
 ## that linc-POLR3G-10 exhibited two NAGNAG acceptors located in two
 ## distinct transcripts: TCONS_00010012 and TCONS_00010010.
 
-## Extract the exon coordinates of TCONS_00010012 and TCONS_00010010:
+## Get the exon coordinates of TCONS_00010012 and TCONS_00010010:
+library(txdbmaker)
 lincrna <- c("TCONS_00010012", "TCONS_00010010")
-library(TxDb.Hsapiens.UCSC.hg19.lincRNAsTranscripts)
-txdb <- TxDb.Hsapiens.UCSC.hg19.lincRNAsTranscripts
-exons <- exonsBy(txdb, by="tx", use.names=TRUE)[lincrna]
+txdb <- makeTxDbFromUCSC("hg19", tablename="lincRNAsTranscripts",
+                                 transcript_ids=lincrna)
+exons <- exonsBy(txdb, by="tx", use.names=TRUE)
 exons
 
 ## The two NAGNAG acceptors were identified in the upstream region of
@@ -327,19 +328,19 @@ exons
 ## Extract the sequences for transcript TCONS_00010012:
 library(BSgenome.Hsapiens.UCSC.hg19)
 genome <- BSgenome.Hsapiens.UCSC.hg19
-exons_seq <- getSeq(genome, exons[[1]])
+exons_seq <- getSeq(genome, exons$TCONS_00010012)
 
-## TCONS_00010012 has 4 exons:
+## TCONS_00010012 has 5 exons:
 exons_seq
 
 ## The most common triplet among the lincRNA sequences was CAG. Identify
-## the location of this pattern in all exons.
+## the location of this pattern in all exons:
 cag_loc <- vmatchPattern("CAG", exons_seq)
 
 ## Convert the first occurance of CAG in each exon back to genome
-## coordinates.
+## coordinates:
 first_loc <- do.call(c, sapply(cag_loc, "[", 1, simplify=TRUE))
-pmapFromTranscripts(first_loc, exons[[1]])
+pmapFromTranscripts(first_loc, exons$TCONS_00010012)
 
 ## ---------------------------------------------------------------------
 ## C. Map dbSNP variants to CDS or cDNA coordinates
@@ -373,7 +374,7 @@ library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 tx_by_gene <- transcriptsBy(txdb, "gene")
 GIPR_transcripts <- tx_by_gene[GIPR_geneid]
-GIPR_transcripts  # all 8 GIPR transcripts are on chr19, positive strand
+GIPR_transcripts  # all 13 GIPR transcripts are on chr19, positive strand
 
 ## Before mapping, the chromosome names (seqlevels) in the two
 ## objects must be harmonized. The style is NCBI for 'snps' and
@@ -386,24 +387,24 @@ seqlevelsStyle(GIPR_transcripts)
 seqlevelsStyle(snps) <- seqlevelsStyle(GIPR_transcripts)
 
 ## The 'GIPR_transcripts' object is a GRangesList of length 1. This single
-## list element contains the cDNA range for 8 different transcripts. To
+## list element contains the cDNA range for 13 different transcripts. To
 ## map to each transcript individually 'GIPR_transcripts' must be unlisted
 ## before mapping.
 
-## Map all 5 SNPS to all 8 transcripts:
+## Map all 5 SNPS to all 13 transcripts:
 mapToTranscripts(snps, unlist(GIPR_transcripts))
 
-## Map the first SNP to transcript "ENST00000590918.5" and the second to
-## "ENST00000263281.7".
+## Map the first and second SNPs to the first and second transcripts,
+## respectively:
 pmapToTranscripts(snps[1:2], unlist(GIPR_transcripts)[1:2])
 
 ## The cdsBy() extractor returns CDS parts by gene or by transcript.
-## Extract the CDS parts for transcript "ENST00000263281.7".
-cds <- cdsBy(txdb, "tx", use.names=TRUE)["ENST00000263281.7"]
+## Extract the CDS parts for transcript "ENST00000263281.8".
+cds <- cdsBy(txdb, "tx", use.names=TRUE)["ENST00000263281.8"]
 cds
 
 ## The 'cds' object is a GRangesList of length 1 containing the ranges of
-## all CDS parts for single transcript "ENST00000263281.7".
+## all CDS parts for single transcript "ENST00000263281.8".
 
 ## To map to the concatenated group of ranges leave 'cds' as a GRangesList.
 mapToTranscripts(snps, cds)
@@ -412,13 +413,9 @@ mapToTranscripts(snps, cds)
 ## the SNPs to the individual cds ranges (vs the concatenated range).
 mapToTranscripts(snps[2], unlist(cds))
 
-## The location is the same because the SNP hit the first CDS part. If
+## The location is the same because the SNP hits the first CDS part. If
 ## the transcript were on the "-" strand the difference in concatenated
 ## vs non-concatenated position would be more obvious.
-
-## Change strand:
-strand(cds) <- strand(snps) <- "-"
-mapToTranscripts(snps[2], unlist(cds))
 }
 }
 
